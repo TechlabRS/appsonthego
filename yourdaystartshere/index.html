@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>itSRs' Personal Productivity Hub</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Set Inter font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            /* NEW: Light, eye-safe background and dark text */
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; 
+            color: #1e293b; 
+        }
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+        .task-completed {
+            text-decoration: line-through;
+            color: #9ca3af; /* Light gray out completed tasks */
+        }
+        .locked-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* NEW: Light overlay */
+            background-color: rgba(255, 255, 255, 0.9); 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            color: #1e293b; 
+        }
+        .full-center {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8">
+
+    <div class="max-w-5xl mx-auto">
+
+        <!-- Header and Welcome -->
+        <header class="text-center mb-12 py-6 border-b border-gray-300">
+            <!-- Sky Blue Accent -->
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-sky-600">The Architect's Rs' Hub</h1>
+            <p class="mt-2 text-lg text-gray-600">Optimizing 9-to-6 and Beyond. Organized by Intent.</p>
+        </header>
+        
+        <!-- Overall Status Scorecard -->
+        <section class="mb-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
+            
+            <!-- Productivity Score -->
+            <div class="bg-white p-5 rounded-xl card-shadow border border-gray-200 border-t-4 border-orange-500">
+                <p class="text-sm text-gray-500 font-semibold mb-1">Productivity Score</p>
+                <div class="text-3xl font-extrabold text-orange-600" id="productivity-score">--%</div>
+                <p class="text-xs text-gray-500 mt-1" id="productivity-status">Analyzing...</p>
+            </div>
+            
+            <!-- Financial Health -->
+            <div class="bg-white p-5 rounded-xl card-shadow border border-gray-200 border-t-4 border-green-500">
+                <p class="text-sm text-gray-500 font-semibold mb-1">Financial Health (Savings)</p>
+                <div class="text-3xl font-extrabold text-green-600" id="financial-health">--%</div>
+                <p class="text-xs text-gray-500 mt-1" id="financial-status">Analyzing...</p>
+            </div>
+            
+            <!-- Growth Momentum -->
+            <div class="bg-white p-5 rounded-xl card-shadow border border-gray-200 border-t-4 border-yellow-500">
+                <p class="text-sm text-gray-500 font-semibold mb-1">Growth Momentum</p>
+                <div class="text-3xl font-extrabold text-yellow-600" id="growth-momentum">--%</div>
+                <p class="text-xs text-gray-500 mt-1" id="growth-status">Analyzing...</p>
+            </div>
+            
+        </section>
+
+        <!-- Main Grid for Applications/Sections -->
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- 1. ACTION HUB (Tasks & Progress) - Light Orange Accent -->
+            <div class="bg-white p-6 rounded-xl card-shadow transition duration-300 hover:scale-[1.02] border border-gray-200 lg:col-span-2 flex flex-col">
+                <h2 class="flex items-center text-2xl font-bold mb-4 text-orange-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L13.5 21.75 16.5 13.5H3.75z" />
+                    </svg>
+                    Action & Progress Tracker (MITs & Daily Log)
+                </h2>
+                <p class="text-gray-600 mb-5">Your daily 9-to-6 priority list and quick reflection log.</p>
+
+                <!-- Task Input Section -->
+                <div id="task-maker-container" class="mb-6">
+                    <div class="text-lg font-semibold text-orange-500 mb-2">MITs (Most Important Tasks)</div>
+                    <div class="flex space-x-2">
+                        <input type="text" id="task-input" class="flex-grow p-2 bg-gray-100 border border-orange-300 rounded-lg text-gray-800 placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500" placeholder="Enter a new work task (e.g., Finalize Q3 Report)">
+                        <button id="add-task-btn" class="px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-500 transition duration-150 flex-shrink-0" disabled>
+                            Add Task
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Task List Section -->
+                <ul id="task-list" class="space-y-3 text-sm text-gray-700 flex-grow mb-6 border-b border-gray-300 pb-6">
+                    <li class="text-gray-500">Loading tasks...</li>
+                </ul>
+
+                <!-- Daily Log Section -->
+                <div class="text-lg font-semibold text-orange-500 mb-2">Daily Progress Log</div>
+                <div id="daily-log-container" class="mb-6">
+                    <textarea id="log-input" class="w-full h-16 p-2 mb-3 bg-gray-100 border border-orange-300 rounded-lg text-gray-800 placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500 resize-none" placeholder="Quickly jot down your main takeaway or status update for today's 9-to-6..."></textarea>
+                    <button id="save-log-btn" class="w-full px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500 transition duration-150" disabled>
+                        Save Daily Log
+                    </button>
+                </div>
+                
+                <!-- Log List -->
+                <div class="text-md font-semibold text-orange-500 mb-2 border-t pt-3 border-gray-300">Recent Logs</div>
+                <ul id="log-list" class="space-y-2 text-sm text-gray-700">
+                    <li class="text-gray-500">Loading daily logs...</li>
+                </ul>
+
+
+                <div id="auth-status" class="mb-3 text-sm text-gray-500 italic mt-4">...Initializing local storage...</div>
+                <div class="mt-auto">
+                    <div class="mt-4 text-sm text-gray-500">
+                        User ID: <span id="user-id-display" class="font-mono text-xs text-orange-600 break-all">Awaiting Init...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. FINANCE HUB (Personal Finance Tracker) - Green Accent -->
+            <div class="bg-white p-6 rounded-xl card-shadow transition duration-300 hover:scale-[1.02] border border-gray-200 md:col-span-1 lg:col-span-1">
+                <h2 class="flex items-center text-2xl font-bold mb-4 text-green-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.509 10.385 13 9.645 13 9V7.5a1.5 1.5 0 013 0v3.75a.75.75 0 01-1.5 0V7.5a.75.75 0 00-1.5 0v.75m-1.5 3h.007v.008H10.5v-.008z" />
+                    </svg>
+                    Financial Tracker
+                </h2>
+                
+                <!-- Balance Display -->
+                <div class="text-3xl font-bold mb-4 text-gray-800">
+                    Balance: <span id="net-balance" class="text-green-600">$0.00</span>
+                </div>
+
+                <p class="text-gray-600 mb-4 text-sm">Record quick transactions daily. Check-in during lunch hour.</p>
+
+                <!-- Transaction Input -->
+                <div id="transaction-maker-container" class="mb-6 space-y-3">
+                    <input type="text" id="txn-desc-input" class="w-full p-2 bg-gray-100 border border-green-300 rounded-lg text-gray-800 placeholder-gray-400 focus:ring-green-500" placeholder="Description (e.g., Coffee, Salary)">
+                    <div class="flex space-x-2">
+                        <input type="number" id="txn-amount-input" class="flex-grow p-2 bg-gray-100 border border-green-300 rounded-lg text-gray-800 placeholder-gray-400 focus:ring-green-500" placeholder="Amount (e.g., 50.00)" step="0.01">
+                        <select id="txn-type-select" class="p-2 bg-gray-100 border border-green-300 rounded-lg text-gray-800">
+                            <option value="expense" class="text-red-600">Expense</option>
+                            <option value="income" class="text-green-600">Income</option>
+                        </select>
+                    </div>
+                    <button id="add-txn-btn" class="w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-500 transition duration-150" disabled>
+                        Add Transaction
+                    </button>
+                </div>
+
+                <!-- Recent Transactions List -->
+                <div class="text-lg font-semibold text-green-500 mb-2 border-t pt-3 border-gray-300">Recent Activity</div>
+                <ul id="txn-list" class="space-y-2 text-sm text-gray-700 max-h-40 overflow-y-auto">
+                    <li class="text-gray-500">Loading activity...</li>
+                </ul>
+            </div>
+
+            <!-- 3. KNOWLEDGE & REFLECTION HUB (Diary & Notes) - Purple Accent -->
+            <div class="bg-white p-6 rounded-xl card-shadow transition duration-300 hover:scale-[1.02] border border-gray-200 md:col-span-1">
+                <h2 class="flex items-center text-2xl font-bold mb-4 text-purple-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 4.487z" />
+                    </svg>
+                    Diary & Imp Notes Maker
+                </h2>
+                <div id="notes-maker-container">
+                    <textarea id="note-input" class="w-full h-16 p-2 mb-3 bg-gray-100 border border-purple-300 rounded-lg text-gray-800 placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500 resize-none" placeholder="Capture quick thought or reflection..."></textarea>
+                    <button id="save-note-btn" class="w-full px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-500 transition duration-150 mb-4" disabled>
+                        Save Note
+                    </button>
+                    <div class="text-lg font-semibold text-purple-500 mb-2 border-t pt-3 border-gray-300">Recent Notes (Live)</div>
+                    <ul id="notes-list" class="space-y-2 text-sm text-gray-700">
+                        <li class="text-gray-500">Loading notes...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 4. SECURITY & CREDENTIALS (Secure Save) - Violet Accent -->
+            <div class="bg-white p-6 rounded-xl card-shadow transition duration-300 hover:scale-[1.02] border border-gray-200 md:col-span-1 relative">
+                <h2 class="flex items-center text-2xl font-bold mb-4 text-violet-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-5.877 7.727l.955-1.91A1.5 1.5 0 017.398 15h9.204a1.5 1.5 0 011.319.727l.955 1.91A3 3 0 0021 18.25V21a1 1 0 01-1 1H4a1 1 0 01-1-1v-2.75a3 3 0 001.623 2.727z" />
+                    </svg>
+                    Credentials Vault (Mock)
+                </h2>
+                <p class="text-gray-600 mb-5 text-sm">Access-controlled reference storage. **DO NOT** use for real passwords.</p>
+
+                <!-- Vault Content (Displayed when unlocked) -->
+                <div id="vault-content" style="display: none;">
+                    <!-- Input to add new credentials -->
+                    <div id="creds-add-container" class="mb-6 space-y-2">
+                        <input type="text" id="creds-service-input" class="w-full p-2 bg-gray-100 border border-violet-300 rounded-lg text-gray-800 placeholder-gray-400" placeholder="Service Name/Context">
+                        <input type="text" id="creds-value-input" class="w-full p-2 bg-gray-100 border border-violet-300 rounded-lg text-gray-800 placeholder-gray-400" placeholder="Username/Reference/Value">
+                        <button id="add-creds-btn" class="w-full px-4 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-500 transition duration-150" disabled>
+                            Save Credential
+                        </button>
+                    </div>
+                    
+                    <!-- Credential Display List -->
+                    <div class="text-lg font-semibold text-violet-500 mb-2 border-t pt-3 border-gray-300">Stored References</div>
+                    <ul id="creds-list" class="space-y-2 text-sm text-gray-700 max-h-40 overflow-y-auto">
+                        <li class="text-gray-500">Loading stored references...</li>
+                    </ul>
+                </div>
+                
+                <!-- Vault Access & Setup Container (Overlay) -->
+                <div id="vault-access-container" class="locked-overlay rounded-xl p-4 full-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-violet-600 mb-3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75M12 4.5v3M15 15.75H9" />
+                    </svg>
+                    
+                    <!-- 4a. Setup Mode (Displayed when key is NOT set) -->
+                    <div id="vault-setup-mode" style="display: none;" class="text-center w-full max-w-xs">
+                        <p class="text-lg font-semibold text-gray-800 mb-4">SET FIRST-TIME MOCK KEY</p>
+                        <input type="password" id="setup-key-input" class="w-full p-2 mb-3 bg-gray-100 border border-yellow-500 rounded-lg text-gray-800 placeholder-gray-400 text-center" placeholder="New Mock Key">
+                        <input type="password" id="confirm-key-input" class="w-full p-2 mb-4 bg-gray-100 border border-yellow-500 rounded-lg text-gray-800 placeholder-gray-400 text-center" placeholder="Confirm Mock Key">
+                        <button id="set-key-btn" class="w-full px-6 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-500 transition duration-150">
+                            Set Secure Mock Key
+                        </button>
+                        <p class="text-xs text-red-600 mt-3">Mock key must be set once for this user ID.</p>
+                    </div>
+                    
+                    <!-- 4b. Locked Mode (Displayed when key IS set) -->
+                    <div id="vault-locked-mode" style="display: none;" class="text-center w-full max-w-xs">
+                         <p class="text-lg font-semibold text-gray-800 mb-4">VAULT LOCKED</p>
+                         <p class="text-sm text-gray-600 mb-4">Enter your custom mock key to proceed.</p>
+                         <input type="password" id="vault-key-input" class="w-full p-2 mb-3 bg-gray-100 border border-violet-500 rounded-lg text-gray-800 placeholder-gray-400 text-center" placeholder="Enter Mock Key">
+                         <button id="vault-unlock-btn" class="w-full px-6 py-2 bg-violet-600 text-white font-semibold rounded-lg hover:bg-violet-500 transition duration-150">
+                             Unlock
+                         </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 5. PERSONAL PROJECT (Future Expansion) - Yellow Accent -->
+            <div class="bg-white p-6 rounded-xl card-shadow transition duration-300 hover:scale-[1.02] border border-gray-200 md:col-span-2">
+                <h2 class="flex items-center text-2xl font-bold mb-4 text-yellow-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5l-4.5 9.75" />
+                    </svg>
+                    Growth & Learning Dashboard
+                </h2>
+                <p class="text-gray-600 mb-5">Track specific skills and personal development goals. Focus: *Continuous Improvement*</p>
+
+                <!-- Skill Input -->
+                <div class="mb-6 space-y-2 flex flex-col sm:flex-row sm:space-x-2 sm:space-y-0">
+                    <input type="text" id="skill-input" class="flex-grow p-2 bg-gray-100 border border-yellow-300 rounded-lg text-gray-800 placeholder-gray-400 focus:ring-yellow-500" placeholder="New Skill Goal (e.g., Financial Modeling)">
+                    <button id="add-skill-btn" class="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-500 transition duration-150 flex-shrink-0" disabled>
+                        Add Goal
+                    </button>
+                </div>
+
+                <!-- Skill List -->
+                <div class="text-lg font-semibold text-yellow-500 mb-3 border-t pt-3 border-gray-300">Tracked Goals (Progress)</div>
+                <ul id="growth-list" class="space-y-4 text-sm text-gray-700">
+                    <li class="text-gray-500">Loading goals...</li>
+                </ul>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-gray-300 text-center text-gray-500 text-sm">
+            <p>&copy; 2024 Optimized Living System. All Rights Reserved.</p>
+        </footer>
+
+    </div>
+
+    <!-- LocalStorage SDKs and custom logic -->
+    <script>
+        // --- (START) LOCALSTORAGE CONVERSION ---
+        
+        // --- GLOBAL VARIABLES & CONSTANTS ---
+        let userId = null;
+        let isVaultUnlocked = false; 
+        let storedVaultKey = null; 
+
+        // LocalStorage Keys
+        const LS_USER_ID_KEY = 'architectHubUserId';
+        const LS_NOTES_KEY = 'architectHub_notes';
+        const LS_TASKS_KEY = 'architectHub_tasks';
+        const LS_LOGS_KEY = 'architectHub_logs';
+        const LS_TRANSACTIONS_KEY = 'architectHub_transactions';
+        const LS_GROWTH_KEY = 'architectHub_growthGoals';
+        const LS_VAULT_CONFIG_KEY = 'architectHub_vaultConfig';
+        const LS_VAULT_CREDS_KEY = 'architectHub_vaultCredentials';
+
+        // Scorecard Elements
+        const productivityScoreDisplay = document.getElementById('productivity-score');
+        const productivityStatusDisplay = document.getElementById('productivity-status');
+        const financialHealthDisplay = document.getElementById('financial-health');
+        const financialStatusDisplay = document.getElementById('financial-status');
+        const growthMomentumDisplay = document.getElementById('growth-momentum');
+        const growthStatusDisplay = document.getElementById('growth-status');
+
+        // Notes Elements
+        const noteInput = document.getElementById('note-input');
+        const saveNoteBtn = document.getElementById('save-note-btn');
+        const notesList = document.getElementById('notes-list');
+        
+        // Task Elements
+        const taskInput = document.getElementById('task-input');
+        const addTaskBtn = document.getElementById('add-task-btn');
+        const taskList = document.getElementById('task-list');
+        
+        // Daily Log Elements
+        const logInput = document.getElementById('log-input');
+        const saveLogBtn = document.getElementById('save-log-btn');
+        const logList = document.getElementById('log-list');
+
+        // Finance Elements
+        const netBalanceDisplay = document.getElementById('net-balance');
+        const txnDescInput = document.getElementById('txn-desc-input');
+        const txnAmountInput = document.getElementById('txn-amount-input');
+        const txnTypeSelect = document.getElementById('txn-type-select');
+        const addTxnBtn = document.getElementById('add-txn-btn');
+        const txnList = document.getElementById('txn-list');
+
+        // Credentials Elements
+        const vaultContent = document.getElementById('vault-content');
+        const credsServiceInput = document.getElementById('creds-service-input');
+        const credsValueInput = document.getElementById('creds-value-input');
+        const addCredsBtn = document.getElementById('add-creds-btn');
+        const credsList = document.getElementById('creds-list');
+        const vaultAccessContainer = document.getElementById('vault-access-container');
+        const vaultSetupMode = document.getElementById('vault-setup-mode');
+        const vaultLockedMode = document.getElementById('vault-locked-mode');
+        const setupKeyInput = document.getElementById('setup-key-input');
+        const confirmKeyInput = document.getElementById('confirm-key-input');
+        const setKeyBtn = document.getElementById('set-key-btn');
+        const vaultKeyInput = document.getElementById('vault-key-input');
+        const vaultUnlockBtn = document.getElementById('vault-unlock-btn');
+        
+        // Growth Elements
+        const skillInput = document.getElementById('skill-input');
+        const addSkillBtn = document.getElementById('add-skill-btn');
+        const growthList = document.getElementById('growth-list');
+
+        // Status Elements
+        const authStatus = document.getElementById('auth-status');
+        const userIdDisplay = document.getElementById('user-id-display');
+
+        // --- LOCALSTORAGE HELPER FUNCTIONS ---
+        
+        /**
+         * Safely retrieves and parses JSON data from LocalStorage.
+         * @param {string} key - The LocalStorage key.
+         * @returns {object | array | null} Parsed data or null if not found/invalid.
+         */
+        function getFromLS(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            } catch (e) {
+                console.error(`Error parsing LS data for ${key}:`, e);
+                // If parse fails, remove the corrupted data
+                localStorage.removeItem(key);
+                return null;
+            }
+        }
+
+        /**
+         * Safely stringifies and saves data to LocalStorage.
+         * @param {string} key - The LocalStorage key.
+         * @param {object | array} data - The data to save.
+         */
+        function saveToLS(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.error(`Error saving LS data for ${key}:`, e);
+            }
+        }
+
+        /**
+         * Initializes the application.
+         */
+        function initializeApp() {
+            // 1. Set up User ID
+            userId = localStorage.getItem(LS_USER_ID_KEY);
+            if (!userId) {
+                userId = crypto.randomUUID();
+                localStorage.setItem(LS_USER_ID_KEY, userId);
+            }
+            console.log("User ID (LocalStorage):", userId);
+            
+            // 2. Update UI
+            authStatus.textContent = 'Status: Ready (Using Local Storage). Data is local.';
+            userIdDisplay.textContent = userId;
+            
+            // 3. Enable all buttons
+            saveNoteBtn.disabled = false;
+            addTaskBtn.disabled = false;
+            saveLogBtn.disabled = false;
+            addTxnBtn.disabled = false; 
+            addCredsBtn.disabled = false; 
+            addSkillBtn.disabled = false; 
+
+            // 4. Load all data from LocalStorage
+            loadNotes();
+            loadTasks();
+            loadDailyLogs();
+            loadTransactions(); 
+            loadGrowthGoals(); 
+            
+            // 5. Vault must load its configuration first
+            loadVaultConfig();
+        }
+
+        // --- NOTES LOGIC ---
+
+        function saveNote() {
+            const text = noteInput.value.trim();
+            if (!text) return;
+
+            saveNoteBtn.disabled = true;
+            saveNoteBtn.textContent = 'Saving...';
+            
+            const newNote = {
+                id: crypto.randomUUID(),
+                text: text,
+                timestamp: new Date().toISOString() // Use ISO string for timestamps
+            };
+
+            const notes = getFromLS(LS_NOTES_KEY) || [];
+            notes.push(newNote);
+            saveToLS(LS_NOTES_KEY, notes);
+
+            noteInput.value = ''; 
+            loadNotes(); // Re-render the list
+
+            saveNoteBtn.disabled = false;
+            saveNoteBtn.textContent = 'Save Note';
+        }
+
+        function loadNotes() {
+            const notes = getFromLS(LS_NOTES_KEY) || [];
+            notesList.innerHTML = '';
+
+            if (notes.length === 0) {
+                notesList.innerHTML = '<li class="text-gray-500">No important notes saved yet.</li>';
+                return;
+            }
+
+            // Sort by timestamp descending
+            notes.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            const recentNotes = notes.slice(0, 5); // Get latest 5
+
+            recentNotes.forEach((noteData) => {
+                const noteItem = document.createElement('li');
+                noteItem.className = 'flex items-start bg-gray-50 p-3 rounded-lg border-l-4 border-purple-500';
+                
+                // Convert ISO string to Date object for formatting
+                const dateStr = new Date(noteData.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                noteItem.innerHTML = `
+                    <span class="text-xs text-gray-500 mr-3 mt-1 flex-shrink-0">${dateStr}</span>
+                    <p class="flex-grow text-gray-800">${noteData.text}</p>
+                `;
+                notesList.appendChild(noteItem);
+            });
+        }
+        
+        // --- TASK LOGIC ---
+
+        function saveTask() {
+            const text = taskInput.value.trim();
+            if (!text) return;
+
+            addTaskBtn.disabled = true;
+            addTaskBtn.textContent = 'Adding...';
+
+            const newTask = {
+                id: crypto.randomUUID(),
+                text: text,
+                completed: false,
+                timestamp: new Date().toISOString()
+            };
+
+            const tasks = getFromLS(LS_TASKS_KEY) || [];
+            tasks.push(newTask);
+            saveToLS(LS_TASKS_KEY, tasks);
+            
+            taskInput.value = ''; 
+            loadTasks(); // Re-render
+
+            addTaskBtn.disabled = false;
+            addTaskBtn.textContent = 'Add Task';
+        }
+
+        function toggleTaskCompleted(taskId, currentStatus) {
+            const tasks = getFromLS(LS_TASKS_KEY) || [];
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+
+            if (taskIndex > -1) {
+                tasks[taskIndex].completed = !currentStatus;
+                saveToLS(LS_TASKS_KEY, tasks);
+                loadTasks(); // Re-render to update UI and scorecard
+            }
+        }
+
+        function loadTasks() {
+            const tasks = getFromLS(LS_TASKS_KEY) || [];
+            taskList.innerHTML = '';
+
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<li class="text-gray-500">No tasks currently defined. Start adding your MITs!</li>';
+                // Update Scorecard: No tasks
+                productivityScoreDisplay.textContent = '--%';
+                productivityStatusDisplay.textContent = 'Add tasks to measure productivity.';
+                return;
+            }
+
+            let completedCount = 0;
+            let totalCount = tasks.length;
+
+            tasks.forEach(task => {
+                if (task.completed) {
+                    completedCount++;
+                }
+            });
+            
+            // Calculate and update Productivity Scorecard
+            const productivityScore = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            let statusText = '';
+            let statusClass = '';
+
+            if (productivityScore >= 80) {
+                statusText = 'Excellent focus! Keep the streak going.';
+                statusClass = 'text-green-600';
+            } else if (productivityScore >= 50) {
+                statusText = 'Solid progress. Aim for 80%+ completion.';
+                statusClass = 'text-yellow-600';
+            } else {
+                statusText = 'Low completion rate. Re-prioritize your MITs.';
+                statusClass = 'text-red-600';
+            }
+            
+            productivityScoreDisplay.textContent = `${productivityScore}%`;
+            productivityStatusDisplay.textContent = statusText;
+            productivityStatusDisplay.className = `text-xs mt-1 ${statusClass}`;
+
+            // Client-side sorting for display
+            tasks.sort((a, b) => {
+                if (a.completed !== b.completed) {
+                    return a.completed ? 1 : -1; 
+                }
+                // Use new Date() for comparison
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+
+            tasks.forEach((task) => {
+                const taskItem = document.createElement('li');
+                taskItem.className = `flex items-center bg-gray-50 p-3 rounded-lg border-l-4 ${task.completed ? 'border-gray-400 opacity-60' : 'border-orange-500'} transition duration-150`;
+                
+                const textClass = task.completed ? 'task-completed text-gray-500' : 'text-gray-800';
+                
+                taskItem.innerHTML = `
+                    <input type="checkbox" id="task-${task.id}" class="form-checkbox h-4 w-4 text-orange-600 bg-white border-gray-400 rounded mr-3 cursor-pointer" ${task.completed ? 'checked' : ''}>
+                    <label for="task-${task.id}" class="${textClass} cursor-pointer flex-grow">${task.text}</label>
+                `;
+
+                taskItem.querySelector('input[type="checkbox"]').addEventListener('change', () => {
+                    toggleTaskCompleted(task.id, task.completed);
+                });
+                
+                taskList.appendChild(taskItem);
+            });
+        }
+        
+        // --- DAILY LOG LOGIC ---
+        
+        function saveDailyLog() {
+            const text = logInput.value.trim();
+            if (!text) return;
+
+            saveLogBtn.disabled = true;
+            saveLogBtn.textContent = 'Saving...';
+            
+            const newLog = {
+                id: crypto.randomUUID(),
+                log: text,
+                timestamp: new Date().toISOString()
+            };
+
+            const logs = getFromLS(LS_LOGS_KEY) || [];
+            logs.push(newLog);
+            saveToLS(LS_LOGS_KEY, logs);
+            
+            logInput.value = ''; 
+            loadDailyLogs(); // Re-render
+
+            saveLogBtn.disabled = false;
+            saveLogBtn.textContent = 'Save Daily Log';
+        }
+
+        function loadDailyLogs() {
+            const logs = getFromLS(LS_LOGS_KEY) || [];
+            logList.innerHTML = '';
+
+            if (logs.length === 0) {
+                logList.innerHTML = '<li class="text-gray-500">No daily logs saved yet.</li>';
+                return;
+            }
+
+            // Sort by timestamp descending
+            logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            const recentLogs = logs.slice(0, 5); // Get latest 5
+
+            recentLogs.forEach((logData) => {
+                const logItem = document.createElement('li');
+                logItem.className = 'flex items-start bg-gray-50 p-3 rounded-lg border-l-4 border-purple-500';
+                
+                const logDate = new Date(logData.timestamp);
+                const dateStr = logDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' - ' +
+                                logDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                logItem.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-xs text-gray-500 mb-1">${dateStr}</span>
+                        <p class="text-gray-800">${logData.log}</p>
+                    </div>
+                `;
+                logList.appendChild(logItem);
+            });
+        }
+        
+        // --- FINANCE LOGIC ---
+
+        function saveTransaction() {
+            const description = txnDescInput.value.trim();
+            const amount = parseFloat(txnAmountInput.value);
+            const type = txnTypeSelect.value; 
+
+            if (!description || isNaN(amount) || amount <= 0) {
+                console.error("Invalid transaction input: Description required, amount must be a positive number.");
+                return;
+            }
+
+            addTxnBtn.disabled = true;
+            addTxnBtn.textContent = 'Recording...';
+
+            const newTxn = {
+                id: crypto.randomUUID(),
+                description: description,
+                amount: amount,
+                type: type, 
+                timestamp: new Date().toISOString()
+            };
+
+            const transactions = getFromLS(LS_TRANSACTIONS_KEY) || [];
+            transactions.push(newTxn);
+            saveToLS(LS_TRANSACTIONS_KEY, transactions);
+            
+            txnDescInput.value = ''; 
+            txnAmountInput.value = ''; 
+            txnTypeSelect.value = 'expense'; 
+            loadTransactions(); // Re-render
+
+            addTxnBtn.disabled = false;
+            addTxnBtn.textContent = 'Add Transaction';
+        }
+        
+        function loadTransactions() {
+            const allTransactions = getFromLS(LS_TRANSACTIONS_KEY) || [];
+            txnList.innerHTML = '';
+
+            let netBalance = 0;
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            if (allTransactions.length === 0) {
+                txnList.innerHTML = '<li class="text-gray-500">No financial activity recorded yet.</li>';
+                financialHealthDisplay.textContent = '--%';
+                financialStatusDisplay.textContent = 'Add transactions to calculate health.';
+            }
+
+            allTransactions.forEach(data => {
+                if (data.type === 'income') {
+                    netBalance += data.amount;
+                    totalIncome += data.amount;
+                } else if (data.type === 'expense') {
+                    netBalance -= data.amount;
+                    totalExpense += data.amount;
+                }
+            });
+            
+            // Calculate and update Financial Health Scorecard
+            let savingsRate = 0;
+            if (totalIncome > 0) {
+                savingsRate = Math.round(((totalIncome - totalExpense) / totalIncome) * 100);
+            }
+            
+            let financeStatusText = '';
+            let financeStatusClass = '';
+            
+            if (savingsRate >= 20) {
+                financeStatusText = 'Excellent! You are saving 20%+ of your income.';
+                financeStatusClass = 'text-green-600';
+            } else if (savingsRate >= 10) {
+                financeStatusText = 'Good start. Try to push toward the 20% goal.';
+                financeStatusClass = 'text-yellow-600';
+            } else {
+                financeStatusText = 'Savings are low. Review expenses for better returns.';
+                financeStatusClass = 'text-red-600';
+            }
+
+            financialHealthDisplay.textContent = `${savingsRate}%`;
+            financialStatusDisplay.textContent = financeStatusText;
+            financialStatusDisplay.className = `text-xs mt-1 ${financeStatusClass}`;
+
+            // Update Balance Display
+            const balanceClass = netBalance >= 0 ? 'text-green-600' : 'text-red-600';
+            netBalanceDisplay.className = balanceClass;
+            netBalanceDisplay.textContent = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(netBalance);
+
+            // Sort by timestamp descending
+            allTransactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            const recentTransactions = allTransactions.slice(0, 5);
+
+            recentTransactions.forEach((txn) => {
+                const txnItem = document.createElement('li');
+                const amountSign = txn.type === 'income' ? '+' : '-';
+                const amountColor = txn.type === 'income' ? 'text-green-600' : 'text-red-600';
+                const borderStyle = txn.type === 'income' ? 'border-green-500' : 'border-red-500';
+                
+                const dateStr = new Date(txn.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+                txnItem.className = `flex justify-between items-center bg-gray-50 p-3 rounded-lg border-l-4 ${borderStyle}`;
+                
+                txnItem.innerHTML = `
+                    <div class="flex-grow">
+                        <p class="text-gray-800 font-medium">${txn.description}</p>
+                        <span class="text-xs text-gray-500">${dateStr}</span>
+                    </div>
+                    <span class="${amountColor} font-bold flex-shrink-0">
+                        ${amountSign}${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(txn.amount)}
+                    </span>
+                `;
+                txnList.appendChild(txnItem);
+            });
+        }
+        
+        // --- CREDENTIALS LOGIC (MOCK) ---
+
+        /**
+         * MOCK ENCRYPTION: Simple Base64 encoding. Not secure.
+         */
+        function mockEncrypt(text) {
+            try {
+                return btoa(text);
+            } catch (e) {
+                console.error("Encryption failed", e);
+                return text;
+            }
+        }
+
+        /**
+         * MOCK DECRYPTION: Simple Base64 decoding. Not secure.
+         */
+        function mockDecrypt(encodedText) {
+            try {
+                return atob(encodedText);
+            } catch (e) {
+                console.error("Decryption error:", e);
+                return "[Error: Decryption Failed]";
+            }
+        }
+
+        /**
+         * Checks if a mock key is set for the user.
+         */
+        function loadVaultConfig() {
+            const config = getFromLS(LS_VAULT_CONFIG_KEY);
+
+            if (config && config.key) {
+                storedVaultKey = config.key;
+                console.log("Vault Config Loaded. Key Exists.");
+                // Show locked mode
+                vaultContent.style.display = 'none';
+                vaultAccessContainer.style.display = 'flex';
+                vaultSetupMode.style.display = 'none';
+                vaultLockedMode.style.display = 'block';
+            } else {
+                storedVaultKey = null;
+                console.log("Vault Config Missing. Entering Setup Mode.");
+                // Show setup mode
+                vaultContent.style.display = 'none';
+                vaultAccessContainer.style.display = 'flex';
+                vaultSetupMode.style.display = 'block';
+                vaultLockedMode.style.display = 'none';
+            }
+            // Ensure credentials list is in the correct state
+            loadCredentials();
+        }
+        
+        /**
+         * Saves the key for the first time.
+         */
+        function setupVaultKey() {
+            const key = setupKeyInput.value.trim();
+            const confirmKey = confirmKeyInput.value.trim();
+
+            if (!key || key.length < 4) {
+                console.error("Mock key must be at least 4 characters.");
+                // You could show a UI error here
+                return;
+            }
+            if (key !== confirmKey) {
+                console.error("Keys do not match.");
+                // You could show a UI error here
+                return;
+            }
+            
+            setKeyBtn.disabled = true;
+            setKeyBtn.textContent = 'Saving...';
+
+            const newConfig = {
+                key: key,
+                timestamp: new Date().toISOString()
+            };
+            
+            saveToLS(LS_VAULT_CONFIG_KEY, newConfig);
+            
+            // Key is set, transition to locked mode
+            storedVaultKey = key;
+            setupKeyInput.value = '';
+            confirmKeyInput.value = '';
+            
+            vaultSetupMode.style.display = 'none';
+            vaultLockedMode.style.display = 'block';
+            console.log("Vault setup complete. Ready to unlock.");
+
+            setKeyBtn.disabled = false;
+            setKeyBtn.textContent = 'Set Secure Mock Key';
+        }
+
+
+        /**
+         * Toggles the lock/unlock state of the vault.
+         */
+        function toggleVaultLock() {
+            if (isVaultUnlocked) {
+                // LOCK the vault
+                isVaultUnlocked = false;
+                vaultContent.style.display = 'none';
+                vaultAccessContainer.style.display = 'flex';
+                vaultUnlockBtn.textContent = 'Unlock';
+                vaultKeyInput.value = ''; // Clear key input on lock
+                console.log("Vault locked.");
+                loadCredentials(); // Re-render the list (will show "locked")
+            } else {
+                // UNLOCK attempt
+                const enteredKey = vaultKeyInput.value.trim();
+                
+                if (enteredKey === storedVaultKey && storedVaultKey !== null) {
+                    isVaultUnlocked = true;
+                    vaultContent.style.display = 'block';
+                    vaultAccessContainer.style.display = 'none';
+                    vaultUnlockBtn.textContent = 'Lock'; // This button isn't visible, but good to set state
+                    vaultKeyInput.value = ''; // Clear key input upon success
+                    loadCredentials(); // Reload and decrypt data
+                    console.log("Vault unlocked successfully.");
+                } else {
+                    console.error("Invalid Mock Key.");
+                    // You could show a UI error here
+                    vaultKeyInput.style.borderColor = 'red';
+                    setTimeout(() => {
+                        vaultKeyInput.style.borderColor = '';
+                    }, 1000);
+                }
+            }
+        }
+
+        /**
+         * Saves a new (mock-encrypted) credential to LocalStorage.
+         */
+        function saveCredential() {
+            const service = credsServiceInput.value.trim();
+            const value = credsValueInput.value.trim();
+
+            if (!service || !value) return;
+
+            addCredsBtn.disabled = true;
+            addCredsBtn.textContent = 'Saving...';
+
+            // MOCK ENCRYPTION before saving
+            const encryptedValue = mockEncrypt(value);
+
+            const newCred = {
+                id: crypto.randomUUID(),
+                service: service,
+                value: encryptedValue, // Storing the mock-encrypted value
+                timestamp: new Date().toISOString()
+            };
+
+            const credentials = getFromLS(LS_VAULT_CREDS_KEY) || [];
+            credentials.push(newCred);
+            saveToLS(LS_VAULT_CREDS_KEY, credentials);
+            
+            credsServiceInput.value = ''; 
+            credsValueInput.value = '';
+            loadCredentials(); // Re-render
+
+            addCredsBtn.disabled = false;
+            addCredsBtn.textContent = 'Save Credential';
+        }
+
+        /**
+         * Loads credentials and decrypts if unlocked.
+         */
+        function loadCredentials() {
+            const credentials = getFromLS(LS_VAULT_CREDS_KEY) || [];
+            credsList.innerHTML = '';
+
+            if (credentials.length === 0) {
+                credsList.innerHTML = '<li class="text-gray-500">No credentials stored.</li>';
+                return;
+            }
+
+            if (!isVaultUnlocked) {
+                credsList.innerHTML = '<li class="text-gray-500">Vault is locked.</li>';
+                return;
+            }
+
+            // Sort by timestamp descending
+            credentials.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            const recentCredentials = credentials.slice(0, 10); // Show up to 10
+
+            recentCredentials.forEach((credData) => {
+                // MOCK DECRYPTION
+                const decryptedValue = mockDecrypt(credData.value);
+
+                const credItem = document.createElement('li');
+                credItem.className = 'bg-gray-50 p-3 rounded-lg border-l-4 border-violet-500';
+                
+                credItem.innerHTML = `
+                    <p class="text-violet-600 font-medium">${credData.service}</p>
+                    <p class="text-sm font-mono text-gray-800 break-all">${decryptedValue}</p>
+                `;
+                credsList.appendChild(credItem);
+            });
+        }
+        
+        // --- GROWTH LOGIC ---
+
+        function saveSkill() {
+            const name = skillInput.value.trim();
+            if (!name) return;
+
+            addSkillBtn.disabled = true;
+            addSkillBtn.textContent = 'Saving...';
+
+            const newGoal = {
+                id: crypto.randomUUID(),
+                name: name,
+                progress: 0, // Start at 0%
+                timestamp: new Date().toISOString()
+            };
+
+            const goals = getFromLS(LS_GROWTH_KEY) || [];
+            goals.push(newGoal);
+            saveToLS(LS_GROWTH_KEY, goals);
+            
+            skillInput.value = ''; 
+            loadGrowthGoals(); // Re-render
+
+            addSkillBtn.disabled = false;
+            addSkillBtn.textContent = 'Add Goal';
+        }
+
+        function updateSkillProgress(skillId, currentProgress, change) {
+            let newProgress = currentProgress + change;
+            newProgress = Math.min(100, Math.max(0, newProgress)); // Clamp between 0 and 100
+
+            const goals = getFromLS(LS_GROWTH_KEY) || [];
+            const goalIndex = goals.findIndex(g => g.id === skillId);
+
+            if (goalIndex > -1) {
+                goals[goalIndex].progress = newProgress;
+                saveToLS(LS_GROWTH_KEY, goals);
+                loadGrowthGoals(); // Re-render
+            }
+        }
+
+        function loadGrowthGoals() {
+            const goals = getFromLS(LS_GROWTH_KEY) || [];
+            growthList.innerHTML = '';
+
+            if (goals.length === 0) {
+                growthList.innerHTML = '<li class="text-gray-500">Define a new skill or project to track your growth.</li>';
+                // Update Scorecard: No goals
+                growthMomentumDisplay.textContent = '--%';
+                growthStatusDisplay.textContent = 'Add goals to build momentum.';
+                return;
+            }
+
+            // 1. Gather all documents and calculate average progress
+            let totalProgress = 0;
+            goals.forEach(goal => {
+                totalProgress += goal.progress || 0;
+            });
+            
+            // 2. Calculate and update Growth Scorecard
+            const averageProgress = goals.length > 0 ? Math.round(totalProgress / goals.length) : 0;
+            let statusText = '';
+            let statusClass = '';
+
+            if (averageProgress >= 70) {
+                statusText = 'High momentum! Keep driving toward mastery.';
+                statusClass = 'text-green-600';
+            } else if (averageProgress >= 40) {
+                statusText = 'Solid. Focus on increasing momentum this week.';
+                statusClass = 'text-yellow-600';
+            } else {
+                statusText = 'Low momentum. Revisit goals or dedicate more time.';
+                statusClass = 'text-red-600';
+            }
+            
+            growthMomentumDisplay.textContent = `${averageProgress}%`;
+            growthStatusDisplay.textContent = statusText;
+            growthStatusDisplay.className = `text-xs mt-1 ${statusClass}`;
+
+
+            // 3. Client-side sorting for display: lowest progress first
+            goals.sort((a, b) => {
+                if (a.progress !== b.progress) {
+                    return a.progress - b.progress; 
+                }
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+
+            // 4. Render the sorted goals
+            goals.forEach((goalData) => {
+                const goalId = goalData.id;
+                const progress = goalData.progress || 0;
+                const progressColor = progress >= 100 ? 'bg-green-600' : (progress > 50 ? 'bg-yellow-600' : 'bg-red-600');
+                
+                const goalItem = document.createElement('li');
+                goalItem.className = 'bg-gray-50 p-3 rounded-lg border-l-4 border-yellow-500 space-y-2';
+                
+                goalItem.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <p class="text-yellow-600 font-medium text-lg">${goalData.name}</p>
+                        <span class="text-xl font-bold ${progress >= 100 ? 'text-green-600' : 'text-yellow-600'}">${progress}%</span>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-300 rounded-full h-2.5">
+                        <div class="${progressColor} h-2.5 rounded-full transition-all duration-500" style="width: ${progress}%;"></div>
+                    </div>
+
+                    <!-- Control Buttons -->
+                    <div class="flex justify-end space-x-2 pt-1">
+                        <button data-id="${goalId}" data-progress="${progress}" data-change="-10" class="progress-btn px-3 py-1 text-xs bg-gray-200 text-yellow-600 rounded-lg hover:bg-gray-300">-10%</button>
+                        <button data-id="${goalId}" data-progress="${progress}" data-change="+10" class="progress-btn px-3 py-1 text-xs bg-gray-200 text-yellow-600 rounded-lg hover:bg-gray-300">+10%</button>
+                        ${progress < 100 ? `<button data-id="${goalId}" data-progress="${progress}" data-change="${100 - progress}" class="progress-btn px-3 py-1 text-xs bg-yellow-600 text-white rounded-lg hover:bg-yellow-500">Mark Done</button>` : ''}
+                    </div>
+                `;
+                growthList.appendChild(goalItem);
+            });
+
+            // 5. Add event listeners for the new buttons
+            growthList.querySelectorAll('.progress-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = e.target.dataset.id;
+                    const progress = parseInt(e.target.dataset.progress, 10);
+                    const change = parseInt(e.target.dataset.change, 10);
+                    updateSkillProgress(id, progress, change);
+                });
+            });
+        }
+
+
+        // --- Event Listeners and Initialization ---
+        window.onload = () => {
+            // Start the application
+            initializeApp();
+
+            // Notes Listeners
+            saveNoteBtn.addEventListener('click', saveNote);
+            noteInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault(); 
+                    if (!saveNoteBtn.disabled) { saveNote(); }
+                }
+            });
+            
+            // Task Listeners
+            addTaskBtn.addEventListener('click', saveTask);
+            taskInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    if (!addTaskBtn.disabled) { saveTask(); }
+                }
+            });
+            
+            // Daily Log Listeners
+            saveLogBtn.addEventListener('click', saveDailyLog);
+            logInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault(); 
+                    if (!saveLogBtn.disabled) { saveDailyLog(); }
+                }
+            });
+
+            // Transaction Listeners
+            addTxnBtn.addEventListener('click', saveTransaction);
+            txnAmountInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    if (!addTxnBtn.disabled) { saveTransaction(); }
+                }
+            });
+            txnDescInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    if (!addTxnBtn.disabled) { saveTransaction(); }
+                }
+            });
+
+            // Credential Listeners
+            setKeyBtn.addEventListener('click', setupVaultKey);
+            setupKeyInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); setupVaultKey(); }
+            });
+            confirmKeyInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); setupVaultKey(); }
+            });
+
+            vaultUnlockBtn.addEventListener('click', toggleVaultLock);
+            vaultKeyInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    toggleVaultLock();
+                }
+            });
+            addCredsBtn.addEventListener('click', saveCredential);
+            credsValueInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    if (!addCredsBtn.disabled) { saveCredential(); }
+                }
+            });
+            
+            // Growth Listeners
+            addSkillBtn.addEventListener('click', saveSkill);
+            skillInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    if (!addSkillBtn.disabled) { saveSkill(); }
+                }
+            });
+        };
+        // --- (END) LOCALSTORAGE CONVERSION ---
+    </script>
+</body>
+</html>
