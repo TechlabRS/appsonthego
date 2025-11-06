@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📈 Advanced Stock Trend Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="/static/script.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #6c757d;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --background-color: #f0f2f5; /* Lighter, modern background */
+      --card-background: #ffffff;
+      --shadow: 0 6px 16px rgba(0, 0, 0, 0.1); /* Deeper shadow for "stunning" look */
+      --radius: 12px;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--background-color);
+      padding: 10px;
+      color: #343a40;
+      min-height: 100vh;
+    }
+    h1 {
+      text-align: center;
+      color: #1e1e1e;
+      margin: 20px 0;
+      font-weight: 700;
+      font-size: 1.8em;
+    }
+    .dashboard-container {
+      display: flex;
+      gap: 20px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    /* Controls are fixed width on desktop, flexible on mobile */
+    .control-panel {
+      flex: 0 0 280px; 
+      padding: 20px;
+      background: var(--card-background);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      height: fit-content;
+      position: sticky; /* Keep controls visible when scrolling */
+      top: 20px;
+    }
+    .content-area {
+      flex-grow: 1;
+      padding-top: 10px;
+    }
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background-color 0.3s, transform 0.1s;
+      text-align: left;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    button:hover {
+      background-color: #0056b3;
+      transform: translateY(-2px);
+    }
+    /* Card Styles for Results */
+    .result-card {
+      background: var(--card-background);
+      border-radius: var(--radius);
+      padding: 25px;
+      box-shadow: var(--shadow);
+      margin-bottom: 25px;
+    }
+    h2 {
+      margin-top: 0;
+      color: var(--primary-color);
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+      font-weight: 600;
+      font-size: 1.5em;
+    }
+    h3 {
+        color: #1e1e1e;
+        margin-top: 25px;
+        margin-bottom: 10px;
+        font-size: 1.2em;
+    }
+    /* Stock Item Display */
+    .stock-item {
+      display: flex;
+      flex-wrap: wrap; /* Allows wrapping on mobile */
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .stock-symbol {
+      font-weight: 700;
+      font-size: 1.2em;
+      color: #343a40;
+      flex: 1 1 50%; /* Takes half space on small screen */
+    }
+    .trend-indicator, .status-above, .status-below {
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85em;
+      min-width: 110px;
+      text-align: center;
+      margin-top: 5px; /* Spacing on mobile */
+    }
+    .rise {
+      background-color: #d4edda;
+      color: var(--success-color);
+    }
+    .fall {
+      background-color: #f8d7da;
+      color: var(--danger-color);
+    }
+    .status-above {
+      background-color: #d4edda;
+      color: var(--success-color);
+    }
+    .status-below {
+      background-color: #f8d7da;
+      color: var(--danger-color);
+    }
+    .momentum-value {
+        font-weight: 700;
+        font-size: 1.1em;
+        min-width: 80px;
+        text-align: right;
+        flex: 0 0 auto;
+    }
+    .info-date {
+        font-size: 0.8em;
+        color: var(--secondary-color);
+        margin-top: 5px;
+        flex: 1 1 100%; /* Full width on new line for date/price details */
+    }
+    /* Chart Container for Auto Trends */
+    .trend-detail-chart {
+        max-width: 100%;
+        height: 180px; /* Slightly smaller for mobile optimization */
+        margin-top: 15px;
+        background: #fcfcfc;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #eee;
+    }
+
+    /* --- RESPONSIVENESS (Mobile-First) --- */
+    @media (max-width: 900px) {
+        .dashboard-container {
+            flex-direction: column; /* Stack vertically on small screens */
+            gap: 10px;
+        }
+        .control-panel {
+            flex: 1 1 100%; /* Full width */
+            position: static;
+            top: auto;
+            margin-bottom: 10px;
+        }
+        .button-group {
+            flex-direction: row; /* Buttons side-by-side on smaller screens */
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        button {
+            flex: 1 1 45%; /* Two buttons per row */
+            text-align: center;
+            padding: 10px;
+        }
+        .result-card {
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+        .stock-item {
+            padding: 10px 0;
+        }
+        .stock-symbol {
+            flex: 1 1 100%; /* Symbol takes full width */
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+        .trend-indicator, .status-above, .status-below {
+            flex: 0 0 auto;
+            margin-top: 0;
+        }
+        .info-date {
+            font-size: 0.75em;
+            margin-top: 0;
+            text-align: left;
+            padding-left: 10px; /* Visual separation */
+            border-left: 1px solid #ccc;
+        }
+    }
+  </style>
+</head>
+<body>
+  <h1>📈 Trading Analytics Dashboard</h1>
+  <div class="dashboard-container">
+    <div class="control-panel">
+        <div class="button-group">
+            <button onclick="loadAutoTrends()">🔍 Auto Trend Analyzer</button>
+            <button onclick="loadMomentum()">🚀 All Momentum Stocks</button>
+            <button onclick="loadHighLow()">🔥 High/Low Performers (5-Day)</button>
+            <button onclick="loadMovingAverage()">📈 20-Day Moving Average</button>
+        </div>
+    </div>
+    <div class="content-area">
+        <div id="autoTrends" class="result-card">
+            <h2>Auto Trend Analysis</h2>
+            <p style="color: var(--secondary-color);">Click 'Auto Trend Analyzer' to check for 3-day rise or fall streaks and view recent price action.</p>
+        </div>
+        <div id="highLowResult" class="result-card">
+            <h2>🔥 5-Day High/Low Performers</h2>
+            <p style="color: var(--secondary-color);">Click 'High/Low Performers (5-Day)' to see the best and worst movers over the last week.</p>
+        </div>
+        <div id="movingAverageResult" class="result-card">
+            <h2>📈 20-Day Moving Average (SMA)</h2>
+            <p style="color: var(--secondary-color);">Click '20-Day Moving Average' to analyze price comparison against the last 20 closing prices.</p>
+        </div>
+        <div id="momentumResult" class="result-card">
+            <h2>All 5-Day Momentum Changes</h2>
+            <p style="color: var(--secondary-color);">Click 'All Momentum Stocks' to see the 5-day percentage change for all tracked stocks, sorted by performance.</p>
+        </div>
+    </div>
+  </div>
+</body>
+</html>
