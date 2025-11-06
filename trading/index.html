@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📈 Advanced Stock Trend Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="/static/script.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #6c757d;
+      --success-color: #28a745;
+      --danger-color: #dc3545;
+      --background-color: #f0f2f5; /* Lighter, modern background */
+      --card-background: #ffffff;
+      --shadow: 0 6px 16px rgba(0, 0, 0, 0.1); /* Deeper shadow for "stunning" look */
+      --radius: 12px;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--background-color);
+      padding: 10px;
+      color: #343a40;
+      min-height: 100vh;
+    }
+    h1 {
+      text-align: center;
+      color: #1e1e1e;
+      margin: 20px 0;
+      font-weight: 700;
+      font-size: 1.8em;
+    }
+    .dashboard-container {
+      display: flex;
+      gap: 20px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    /* Controls are fixed width on desktop, flexible on mobile */
+    .control-panel {
+      flex: 0 0 280px; 
+      padding: 20px;
+      background: var(--card-background);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      height: fit-content;
+      position: sticky; /* Keep controls visible when scrolling */
+      top: 20px;
+    }
+    .content-area {
+      flex-grow: 1;
+      padding-top: 10px;
+    }
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background-color 0.3s, transform 0.1s;
+      text-align: left;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    button:hover {
+      background-color: #0056b3;
+      transform: translateY(-2px);
+    }
+    /* Card Styles for Results */
+    .result-card {
+      background: var(--card-background);
+      border-radius: var(--radius);
+      padding: 25px;
+      box-shadow: var(--shadow);
+      margin-bottom: 25px;
+    }
+    h2 {
+      margin-top: 0;
+      color: var(--primary-color);
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+      font-weight: 600;
+      font-size: 1.5em;
+    }
+    h3 {
+        color: #1e1e1e;
+        margin-top: 25px;
+        margin-bottom: 10px;
+        font-size: 1.2em;
+    }
+    /* Stock Item Display */
+    .stock-item {
+      display: flex;
+      flex-wrap: wrap; /* Allows wrapping on mobile */
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .stock-symbol {
+      font-weight: 700;
+      font-size: 1.2em;
+      color: #343a40;
+      flex: 1 1 50%; /* Takes half space on small screen */
+    }
+    .trend-indicator, .status-above, .status-below {
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85em;
+      min-width: 110px;
+      text-align: center;
+      margin-top: 5px; /* Spacing on mobile */
+    }
+    .rise {
+      background-color: #d4edda;
+      color: var(--success-color);
+    }
+    .fall {
+      background-color: #f8d7da;
+      color: var(--danger-color);
+    }
+    .status-above {
+      background-color: #d4edda;
+      color: var(--success-color);
+    }
+    .status-below {
+      background-color: #f8d7da;
+      color: var(--danger-color);
+    }
+    .momentum-value {
+        font-weight: 700;
+        font-size: 1.1em;
+        min-width: 80px;
+        text-align: right;
+        flex: 0 0 auto;
+    }
+    .info-date {
+        font-size: 0.8em;
+        color: var(--secondary-color);
+        margin-top: 5px;
+        flex: 1 1 100%; /* Full width on new line for date/price details */
+    }
+    /* Chart Container for Auto Trends */
+    .trend-detail-chart {
+        max-width: 100%;
+        height: 180px; /* Slightly smaller for mobile optimization */
+        margin-top: 15px;
+        background: #fcfcfc;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #eee;
+    }
+
+    /* --- RESPONSIVENESS (Mobile-First) --- */
+    @media (max-width: 900px) {
+        .dashboard-container {
+            flex-direction: column; /* Stack vertically on small screens */
+            gap: 10px;
+        }
+        .control-panel {
+            flex: 1 1 100%; /* Full width */
+            position: static;
+            top: auto;
+            margin-bottom: 10px;
+        }
+        .button-group {
+            flex-direction: row; /* Buttons side-by-side on smaller screens */
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        button {
+            flex: 1 1 45%; /* Two buttons per row */
+            text-align: center;
+            padding: 10px;
+        }
+        .result-card {
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+        .stock-item {
+            padding: 10px 0;
+        }
+        .stock-symbol {
+            flex: 1 1 100%; /* Symbol takes full width */
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+        .trend-indicator, .status-above, .status-below {
+            flex: 0 0 auto;
+            margin-top: 0;
+        }
+        .info-date {
+            font-size: 0.75em;
+            margin-top: 0;
+            text-align: left;
+            padding-left: 10px; /* Visual separation */
+            border-left: 1px solid #ccc;
+        }
+    }
+  </style>
+</head>
+<body>
+  <h1>📈 Trading Analytics Dashboard</h1>
+  <div class="dashboard-container">
+    <div class="control-panel">
+        <div class="button-group">
+            <button onclick="loadAutoTrends()">🔍 Auto Trend Analyzer</button>
+            <button onclick="loadMomentum()">🚀 All Momentum Stocks</button>
+            <button onclick="loadHighLow()">🔥 High/Low Performers (5-Day)</button>
+            <button onclick="loadMovingAverage()">📈 20-Day Moving Average</button>
+        </div>
+    </div>
+    <div class="content-area">
+        <div id="autoTrends" class="result-card">
+            <h2>Auto Trend Analysis</h2>
+            <p style="color: var(--secondary-color);">Click 'Auto Trend Analyzer' to check for 3-day rise or fall streaks and view recent price action.</p>
+        </div>
+        <div id="highLowResult" class="result-card">
+            <h2>🔥 5-Day High/Low Performers</h2>
+            <p style="color: var(--secondary-color);">Click 'High/Low Performers (5-Day)' to see the best and worst movers over the last week.</p>
+        </div>
+        <div id="movingAverageResult" class="result-card">
+            <h2>📈 20-Day Moving Average (SMA)</h2>
+            <p style="color: var(--secondary-color);">Click '20-Day Moving Average' to analyze price comparison against the last 20 closing prices.</p>
+        </div>
+        <div id="momentumResult" class="result-card">
+            <h2>All 5-Day Momentum Changes</h2>
+            <p style="color: var(--secondary-color);">Click 'All Momentum Stocks' to see the 5-day percentage change for all tracked stocks, sorted by performance.</p>
+        </div>
+    </div>
+  </div>
+</body>
+  <script>
+    // Function to create a Chart.js instance (This is where the charts are drawn)
+function createChart(canvasId, dates, prices) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const isRising = prices[prices.length - 1] > prices[0];
+    const chartColor = isRising ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)'; // Success or Danger color
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                data: prices,
+                borderColor: chartColor,
+                backgroundColor: isRising ? 'rgba(40, 167, 69, 0.1)' : 'rgba(220, 53, 69, 0.1)',
+                borderWidth: 2,
+                pointRadius: 3,
+                tension: 0.4,
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+                x: { display: true, title: { display: false } },
+                y: { display: true, title: { display: false } }
+            },
+            elements: { line: { tension: 0.4 } }
+        }
+    });
+}
+
+async function loadAutoTrends() {
+  const output = document.getElementById("autoTrends");
+  output.innerHTML = "<h2>Auto Trend Analysis</h2><p>Loading Auto Trend Data...</p>";
+
+  try {
+    const res = await fetch("/api/auto_trends");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (data.error) {
+      output.innerHTML = `<h2>Auto Trend Analysis</h2><span style='color:var(--danger-color);'>${data.error}</span>`;
+      return;
+    }
+
+    // Generate HTML for all items, including the chart canvas
+    const htmlContent = data
+      .map((item, index) => {
+        const indicatorClass = item.streak_type === "rise" ? "rise" : "fall";
+        const canvasId = `trendChart-${index}`;
+
+        return `
+        <div class="stock-item">
+          <div class="stock-symbol">${item.symbol}</div>
+          <div class="trend-indicator ${indicatorClass}">
+            ${item.streak_type.toUpperCase()} Streak (${item.days} days)
+          </div>
+          <div class="info-date">
+            Last Close: ₹${item.last_close} (${item.as_of})
+          </div>
+        </div>
+        <div class="trend-detail-chart">
+            <canvas id="${canvasId}"></canvas>
+        </div>
+      `;
+      })
+      .join("");
+
+    output.innerHTML = `<h2>Auto Trend Analysis</h2>${htmlContent}`;
+
+    // Create charts after the HTML elements are in the DOM
+    data.forEach((item, index) => {
+        createChart(`trendChart-${index}`, item.dates, item.prices);
+    });
+
+  } catch (err) {
+    console.error("Error fetching auto trends:", err);
+    output.innerHTML = `<h2>Auto Trend Analysis</h2><span style='color:var(--danger-color);'>Failed: ${err.message}</span>`;
+  }
+}
+
+async function loadMomentum() {
+  const output = document.getElementById("momentumResult");
+  output.innerHTML = "<h2>All 5-Day Momentum Changes</h2><p>Loading momentum data...</p>";
+
+  try {
+    const res = await fetch("/api/momentum");
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Server error (${res.status}): ${errText}`);
+    }
+
+    const data = await res.json();
+    if (data.error) {
+      output.innerHTML = `<h2>All 5-Day Momentum Changes</h2><span style='color:var(--danger-color);'>${data.error}</span>`;
+      return;
+    }
+
+    data.sort((a, b) => b.change_pct - a.change_pct);
+
+    output.innerHTML = `<h2>All 5-Day Momentum Changes</h2>` + data
+      .map(
+        (item) => {
+            const changeClass = item.change_pct >= 0 ? "rise" : "fall";
+            const sign = item.change_pct > 0 ? "+" : "";
+
+            return `
+              <div class="stock-item">
+                <div class="stock-symbol">${item.symbol}</div>
+                <div class="momentum-value ${changeClass}">
+                  ${sign}${item.change_pct}% 
+                </div>
+                <div class="info-date">
+                  Close: ₹${item.last_close} (${item.as_of})
+                </div>
+              </div>
+            `;
+        }
+      )
+      .join("");
+  } catch (err) {
+    console.error("Error fetching momentum data:", err);
+    output.innerHTML = `<h2>All 5-Day Momentum Changes</h2><span style='color:var(--danger-color);'>Failed: ${err.message}</span>`;
+  }
+}
+
+async function loadHighLow() {
+  const output = document.getElementById("highLowResult");
+  output.innerHTML = "<h2>🔥 5-Day High/Low Performers</h2><p>Loading high/low performance data...</p>";
+
+  try {
+    const res = await fetch("/api/high_low_performers");
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Server error (${res.status}): ${errText}`);
+    }
+
+    const data = await res.json();
+    if (data.error) {
+      output.innerHTML = `<h2>5-Day High/Low Performers</h2><span style='color:var(--danger-color);'>${data.error}</span>`;
+      return;
+    }
+
+    const renderList = (list) => {
+        return list.map(
+            (item) => {
+                const changeClass = item.change_pct >= 0 ? "rise" : "fall";
+                const sign = item.change_pct > 0 ? "+" : "";
+
+                return `
+                    <div class="stock-item">
+                        <div class="stock-symbol">${item.symbol}</div>
+                        <div class="momentum-value ${changeClass}">
+                            ${sign}${item.change_pct}% 
+                        </div>
+                        <div class="info-date">
+                            Close: ₹${item.last_close} (${item.as_of})
+                        </div>
+                    </div>
+                `;
+            }
+        ).join("");
+    };
+
+    const highList = renderList(data.high);
+    const lowList = renderList(data.low);
+    const N = data.N || 3;
+
+    output.innerHTML = `
+        <h2>🔥 ${data.period} High/Low Performers (Top/Bottom ${N})</h2>
+        
+        <h3>🚀 Top High Performers</h3>
+        <div style="margin-bottom: 20px; border: 1px solid var(--success-color); padding: 10px; border-radius: 4px;">
+            ${highList.length ? highList : '<p style="color:var(--secondary-color);">No stocks found in this category.</p>'}
+        </div>
+
+        <h3>📉 Bottom Low Performers</h3>
+        <div style="border: 1px solid var(--danger-color); padding: 10px; border-radius: 4px;">
+            ${lowList.length ? lowList : '<p style="color:var(--secondary-color);">No stocks found in this category.</p>'}
+        </div>
+    `;
+
+  } catch (err) {
+    console.error("Error fetching high/low data:", err);
+    output.innerHTML = `<h2>5-Day High/Low Performers</h2><span style='color:var(--danger-color);'>Failed: ${err.message}</span>`;
+  }
+}
+
+// ----------------------------
+// Load Moving Average (20-Day SMA) - NOW CORRECTLY DEFINED
+// ----------------------------
+async function loadMovingAverage() {
+  const output = document.getElementById("movingAverageResult");
+  output.innerHTML = "<h2>📈 20-Day Moving Average (SMA)</h2><p>Loading 20-Day SMA data...</p>";
+
+  try {
+    const res = await fetch("/api/moving_average");
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Server error (${res.status}): ${errText}`);
+    }
+
+    const data = await res.json();
+    if (data.error) {
+      output.innerHTML = `<h2>20-Day Moving Average (SMA)</h2><span style='color:var(--danger-color);'>${data.error}</span>`;
+      return;
+    }
+
+    output.innerHTML = `<h2>📈 ${data[0].sma_period}-Day Moving Average (SMA)</h2>` + data
+      .map(
+        (item) => {
+            const statusClass = item.status === "Above SMA" ? "status-above" : "status-below";
+            const deviationClass = item.deviation_pct >= 0 ? "rise" : "fall";
+            const sign = item.deviation_pct > 0 ? "+" : "";
+
+            return `
+              <div class="stock-item">
+                <div class="stock-symbol">${item.symbol}</div>
+                <div class="${statusClass}">
+                  ${item.status}
+                </div>
+                <div class="momentum-value ${deviationClass}">
+                  ${sign}${item.deviation_pct}%
+                </div>
+                <div class="info-date">
+                  Close: ₹${item.last_close} | SMA: ₹${item.last_sma} (${item.as_of})
+                </div>
+              </div>
+            `;
+        }
+      )
+      .join("");
+
+  } catch (err) {
+    console.error("Error fetching MA data:", err);
+    output.innerHTML = `<h2>20-Day Moving Average (SMA)</h2><span style='color:var(--danger-color);'>Failed: ${err.message}</span>`;
+  }
+}
+  </script>
+</html>
