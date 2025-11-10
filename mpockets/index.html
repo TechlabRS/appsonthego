@@ -1,0 +1,3013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RaGhaS Money Tracker</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS for Modern, Sleek UI -->
+    <style>
+        :root {
+            /* Rich Color Palette */
+            --color-primary: #4A90E2; /* Vibrant Blue */
+            --color-primary-dark: #3A7BC8;
+            --color-secondary: #50E3C2; /* Teal/Mint */
+            --color-accent: #F5A623; /* Amber */
+            --color-success: #2ECC71; /* Green */
+            --color-danger: #E74C3C; /* Red */
+            --color-warning: #F39C12; /* Yellow */
+            --color-info: #3498DB; /* Light Blue */
+
+            /* UI Colors */
+            --color-bg-primary: #F7F9FC; /* Light Gray Background */
+            --color-bg-secondary: #FFFFFF; /* Card/Modal Background */
+            --color-text-primary: #2C3E50; /* Dark Blue/Slate */
+            --color-text-secondary: #8FA1B3; /* Muted Gray */
+            --color-border: #E6ECF3;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* --- Global & Typography --- */
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            overscroll-behavior-y: none; /* Prevents pull-to-refresh */
+        }
+
+        h1, h2, h3, h4, h5 {
+            font-weight: 600;
+        }
+
+        /* --- App Container & Layout --- */
+        #appContainer {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 600px; /* Compact, mobile-first max-width */
+            margin: 0 auto;
+            background-color: var(--color-bg-secondary);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Important for view container scrolling */
+        }
+
+        .app-header {
+            padding: 1rem 1.25rem;
+            background-color: var(--color-bg-secondary);
+            border-bottom: 1px solid var(--color-border);
+            z-index: 100;
+        }
+        .app-header.rtitle {
+            display: none; 
+        }
+        .app-header #appTitle {
+            font-size: 1.5rem;
+            margin: 0;
+            color: var(--color-primary);
+        }
+
+        /* --- View Container (Handles Scrolling) --- */
+        .view-container {
+            flex-grow: 1;
+            overflow-y: auto; 
+            padding: 1.25rem;
+            padding-bottom: 80px; 
+        }
+
+        .view {
+            display: none; 
+        }
+        .view.active {
+            display: block; 
+        }
+
+        /* --- Bottom Navigation --- */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 600px; 
+            margin: 0 auto;
+            height: 65px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: var(--color-bg-secondary);
+            border-top: 1px solid var(--color-border);
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.05);
+            z-index: 1000;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0.5rem;
+            width: 100%; 
+        }
+        .nav-item i {
+            font-size: 1.25rem;
+            margin-bottom: 4px;
+        }
+        .nav-item.active {
+            color: var(--color-primary);
+            font-weight: 500;
+        }
+        .nav-item:hover:not(.active) {
+            color: var(--color-primary-dark);
+        }
+
+        /* --- Floating Action Button (FAB) --- */
+        .fab {
+            position: absolute;
+            bottom: 85px; 
+            right: 25px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.75rem;
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 999;
+        }
+        .fab:hover {
+            transform: scale(1.05) rotate(15deg);
+            box-shadow: 0 8px 25px rgba(74, 144, 226, 0.6);
+        }
+
+        /* --- Modern Card Styling --- */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 1.25rem;
+            overflow: hidden; 
+        }
+        .card-header {
+            background-color: var(--color-bg-secondary);
+            border-bottom: 1px solid var(--color-border);
+            font-weight: 600;
+            color: var(--color-text-primary);
+            padding: 0.75rem 1.25rem;
+        }
+        .card-body {
+            padding: 1.25rem;
+        }
+        .list-group-item {
+            border-color: var(--color-border);
+        }
+
+        /* --- Specific Card Styles --- */
+        .total-balance-card {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            color: white;
+            text-align: center;
+        }
+        .total-balance-card h2 {
+            font-size: 1rem;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+        .balance-amount {
+            font-size: 2.25rem;
+            font-weight: 700;
+        }
+
+        /* Balance List Styling */
+        .account-balance-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--color-border);
+            align-items: center;
+        }
+        .account-balance-item:last-child {
+            border-bottom: none;
+        }
+        .account-name {
+            font-weight: 500;
+        }
+        .account-value {
+            font-weight: 700;
+        }
+        .hidden-balance i {
+            font-size: 1rem;
+            color: var(--color-text-secondary);
+        }
+        
+        /* --- Modern Form Controls --- */
+        .form-control, .custom-select {
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            transition: all 0.2s ease;
+        }
+        .form-control:focus, .custom-select:focus {
+            background-color: var(--color-bg-secondary);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+            outline: none;
+        }
+        .form-control::placeholder {
+            color: var(--color-text-secondary);
+            opacity: 0.8;
+        }
+        .form-group label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* --- Modern Button Styling --- */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+            border-width: 2px;
+        }
+        .btn-sm {
+            border-radius: 6px;
+            padding: 0.25rem 0.75rem;
+        }
+        .btn-block {
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        .btn-primary {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+        .btn-primary:hover {
+            background-color: var(--color-primary-dark);
+            border-color: var(--color-primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-outline-secondary {
+            color: var(--color-text-secondary);
+            border-color: var(--color-border);
+        }
+        .btn-outline-secondary:hover {
+            color: var(--color-text-primary);
+            background-color: var(--color-bg-primary);
+            border-color: var(--color-border);
+        }
+        .btn-success { background-color: var(--color-success); border-color: var(--color-success); }
+        .btn-danger { background-color: var(--color-danger); border-color: var(--color-danger); }
+        .btn-warning { background-color: var(--color-warning); border-color: var(--color-warning); }
+        .btn-info { background-color: var(--color-info); border-color: var(--color-info); }
+        
+        .btn-outline-warning { color: var(--color-warning); border-color: var(--color-warning); }
+        .btn-outline-warning:hover { background-color: var(--color-warning); color: white; }
+        .btn-outline-info { color: var(--color-info); border-color: var(--color-info); }
+        .btn-outline-info:hover { background-color: var(--color-info); color: white; }
+        .btn-outline-success { color: var(--color-success); border-color: var(--color-success); }
+        .btn-outline-success:hover { background-color: var(--color-success); color: white; }
+
+        /* --- Modern Modal Styling --- */
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        .modal-header {
+            border-bottom: 1px solid var(--color-border);
+        }
+        .modal-header .close {
+            opacity: 0.8;
+            transition: all 0.2s ease;
+        }
+        .modal-header .close:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        /* --- Category Chip Selection --- */
+        .category-chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        .category-chip {
+            cursor: pointer;
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+            border-radius: 16px;
+            font-size: 0.85rem;
+            padding: 0.25rem 0.75rem;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .category-chip.active {
+            background-color: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        /* --- Settings Category Management Chips --- */
+        .mgmt-category-chip {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+            border-radius: 16px;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.8rem;
+            margin: 0.3rem 0.3rem 0 0;
+            transition: all 0.2s ease;
+        }
+        .remove-chip-btn {
+            background: none;
+            border: none;
+            color: var(--color-danger);
+            font-weight: 700;
+            margin-left: 5px;
+            padding: 0;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        
+        /* --- Transaction List Styling --- */
+        .transaction-list .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            border-left: 4px solid transparent;
+            border-radius: 0;
+        }
+        .transaction-list .list-group-item.transaction-income {
+            border-left-color: var(--color-success);
+        }
+        .transaction-list .list-group-item.transaction-spend {
+            border-left-color: var(--color-danger);
+        }
+        .transaction-list .list-group-item.transaction-transfer {
+            border-left-color: var(--color-info);
+        }
+        .transaction-list .list-group-item.transaction-loan {
+            border-left-color: var(--color-warning);
+        }
+        .list-item-icon {
+            font-size: 1.2rem;
+            margin-right: 0.75rem;
+        }
+        .list-item-details {
+            flex-grow: 1;
+        }
+        .list-item-details .sub-info {
+            font-size: 0.8rem;
+            color: var(--color-text-secondary);
+        }
+        .list-item-details .account-info, .list-item-details .loan-details-info {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .list-item-amount-actions {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .list-item-amount-actions .amount {
+            font-weight: 600;
+            display: block;
+        }
+        .list-item-amount-actions .amount.lent {
+            color: var(--color-warning);
+        }
+        .item-actions {
+            margin-top: 5px;
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
+        }
+        .item-actions .action-btn {
+            padding: 0.1rem 0.3rem;
+            font-size: 0.8rem;
+        }
+        .status-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.1em 0.4em;
+            border-radius: 4px;
+            color: white;
+            margin-left: 5px;
+        }
+        .status-loan-outstanding { background-color: var(--color-warning); }
+        .status-loan-returned { background-color: var(--color-success); }
+        .status-active, .status-secret { background-color: var(--color-success); }
+        .status-redeemed { background-color: var(--color-danger); }
+        .status-inactive { background-color: var(--color-text-secondary); }
+        
+        .filtered-total-item {
+            font-size: 0.8rem;
+            padding: 0 0.5rem;
+            display: inline-block;
+        }
+        .filtered-total-net {
+            font-weight: bold;
+        }
+
+        /* Investment List Styling */
+        .investment-item {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: relative;
+            padding-right: 4rem; /* Space for delete button */
+        }
+        .investment-item .main-info {
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            margin-bottom: 0.25rem;
+        }
+        .investment-item .sub-info, .investment-item .investment-details {
+            font-size: 0.8rem;
+            color: var(--color-text-secondary);
+            width: 100%;
+        }
+        .investment-item .list-item-amount {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            line-height: 1.2;
+            text-align: right;
+            font-size: 0.9rem;
+        }
+        .investment-item .current-value-label {
+            display: block;
+        }
+        .investment-item .investment-details.profit {
+            color: var(--color-success);
+            font-weight: 600;
+        }
+        .investment-item .investment-details.loss {
+            color: var(--color-danger);
+            font-weight: 600;
+        }
+        .investment-item-actions {
+            width: 100%;
+            display: flex;
+            gap: 5px;
+            margin-top: 0.5rem;
+            justify-content: flex-end;
+        }
+        .investment-item.redeemed-investment {
+            opacity: 0.7;
+            background-color: #fffaf0;
+        }
+
+        /* Settings Account List */
+        .account-list-item {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .account-list-item .account-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .account-list-item .badge {
+            margin-left: 5px;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <!-- Loading Screen (Will be hidden on initialization) -->
+    <div id="loginScreen" style="display: flex;">
+        <div class="text-center">
+            <div class="spinner-border text-light mb-3" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <h4>Welcome to RaGhaS Money Tracker</h4>
+            <p class="small">Loading application...</p>
+        </div>
+    </div>
+
+
+    <!-- Main application container -->
+    <div id="appContainer" style="display: none;">
+        
+        <header class="app-header rtitle"><h1 id="appname">RaGhaS Money Expense Tracker/Tool</h1></header>
+        <header class="app-header"><h1 id="appTitle">Dashboard</h1></header>
+        
+        <div class="view-container">
+            
+            <!-- Home View -->
+            <div class="view active" id="homeView">
+                <div class="card total-balance-card">
+                    <div class="card-body">
+                        <h2>Total Balance</h2>
+                        <div class="balance-amount" id="totalBalance">₹0.00</div>
+                    </div>
+                </div>
+                <div class="balance-visibility-toggle mb-3 text-center">
+                    <button class="btn btn-outline-secondary btn-sm" id="toggleBalanceVisibility">
+                        <i class="fas fa-eye-slash"></i> Show Amounts
+                    </button>
+                </div>
+                <div class="card account-balances-card">
+                    <div class="card-header">
+                        Account Balances
+                        <button class="btn btn-sm btn-outline-secondary float-right" id="toggleShowSecretAccountsHome" title="Show Secret Accounts Visibility">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    </div>
+                    <div class="card-body" id="accountBalancesList">
+                        <p class="text-center text-muted">No accounts added yet.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Recent Transactions</div>
+                    <ul class="list-group list-group-flush" id="recentTransactionsListHome">
+                        <li class="list-group-item text-center text-muted">No recent transactions.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">Investment Portfolio Overview</div>
+                    <div class="card-body" id="investmentSummaryHome">
+                        <p class="text-center text-muted">No active investments yet.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Transactions View -->
+            <div class="view" id="transactionsView">
+                <div class="card">
+                    <div class="card-header">Transaction History</div>
+                    <div class="card-body">
+                        <div class="new-filter-controls">
+                            <div class="search-filter-group">
+                                <input id="txSearchInput" type="text" placeholder="Search description, category..." class="form-control" />
+                                <input id="txAmountFilter" type="number" placeholder="Amount (₹)" class="form-control" step="0.01" />
+                            </div>
+                            <div class="select-filters-group">
+                                <select id="txMonthFilter" class="custom-select"><option value="">All Months</option></select>
+                                <select id="txYearFilter" class="custom-select"><option value="">All Years</option></select>
+                                <select id="txTypeFilter" class="custom-select">
+                                    <option value="">All Types</option>
+                                    <option value="income">Income</option>
+                                    <option value="spend">Spend</option>
+                                    <option value="transfer">Transfer</option>
+                                    <option value="loan">Loan/Receivable</option>
+                                    <option value="loan_outstanding">Loan (Outstanding)</option>
+                                    <option value="loan_returned">Loan (Returned)</option>
+                                    <option value="investment_purchase">Investment Purchase</option>
+                                    <option value="investment_sale">Investment Sale</option>
+                                </select>
+                                <button class="btn btn-sm btn-secondary" id="txClearFiltersBtn"><i class="fas fa-times"></i> Clear</button>
+                            </div>
+                        </div>
+                        <div id="filteredTotalsContainer" style="display: none;" class="mb-3 text-center d-flex justify-content-center flex-wrap" style="gap: 1rem;">
+                            <!-- Filtered totals will be shown here by JS -->
+                        </div>
+                        <ul class="list-group list-group-flush transaction-list" id="transactionList">
+                            <li class="list-group-item text-center text-muted" id="noTransactionsMessage">No transactions yet.</li>
+                            <!-- Transactions will be populated here by JS -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts View -->
+            <div class="view" id="chartsView">
+                <div class="card">
+                    <div class="card-header">Income vs. Spend Overview</div>
+                    <div class="card-body chart-container">
+                        <canvas id="incomeSpendChart"></canvas>
+                        <p id="noIncomeSpendData" class="text-center text-muted" style="display:block;">Not enough data.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Monthly Spend Trend</div>
+                    <div class="card-body chart-container">
+                        <canvas id="monthlySpendChartCanvas"></canvas>
+                        <p id="noMonthlySpendData" class="text-center text-muted" style="display:block;">Not enough spend data.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Investment Portfolio Distribution</div>
+                    <div class="card-body chart-container">
+                        <canvas id="investmentPortfolioChart"></canvas>
+                        <p id="noInvestmentPortfolioData" class="text-center text-muted" style="display:block;">No active investments.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Spend Category Breakdown</div>
+                    <div class="card-body chart-container">
+                        <canvas id="spendCategoryChart"></canvas>
+                        <p id="noSpendDataForCategoryChart" class="text-center text-muted" style="display:block;">Not enough spend data.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Investments View -->
+            <div class="view" id="investmentsView">
+                <div class="card">
+                    <div class="card-header">Manage Investments</div>
+                    <div class="card-body investment-actions d-flex flex-wrap justify-content-center" style="gap: 0.5rem;">
+                        <button class="btn btn-outline-warning btn-sm open-investment-modal" data-type="stock" data-toggle="modal" data-target="#investmentModal"><i class="fas fa-chart-line"></i> Add Stock</button>
+                        <button class="btn btn-outline-info btn-sm open-investment-modal" data-type="mf" data-toggle="modal" data-target="#investmentModal"><i class="fas fa-umbrella-beach"></i> Add MF</button>
+                        <button class="btn btn-outline-success btn-sm open-investment-modal" data-type="fd" data-toggle="modal" data-target="#investmentModal"><i class="fas fa-piggy-bank"></i> Add FD</button>
+                        <button class="btn btn-outline-primary btn-sm open-investment-modal" data-type="postal" data-toggle="modal" data-target="#investmentModal"><i class="fas fa-envelope"></i> Add Postal</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">My Investments Portfolio</div>
+                    <ul class="list-group list-group-flush investment-list" id="investmentList">
+                        <li class="list-group-item text-center text-muted" id="noInvestmentsMessage">No investments yet.</li>
+                        <!-- Investments will be populated here by JS -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div class="view" id="settingsView">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        Manage Accounts
+                        <button id="toggleAccountManagementBtn" class="btn btn-sm btn-outline-secondary" title="Hide Account Section">
+                            <i class="fas fa-eye-slash"></i> Hide
+                        </button>
+                    </div>
+                    <div id="accountManagementContent" class="card-body">
+                        <form id="addAccountForm" class="mb-3">
+                            <div class="form-row" style="gap: 0.5rem 0;">
+                                <div class="col-sm-5 mb-2 mb-sm-0">
+                                    <input type="text" class="form-control form-control-sm" id="newAccountName" placeholder="Account Name" required>
+                                </div>
+                                <div class="col-sm-4 mb-2 mb-sm-0">
+                                    <input type="text" class="form-control form-control-sm" id="newAccountId" placeholder="Short ID (e.g., icici_sav)" required>
+                                </div>
+                                <div class="col-sm-3">
+                                    <button type="submit" class="btn btn-primary btn-sm btn-block">Add</button>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="accountsListContainer">
+                            <p class="text-muted text-center" id="noAccountsMessageSettings">No accounts added yet.</p>
+                            <!-- Accounts list will be populated here by JS -->
+                        </div>
+                        <div class="form-group mt-3">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="showSecretAccountsToggleSettings">
+                                <label class="custom-control-label" for="showSecretAccountsToggleSettings">Show Secret Accounts</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        Manage Categories
+                        <button id="toggleCategoryManagementBtn" class="btn btn-sm btn-outline-secondary" title="Hide Category Section">
+                            <i class="fas fa-eye-slash"></i> Hide
+                        </button>
+                    </div>
+                    <div id="categoryManagementContent" class="card-body">
+                        <h5>Spend Categories</h5>
+                        <form id="addSpendCategoryForm" class="form-inline mb-3">
+                            <input type="text" class="form-control form-control-sm mr-2 flex-grow-1" id="newSpendCategoryName" placeholder="New Spend Category" required>
+                            <button type="submit" class="btn btn-success btn-sm">Add</button>
+                        </form>
+                        <div id="spendCategoriesListContainer" class="category-management-chips-container d-flex flex-wrap" style="gap: 5px;">
+                            <!-- Spend categories will be populated here by JS -->
+                        </div>
+                        <hr>
+                        <h5>Income Categories</h5>
+                        <form id="addIncomeCategoryForm" class="form-inline mb-3">
+                            <input type="text" class="form-control form-control-sm mr-2 flex-grow-1" id="newIncomeCategoryName" placeholder="New Income Category" required>
+                            <button type="submit" class="btn btn-success btn-sm">Add</button>
+                        </form>
+                        <div id="incomeCategoriesListContainer" class="category-management-chips-container d-flex flex-wrap" style="gap: 5px;">
+                            <!-- Income categories will be populated here by JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">Data Management</div>
+                    <div class="card-body settings-actions" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <button class="btn btn-info btn-block" id="exportDataBtn"><i class="fas fa-file-export"></i> Export Data</button>
+                        <button class="btn btn-warning btn-block" id="importDataTriggerBtn"><i class="fas fa-file-import"></i> Import Data</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                        <button class="btn btn-danger btn-block mt-3" id="resetDataBtn"><i class="fas fa-trash-restore"></i> Reset All Data</button>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">App Info</div>
+                    <div class="card-body">
+                        <p class="text-muted text-center" id="appVersionInfo">RaGhaS Money Tracker - AET v3.10</p>
+                        <p class="text-muted text-center">&copy; 2024-2025.</p>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End .view-container -->
+
+        <!-- Floating Action Button -->
+        <div class="fab" id="openTransactionModalFab" data-toggle="modal" data-target="#transactionModal">
+            <i class="fas fa-plus"></i>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-view="homeView" data-title="Dashboard"><i class="fas fa-home"></i> Home</div>
+            <div class="nav-item" data-view="transactionsView" data-title="Transactions"><i class="fas fa-list-alt"></i> Transactions</div>
+            <div class="nav-item" data-view="chartsView" data-title="Charts"><i class="fas fa-chart-pie"></i> Charts</div>
+            <div class="nav-item" data-view="investmentsView" data-title="Investments"><i class="fas fa-piggy-bank"></i> Investments</div>
+            <div class="nav-item" data-view="settingsView" data-title="Settings"><i class="fas fa-cog"></i> Settings</div>
+        </nav>
+
+    </div> <!-- End #appContainer -->
+
+    <!-- =================================================================== -->
+    <!--                        MODALS (Dialogs)                             -->
+    <!-- =================================================================== -->
+
+    <!-- Transaction Modal (Add/Edit) -->
+    <div class="modal fade" id="transactionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transactionModalTitle">Add New Transaction</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="transactionForm">
+                        <input type="hidden" id="editingTransactionId">
+                        <div class="form-group">
+                            <label for="transactionType">Type</label>
+                            <select class="custom-select" id="transactionType" required>
+                                <option value="income">Income</option>
+                                <option value="spend">Spend</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="loan">Loan/Receivable</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group form-group-spend-category-chips" style="display:none;">
+                            <label>Spend Category</label>
+                            <div class="category-chips-container" id="spendCategoryChipsContainer">
+                                <!-- Spend category chips populated by JS -->
+                            </div>
+                        </div>
+                        <div class="form-group form-group-income-category-chips" style="display:none;">
+                            <label>Income Category</label>
+                            <div class="category-chips-container" id="incomeCategoryChipsContainer">
+                                <!-- Income category chips populated by JS -->
+                            </div>
+                        </div>
+                        
+                        <div class="form-group form-group-account">
+                            <label for="transactionAccount" id="transactionAccountLabel">Account</label>
+                            <select class="custom-select" id="transactionAccount" required></select>
+                        </div>
+                        
+                        <div class="form-group form-group-transfer" style="display:none;">
+                            <label for="transferFromAccount">From Account</label>
+                            <select class="custom-select" id="transferFromAccount"></select>
+                        </div>
+                        <div class="form-group form-group-transfer" style="display:none;">
+                            <label for="transferToAccount">To Account</label>
+                            <select class="custom-select" id="transferToAccount"></select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="transactionDescription" id="transactionDescriptionLabel">Description</label>
+                            <input type="text" class="form-control" id="transactionDescription" placeholder="e.g., Salary, Coffee, Loan to John">
+                        </div>
+                        <div class="form-group">
+                            <label for="transactionAmount" id="transactionAmountLabel">Amount (₹)</label>
+                            <input type="number" class="form-control" id="transactionAmount" placeholder="0.00" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="transactionDate" id="transactionDateLabel">Date</label>
+                            <input type="date" class="form-control" id="transactionDate" required>
+                        </div>
+                        
+                        <input type="hidden" id="selectedCategoryInput">
+                        <button type="submit" class="btn btn-primary btn-block" id="transactionSubmitBtn">Add Transaction</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Record Loan Return Modal -->
+    <div class="modal fade" id="recordLoanReturnModal" tabindex="-1" aria-labelledby="recordLoanReturnModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="recordLoanReturnModalLabel">Record Loan Return/Refund</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <form id="recordLoanReturnForm">
+                         <input type="hidden" id="originalLoanIdToReturn">
+                        <p>Recording return for loan: "<strong id="loanReturnDescription"></strong>"</p>
+                        <p>Original amount lent: <strong id="originalLoanAmountDisplay"></strong></p>
+                        <div class="form-group">
+                             <label for="loanReturnDateInput">Return Date</label>
+                            <input type="date" class="form-control" id="loanReturnDateInput" required>
+                        </div>
+                        <div class="form-group">
+                             <label for="loanReturnAmountInput">Amount Returned (₹)</label>
+                            <input type="number" class="form-control" id="loanReturnAmountInput" step="0.01" min="0.01" required>
+                        </div>
+                         <div class="form-group">
+                            <label for="loanReturnAccountSelect">Deposit to Account</label>
+                            <select class="custom-select" id="loanReturnAccountSelect" required></select>
+                        </div>
+                         <button type="submit" class="btn btn-success btn-block">Record Return</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Investment Modal (Add/Edit) -->
+    <div class="modal fade" id="investmentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Investment</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="investmentForm">
+                        <input type="hidden" id="investmentId">
+                        <div class="form-group">
+                            <label for="investmentType">Type</label>
+                            <select class="custom-select" id="investmentType" required>
+                                <option value="stock">Stock</option>
+                                <option value="mf">Mutual Fund</option>
+                                <option value="fd">Fixed Deposit</option>
+                                <option value="postal">Postal</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label for="investmentDescription">Description</label><input type="text" class="form-control" id="investmentDescription" required></div>
+                        <div class="form-group"><label for="investmentDate">Date</label><input type="date" class="form-control" id="investmentDate" required></div>
+                        <div class="form-group"><label for="investmentAmount">Amount Invested (₹)</label><input type="number" class="form-control" id="investmentAmount" step="0.01" min="0.01" required></div>
+                        <div class="form-group"><label for="investmentSourceAccount">Source Account</label><select class="custom-select" id="investmentSourceAccount" required></select></div>
+                        <div class="form-group"><label for="investmentMaturity">Maturity Info (Optional)</label><input type="text" class="form-control" id="investmentMaturity"></div>
+                        <button type="submit" class="btn btn-success btn-block">Save Investment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Investment Value Modal -->
+    <div class="modal fade" id="updateInvestmentValueModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Investment Value</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateInvestmentValueForm">
+                        <input type="hidden" id="updateValueInvestmentId">
+                        <p>Investment: <strong id="updateValueInvestmentName"></strong></p>
+                        <div class="form-group">
+                            <label for="investmentCurrentValue">New Current Value (₹)</label>
+                            <input type="number" class="form-control" id="investmentCurrentValue" step="0.01" min="0" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Update Value</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Redeem Investment Modal -->
+    <div class="modal fade" id="redeemInvestmentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Redeem Investment</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="redeemInvestmentForm">
+                        <input type="hidden" id="redeemInvestmentId">
+                        <p>Investment: <strong id="redeemInvestmentName"></strong></p>
+                        <p>Initial Cost: <strong id="redeemInvestmentInitialCost"></strong></p>
+                        <div class="form-group">
+                            <label for="investmentRedeemedAmount">Amount Received from Redemption (₹)</label>
+                            <input type="number" class="form-control" id="investmentRedeemedAmount" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="investmentRedemptionDate">Redemption Date</label>
+                            <input type="date" class="form-control" id="investmentRedemptionDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="redemptionDepositAccount">Deposit to Account</label>
+                            <select class="custom-select" id="redemptionDepositAccount" required></select>
+                        </div>
+                        <div id="redeemProfitLossInfo" class="profit-loss-info text-center mb-2">
+                            <!-- Profit/loss info shown here by JS -->
+                        </div>
+                        <button type="submit" class="btn btn-success btn-block">Confirm Redemption</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- JavaScript Dependencies -->
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <!-- Popper.js (Required for Bootstrap tooltips and popovers) -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Chart.js (for the charts view) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Application Logic -->
+    <script>
+        // --- GLOBAL/UTILITY VARIABLES (Must be defined first) ---
+        const APP_VERSION = "AET v3.10";
+        const LOCAL_STORAGE_ACCOUNTS_KEY = `accounts_adv_${APP_VERSION}_v1`;
+        const LOCAL_STORAGE_TRANSACTIONS_KEY = `transactions_adv_${APP_VERSION}_acct_mgmt_v1_loan`;
+        const LOCAL_STORAGE_INVESTMENTS_KEY = `investments_adv_${APP_VERSION}_acct_mgmt_v1_loan`;
+        const LOCAL_STORAGE_SPEND_CATEGORIES_KEY = `spend_categories_adv_${APP_VERSION}_v1`;
+        const LOCAL_STORAGE_INCOME_CATEGORIES_KEY = `income_categories_adv_${APP_VERSION}_v1`;
+        const LOCAL_STORAGE_CATEGORY_MGMT_VISIBLE_KEY = `category_mgmt_visible_${APP_VERSION}_v1`;
+        const LOCAL_STORAGE_ACCOUNT_MGMT_VISIBLE_KEY = `account_mgmt_visible_${APP_VERSION}_v1`; 
+
+        const isAuthenticated = true;
+        
+        let accountManagementVisible = true; 
+        let categoryManagementVisible = true; 
+        
+        let accounts = [];
+        let showSecretAccounts = false;
+        let spendCategories = [];
+        let incomeCategories = [];
+        const investmentRelatedCategories = ['Investment Expense', 'Investment Income'];
+        let balancesVisible = false;
+        let transactions = [];
+        let investments = [];
+        const investmentTypeNames = { stock: 'Stock', mf: 'Mutual Fund', fd: 'Fixed Deposit', postal: 'Postal' };
+        let spendCategoryChartInstance = null;
+        let incomeSpendChartInstance = null;
+        let investmentPortfolioChartInstance = null;
+        let monthlySpendChartInstance = null;
+
+        // --- DOM Elements (Defined outside initApp for global access) ---
+        const appContainerEl = document.getElementById('appContainer');
+        const appTitleEl = document.getElementById('appTitle');
+        const views = document.querySelectorAll('.view');
+        const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+        const recentTransactionsListHomeEl = document.getElementById('recentTransactionsListHome');
+        const investmentSummaryHomeEl = document.getElementById('investmentSummaryHome');
+        const spendCategoryChartCanvas = document.getElementById('spendCategoryChart')?.getContext('2d');
+        const noSpendDataForCategoryChartEl = document.getElementById('noSpendDataForCategoryChart');
+        const incomeSpendChartCanvas = document.getElementById('incomeSpendChart')?.getContext('2d');
+        const noIncomeSpendDataEl = document.getElementById('noIncomeSpendData');
+        const investmentPortfolioChartCanvas = document.getElementById('investmentPortfolioChart')?.getContext('2d');
+        const noInvestmentPortfolioDataEl = document.getElementById('noInvestmentPortfolioData');
+        const exportDataBtn = document.getElementById('exportDataBtn');
+        const importFileEl = document.getElementById('importFile');
+        const importDataTriggerBtn = document.getElementById('importDataTriggerBtn');
+        const resetDataBtn = document.getElementById('resetDataBtn');
+        const transactionForm = document.getElementById('transactionForm');
+        const transactionListEl = document.getElementById('transactionList');
+        const totalBalanceEl = document.getElementById('totalBalance');
+        const transactionDateEl = document.getElementById('transactionDate');
+        const noTransactionsMessageEl = document.getElementById('noTransactionsMessage');
+        const transactionTypeEl = document.getElementById('transactionType');
+        const transactionAccountLabelEl = document.getElementById('transactionAccountLabel');
+        const transactionAmountLabelEl = document.getElementById('transactionAmountLabel');
+        const accountGroupEl = document.querySelector('#transactionModal .form-group-account');
+        const transferGroupEls = document.querySelectorAll('#transactionModal .form-group-transfer');
+        const spendCategoryChipsGroupEl = document.querySelector('#transactionModal .form-group-spend-category-chips');
+        const spendCategoryChipsContainerEl = document.getElementById('spendCategoryChipsContainer');
+        const incomeCategoryChipsGroupEl = document.querySelector('#transactionModal .form-group-income-category-chips');
+        const incomeCategoryChipsContainerEl = document.getElementById('incomeCategoryChipsContainer');
+        const transactionDescriptionLabelEl = document.getElementById('transactionDescriptionLabel');
+        const selectedCategoryInputEl = document.getElementById('selectedCategoryInput');
+        const accountBalancesListEl = document.getElementById('accountBalancesList');
+        const toggleBalanceVisibilityBtn = document.getElementById('toggleBalanceVisibility');
+        const investmentForm = document.getElementById('investmentForm');
+        const investmentListEl = document.getElementById('investmentList');
+        const noInvestmentsMessageEl = document.getElementById('noInvestmentsMessage');
+        const investmentModalJQ = $('#investmentModal');
+        const transactionModalJQ = $('#transactionModal');
+        const investmentTypeSelect = document.getElementById('investmentType');
+        const investmentDateEl = document.getElementById('investmentDate');
+        const investmentSourceAccountEl = document.getElementById('investmentSourceAccount');
+        const txSearchInputEl = document.getElementById('txSearchInput');
+        const txAmountFilterEl = document.getElementById('txAmountFilter');
+        const txMonthFilterEl = document.getElementById('txMonthFilter');
+        const txYearFilterEl = document.getElementById('txYearFilter');
+        const txTypeFilterEl = document.getElementById('txTypeFilter');
+        const txClearFiltersBtnEl = document.getElementById('txClearFiltersBtn');
+        const filteredTotalsContainerEl = document.getElementById('filteredTotalsContainer');
+        const fabOpenTransactionModal = document.getElementById('openTransactionModalFab');
+        let lastFocusedElementBeforeModal;
+        const transactionModalTitleEl = document.getElementById('transactionModalTitle');
+        const transactionSubmitBtnEl = document.getElementById('transactionSubmitBtn');
+        const editingTransactionIdEl = document.getElementById('editingTransactionId');
+        const appVersionInfoEl = document.getElementById('appVersionInfo');
+        const updateInvestmentValueForm = document.getElementById('updateInvestmentValueForm');
+        const updateValueInvestmentIdEl = document.getElementById('updateValueInvestmentId');
+        const updateValueInvestmentNameEl = document.getElementById('updateValueInvestmentName');
+        const investmentCurrentValueEl = document.getElementById('investmentCurrentValue');
+        const redeemInvestmentForm = document.getElementById('redeemInvestmentForm');
+        const redeemInvestmentIdEl = document.getElementById('redeemInvestmentId');
+        const redeemInvestmentNameEl = document.getElementById('redeemInvestmentName');
+        const redeemInvestmentInitialCostEl = document.getElementById('redeemInvestmentInitialCost');
+        const investmentRedeemedAmountEl = document.getElementById('investmentRedeemedAmount');
+        const investmentRedemptionDateEl = document.getElementById('investmentRedemptionDate');
+        const redemptionDepositAccountEl = document.getElementById('redemptionDepositAccount');
+        const redeemProfitLossInfoEl = document.getElementById('redeemProfitLossInfo');
+        const recordLoanReturnFormEl = document.getElementById('recordLoanReturnForm');
+        const originalLoanIdToReturnEl = document.getElementById('originalLoanIdToReturn');
+        const loanReturnDescriptionEl = document.getElementById('loanReturnDescription');
+        const originalLoanAmountDisplayEl = document.getElementById('originalLoanAmountDisplay');
+        const loanReturnDateInputEl = document.getElementById('loanReturnDateInput');
+        const loanReturnAmountInputEl = document.getElementById('loanReturnAmountInput');
+        const loanReturnAccountSelectEl = document.getElementById('loanReturnAccountSelect');
+        const addAccountFormEl = document.getElementById('addAccountForm');
+        const newAccountNameEl = document.getElementById('newAccountName');
+        const newAccountIdEl = document.getElementById('newAccountId');
+        const accountsListContainerEl = document.getElementById('accountsListContainer');
+        const noAccountsMessageSettingsEl = document.getElementById('noAccountsMessageSettings');
+        const showSecretAccountsToggleSettingsEl = document.getElementById('showSecretAccountsToggleSettings');
+        const toggleShowSecretAccountsHomeBtn = document.getElementById('toggleShowSecretAccountsHome');
+        const addSpendCategoryFormEl = document.getElementById('addSpendCategoryForm');
+        const newSpendCategoryNameEl = document.getElementById('newSpendCategoryName');
+        const spendCategoriesListContainerEl = document.getElementById('spendCategoriesListContainer');
+        const addIncomeCategoryFormEl = document.getElementById('addIncomeCategoryForm');
+        const newIncomeCategoryNameEl = document.getElementById('newIncomeCategoryName');
+        const incomeCategoriesListContainerEl = document.getElementById('incomeCategoriesListContainer');
+        const toggleCategoryManagementBtn = document.getElementById('toggleCategoryManagementBtn');
+        const categoryManagementContentEl = document.getElementById('categoryManagementContent');
+        const toggleAccountManagementBtn = document.getElementById('toggleAccountManagementBtn');
+        const accountManagementContentEl = document.getElementById('accountManagementContent');
+        const loginScreenEl = document.getElementById('loginScreen');
+
+
+        // --- Utility Functions ---
+        function saveTransactions() { if(isAuthenticated) localStorage.setItem(LOCAL_STORAGE_TRANSACTIONS_KEY, JSON.stringify(transactions));}
+        function saveInvestments() { if(isAuthenticated) localStorage.setItem(LOCAL_STORAGE_INVESTMENTS_KEY, JSON.stringify(investments));}
+        function saveAccounts() { if(isAuthenticated) localStorage.setItem(LOCAL_STORAGE_ACCOUNTS_KEY, JSON.stringify(accounts)); }
+        function saveSpendCategories() { if (isAuthenticated) localStorage.setItem(LOCAL_STORAGE_SPEND_CATEGORIES_KEY, JSON.stringify(spendCategories)); }
+        function saveIncomeCategories() { if (isAuthenticated) localStorage.setItem(LOCAL_STORAGE_INCOME_CATEGORIES_KEY, JSON.stringify(incomeCategories)); }
+
+        function formatDate(dateString) { 
+            if (!dateString) return '';
+            return new Date(dateString).toISOString().slice(0, 10);
+        }
+        function displayDate(dateString) { 
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+        function formatCurrency(amount) { 
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
+        }
+        function setDefaultDate(dateElement) { 
+            if(dateElement && !dateElement.value) dateElement.valueAsDate = new Date();
+        }
+        function getAccountNameById(accountId) {
+            const account = accounts.find(acc => acc.id === accountId);
+            return account ? account.name : `[Unknown Account: ${accountId}]`;
+        }
+        function getVisibleAccounts() {
+            return accounts.filter(acc => acc.status === 'active' || (acc.status === 'secret' && showSecretAccounts));
+        }
+
+        // --- Core Load Functions ---
+        function loadCategories() {
+            const storedSpendCategories = localStorage.getItem(LOCAL_STORAGE_SPEND_CATEGORIES_KEY);
+            if (storedSpendCategories) {
+                spendCategories = JSON.parse(storedSpendCategories);
+            } else {
+                spendCategories = [ 'Bills & Recharges', 'CC Bills', 'Cloths', 'Education', 'Entertainment', 'EMI', 'Foods & Drinks' ,'Fuel', 'Gifts', 'Groceries', 'Homes & Utilities', 'Health & Medicine', 'Insurance', 'Investment Expense', 'Labs & Tests', 'Maintenance', 'Travel', 'Shopping', 'Parties', 'Vacation', 'Personal Care', 'Rent', 'Subscriptions', 'Others' ];
+                saveSpendCategories();
+            }
+
+            const storedIncomeCategories = localStorage.getItem(LOCAL_STORAGE_INCOME_CATEGORIES_KEY);
+            if (storedIncomeCategories) {
+                incomeCategories = JSON.parse(storedIncomeCategories);
+            } else {
+                incomeCategories = ["Salary", "In-hand Cash", "Savings", "Earnings", "Investment Income", "Gifts Received", "Refunds", "Other Income"];
+                saveIncomeCategories();
+            }
+        }
+        function loadAccounts() {
+            const storedAccounts = localStorage.getItem(LOCAL_STORAGE_ACCOUNTS_KEY);
+            if (storedAccounts) {
+                accounts = JSON.parse(storedAccounts);
+            } else {
+                accounts = [
+                    { id: 'cash', name: 'Cash', status: 'active' },
+                    { id: 'sbi', name: 'SBI', status: 'active' }
+                ];
+                saveAccounts();
+            }
+            showSecretAccounts = JSON.parse(localStorage.getItem('showSecretAccounts')) || false;
+            if (showSecretAccountsToggleSettingsEl) showSecretAccountsToggleSettingsEl.checked = showSecretAccounts;
+        }
+
+        // --- Dropdown/Chip Population ---
+        function populateAccountDropdown(selectElement, selectedValue = "") {
+            if (!selectElement) return;
+            const visibleAccounts = getVisibleAccounts();
+            const isTransferInput = ['transferFromAccount', 'transferToAccount'].includes(selectElement.id);
+            if (isTransferInput && !transactionTypeEl.value === 'transfer') {
+                selectElement.required = false; 
+            } else {
+                selectElement.required = true;
+            }
+
+            selectElement.innerHTML = '<option value="">-- Select Account --</option>';
+            visibleAccounts.forEach(acc => {
+                const option = document.createElement('option');
+                option.value = acc.id; 
+                option.textContent = `${acc.name} (${acc.id})`;
+                if (acc.id === selectedValue) option.selected = true;
+                selectElement.appendChild(option);
+            });
+        }
+        function populateAllAccountDropdowns() { 
+            if (!isAuthenticated) return;
+            populateAccountDropdown(document.getElementById('transactionAccount'));
+            populateAccountDropdown(document.getElementById('transferFromAccount'));
+            populateAccountDropdown(document.getElementById('transferToAccount'));
+            if (investmentSourceAccountEl) populateAccountDropdown(investmentSourceAccountEl);
+            if (redemptionDepositAccountEl) populateAccountDropdown(redemptionDepositAccountEl);
+            if (loanReturnAccountSelectEl) populateAccountDropdown(loanReturnAccountSelectEl);
+        }
+        function populateSpendCategoryChips(selectedCategory = null) { 
+            if (!isAuthenticated || !spendCategoryChipsContainerEl) return;
+            spendCategoryChipsContainerEl.innerHTML = ''; 
+            
+            spendCategories.sort().forEach(cat => { 
+                const chip = document.createElement('span'); 
+                chip.classList.add('category-chip'); 
+                chip.textContent = cat; 
+                chip.dataset.category = cat; 
+                if (cat === selectedCategory) chip.classList.add('active'); 
+                
+                chip.addEventListener('click', () => { 
+                    document.querySelectorAll('#spendCategoryChipsContainer .category-chip').forEach(c => c.classList.remove('active')); 
+                    chip.classList.add('active'); 
+                    selectedCategoryInputEl.value = cat; 
+                }); 
+                spendCategoryChipsContainerEl.appendChild(chip); 
+            });
+        }
+        function populateIncomeCategoryChips(selectedCategory = null) { 
+            if (!isAuthenticated || !incomeCategoryChipsContainerEl) return; 
+            incomeCategoryChipsContainerEl.innerHTML = '';
+            
+            incomeCategories.sort().forEach(cat => { 
+                const chip = document.createElement('span'); 
+                chip.classList.add('category-chip'); 
+                chip.textContent = cat; 
+                chip.dataset.category = cat; 
+                if (cat === selectedCategory) chip.classList.add('active'); 
+                
+                chip.addEventListener('click', () => { 
+                    document.querySelectorAll('#incomeCategoryChipsContainer .category-chip').forEach(c => c.classList.remove('active')); 
+                    chip.classList.add('active'); 
+                    selectedCategoryInputEl.value = cat; 
+                }); 
+                incomeCategoryChipsContainerEl.appendChild(chip); 
+            });
+        }
+
+        // --- Settings UI Visibility Logic ---
+        function loadCategoryManagementVisibility() {
+            const storedVisibility = localStorage.getItem(LOCAL_STORAGE_CATEGORY_MGMT_VISIBLE_KEY);
+            if (storedVisibility !== null) {
+                categoryManagementVisible = JSON.parse(storedVisibility);
+            }
+        }
+        function saveCategoryManagementVisibility() {
+            if(isAuthenticated) localStorage.setItem(LOCAL_STORAGE_CATEGORY_MGMT_VISIBLE_KEY, JSON.stringify(categoryManagementVisible));
+        }
+        function applyCategoryManagementVisibility() {
+            if (!categoryManagementContentEl || !toggleCategoryManagementBtn) return;
+
+            if (categoryManagementVisible) {
+                categoryManagementContentEl.style.display = 'block';
+                toggleCategoryManagementBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide';
+                toggleCategoryManagementBtn.title = 'Hide Category Section';
+            } else {
+                categoryManagementContentEl.style.display = 'none';
+                toggleCategoryManagementBtn.innerHTML = '<i class="fas fa-eye"></i> Show';
+                toggleCategoryManagementBtn.title = 'Show Category Section';
+            }
+        }
+        function loadAccountManagementVisibility() {
+            const storedVisibility = localStorage.getItem(LOCAL_STORAGE_ACCOUNT_MGMT_VISIBLE_KEY);
+            if (storedVisibility !== null) {
+                accountManagementVisible = JSON.parse(storedVisibility);
+            }
+        }
+        function saveAccountManagementVisibility() {
+            if(isAuthenticated) localStorage.setItem(LOCAL_STORAGE_ACCOUNT_MGMT_VISIBLE_KEY, JSON.stringify(accountManagementVisible));
+        }
+        function applyAccountManagementVisibility() {
+            if (!accountManagementContentEl || !toggleAccountManagementBtn) return;
+
+            if (accountManagementVisible) {
+                accountManagementContentEl.style.display = 'block';
+                toggleAccountManagementBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide';
+                toggleAccountManagementBtn.title = 'Hide Account Section';
+            } else {
+                accountManagementContentEl.style.display = 'none';
+                toggleAccountManagementBtn.innerHTML = '<i class="fas fa-eye"></i> Show';
+                toggleAccountManagementBtn.title = 'Show Account Section';
+            }
+        }
+
+        // --- View Management ---
+        function showView(viewId, title) { 
+            if (!isAuthenticated) return;
+            views.forEach(view => view.classList.remove('active'));
+            const targetView = document.getElementById(viewId);
+            if (targetView) targetView.classList.add('active'); else console.error("View not found:", viewId);
+       
+            navItems.forEach(item => item.classList.toggle('active', item.dataset.view === viewId));
+            if(appTitleEl) appTitleEl.textContent = title;
+            
+            // Re-render based on the activated view
+            if (viewId === 'chartsView') { 
+                renderSpendCategoryChart(); 
+                renderIncomeSpendChart(); 
+                renderInvestmentPortfolioChart(); 
+                renderMonthlySpendChart();
+            }
+            if (viewId === 'homeView') renderHomePageSummaries();
+            if (viewId === 'investmentsView') renderInvestmentList();
+            if (viewId === 'transactionsView') renderFullTransactionList();
+            if (viewId === 'settingsView') {
+                renderAccountManagementList();
+                renderCategoryManagementUI();
+                applyCategoryManagementVisibility();
+                applyAccountManagementVisibility(); 
+            }
+        }
+
+        // --- Master Render Function ---
+        function renderAllContent() { 
+            if (!isAuthenticated) return; 
+            
+            renderAccountBalances(); 
+            renderHomePageSummaries(); 
+            
+            const activeView = document.querySelector('.view.active');
+            if (activeView) {
+                const viewId = activeView.id;
+                if (viewId === 'transactionsView') renderFullTransactionList();
+                else if (viewId === 'investmentsView') renderInvestmentList();
+                else if (viewId === 'chartsView') { 
+                    renderSpendCategoryChart(); 
+                    renderIncomeSpendChart(); 
+                    renderInvestmentPortfolioChart();
+                    renderMonthlySpendChart();
+                }
+                else if (viewId === 'settingsView') {
+                    renderAccountManagementList(); 
+                    renderCategoryManagementUI(); 
+                }
+            }
+        }
+
+        // --- Other Render Functions (defined globally so showView can call them) ---
+
+        function renderSpendCategoryChart() { 
+            if (!isAuthenticated || !spendCategoryChartCanvas) return;
+            const categorySpends = {}; 
+            transactions.filter(t => t.type === 'spend' && t.category && !investmentRelatedCategories.includes(t.category)).forEach(t => { 
+                categorySpends[t.category] = (categorySpends[t.category] || 0) + t.amount; 
+            });
+            
+            const labels = Object.keys(categorySpends); 
+            const data = Object.values(categorySpends); 
+            const backgroundColors = labels.map((_, index) => `hsl(${(index * 45 + 10) % 360}, 70%, 65%)`);
+            
+            if (noSpendDataForCategoryChartEl) noSpendDataForCategoryChartEl.style.display = (labels.length === 0) ? 'block' : 'none'; 
+            if (spendCategoryChartCanvas.canvas.parentElement) spendCategoryChartCanvas.canvas.parentElement.style.display = (labels.length > 0) ? 'block' : 'none'; 
+            
+            if (labels.length === 0) { 
+                if(spendCategoryChartInstance) spendCategoryChartInstance.destroy(); 
+                spendCategoryChartInstance = null; 
+                return; 
+            } 
+            
+            if (spendCategoryChartInstance) spendCategoryChartInstance.destroy();
+            spendCategoryChartInstance = new Chart(spendCategoryChartCanvas, { 
+                type: 'doughnut', 
+                data: { 
+                    labels: labels, 
+                    datasets: [{ 
+                        label: 'Spend by Category', 
+                        data: data, 
+                        backgroundColor: backgroundColors, 
+                        borderColor: '#fff', 
+                        borderWidth: 2, 
+                        hoverOffset: 8 
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    animation: { animateScale: true, animateRotate: true }, 
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { font: { size: 10 }, boxWidth:15, padding:10 } 
+                        }, 
+                        tooltip: { 
+                            callbacks: { 
+                                label: context => `${context.label || ''}: ${formatCurrency(context.parsed)} (${((context.parsed / context.dataset.data.reduce((a,b)=>a+b,0)) * 100).toFixed(1)}%)` 
+                            }
+                        } 
+                    } 
+                } 
+            });
+        }
+        
+        function renderIncomeSpendChart() { 
+            if (!isAuthenticated || !incomeSpendChartCanvas) return; 
+            
+            let totalIncome = 0; 
+            let totalSpend = 0;
+            
+            transactions.forEach(t => { 
+                if (t.type === 'income') totalIncome += t.amount; 
+                else if (t.type === 'spend') totalSpend += t.amount; 
+                else if (t.type === 'loan') { 
+                    totalSpend += t.amount; 
+                    if (t.loanStatus === 'returned' && t.returnDetails) { 
+                        totalIncome += t.returnDetails.returnAmount; 
+                    } 
+                } 
+            });
+            
+            if (noIncomeSpendDataEl) noIncomeSpendDataEl.style.display = (totalIncome === 0 && totalSpend === 0) ? 'block' : 'none';
+            if (incomeSpendChartCanvas.canvas.parentElement) incomeSpendChartCanvas.canvas.parentElement.style.display = (totalIncome > 0 || totalSpend > 0) ? 'block' : 'none';
+            
+            if (totalIncome === 0 && totalSpend === 0) { 
+                if (incomeSpendChartInstance) incomeSpendChartInstance.destroy(); 
+                incomeSpendChartInstance = null; 
+                return; 
+            } 
+            
+            if (incomeSpendChartInstance) incomeSpendChartInstance.destroy();
+            incomeSpendChartInstance = new Chart(incomeSpendChartCanvas, { 
+                type: 'bar', 
+                data: { 
+                    labels: ['Total Income', 'Total Spend'], 
+                    datasets: [{ 
+                        label: 'Amount (₹)', 
+                        data: [totalIncome, totalSpend], 
+                        backgroundColor: ['rgba(74, 144, 226, 0.8)', 'rgba(231, 76, 60, 0.8)'], 
+                        borderColor: ['rgba(74, 144, 226, 1)', 'rgba(231, 76, 60, 1)'], 
+                        borderWidth: 1 
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { callback: value => formatCurrency(value) } 
+                        } 
+                    }, 
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { callbacks: { label: context => `${context.label}: ${formatCurrency(context.parsed.y)}` } } 
+                    } 
+                } 
+            });
+        }
+        
+        function renderInvestmentPortfolioChart() { 
+            if (!isAuthenticated || !investmentPortfolioChartCanvas) return; 
+            
+            const activeInvestments = investments.filter(inv => inv.status === 'active');
+            const portfolioData = {}; 
+            
+            activeInvestments.forEach(inv => { 
+                const typeName = investmentTypeNames[inv.type] || 'Other'; 
+                const value = inv.currentValue !== null && inv.currentValue !== undefined ? inv.currentValue : inv.amount; 
+                portfolioData[typeName] = (portfolioData[typeName] || 0) + value; 
+            });
+            
+            const labels = Object.keys(portfolioData); 
+            const data = Object.values(portfolioData); 
+            const backgroundColors = labels.map((_, index) => `hsl(${(index * 60 + 30) % 360}, 65%, 60%)`);
+            
+            if (noInvestmentPortfolioDataEl) noInvestmentPortfolioDataEl.style.display = (labels.length === 0) ? 'block' : 'none'; 
+            if (investmentPortfolioChartCanvas.canvas.parentElement) investmentPortfolioChartCanvas.canvas.parentElement.style.display = (labels.length > 0) ? 'block' : 'none'; 
+            
+            if (labels.length === 0) { 
+                if (investmentPortfolioChartInstance) investmentPortfolioChartInstance.destroy(); 
+                investmentPortfolioChartInstance = null; 
+                return; 
+            } 
+            
+            if (investmentPortfolioChartInstance) investmentPortfolioChartInstance.destroy();
+            investmentPortfolioChartInstance = new Chart(investmentPortfolioChartCanvas, { 
+                type: 'pie', 
+                data: { 
+                    labels: labels, 
+                    datasets: [{ 
+                        label: 'Investment Value', 
+                        data: data, 
+                        backgroundColor: backgroundColors, 
+                        borderColor: '#fff', 
+                        borderWidth: 2, 
+                        hoverOffset: 8 
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    animation: { animateScale: true, animateRotate: true }, 
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { font: { size: 10 }, boxWidth:15, padding:10 } 
+                        }, 
+                        tooltip: { 
+                            callbacks: { 
+                                label: context => `${context.label || ''}: ${formatCurrency(context.parsed)} (${((context.parsed / context.dataset.data.reduce((a,b)=>a+b,0)) * 100).toFixed(1)}%)` 
+                            }
+                        } 
+                    } 
+                } 
+            });
+        }
+
+        function renderMonthlySpendChart() {
+            if (!isAuthenticated || !document.getElementById('monthlySpendChartCanvas')) return;
+            
+            const monthlyData = {};
+
+            transactions.forEach(t => {
+                let spendAmount = 0;
+                
+                if (t.type === 'spend' && !investmentRelatedCategories.includes(t.category)) {
+                    spendAmount = t.amount;
+                } else if (t.type === 'loan') {
+                    spendAmount = t.amount; 
+                }
+
+                if (spendAmount > 0) {
+                    const date = new Date(t.date);
+                    const timeKey = date.getFullYear() * 100 + (date.getMonth() + 1); 
+                    const monthLabel = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+
+                    if (!monthlyData[timeKey]) {
+                        monthlyData[timeKey] = {
+                            totalSpend: 0,
+                            monthLabel: monthLabel
+                        };
+                    }
+                    monthlyData[timeKey].totalSpend += spendAmount;
+                }
+            });
+
+            const sortedTimeKeys = Object.keys(monthlyData).sort((a, b) => a - b);
+            const labels = sortedTimeKeys.map(timeKey => monthlyData[timeKey].monthLabel);
+            const data = sortedTimeKeys.map(timeKey => monthlyData[timeKey].totalSpend);
+
+            const monthlySpendChartCanvas = document.getElementById('monthlySpendChartCanvas')?.getContext('2d');
+            const noMonthlySpendDataEl = document.getElementById('noMonthlySpendData');
+
+            if (noMonthlySpendDataEl) noMonthlySpendDataEl.style.display = (labels.length === 0) ? 'block' : 'none';
+            
+            if (monthlySpendChartCanvas?.canvas.parentElement) {
+                monthlySpendChartCanvas.canvas.parentElement.style.display = (labels.length > 0) ? 'block' : 'none';
+            }
+
+            if (labels.length === 0) {
+                if (monthlySpendChartInstance) monthlySpendChartInstance.destroy();
+                monthlySpendChartInstance = null;
+                return;
+            }
+
+            if (monthlySpendChartInstance) monthlySpendChartInstance.destroy();
+            
+            monthlySpendChartInstance = new Chart(monthlySpendChartCanvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Spend (₹)',
+                        data: data,
+                        borderColor: 'rgba(231, 76, 60, 1)', 
+                        backgroundColor: 'rgba(231, 76, 60, 0.2)', 
+                        fill: true, 
+                        tension: 0.2 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Amount (₹)' },
+                            ticks: { callback: value => formatCurrency(value) }
+                        },
+                        x: {
+                            title: { display: true, text: 'Month' }
+                        },
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: context => `${context.dataset.label}: ${formatCurrency(context.parsed.y)}` } }
+                    }
+                }
+            });
+        }
+        
+        function renderAccountBalances() { 
+            if (!isAuthenticated || !accountBalancesListEl || !totalBalanceEl) return;
+            
+            const allBalances = calculateAllBalances(); 
+            accountBalancesListEl.innerHTML = ''; 
+            
+            const visibleAccountsForDisplay = accounts.filter(acc => acc.status === 'active' || (acc.status === 'secret' && showSecretAccounts));
+            
+            let totalOverallBalance = 0;
+            
+            if (visibleAccountsForDisplay.length === 0) { 
+                accountBalancesListEl.innerHTML = '<p class="text-muted text-center">No active accounts to display.</p>'; 
+                totalBalanceEl.textContent = formatCurrency(0); 
+                return;
+            } 
+            
+            visibleAccountsForDisplay.forEach(acc => { 
+                const balance = allBalances[acc.id] || 0; 
+                totalOverallBalance += balance; 
+                
+                const item = document.createElement('div'); 
+                item.classList.add('account-balance-item'); 
+                
+                const valueDisplay = balancesVisible ? formatCurrency(balance) : `<i class="fas fa-eye-slash"></i>`; 
+                
+                item.innerHTML = `
+                    <span class="account-name">
+                        ${getAccountNameById(acc.id)} 
+                        ${acc.status === 'secret' ? '<i class="fas fa-user-secret text-warning" title="Secret Account"></i>' : ''}
+                    </span>
+                    <span class="account-value ${!balancesVisible ? 'hidden-balance' : ''}">
+                        ${valueDisplay}
+                    </span>
+                `; 
+                accountBalancesListEl.appendChild(item); 
+            });
+            
+            totalBalanceEl.textContent = formatCurrency(totalOverallBalance); 
+            totalBalanceEl.style.color = totalOverallBalance < 0 ? '#dc3545' : 'white';
+        }
+
+        function calculateAllBalances() { 
+            if (!isAuthenticated) return {};
+            const accBalances = {}; 
+            accounts.forEach(acc => accBalances[acc.id] = 0); 
+
+            transactions.forEach(t => { 
+                if (t.type === 'income' && accBalances.hasOwnProperty(t.account)) { 
+                    accBalances[t.account] += t.amount; 
+                } else if (t.type === 'spend' && accBalances.hasOwnProperty(t.account)) { 
+                    accBalances[t.account] -= t.amount; 
+                } else if (t.type === 'transfer') { 
+                    if(accBalances.hasOwnProperty(t.fromAccount)) accBalances[t.fromAccount] -= t.amount; 
+                    if(accBalances.hasOwnProperty(t.toAccount)) accBalances[t.toAccount] += t.amount; 
+                } else if (t.type === 'loan') { 
+                    if (accBalances.hasOwnProperty(t.account)) { 
+                        accBalances[t.account] -= t.amount; 
+                    } 
+                    if (t.loanStatus === 'returned' && t.returnDetails && t.returnDetails.returnAccount && accBalances.hasOwnProperty(t.returnDetails.returnAccount) && t.returnDetails.returnAmount > 0) { 
+                        accBalances[t.returnDetails.returnAccount] += t.returnDetails.returnAmount; 
+                    } 
+                } 
+            }); 
+            return accBalances; 
+        }
+
+        function renderHomePageSummaries() { 
+            if (!isAuthenticated) return; 
+            
+            if (recentTransactionsListHomeEl) { 
+                recentTransactionsListHomeEl.innerHTML = '';
+                const recent = [...transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,5);
+                
+                if(recent.length === 0) { 
+                    recentTransactionsListHomeEl.innerHTML = '<li class="list-group-item text-center text-muted">No recent transactions.</li>';
+                } else { 
+                    recent.forEach(t => { 
+                        let sign = ''; 
+                        let amountStr = formatCurrency(t.amount); 
+                        let colorClass = ''; 
+                        let primaryInfo = t.description || 'N/A'; 
+                        
+                        if (t.type === 'income') { 
+                            sign = '+'; 
+                            colorClass = 'text-success'; 
+                        } else if (t.type === 'spend') { 
+                            sign = '-'; 
+                            colorClass = 'text-danger'; 
+                        } else if (t.type === 'transfer') { 
+                            colorClass = 'text-info'; 
+                            primaryInfo = `Transfer: ${getAccountNameById(t.fromAccount)} -> ${getAccountNameById(t.toAccount)}`; 
+                            sign = '';
+                        } else if (t.type === 'loan') { 
+                            colorClass = 'text-warning'; 
+                            primaryInfo = `Loan: ${t.description || 'N/A'} (${t.loanStatus})`; 
+                            if (t.loanStatus === 'outstanding') { 
+                                sign = '-'; 
+                            } else if (t.loanStatus === 'returned' && t.returnDetails) { 
+                                primaryInfo = `Loan Ret: ${t.description || 'N/A'}`; 
+                                amountStr = `Lent: ${formatCurrency(t.amount)}, Ret: ${formatCurrency(t.returnDetails.returnAmount)}`; 
+                                colorClass = 'text-success'; 
+                                sign = '+';
+                            } 
+                        } 
+                        
+                        if(t.category && (t.type === 'income' || t.type === 'spend')) {
+                             primaryInfo = t.category;
+                             if(t.description) primaryInfo += ` (${t.description.substring(0,15)}...)`;
+                        }
+                        
+                        const item = document.createElement('li'); 
+                        item.classList.add('list-group-item'); 
+                        item.innerHTML = `
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div style="font-size:0.85rem;">
+                                    <span style="font-weight:500;">${primaryInfo}</span>
+                                    <small class="d-block text-muted">${displayDate(t.date)}</small>
+                                </div>
+                                <small class="${colorClass}" style="font-weight:bold;">${sign}${amountStr}</small>
+                            </div>
+                        `; 
+                        recentTransactionsListHomeEl.appendChild(item); 
+                    });
+                } 
+            } 
+            
+            if (investmentSummaryHomeEl) { 
+                const activeInvestments = investments.filter(inv => inv.status === 'active');
+                if (activeInvestments.length === 0) { 
+                    investmentSummaryHomeEl.innerHTML = '<p class="text-center text-muted">No active investments yet.</p>';
+                } else { 
+                    const totalInitialCostActive = activeInvestments.reduce((sum, inv) => sum + inv.amount, 0);
+                    const totalCurrentValueActive = activeInvestments.reduce((sum, inv) => sum + (inv.currentValue !== null && inv.currentValue !== undefined ? inv.currentValue : inv.amount), 0);
+                    const netChange = totalCurrentValueActive - totalInitialCostActive;
+                    
+                    investmentSummaryHomeEl.innerHTML = `
+                        <p class="text-center mb-1"><strong>Active Investments:</strong> ${activeInvestments.length}</p>
+                        <p class="text-center mb-1"><strong>Total Cost:</strong> ${formatCurrency(totalInitialCostActive)}</p>
+                        <p class="text-center mb-1"><strong>Current Value:</strong> ${formatCurrency(totalCurrentValueActive)}</p>
+                        <p class="text-center mb-0 ${netChange >= 0 ? 'text-success' : 'text-danger'}">
+                            <strong>Net Change:</strong> ${formatCurrency(netChange)}
+                        </p>
+                    `;
+                } 
+            } 
+        }
+
+        function renderInvestmentList() { 
+            if (!isAuthenticated || !investmentListEl) return; 
+            investmentListEl.innerHTML = '';
+            
+            const sortedInvestments = [...investments].sort((a, b) => (a.status === 'active' && b.status !== 'active') ? -1 : (a.status !== 'active' && b.status === 'active') ? 1 : new Date(b.date) - new Date(a.date));
+            
+            if (sortedInvestments.length === 0) { 
+                if (noInvestmentsMessageEl) { 
+                    noInvestmentsMessageEl.style.display = 'block'; 
+                    investmentListEl.appendChild(noInvestmentsMessageEl);
+                }
+            } else { 
+                if (noInvestmentsMessageEl) noInvestmentsMessageEl.style.display = 'none';
+                
+                sortedInvestments.forEach(inv => { 
+                    const item = document.createElement('li'); 
+                    item.classList.add('list-group-item', 'investment-item'); 
+                    if (inv.status === 'redeemed') item.classList.add('redeemed-investment'); 
+                    
+                    let valueDisplay = `<span class="amount text-muted">${formatCurrency(inv.amount)}</span> <small>(Invested)</small>`; 
+                    let profitLossDisplay = '';
+                    let actionButtonsHtml = '';
+
+                    if (inv.status === 'active') { 
+                        if (inv.currentValue !== null && inv.currentValue !== undefined) { 
+                            valueDisplay += `<br><span class="amount ${inv.currentValue >= inv.amount ? 'text-success' : 'text-danger'}">${formatCurrency(inv.currentValue)}</span> <small class="current-value-label">(Current)</small>`; 
+                        }
+                        actionButtonsHtml = `
+                            <div class="investment-item-actions">
+                                <button class="btn btn-info btn-sm update-value-btn" data-id="${inv.id}" title="Update Value"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-success btn-sm redeem-btn" data-id="${inv.id}" title="Redeem"><i class="fas fa-hand-holding-usd"></i></button>
+                            </div>`; 
+                    } else if (inv.status === 'redeemed') { 
+                        valueDisplay = `<span class="amount text-muted">${formatCurrency(inv.amount)}</span> <small>(Invested)</small><br><span class="amount">${formatCurrency(inv.redeemedAmount || 0)}</span> <small>(Redeemed)</small>`; 
+                        if (inv.profitOrLoss !== null && inv.profitOrLoss !== undefined) {
+                            profitLossDisplay = `<div class="investment-details ${inv.profitOrLoss >= 0 ? 'profit' : 'loss'}">P/L: ${formatCurrency(inv.profitOrLoss)}</div>`;
+                        }
+                    }
+                    
+                    item.innerHTML = `
+                        <div class="list-item-content">
+                            <div class="main-info">
+                                ${inv.description} 
+                                <span class="status-badge status-${inv.status}">${inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span>
+                            </div>
+                            <div class="sub-info">Type: ${investmentTypeNames[inv.type] || 'N/A'} | Invested: ${displayDate(inv.date)}</div>
+                            ${inv.status === 'active' && inv.maturityInfo ? `<div class="investment-details">Maturity: ${inv.maturityInfo}</div>` : ''}
+                            ${inv.status === 'redeemed' && inv.redemptionDate ? `<div class="investment-details">Redeemed: ${displayDate(inv.redemptionDate)}</div>` : ''}
+                            ${profitLossDisplay}
+                            <div class="investment-details">From: ${getAccountNameById(inv.sourceAccount)}</div>
+                        </div>
+                        <div class="list-item-amount text-right">${valueDisplay}</div>
+                        ${actionButtonsHtml}
+                        <button class="delete-btn btn btn-danger btn-sm" data-id="${inv.id}" data-type="investment" title="Delete" style="position: absolute; bottom: 5px; right: 5px;"><i class="fas fa-trash-alt"></i></button>
+                    `; 
+                    investmentListEl.appendChild(item); 
+                }); 
+            } 
+        }
+
+        function renderCategoryManagementUI() {
+            if (!isAuthenticated || !spendCategoriesListContainerEl || !incomeCategoriesListContainerEl) return;
+
+            spendCategoriesListContainerEl.innerHTML = '';
+            if (spendCategories.length === 0) {
+                spendCategoriesListContainerEl.innerHTML = '<p class="text-muted text-center small m-0">No spend categories defined. Add one above.</p>';
+            } else {
+                spendCategories.sort().forEach(cat => {
+                    const chip = document.createElement('span');
+                    chip.className = 'mgmt-category-chip';
+                    chip.innerHTML = `
+                        ${cat}
+                        <button class="remove-chip-btn remove-category-btn" data-type="spend" data-category="${cat}" title="Remove ${cat}">&times;</button>
+                    `;
+                    spendCategoriesListContainerEl.appendChild(chip);
+                });
+            }
+
+            incomeCategoriesListContainerEl.innerHTML = '';
+            if (incomeCategories.length === 0) {
+                incomeCategoriesListContainerEl.innerHTML = '<p class="text-muted text-center small m-0">No income categories defined. Add one above.</p>';
+            } else {
+                incomeCategories.sort().forEach(cat => {
+                    const chip = document.createElement('span');
+                    chip.className = 'mgmt-category-chip';
+                    chip.innerHTML = `
+                        ${cat}
+                        <button class="remove-chip-btn remove-category-btn" data-type="income" data-category="${cat}" title="Remove ${cat}">&times;</button>
+                    `;
+                    incomeCategoriesListContainerEl.appendChild(chip);
+                });
+            }
+        }
+
+        function renderAccountManagementList() {
+            if (!isAuthenticated || !accountsListContainerEl) return;
+            accountsListContainerEl.innerHTML = ''; 
+
+            if (accounts.length === 0) {
+                if (noAccountsMessageSettingsEl) noAccountsMessageSettingsEl.style.display = 'block';
+                return;
+            }
+            if (noAccountsMessageSettingsEl) noAccountsMessageSettingsEl.style.display = 'none';
+
+            const ul = document.createElement('ul');
+            ul.className = 'list-group';
+
+            accounts.forEach(acc => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item account-list-item';
+
+                let statusBadge = '';
+                let toggleStatusBtnHtml = '';
+                let toggleSecretBtnHtml = '';
+
+                if (acc.status === 'inactive') {
+                    statusBadge = '<span class="badge badge-secondary">Inactive</span>';
+                    toggleStatusBtnHtml = `<button class="btn btn-sm btn-outline-success toggle-account-status-btn" data-id="${acc.id}" title="Activate">
+                        <i class="fas fa-toggle-on"></i> Activate
+                    </button>`;
+                } else if (acc.status === 'secret') {
+                    statusBadge = '<span class="badge badge-warning">Secret</span>';
+                    toggleStatusBtnHtml = `<button class="btn btn-sm btn-outline-danger toggle-account-status-btn" data-id="${acc.id}" title="Deactivate">
+                        <i class="fas fa-toggle-off"></i> Deactivate
+                    </button>`;
+                } else { // active
+                     statusBadge = '<span class="badge badge-primary">Active</span>';
+                     toggleStatusBtnHtml = `<button class="btn btn-sm btn-outline-danger toggle-account-status-btn" data-id="${acc.id}" title="Deactivate">
+                        <i class="fas fa-toggle-off"></i> Deactivate
+                    </button>`;
+                }
+
+                if (acc.status === 'secret') {
+                    toggleSecretBtnHtml = `<button class="btn btn-sm btn-outline-info toggle-account-secret-btn" data-id="${acc.id}" title="Make Public">
+                        <i class="fas fa-eye"></i> Public
+                    </button>`;
+                } else if (acc.status !== 'inactive') {
+                    toggleSecretBtnHtml = `<button class="btn btn-sm btn-outline-warning toggle-account-secret-btn" data-id="${acc.id}" title="Make Secret">
+                        <i class="fas fa-user-secret"></i> Secret
+                    </button>`;
+                }
+
+                li.innerHTML = `
+                     <div class="account-name-status">
+                        ${acc.name} (ID: ${acc.id}) ${statusBadge}
+                    </div>
+                    <div class="account-actions">
+                        ${toggleStatusBtnHtml}
+                        ${toggleSecretBtnHtml}
+                    </div>
+                 `;
+                ul.appendChild(li);
+            });
+            accountsListContainerEl.appendChild(ul);
+        }
+
+        function updateTransactionFormFields(transactionType = null) { 
+            if (!isAuthenticated || !transactionTypeEl || !accountGroupEl || !transferGroupEls.length || !spendCategoryChipsGroupEl || !incomeCategoryChipsGroupEl || !transactionDescriptionLabelEl || !transactionAccountLabelEl || !transactionAmountLabelEl) return;
+            
+            const type = transactionType || transactionTypeEl.value; 
+            
+            accountGroupEl.style.display = (type === 'income' || type === 'spend' || type === 'loan') ? 'block' : 'none'; 
+            transferGroupEls.forEach(el => el.style.display = (type === 'transfer') ? 'block' : 'none'); 
+            spendCategoryChipsGroupEl.style.display = (type === 'spend') ? 'block' : 'none'; 
+            incomeCategoryChipsGroupEl.style.display = (type === 'income') ? 'block' : 'none';
+            
+            document.getElementById('transactionAccount').required = (type !== 'transfer');
+            document.getElementById('transferFromAccount').required = (type === 'transfer');
+            document.getElementById('transferToAccount').required = (type === 'transfer');
+            
+            if (type === 'loan') { 
+                transactionAccountLabelEl.textContent = "Lent From Account"; 
+                transactionAmountLabelEl.textContent = "Amount Lent (₹)";
+                transactionDescriptionLabelEl.textContent = "Description (e.g., To Whom, Reason)"; 
+                document.getElementById('transactionAmount').min = "0.01";
+            } else if (type === 'transfer') {
+                transactionDescriptionLabelEl.textContent = "Description (Optional)";
+                transactionAmountLabelEl.textContent = "Amount (₹)";
+                document.getElementById('transactionAmount').min = "0.01";
+            } else { 
+                transactionAccountLabelEl.textContent = "Account";
+                transactionAmountLabelEl.textContent = "Amount (₹)"; 
+                transactionDescriptionLabelEl.textContent = 'Notes / Specifics (Optional)';
+                document.getElementById('transactionAmount').min = "0.01";
+            } 
+            
+            selectedCategoryInputEl.value = ''; 
+            document.querySelectorAll('#spendCategoryChipsContainer .category-chip.active').forEach(c => c.classList.remove('active')); 
+            document.querySelectorAll('#incomeCategoryChipsContainer .category-chip.active').forEach(c => c.classList.remove('active')); 
+            
+            if (type === 'spend') { 
+                populateSpendCategoryChips();
+            } else if (type === 'income') { 
+                populateIncomeCategoryChips(); 
+            }
+        }
+
+        function filterAndSearchTransactions() { 
+            if (!isAuthenticated) return []; 
+            let filtered = [...transactions];
+            
+            const searchQuery = txSearchInputEl ? txSearchInputEl.value.toLowerCase().trim() : ""; 
+            const amountQueryVal = txAmountFilterEl ? txAmountFilterEl.value.trim() : "";
+            const amountQuery = amountQueryVal ? parseFloat(amountQueryVal) : null; 
+            const selectedMonth = txMonthFilterEl ? txMonthFilterEl.value : "";
+            const selectedYear = txYearFilterEl ? txYearFilterEl.value : ""; 
+            const selectedType = txTypeFilterEl ? txTypeFilterEl.value : "";
+            
+            if (searchQuery) { 
+                filtered = filtered.filter(t => (
+                    (t.description && t.description.toLowerCase().includes(searchQuery)) || 
+                    (t.category && t.category.toLowerCase().includes(searchQuery)) || 
+                    (t.type === 'transfer' && (getAccountNameById(t.fromAccount)?.toLowerCase().includes(searchQuery) || getAccountNameById(t.toAccount)?.toLowerCase().includes(searchQuery))) || 
+                    (t.type !== 'transfer' && t.type !== 'loan' && getAccountNameById(t.account)?.toLowerCase().includes(searchQuery)) || 
+                    (t.type === 'loan' && getAccountNameById(t.account)?.toLowerCase().includes(searchQuery))
+                ));
+            } 
+            
+            if (amountQuery !== null && !isNaN(amountQuery)) { 
+                filtered = filtered.filter(t => 
+                    (t.type === 'loan' && t.amount === amountQuery) || 
+                    (t.type === 'loan' && t.returnDetails && t.returnDetails.returnAmount === amountQuery) || 
+                    (t.type !== 'loan' && t.amount === amountQuery)
+                );
+            } 
+            
+            if (selectedYear) { 
+                filtered = filtered.filter(t => new Date(t.date).getFullYear() === parseInt(selectedYear));
+            } 
+            if (selectedMonth !== "") { 
+                filtered = filtered.filter(t => new Date(t.date).getMonth() === parseInt(selectedMonth));
+            } 
+            
+            if (selectedType) { 
+                if (selectedType === "investment_purchase") { 
+                    filtered = filtered.filter(t => t.type === 'spend' && t.category === 'Investment Expense');
+                } else if (selectedType === "investment_sale") { 
+                    filtered = filtered.filter(t => t.type === 'income' && t.category === 'Investment Income');
+                } else if (selectedType === "loan_outstanding") { 
+                    filtered = filtered.filter(t => t.type === 'loan' && t.loanStatus === 'outstanding');
+                } else if (selectedType === "loan_returned") { 
+                    filtered = filtered.filter(t => t.type === 'loan' && t.loanStatus === 'returned');
+                } else { 
+                    filtered = filtered.filter(t => t.type === selectedType); 
+                } 
+            } 
+            return filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+        }
+
+        function populateFilters() { 
+            if (!isAuthenticated) return;
+            
+            if (txMonthFilterEl) { 
+                const currentMonth = txMonthFilterEl.value; 
+                txMonthFilterEl.innerHTML = '<option value="">All Months</option>';
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                monthNames.forEach((month, index) => { 
+                    const option = document.createElement('option'); 
+                    option.value = index; 
+                    option.textContent = month; 
+                    if (String(index) === currentMonth) option.selected = true; 
+                    txMonthFilterEl.appendChild(option); 
+                });
+            } 
+            
+            if (txYearFilterEl) { 
+                const currentYear = txYearFilterEl.value; 
+                const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))].sort((a, b) => b - a);
+                txYearFilterEl.innerHTML = '<option value="">All Years</option>'; 
+                years.forEach(year => { 
+                    const option = document.createElement('option'); 
+                    option.value = year; 
+                    option.textContent = year; 
+                    if (String(year) === currentYear) option.selected = true; 
+                    txYearFilterEl.appendChild(option); 
+                });
+            } 
+        }
+    
+        function renderFullTransactionList() { 
+            if (!isAuthenticated || !transactionListEl) return;
+            
+            populateFilters(); 
+            const transactionsToRender = filterAndSearchTransactions(); 
+            transactionListEl.innerHTML = ''; 
+            
+            let filteredIncome = 0; 
+            let filteredSpend = 0; 
+            let filteredTransfer = 0;
+
+            transactionsToRender.forEach(t => { 
+                if (t.type === 'income') {
+                    filteredIncome += t.amount; 
+                } else if (t.type === 'spend') {
+                    filteredSpend += t.amount; 
+                } else if (t.type === 'transfer') {
+                    filteredTransfer += t.amount; 
+                } else if (t.type === 'loan') { 
+                    filteredSpend += t.amount; 
+                    if (t.loanStatus === 'returned' && t.returnDetails) { 
+                        filteredIncome += t.returnDetails.returnAmount; 
+                    } 
+                } 
+            });
+
+            if (filteredTotalsContainerEl) { 
+                if (transactionsToRender.length > 0) { 
+                    filteredTotalsContainerEl.innerHTML = ` 
+                        <span class="filtered-total-item filtered-total-income text-success">Income: ${formatCurrency(filteredIncome)}</span> 
+                        <span class="filtered-total-item filtered-total-spend text-danger">Spend: ${formatCurrency(filteredSpend)}</span> 
+                        <span class="filtered-total-item filtered-total-transfer text-info">Transfers: ${formatCurrency(filteredTransfer)}</span> 
+                        <span class="filtered-total-item filtered-total-net ${filteredIncome - filteredSpend >= 0 ? 'text-primary' : 'text-danger'}">Net: ${formatCurrency(filteredIncome - filteredSpend)}</span> 
+                    `;
+                    filteredTotalsContainerEl.style.display = 'flex'; 
+                } else { 
+                    filteredTotalsContainerEl.style.display = 'none'; 
+                } 
+            } 
+            
+            if (transactionsToRender.length === 0) { 
+                if (noTransactionsMessageEl) { 
+                    noTransactionsMessageEl.textContent = transactions.length > 0 ? "No transactions match filters." : "No transactions yet."; 
+                    noTransactionsMessageEl.style.display = 'block'; 
+                    transactionListEl.appendChild(noTransactionsMessageEl);
+                } 
+            } else { 
+                if (noTransactionsMessageEl) noTransactionsMessageEl.style.display = 'none'; 
+                
+                transactionsToRender.forEach(t => { 
+                    let iconClass = '', sign = '', accInfo = '', amountDisplay = formatCurrency(t.amount); 
+                    let mainInfo = t.description || 'N/A'; 
+                    let loanDetailsHtml = ''; 
+                    
+                    let actionButtons = `
+                        <button class="btn btn-sm btn-outline-warning action-btn edit-btn" data-id="${t.id}" title="Edit"><i class="fas fa-edit"></i></button> 
+                        <button class="btn btn-sm btn-outline-danger action-btn delete-btn" data-id="${t.id}" data-type="transaction" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                    `; 
+                    
+                    if (t.type === 'income') { 
+                        iconClass = 'fa-arrow-down'; 
+                        sign = '+'; 
+                        accInfo = `To: ${getAccountNameById(t.account)}`; 
+                    } else if (t.type === 'spend') { 
+                        iconClass = 'fa-arrow-up'; 
+                        sign = '-'; 
+                        accInfo = `From: ${getAccountNameById(t.account)}`; 
+                    } else if (t.type === 'transfer') { 
+                        iconClass = 'fa-exchange-alt'; 
+                        accInfo = `From ${getAccountNameById(t.fromAccount)} to ${getAccountNameById(t.toAccount)}`; 
+                        mainInfo = t.description || 'Transfer';
+                    } else if (t.type === 'loan') { 
+                        iconClass = 'fa-hand-holding-usd';
+                        mainInfo = `Loan: ${t.description || 'N/A'}`; 
+                        
+                        mainInfo += `<span class="status-badge status-loan-${t.loanStatus}">${t.loanStatus.charAt(0).toUpperCase() + t.loanStatus.slice(1)}</span>`; 
+                        
+                        accInfo = `Lent: ${formatCurrency(t.amount)} from ${getAccountNameById(t.account)}`;
+                        amountDisplay = `-${formatCurrency(t.amount)}`; 
+                        
+                        if (t.loanStatus === 'outstanding') { 
+                            actionButtons += ` <button class="btn btn-sm btn-outline-success action-btn record-return-btn" data-id="${t.id}" title="Record Return"><i class="fas fa-undo-alt"></i> Return</button>`;
+                        } else if (t.loanStatus === 'returned' && t.returnDetails) { 
+                            loanDetailsHtml = `<div class="loan-details-info text-success">Returned: ${formatCurrency(t.returnDetails.returnAmount)} to ${getAccountNameById(t.returnDetails.returnAccount)} on ${displayDate(t.returnDetails.returnDate)}</div>`;
+                            amountDisplay = `(Lent: -${formatCurrency(t.amount)})<br><span class="text-success" style="font-weight: 700;">+${formatCurrency(t.returnDetails.returnAmount)}</span>`; 
+                        } 
+                    } 
+                    
+                    let categoryDisplay = t.category;
+                    if(categoryDisplay) {
+                         mainInfo = `<span class="category-info">${categoryDisplay}</span>`;
+                         if(t.description) mainInfo += `<span class="description-info text-muted"> (${t.description})</span>`;
+                    } else {
+                        mainInfo = t.description || t.type.charAt(0).toUpperCase() + t.type.slice(1);
+                    }
+
+                    const item = document.createElement('li'); 
+                    item.classList.add('list-group-item', `transaction-${t.type}`); 
+                    
+                    item.innerHTML = ` 
+                        <div class="list-item-icon"><i class="fas ${iconClass} ${t.type === 'income' ? 'text-success' : t.type === 'spend' ? 'text-danger' : 'text-info'}"></i></div> 
+                        <div class="list-item-details"> 
+                            <div style="font-weight: 500;">${mainInfo}</div> 
+                            <div class="sub-info">${displayDate(t.date)}</div> 
+                            <div class="account-info">${accInfo}</div> 
+                            ${loanDetailsHtml} 
+                        </div> 
+                        <div class="list-item-amount-actions"> 
+                            <span class="amount ${t.type === 'income' ? 'text-success' : t.type === 'spend' ? 'text-danger' : t.type === 'loan' && t.loanStatus === 'outstanding' ? 'text-danger' : 'text-primary'}">
+                                ${t.type === 'loan' && t.loanStatus === 'returned' ? amountDisplay : `${sign}${formatCurrency(t.amount)}`}
+                            </span> 
+                            <div class="item-actions"> 
+                                ${actionButtons} 
+                            </div> 
+                        </div>
+                    `; 
+                    transactionListEl.appendChild(item); 
+                });
+            } 
+        }
+
+        function renderInvestmentList() { 
+            if (!isAuthenticated || !investmentListEl) return; 
+            investmentListEl.innerHTML = '';
+            
+            const sortedInvestments = [...investments].sort((a, b) => (a.status === 'active' && b.status !== 'active') ? -1 : (a.status !== 'active' && b.status === 'active') ? 1 : new Date(b.date) - new Date(a.date));
+            
+            if (sortedInvestments.length === 0) { 
+                if (noInvestmentsMessageEl) { 
+                    noInvestmentsMessageEl.style.display = 'block'; 
+                    investmentListEl.appendChild(noInvestmentsMessageEl);
+                }
+            } else { 
+                if (noInvestmentsMessageEl) noInvestmentsMessageEl.style.display = 'none';
+                
+                sortedInvestments.forEach(inv => { 
+                    const item = document.createElement('li'); 
+                    item.classList.add('list-group-item', 'investment-item'); 
+                    if (inv.status === 'redeemed') item.classList.add('redeemed-investment'); 
+                    
+                    let valueDisplay = `<span class="amount text-muted">${formatCurrency(inv.amount)}</span> <small>(Invested)</small>`; 
+                    let profitLossDisplay = '';
+                    let actionButtonsHtml = '';
+
+                    if (inv.status === 'active') { 
+                        if (inv.currentValue !== null && inv.currentValue !== undefined) { 
+                            valueDisplay += `<br><span class="amount ${inv.currentValue >= inv.amount ? 'text-success' : 'text-danger'}">${formatCurrency(inv.currentValue)}</span> <small class="current-value-label">(Current)</small>`; 
+                        }
+                        actionButtonsHtml = `
+                            <div class="investment-item-actions">
+                                <button class="btn btn-info btn-sm update-value-btn" data-id="${inv.id}" title="Update Value"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-success btn-sm redeem-btn" data-id="${inv.id}" title="Redeem"><i class="fas fa-hand-holding-usd"></i></button>
+                            </div>`; 
+                    } else if (inv.status === 'redeemed') { 
+                        valueDisplay = `<span class="amount text-muted">${formatCurrency(inv.amount)}</span> <small>(Invested)</small><br><span class="amount">${formatCurrency(inv.redeemedAmount || 0)}</span> <small>(Redeemed)</small>`; 
+                        if (inv.profitOrLoss !== null && inv.profitOrLoss !== undefined) {
+                            profitLossDisplay = `<div class="investment-details ${inv.profitOrLoss >= 0 ? 'profit' : 'loss'}">P/L: ${formatCurrency(inv.profitOrLoss)}</div>`;
+                        }
+                    }
+                    
+                    item.innerHTML = `
+                        <div class="list-item-content">
+                            <div class="main-info">
+                                ${inv.description} 
+                                <span class="status-badge status-${inv.status}">${inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span>
+                            </div>
+                            <div class="sub-info">Type: ${investmentTypeNames[inv.type] || 'N/A'} | Invested: ${displayDate(inv.date)}</div>
+                            ${inv.status === 'active' && inv.maturityInfo ? `<div class="investment-details">Maturity: ${inv.maturityInfo}</div>` : ''}
+                            ${inv.status === 'redeemed' && inv.redemptionDate ? `<div class="investment-details">Redeemed: ${displayDate(inv.redemptionDate)}</div>` : ''}
+                            ${profitLossDisplay}
+                            <div class="investment-details">From: ${getAccountNameById(inv.sourceAccount)}</div>
+                        </div>
+                        <div class="list-item-amount text-right">${valueDisplay}</div>
+                        ${actionButtonsHtml}
+                        <button class="delete-btn btn btn-danger btn-sm" data-id="${inv.id}" data-type="investment" title="Delete" style="position: absolute; bottom: 5px; right: 5px;"><i class="fas fa-trash-alt"></i></button>
+                    `; 
+                    investmentListEl.appendChild(item); 
+                }); 
+            } 
+        }
+
+
+        // --- Data Management Functions ---
+        
+        function exportData() { 
+            if (!isAuthenticated) return; 
+            const dataToExport = { 
+                accounts, 
+                transactions, 
+                investments, 
+                spendCategories, 
+                incomeCategories, 
+                appVersion: `money_tracker_${APP_VERSION}_export_v1.9`, 
+                exportDate: new Date().toISOString() 
+            };
+            const jsonData = JSON.stringify(dataToExport, null, 2); 
+            const blob = new Blob([jsonData], { type: 'application/json' }); 
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); 
+            a.href = url; 
+            a.download = `money_tracker_data_${formatDate(new Date().toISOString().slice(0,10))}.json`; 
+            document.body.appendChild(a); 
+            a.click(); 
+            document.body.removeChild(a); 
+            URL.revokeObjectURL(url); 
+            alert('Data exported successfully!');
+        }
+        
+        function importData(event) { 
+            if (!isAuthenticated) return; 
+            const file = event.target.files[0]; 
+            if (!file) return; 
+            if (file.type !== "application/json") { alert("Invalid file type."); return;
+            } 
+            const reader = new FileReader(); 
+            reader.onload = function(e) { 
+                try { 
+                    const importedData = JSON.parse(e.target.result);
+                    const isValidTransaction = (tr) => typeof tr.id === 'number' && typeof tr.type === 'string';
+                    const isValidInvestment = (inv) => typeof inv.id === 'number' && typeof inv.description === 'string';
+                    const isValidAccount = (acc) => typeof acc.id === 'string' && typeof acc.name === 'string' && typeof acc.status === 'string';
+                    const isValidCategoryArray = (arr) => Array.isArray(arr) && arr.every(item => typeof item === 'string');
+
+                    if (importedData && 
+                        (!importedData.transactions || (Array.isArray(importedData.transactions) && importedData.transactions.every(isValidTransaction))) && 
+                        (!importedData.investments || (Array.isArray(importedData.investments) && importedData.investments.every(isValidInvestment))) && 
+                        (!importedData.accounts || (Array.isArray(importedData.accounts) && importedData.accounts.every(isValidAccount))) &&
+                        (!importedData.spendCategories || isValidCategoryArray(importedData.spendCategories)) &&
+                        (!importedData.incomeCategories || isValidCategoryArray(importedData.incomeCategories))
+                    ) { 
+                        if (confirm('This will merge imported data. New items added. Existing IDs/Names skipped. Continue?')) { 
+                            let newTransactionsAdded = 0;
+                            let skippedTransactions = 0; 
+                            let newInvestmentsAdded = 0; 
+                            let skippedInvestments = 0; 
+                            let newAccountsAdded = 0; 
+                            let skippedAccounts = 0;
+                            let newSpendCategoriesAdded = 0;
+                            let skippedSpendCategories = 0;
+                            let newIncomeCategoriesAdded = 0;
+                            let skippedIncomeCategories = 0;
+
+                            if (importedData.accounts) { 
+                                const existingAccountIds = new Set(accounts.map(acc => acc.id));
+                                importedData.accounts.forEach(importedAcc => { 
+                                    if (!existingAccountIds.has(importedAcc.id)) { 
+                                        accounts.push(importedAcc); newAccountsAdded++; 
+                                    } else { skippedAccounts++; } 
+                                });
+                            } 
+                            
+                            const existingTransactionIds = new Set(transactions.map(t => t.id)); 
+                            if(importedData.transactions) importedData.transactions.forEach(importedTx => { 
+                                if (!existingTransactionIds.has(importedTx.id)) { 
+                                    const amount = importedTx.type === 'loan' ? (importedTx.amount_lent || importedTx.amount || 0) : (importedTx.amount || 0); 
+                                    transactions.push({...importedTx, amount: parseFloat(amount) }); newTransactionsAdded++; 
+                                } else { skippedTransactions++; } 
+                            });
+                            
+                            const existingInvestmentIds = new Set(investments.map(inv => inv.id)); 
+                            if(importedData.investments) importedData.investments.forEach(importedInv => { 
+                                if (!existingInvestmentIds.has(importedInv.id)) { 
+                                    investments.push({ 
+                                        ...importedInv, 
+                                        amount: parseFloat(importedInv.amount || 0), 
+                                        currentValue: importedInv.currentValue ? parseFloat(importedInv.currentValue) : null, 
+                                        redeemedAmount: importedInv.redeemedAmount ? parseFloat(importedInv.redeemedAmount) : null, 
+                                        profitOrLoss: importedInv.profitOrLoss ? parseFloat(importedInv.profitOrLoss) : null, 
+                                        status: importedInv.status || 'active' 
+                                    }); 
+                                    newInvestmentsAdded++; 
+                                } else { skippedInvestments++; } 
+                            });
+
+                            if (importedData.spendCategories) {
+                                const existingSpendCatSet = new Set(spendCategories.map(c => c.toLowerCase()));
+                                importedData.spendCategories.forEach(cat => {
+                                    if (typeof cat === 'string' && !existingSpendCatSet.has(cat.toLowerCase())) {
+                                        spendCategories.push(cat);
+                                        newSpendCategoriesAdded++;
+                                    } else {
+                                        skippedSpendCategories++;
+                                    }
+                                });
+                            }
+                            if (importedData.incomeCategories) {
+                                const existingIncomeCatSet = new Set(incomeCategories.map(c => c.toLowerCase()));
+                                importedData.incomeCategories.forEach(cat => {
+                                    if (typeof cat === 'string' && !existingIncomeCatSet.has(cat.toLowerCase())) {
+                                        incomeCategories.push(cat);
+                                        newIncomeCategoriesAdded++;
+                                    } else {
+                                        skippedIncomeCategories++;
+                                    }
+                                });
+                            }
+                            
+                            saveAccounts(); saveTransactions(); saveInvestments(); 
+                            saveSpendCategories(); saveIncomeCategories(); 
+                            renderAllContent(); populateFilters(); 
+                            alert(`Data merged!\nAccounts: ${newAccountsAdded} new (Skipped: ${skippedAccounts})\nTransactions: ${newTransactionsAdded} new (Skipped: ${skippedTransactions})\nInvestments: ${newInvestmentsAdded} new (Skipped: ${skippedInvestments})\nSpend Cats: ${newSpendCategoriesAdded} new (Skipped: ${skippedSpendCategories})\nIncome Cats: ${newIncomeCategoriesAdded} new (Skipped: ${skippedIncomeCategories})`);
+                        } 
+                    } else { 
+                        alert('Invalid data structure in imported file.'); 
+                    } 
+                } catch (error) { 
+                    console.error("Import Error:", error);
+                    alert('Error importing data.'); 
+                } finally { 
+                    importFileEl.value = ''; 
+                } 
+            }; 
+            reader.readAsText(file);
+        }
+        
+        function handleResetData() { 
+            if (!isAuthenticated) return; 
+            
+            if (window.confirm('ARE YOU SURE you want to reset all data? This cannot be undone.')) { 
+                if (window.confirm('SECOND CONFIRMATION: All data will be permanently deleted. Proceed?')) { 
+                    transactions = [];
+                    investments = []; 
+                    accounts = [ { id: 'cash', name: 'Cash', status: 'active' }, { id: 'sbi', name: 'SBI', status: 'active'} ]; 
+                    
+                    spendCategories = [ 'Bills & Recharges', 'CC Bills', 'Cloths', 'Education', 'Entertainment', 'EMI', 'Foods & Drinks' ,'Fuel', 'Gifts', 'Groceries', 'Homes & Utilities', 'Health & Medicine', 'Insurance', 'Investment Expense', 'Labs & Tests', 'Maintenance', 'Travel', 'Shopping', 'Parties', 'Vacation', 'Personal Care', 'Rent', 'Subscriptions', 'Others' ]; 
+                    incomeCategories = ["Salary", "In-hand Cash", "Savings", "Earnings", "Investment Income", "Gifts Received", "Refunds", "Other Income"]; 
+
+                    saveTransactions(); saveInvestments(); saveAccounts(); 
+                    saveSpendCategories(); saveIncomeCategories(); 
+                    
+                    renderAllContent(); 
+                    populateFilters();
+                    
+                    alert('All application data has been reset.'); 
+                    showView('homeView', 'Dashboard'); 
+                } 
+            } 
+        }
+
+        // --- Main App Initialization Function ---
+        function initializeApp() {
+            if (!isAuthenticated) return;
+
+            // 1. Initial Load from Local Storage
+            loadAccounts(); 
+            loadCategories(); 
+            loadCategoryManagementVisibility();
+            loadAccountManagementVisibility();
+
+            transactions = JSON.parse(localStorage.getItem(LOCAL_STORAGE_TRANSACTIONS_KEY)) || [];
+            investments = JSON.parse(localStorage.getItem(LOCAL_STORAGE_INVESTMENTS_KEY)) || [];
+            
+            // 2. Initial UI Setup
+            if (appVersionInfoEl) appVersionInfoEl.textContent = `RaGhaS Money Tracker - ${APP_VERSION}`;
+            document.title = `RaGhaS Money Tracker - ${APP_VERSION}`;
+            
+            if (loginScreenEl) loginScreenEl.style.display = 'none'; 
+            if (appContainerEl) appContainerEl.style.display = 'flex'; 
+
+            // 3. Default Date Setup
+            setDefaultDate(transactionDateEl);
+            setDefaultDate(investmentDateEl);
+            setDefaultDate(investmentRedemptionDateEl);
+            setDefaultDate(loanReturnDateInputEl); 
+            
+            // 4. Populate Dropdowns/Chips
+            populateSpendCategoryChips(); 
+            populateIncomeCategoryChips(); 
+            populateAllAccountDropdowns(); 
+            populateFilters();
+
+            // 5. Apply Settings UI Visibility
+            applyCategoryManagementVisibility();
+            applyAccountManagementVisibility();
+            
+            // 6. Set initial transaction form state
+            updateTransactionFormFields('income'); 
+
+            // 7. Initial Render (Dashboard)
+            showView('homeView', 'Dashboard'); 
+            renderAllContent();
+
+            // --- Event Listeners Setup ---
+            
+            if (toggleBalanceVisibilityBtn) { 
+                toggleBalanceVisibilityBtn.addEventListener('click', () => { 
+                    balancesVisible = !balancesVisible; 
+                    toggleBalanceVisibilityBtn.innerHTML = balancesVisible ? 
+                        '<i class="fas fa-eye"></i> Hide Amounts' : 
+                        '<i class="fas fa-eye-slash"></i> Show Amounts'; 
+                    renderAccountBalances(); 
+                });
+            }
+            
+            if (transactionTypeEl) transactionTypeEl.addEventListener('change', () => updateTransactionFormFields());
+            
+            // Data Management
+            if (exportDataBtn) exportDataBtn.addEventListener('click', exportData);
+            if (importDataTriggerBtn) importDataTriggerBtn.addEventListener('click', () => { lastFocusedElementBeforeModal = document.activeElement; importFileEl.click();});
+            if (importFileEl) importFileEl.addEventListener('change', importData);
+            if (resetDataBtn) resetDataBtn.addEventListener('click', handleResetData);
+            
+            // FAB (Open Transaction Modal)
+            if (fabOpenTransactionModal) { 
+                fabOpenTransactionModal.addEventListener('click', () => { 
+                    lastFocusedElementBeforeModal = document.activeElement; 
+                    editingTransactionIdEl.value = ''; 
+                    transactionModalTitleEl.textContent = 'Add New Transaction'; 
+                    transactionSubmitBtnEl.textContent = 'Add Transaction'; 
+                    transactionSubmitBtnEl.classList.remove('btn-warning'); 
+                    transactionSubmitBtnEl.classList.add('btn-primary'); 
+                    transactionForm.reset(); 
+                    selectedCategoryInputEl.value = ''; 
+                    document.querySelectorAll('.category-chips-container .category-chip.active').forEach(c => c.classList.remove('active')); 
+                    setDefaultDate(transactionDateEl); 
+                    updateTransactionFormFields('income'); 
+                    populateAllAccountDropdowns(); 
+                    transactionModalJQ.modal('show'); 
+                });
+            }
+            
+            // Transaction Form Submission
+            if (transactionForm) { 
+                transactionForm.addEventListener('submit', (e) => { 
+                    e.preventDefault(); 
+                    
+                    const editingId = editingTransactionIdEl.value ? parseInt(editingTransactionIdEl.value) : null; 
+                    const type = transactionTypeEl.value; 
+                    const descriptionInputVal = document.getElementById('transactionDescription').value.trim();
+                    const amount = parseFloat(document.getElementById('transactionAmount').value); 
+                    const date = transactionDateEl.value; 
+                    
+                    let category = (type === 'income' || type === 'spend') ? selectedCategoryInputEl.value : null; 
+                    if((type === 'income' || type === 'spend') && !category) {
+                        category = descriptionInputVal || (type === 'income' ? 'Uncategorized Income' : 'Uncategorized Spend');
+                    }
+
+                    const description = descriptionInputVal; 
+                    
+                    let acc, fromAcc, toAcc, isValid = false;
+
+                    if (type === 'income' || type === 'spend') { 
+                        acc = document.getElementById('transactionAccount').value; 
+                        if (!acc) { alert('Select account.'); return; } 
+                        if (amount > 0 && date ) isValid = true;
+                    } else if (type === 'transfer') { 
+                        fromAcc = document.getElementById('transferFromAccount').value; 
+                        toAcc = document.getElementById('transferToAccount').value;
+                        if (!fromAcc || !toAcc) { alert('Select From & To accounts.'); return; } 
+                        if (fromAcc === toAcc) { alert('Accounts cannot be same.'); return; } 
+                        if (amount > 0 && date) isValid = true;
+                    } else if (type === 'loan') { 
+                        acc = document.getElementById('transactionAccount').value;
+                        if (!acc) { alert('Please select the account money is lent from.'); return; } 
+                        if (!description) { alert('Please enter a description for the loan (e.g., to whom).'); return; } 
+                        if (amount > 0 && date) isValid = true;
+                    } 
+                    
+                    if (isValid) { 
+                        const transactionData = { type, description, amount, date };
+                        
+                        if (type === 'income' || type === 'spend') { 
+                            transactionData.category = category;
+                            transactionData.account = acc;
+                        } else if (type === 'transfer') { 
+                            transactionData.fromAccount = fromAcc; 
+                            transactionData.toAccount = toAcc; 
+                        } else if (type === 'loan') { 
+                            transactionData.account = acc;
+                            transactionData.loanStatus = 'outstanding'; 
+                            transactionData.returnDetails = null; 
+                            transactionData.category = 'Loan Receivable'; 
+                        } 
+                        
+                        if (editingId) { 
+                            const index = transactions.findIndex(t => t.id === editingId);
+                            if (index > -1) { 
+                                const original = transactions[index];
+                                transactions[index] = { 
+                                    ...original, 
+                                    ...transactionData,
+                                    id: original.id, 
+                                    loanStatus: type === 'loan' ? original.loanStatus || 'outstanding' : undefined,
+                                    returnDetails: type === 'loan' ? original.returnDetails : undefined
+                                }; 
+                            } 
+                        } else { 
+                            transactionData.id = Date.now(); 
+                            transactions.push(transactionData); 
+                        } 
+                        
+                        saveTransactions(); 
+                        renderAllContent(); 
+                        populateFilters(); 
+                        transactionModalJQ.modal('hide'); 
+                    } else { 
+                        alert('Please fill all required fields correctly.');
+                    } 
+                });
+            }
+            
+            // Investment Form Submission
+            document.querySelectorAll('.open-investment-modal').forEach(button => { 
+                button.addEventListener('click', function() { 
+                    lastFocusedElementBeforeModal = document.activeElement; 
+                    const type = this.dataset.type; 
+                    if(investmentForm) investmentForm.reset(); 
+                    if(investmentTypeSelect) investmentTypeSelect.value = type; 
+                    setDefaultDate(investmentDateEl); 
+                    populateAllAccountDropdowns(); 
+                    document.getElementById('investmentId').value = ''; 
+                    investmentModalJQ.modal('show'); 
+                });
+            });
+            
+            if(investmentForm) { 
+                investmentForm.addEventListener('submit', function(e) { 
+                    e.preventDefault(); 
+                    const type = investmentTypeSelect.value; 
+                    const description = document.getElementById('investmentDescription').value.trim(); 
+                    const date = investmentDateEl.value; 
+                    const amount = parseFloat(document.getElementById('investmentAmount').value); 
+                    const maturityInfo = document.getElementById('investmentMaturity').value.trim(); 
+                    const sourceAccount = investmentSourceAccountEl.value; 
+                    
+                    if (!description || !date || isNaN(amount) || amount <= 0 || !sourceAccount) { 
+                        alert('Fill required fields.'); 
+                        return; 
+                    } 
+                    
+                    const newInvestment = { 
+                        id: Date.now(), 
+                        type, description, date, amount, maturityInfo, sourceAccount, 
+                        status: 'active', currentValue: null, redeemedAmount: null, redemptionDate: null, profitOrLoss: null 
+                    }; 
+                    investments.push(newInvestment); 
+                    saveInvestments(); 
+                    
+                    const spendTransactionForInvestment = { 
+                        id: Date.now() + 1, 
+                        type: 'spend', 
+                        category: 'Investment Expense', 
+                        description: `Investment: ${description}`, 
+                        amount: amount, 
+                        date: date, 
+                        account: sourceAccount 
+                    };
+                    transactions.push(spendTransactionForInvestment); 
+                    saveTransactions(); 
+                    
+                    renderAllContent(); 
+                    populateFilters(); 
+                    investmentModalJQ.modal('hide'); 
+                });
+            }
+            
+            // Update Investment Value
+            if (updateInvestmentValueForm) { 
+                updateInvestmentValueForm.addEventListener('submit', function(e) { 
+                    e.preventDefault(); 
+                    const id = parseInt(updateValueInvestmentIdEl.value); 
+                    const currentValue = parseFloat(investmentCurrentValueEl.value); 
+                    const investmentIndex = investments.findIndex(inv => inv.id === id); 
+                    
+                    if (investmentIndex > -1 && !isNaN(currentValue) && currentValue >= 0) { 
+                        investments[investmentIndex].currentValue = currentValue; 
+                        saveInvestments(); 
+                        renderAllContent(); 
+                        $('#updateInvestmentValueModal').modal('hide'); 
+                    } else { 
+                        alert('Invalid current value.'); 
+                    } 
+                });
+            }
+            
+            // Redeem Investment
+            if (redeemInvestmentForm) { 
+                redeemInvestmentForm.addEventListener('submit', function(e) { 
+                    e.preventDefault(); 
+                    const id = parseInt(redeemInvestmentIdEl.value); 
+                    const redeemedAmount = parseFloat(investmentRedeemedAmountEl.value); 
+                    const redemptionDate = investmentRedemptionDateEl.value; 
+                    const depositAccount = redemptionDepositAccountEl.value; 
+                    
+                    const investmentIndex = investments.findIndex(inv => inv.id === id); 
+                    
+                    if (investmentIndex > -1 && !isNaN(redeemedAmount) && redeemedAmount > 0 && redemptionDate && depositAccount) { 
+                        const investment = investments[investmentIndex];
+                        const profitLoss = redeemedAmount - investment.amount; 
+                        
+                        investment.status = 'redeemed'; 
+                        investment.redeemedAmount = redeemedAmount; 
+                        investment.redemptionDate = redemptionDate; 
+                        investment.profitOrLoss = profitLoss;
+                        investment.currentValue = null; 
+                        
+                        const incomeTransaction = { 
+                            id: Date.now(), 
+                            type: 'income', 
+                            description: `Redemption: ${investment.description} (P/L: ${formatCurrency(profitLoss)})`, 
+                            amount: redeemedAmount, 
+                            date: redemptionDate, 
+                            account: depositAccount, 
+                            category: 'Investment Income' 
+                        };
+                        transactions.push(incomeTransaction); 
+                        
+                        saveInvestments(); 
+                        saveTransactions(); 
+                        renderAllContent(); 
+                        populateFilters(); 
+                        $('#redeemInvestmentModal').modal('hide'); 
+                    } else { 
+                        alert('Fill all fields correctly.');
+                    } 
+                });
+            }
+            
+            // Investment Redemption P/L Preview
+            if(investmentRedeemedAmountEl) { 
+                investmentRedeemedAmountEl.addEventListener('input', function() { 
+                    const investmentId = parseInt(redeemInvestmentIdEl.value); 
+                    const investment = investments.find(inv => inv.id === investmentId); 
+                    if (!investment) return; 
+                    
+                    const redeemedAmountVal = parseFloat(this.value); 
+                    
+                    if (!isNaN(redeemedAmountVal)) { 
+                        const profitLoss = redeemedAmountVal - investment.amount; 
+                        redeemProfitLossInfoEl.textContent = `Est. P/L: ${formatCurrency(profitLoss)}`; 
+                        redeemProfitLossInfoEl.className = `profit-loss-info text-center mb-2 ${profitLoss >= 0 ? 'text-success' : 'text-danger'}`; 
+                    } else { 
+                        redeemProfitLossInfoEl.textContent = ''; 
+                    } 
+                });
+            }
+            
+            // Record Loan Return Handler
+            if (recordLoanReturnFormEl) {
+                recordLoanReturnFormEl.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const loanId = parseInt(originalLoanIdToReturnEl.value);
+                    const returnDate = loanReturnDateInputEl.value;
+                    const returnAmount = parseFloat(loanReturnAmountInputEl.value);
+                    const returnAccount = loanReturnAccountSelectEl.value;
+
+                    if (!loanId || !returnDate || isNaN(returnAmount) || returnAmount <= 0 || !returnAccount) {
+                        alert('Please fill all fields for the loan return correctly.');
+                        return;
+                    }
+
+                    const loanIndex = transactions.findIndex(t => t.id === loanId && t.type === 'loan');
+                    if (loanIndex > -1) {
+                        transactions[loanIndex].loanStatus = 'returned';
+                        transactions[loanIndex].returnDetails = { returnDate, returnAmount, returnAccount };
+                        saveTransactions();
+                        renderAllContent();
+                        $('#recordLoanReturnModal').modal('hide');
+                    } else {
+                        alert('Error finding the original loan transaction.');
+                    }
+                });
+            }
+            
+            // --- Settings Event Listeners ---
+            
+            if (toggleCategoryManagementBtn) {
+                toggleCategoryManagementBtn.addEventListener('click', () => {
+                    categoryManagementVisible = !categoryManagementVisible;
+                    applyCategoryManagementVisibility();
+                    saveCategoryManagementVisibility();
+                });
+            }
+
+            if (toggleAccountManagementBtn) {
+                toggleAccountManagementBtn.addEventListener('click', () => {
+                    accountManagementVisible = !accountManagementVisible;
+                    applyAccountManagementVisibility();
+                    saveAccountManagementVisibility();
+                });
+            }
+            
+            if (addSpendCategoryFormEl) {
+                addSpendCategoryFormEl.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const categoryName = newSpendCategoryNameEl.value.trim();
+                    if (categoryName && !spendCategories.find(c => c.toLowerCase() === categoryName.toLowerCase())) {
+                        spendCategories.push(categoryName);
+                        saveSpendCategories();
+                        renderCategoryManagementUI();
+                        populateSpendCategoryChips(); 
+                        newSpendCategoryNameEl.value = '';
+                    } else if (categoryName) {
+                        alert('Spend category already exists or is invalid.');
+                    }
+                });
+            }
+
+            if (addIncomeCategoryFormEl) {
+                addIncomeCategoryFormEl.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const categoryName = newIncomeCategoryNameEl.value.trim();
+                    if (categoryName && !incomeCategories.find(c => c.toLowerCase() === categoryName.toLowerCase())) {
+                        incomeCategories.push(categoryName);
+                        saveIncomeCategories();
+                        renderCategoryManagementUI();
+                        populateIncomeCategoryChips(); 
+                        newIncomeCategoryNameEl.value = '';
+                    } else if (categoryName) {
+                        alert('Income category already exists or is invalid.');
+                    }
+                });
+            }
+
+            if (spendCategoriesListContainerEl) {
+                spendCategoriesListContainerEl.addEventListener('click', (e) => {
+                    if (e.target.closest('.remove-category-btn') && e.target.closest('.remove-category-btn').dataset.type === 'spend') {
+                        const btn = e.target.closest('.remove-category-btn');
+                        const categoryToRemove = btn.dataset.category;
+                        if (confirm(`Are you sure you want to remove the spend category "${categoryToRemove}"?`)) {
+                            spendCategories = spendCategories.filter(cat => cat !== categoryToRemove);
+                            saveSpendCategories();
+                            renderCategoryManagementUI();
+                            populateSpendCategoryChips(); 
+                        }
+                    }
+                });
+            }
+            
+            if (incomeCategoriesListContainerEl) {
+                incomeCategoriesListContainerEl.addEventListener('click', (e) => {
+                    if (e.target.closest('.remove-category-btn') && e.target.closest('.remove-category-btn').dataset.type === 'income') {
+                        const btn = e.target.closest('.remove-category-btn');
+                        const categoryToRemove = btn.dataset.category;
+                        if (confirm(`Are you sure you want to remove the income category "${categoryToRemove}"?`)) {
+                            incomeCategories = incomeCategories.filter(cat => cat !== categoryToRemove);
+                            saveIncomeCategories();
+                            renderCategoryManagementUI();
+                            populateIncomeCategoryChips(); 
+                        }
+                    }
+                });
+            }
+            
+            if (addAccountFormEl) {
+                addAccountFormEl.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const name = newAccountNameEl.value.trim();
+                    const id = newAccountIdEl.value.trim().toLowerCase().replace(/\s+/g, '_'); 
+
+                    if (!name || !id) { alert('Please provide both account name and a short ID.'); return; }
+                    if (accounts.some(acc => acc.id === id)) { alert('Account ID already exists. Please choose a unique ID.'); return; }
+                    if (!/^[a-z0-9_]+$/.test(id)) { alert('Account ID can only contain lowercase letters, numbers, and underscores.'); return; }
+
+                    accounts.push({ id, name, status: 'active' }); 
+                    saveAccounts();
+                    renderAccountManagementList();
+                    populateAllAccountDropdowns(); 
+                    renderAccountBalances(); 
+                    addAccountFormEl.reset();
+                });
+            }
+
+            if (accountsListContainerEl) {
+                accountsListContainerEl.addEventListener('click', (e) => {
+                    const target = e.target.closest('button');
+                    if (!target) return;
+
+                    const accountId = target.dataset.id;
+                    const account = accounts.find(acc => acc.id === accountId);
+                    if (!account) return;
+
+                    if (target.classList.contains('toggle-account-status-btn')) {
+                        if (account.status === 'active' || account.status === 'secret') {
+                            account.status = 'inactive';
+                        } else if (account.status === 'inactive') {
+                            account.status = 'active'; 
+                        }
+                    } else if (target.classList.contains('toggle-account-secret-btn')) {
+                        if (account.status === 'secret') {
+                            account.status = 'active'; 
+                        } else if (account.status === 'active') {
+                            account.status = 'secret'; 
+                        }
+                    }
+                    
+                    saveAccounts();
+                    renderAccountManagementList();
+                    populateAllAccountDropdowns();
+                    renderAccountBalances();
+                    if(document.getElementById('transactionsView').classList.contains('active')) renderFullTransactionList(); 
+                });
+            }
+
+            if (showSecretAccountsToggleSettingsEl) {
+                showSecretAccountsToggleSettingsEl.addEventListener('change', (e) => {
+                    showSecretAccounts = e.target.checked;
+                    localStorage.setItem('showSecretAccounts', JSON.stringify(showSecretAccounts)); 
+                    if(toggleShowSecretAccountsHomeBtn) {
+                        toggleShowSecretAccountsHomeBtn.innerHTML = showSecretAccounts ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+                        toggleShowSecretAccountsHomeBtn.title = showSecretAccounts ? "Hide Secret Accounts" : "Show Secret Accounts";
+                    }
+                    populateAllAccountDropdowns();
+                    renderAccountBalances();
+                    if(document.getElementById('transactionsView').classList.contains('active')) renderFullTransactionList(); 
+                });
+            }
+            
+            if (toggleShowSecretAccountsHomeBtn) {
+                toggleShowSecretAccountsHomeBtn.innerHTML = showSecretAccounts ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+                toggleShowSecretAccountsHomeBtn.title = showSecretAccounts ? "Hide Secret Accounts" : "Show Secret Accounts";
+                toggleShowSecretAccountsHomeBtn.addEventListener('click', () => {
+                    showSecretAccounts = !showSecretAccounts;
+                    localStorage.setItem('showSecretAccounts', JSON.stringify(showSecretAccounts)); 
+                    toggleShowSecretAccountsHomeBtn.innerHTML = showSecretAccounts ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+                    toggleShowSecretAccountsHomeBtn.title = showSecretAccounts ? "Hide Secret Accounts" : "Show Secret Accounts";
+                    if(showSecretAccountsToggleSettingsEl) showSecretAccountsToggleSettingsEl.checked = showSecretAccounts; 
+                    populateAllAccountDropdowns();
+                    renderAccountBalances();
+                    if(document.getElementById('transactionsView').classList.contains('active')) renderFullTransactionList(); 
+                });
+            }
+            
+            if (txSearchInputEl) txSearchInputEl.addEventListener('input', renderFullTransactionList);
+            if (txAmountFilterEl) txAmountFilterEl.addEventListener('input', renderFullTransactionList);
+            if (txMonthFilterEl) txMonthFilterEl.addEventListener('change', renderFullTransactionList);
+            if (txYearFilterEl) txYearFilterEl.addEventListener('change', renderFullTransactionList);
+            if (txTypeFilterEl) txTypeFilterEl.addEventListener('change', renderFullTransactionList);
+            if (txClearFiltersBtnEl) { 
+                txClearFiltersBtnEl.addEventListener('click', () => { 
+                    if(txSearchInputEl) txSearchInputEl.value = ''; 
+                    if(txAmountFilterEl) txAmountFilterEl.value = ''; 
+                    if(txMonthFilterEl) txMonthFilterEl.value = ''; 
+                    if(txYearFilterEl) txYearFilterEl.value = ''; 
+                    if(txTypeFilterEl) txTypeFilterEl.value = ''; 
+                    renderFullTransactionList(); 
+                });
+            }
+
+            document.body.addEventListener('click', function(e) { 
+                const editButton = e.target.closest('.edit-btn'); 
+                if (editButton && editButton.dataset.type !== 'investment') { 
+                    lastFocusedElementBeforeModal = document.activeElement; 
+                    const transactionId = parseInt(editButton.dataset.id); 
+                    const transactionToEdit = transactions.find(t => t.id === transactionId); 
+                    
+                    if (transactionToEdit) { 
+                        editingTransactionIdEl.value = transactionToEdit.id; 
+                        transactionModalTitleEl.textContent = 'Edit Transaction'; 
+                        transactionSubmitBtnEl.textContent = 'Update Transaction'; 
+                        transactionSubmitBtnEl.classList.remove('btn-primary'); 
+                        transactionSubmitBtnEl.classList.add('btn-warning');
+                        
+                        transactionTypeEl.value = transactionToEdit.type; 
+                        updateTransactionFormFields(transactionToEdit.type); 
+                        
+                        document.getElementById('transactionDescription').value = transactionToEdit.description || ''; 
+                        document.getElementById('transactionAmount').value = transactionToEdit.amount; 
+                        document.getElementById('transactionDate').value = formatDate(transactionToEdit.date); 
+                        selectedCategoryInputEl.value = transactionToEdit.category || '';
+                        
+                        if (transactionToEdit.type === 'spend') { 
+                            populateSpendCategoryChips(transactionToEdit.category); 
+                            populateAccountDropdown(document.getElementById('transactionAccount'), transactionToEdit.account); 
+                        } else if (transactionToEdit.type === 'income') { 
+                            populateIncomeCategoryChips(transactionToEdit.category); 
+                            populateAccountDropdown(document.getElementById('transactionAccount'), transactionToEdit.account);
+                        } else if (transactionToEdit.type === 'transfer') { 
+                            populateAccountDropdown(document.getElementById('transferFromAccount'), transactionToEdit.fromAccount); 
+                            populateAccountDropdown(document.getElementById('transferToAccount'), transactionToEdit.toAccount); 
+                        } else if (transactionToEdit.type === 'loan') { 
+                            populateAccountDropdown(document.getElementById('transactionAccount'), transactionToEdit.account);
+                        } 
+                        transactionModalJQ.modal('show'); 
+                    } 
+                } 
+                
+                const deleteButton = e.target.closest('.delete-btn'); 
+                if (deleteButton) { 
+                    const id = parseInt(deleteButton.dataset.id); 
+                    const type = deleteButton.dataset.type;
+                    
+                    if (type === 'transaction') { 
+                        if (window.confirm('Delete transaction? This cannot be undone.')) { 
+                            transactions = transactions.filter(t => t.id !== id); 
+                            saveTransactions(); 
+                            renderAllContent();
+                            populateFilters();
+                        }
+                    } else if (type === 'investment') { 
+                        const investmentToDelete = investments.find(inv => inv.id === id);
+                        let confirmMessage = 'Delete investment record? This is permanent.'; 
+                        if (investmentToDelete && investmentToDelete.status === 'redeemed') { 
+                            confirmMessage += '\nNOTE: Associated income transaction is NOT automatically reversed. You may need to delete it manually in the transaction view.';
+                        } 
+                        if (window.confirm(confirmMessage)) { 
+                            investments = investments.filter(inv => inv.id !== id);
+                            
+                            transactions = transactions.filter(t => 
+                                !(t.type === 'spend' && t.category === 'Investment Expense' && t.description.includes(investmentToDelete.description))
+                            );
+
+                            saveInvestments(); 
+                            saveTransactions();
+                            renderAllContent();
+                        }
+                    }
+                } 
+                
+                const updateBtn = e.target.closest('.update-value-btn');
+                if (updateBtn) { 
+                    lastFocusedElementBeforeModal = document.activeElement; 
+                    const investmentId = parseInt(updateBtn.dataset.id);
+                    const investment = investments.find(inv => inv.id === investmentId); 
+                    if (!investment) return; 
+                    updateValueInvestmentIdEl.value = investment.id; 
+                    updateValueInvestmentNameEl.textContent = investment.description;
+                    investmentCurrentValueEl.value = investment.currentValue !== null && investment.currentValue !== undefined ? investment.currentValue.toFixed(2) : ''; 
+                    $('#updateInvestmentValueModal').modal('show'); 
+                } 
+                
+                const redeemBtn = e.target.closest('.redeem-btn');
+                if (redeemBtn) { 
+                    lastFocusedElementBeforeModal = document.activeElement; 
+                    const investmentId = parseInt(redeemBtn.dataset.id); 
+                    const investment = investments.find(inv => inv.id === investmentId);
+                    if (!investment) return; 
+                    redeemInvestmentIdEl.value = investment.id; 
+                    redeemInvestmentNameEl.textContent = investment.description; 
+                    redeemInvestmentInitialCostEl.textContent = formatCurrency(investment.amount); 
+                    investmentRedeemedAmountEl.value = investment.currentValue !== null && investment.currentValue !== undefined ? investment.currentValue.toFixed(2) : investment.amount.toFixed(2);
+                    setDefaultDate(investmentRedemptionDateEl); 
+                    populateAccountDropdown(redemptionDepositAccountEl); 
+                    redeemProfitLossInfoEl.textContent = ''; 
+                    $('#redeemInvestmentModal').modal('show'); 
+                } 
+                
+                const recordReturnBtn = e.target.closest('.record-return-btn'); 
+                if (recordReturnBtn) { 
+                    lastFocusedElementBeforeModal = document.activeElement; 
+                    const loanId = parseInt(recordReturnBtn.dataset.id);
+                    const loanToReturn = transactions.find(t => t.id === loanId && t.type === 'loan'); 
+                    if (loanToReturn) { 
+                        originalLoanIdToReturnEl.value = loanId;
+                        loanReturnDescriptionEl.textContent = loanToReturn.description; 
+                        originalLoanAmountDisplayEl.textContent = formatCurrency(loanToReturn.amount); 
+                        loanReturnAmountInputEl.value = loanToReturn.amount.toFixed(2); 
+                        setDefaultDate(loanReturnDateInputEl); 
+                        populateAccountDropdown(loanReturnAccountSelectEl); 
+                        $('#recordLoanReturnModal').modal('show'); 
+                    } 
+                }
+            });
+            
+            navItems.forEach(item => { 
+                item.addEventListener('click', () => { 
+                    showView(item.dataset.view, item.dataset.title); 
+                }); 
+            });
+
+            $('.modal').on('hidden.bs.modal', function () { 
+                if (lastFocusedElementBeforeModal) { 
+                    try { lastFocusedElementBeforeModal.focus(); } catch(e) { /* Element might no longer be focusable or exist */ } 
+                    lastFocusedElementBeforeModal = null; 
+                } 
+            });
+
+            $('#transactionModal').on('hidden.bs.modal', function () { 
+                transactionForm.reset(); 
+                editingTransactionIdEl.value = ''; 
+                selectedCategoryInputEl.value = ''; 
+                document.querySelectorAll('.category-chips-container .category-chip.active').forEach(c => c.classList.remove('active')); 
+                setDefaultDate(transactionDateEl); 
+                updateTransactionFormFields('income'); 
+                populateAllAccountDropdowns(); 
+            });
+            
+            $('#investmentModal').on('hidden.bs.modal', function () { 
+                if(investmentForm) investmentForm.reset(); 
+                setDefaultDate(investmentDateEl); 
+                if(investmentTypeSelect) investmentTypeSelect.value = "stock"; 
+                populateAllAccountDropdowns(); 
+            });
+            
+            $('#updateInvestmentValueModal').on('hidden.bs.modal', function () { 
+                if(updateInvestmentValueForm) updateInvestmentValueForm.reset(); 
+            });
+            
+            $('#redeemInvestmentModal').on('hidden.bs.modal', function () { 
+                if(redeemInvestmentForm) redeemInvestmentForm.reset(); 
+                if(redeemProfitLossInfoEl) redeemProfitLossInfoEl.textContent = ''; 
+                populateAllAccountDropdowns(); 
+            });
+            
+            $('#recordLoanReturnModal').on('hidden.bs.modal', function () { 
+                if(recordLoanReturnFormEl) recordLoanReturnFormEl.reset(); 
+            });
+        }
+        
+        // --- FINAL INIT CALL ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+        });
+    </script>
+
+</body>
+</html>
