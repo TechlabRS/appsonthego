@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All-in-One Tracker</title>
+    <title>RS' Diet and All-in-One Tracker</title>
     <!-- Google Font: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         /* CSS variables for a modern theme */
@@ -28,6 +30,7 @@
             --border-radius: 12px;
             --warning-light: #fff3cd;
             --warning-dark: #856404;
+            --danger: #dc3545;
             --danger-light: #f8d7da;
             --danger-dark: #721c24;
         }
@@ -565,46 +568,8 @@
             background-color: var(--grey-medium);
         }
 
-        /* --- History Page --- */
-        .history-day-card {
-            background: var(--white);
-            border: 1px solid var(--grey-light);
-            border-radius: var(--border-radius);
-            padding: 16px;
-            box-shadow: var(--shadow);
-            margin-bottom: 16px;
-        }
-        .history-day-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--primary-green);
-            margin-bottom: 12px;
-        }
-        .history-day-title span {
-            font-weight: 500;
-            color: var(--text-light);
-            font-size: 0.9rem;
-            margin-left: 8px;
-        }
-        .history-day-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            font-size: 0.95rem;
-        }
-        .history-stat {
-            display: flex;
-            flex-direction: column;
-        }
-        .history-stat-label {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            margin-bottom: 2px;
-        }
-        .history-stat-value {
-            font-weight: 600;
-            color: var(--text-dark);
-        }
+        /* --- History Page (Now Reports) --- */
+        /* Styles removed, new styles below */
 
         /* --- Quantity Modal --- */
         .modal-overlay {
@@ -687,7 +652,7 @@
             background: var(--primary-green);
         }
 
-        /* --- NEW: Import/Export Styles --- */
+        /* --- Import/Export Styles --- */
         .data-management-actions {
             display: flex;
             flex-direction: column;
@@ -719,7 +684,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>My Tracker</h1>
+            <h1>RS' Diet and Goal Tracker</h1>
             <p>Your journey to healthy weight gain</p>
         </header>
         
@@ -737,9 +702,10 @@
                 <i class="ph-light ph-magnifying-glass"></i>
                 Add Custom
             </div>
-            <div class="nav-tab" data-page="history">
-                <i class="ph-light ph-chart-bar-horizontal"></i>
-                History
+            <!-- UPDATED: History is now Reports -->
+            <div class="nav-tab" data-page="reports">
+                <i class="ph-light ph-chart-bar"></i>
+                Reports
             </div>
             <div class="nav-tab" data-page="plan">
                 <i class="ph-light ph-calendar"></i>
@@ -804,7 +770,7 @@
                     <p class="motivation-quote" id="motivation-quote">"Consistency is the key to progress."</p>
                 </div>
 
-                <!-- NEW: DATA MANAGEMENT CARD -->
+                <!-- DATA MANAGEMENT CARD -->
                 <div class="card">
                     <h3>Data Management</h3>
                     <div class="data-management-actions">
@@ -929,14 +895,19 @@
                 </div>
             </section>
 
-            <!-- History Page -->
-            <section id="page-history" class="page">
-                <h2 class="page-title"><i class="ph-light ph-chart-bar-horizontal"></i>7-Day History</h2>
+            <!-- UPDATED: History Page is now Reports Page -->
+            <section id="page-reports" class="page">
+                <h2 class="page-title"><i class="ph-light ph-chart-bar"></i>Monthly Reports</h2>
                 <p style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-light);">
-                    Review your logged calories and weight for the past week.
+                    Review your weight and calorie trends for the last 30 days.
                 </p>
-                <div id="history-report-container">
-                    <!-- History cards will be injected here -->
+                <div class="card">
+                    <h3>Weight Progress (Last 30 Days)</h3>
+                    <canvas id="weight-chart"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Calorie Intake (Last 30 Days)</h3>
+                    <canvas id="calorie-chart"></canvas>
                 </div>
             </section>
 
@@ -956,6 +927,12 @@
             <section id="page-food-list" class="page">
                 <h2 class="page-title"><i class="ph-light ph-books"></i>My Food Database</h2>
                 
+                <!-- NEW: Search bar for food list -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="food-list-search-input">Search Your Database</label>
+                    <input type="text" id="food-list-search-input" class="form-input" placeholder="Find a food in your database...">
+                </div>
+
                 <!-- Add Food Section -->
                 <div class="card">
                     <button id="show-add-food-form-btn" class="form-button">
@@ -1219,9 +1196,6 @@
             const addCustomGoalsTitle = document.getElementById('add-custom-goals-title');
             const addCustomLogTitle = document.getElementById('add-custom-log-title');
             const routineLogTitle = document.getElementById('routine-log-title');
-
-            // History Page
-            const historyReportContainer = document.getElementById('history-report-container');
             
             // Meal Ideas
             const daySelectorContainer = document.getElementById('day-selector');
@@ -1241,9 +1215,16 @@
             const addFoodForm = document.getElementById('add-food-form');
             const cancelAddFoodBtn = document.getElementById('cancel-add-food-btn');
 
-            // NEW: Import/Export Elements
+            // Import/Export Elements
             const exportDataBtn = document.getElementById('export-data-btn');
             const importFileInput = document.getElementById('import-file-input');
+
+            // Chart.js instance variables
+            let weightChartInstance = null;
+            let calorieChartInstance = null;
+
+            // NEW: Food List Search
+            const foodListSearchInput = document.getElementById('food-list-search-input');
 
             // --- 3. STATE ---
             let FOOD_DATABASE = []; // Will be populated from localStorage or DEFAULT
@@ -1260,18 +1241,28 @@
                 return today.toISOString().split('T')[0];
             }
 
+            // Helper to get date string for N days ago
             function getDateStringDaysAgo(days) {
                 const date = new Date();
                 date.setDate(date.getDate() - days);
                 return date.toISOString().split('T')[0];
             }
             
+            // Helper to format date for display
             function formatDisplayDate(dateStr) {
                 const date = new Date(dateStr);
                 const options = { weekday: 'long', month: 'short', day: 'numeric' };
                 date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
                 if (dateStr === getTodayDateString()) return "Today";
                 if (dateStr === getDateStringDaysAgo(1)) return "Yesterday";
+                return date.toLocaleDateString('en-US', options);
+            }
+
+            // NEW: Helper to format date for chart labels
+            function formatChartDate(dateStr) {
+                const date = new Date(dateStr);
+                const options = { month: 'short', day: 'numeric' };
+                date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
                 return date.toLocaleDateString('en-US', options);
             }
 
@@ -1349,12 +1340,13 @@
                 } else if (pageId === 'log-routine') {
                     logDatePickerRoutine.value = selectedLogDate;
                     renderTodaysLog('log-routine');
-                } else if (pageId === 'history') {
-                    renderHistoryReport();
+                } else if (pageId === 'reports') { // UPDATED
+                    renderReports();
                 } else if (pageId === 'plan') {
                     renderDayTabs();
                     renderMealIdeas(selectedPlanDay);
                 } else if (pageId === 'food-list') {
+                    foodListSearchInput.value = ''; // Clear search bar
                     renderFoodDatabase();
                     addFoodForm.style.display = 'none';
                     showAddFoodFormBtn.style.display = 'block';
@@ -1736,12 +1728,33 @@
                 }
             });
 
-            // --- 10. FOOD LIST PAGE LOGIC ---
+            // --- 10. FOOD LIST PAGE LOGIC (NOW WITH SEARCH) ---
             function renderFoodDatabase() {
                 foodDatabaseListContainer.innerHTML = '';
+                
+                // Get search query from the input
+                const query = foodListSearchInput.value.toLowerCase().trim();
+
                 const sortedDB = [...FOOD_DATABASE].sort((a, b) => a.name.localeCompare(b.name));
                 
-                sortedDB.forEach(food => {
+                // Filter the sorted DB based on the query
+                const filteredDB = sortedDB.filter(food => {
+                    if (!query) return true; // Show all if query is empty
+                    return food.name.toLowerCase().includes(query);
+                });
+
+                // Show a message if no results match the query
+                if (filteredDB.length === 0) {
+                    if (query) {
+                        foodDatabaseListContainer.innerHTML = `<p style="text-align: center; color: var(--text-light); padding: 16px 0;">No food found matching "${query}".</p>`;
+                    } else {
+                        foodDatabaseListContainer.innerHTML = `<p style="text-align: center; color: var(--text-light); padding: 16px 0;">Your food database is empty. Add a new food above.</p>`;
+                    }
+                    return; // Stop here
+                }
+
+                // Render only the filtered items
+                filteredDB.forEach(food => {
                     const cardHTML = `
                         <div class="food-list-item">
                             <h3>${food.name}</h3>
@@ -1789,6 +1802,12 @@
                     return;
                 }
 
+                // Check for duplicate name
+                if (FOOD_DATABASE.some(food => food.name.toLowerCase() === name.toLowerCase())) {
+                    showToast('A food with this name already exists.');
+                    return;
+                }
+
                 const nextId = FOOD_DATABASE.length > 0 ? Math.max(...FOOD_DATABASE.map(f => f.id)) + 1 : 1;
                 
                 const newFood = {
@@ -1804,7 +1823,7 @@
                 };
 
                 FOOD_DATABASE.push(newFood);
-                saveFoodDatabase();
+                saveFoodDatabase(); // This was the bug fix
                 renderFoodDatabase();
                 
                 addFoodForm.style.display = 'none';
@@ -1862,41 +1881,162 @@
                 }
             });
 
-            // --- 12. HISTORY REPORT LOGIC ---
-            function renderHistoryReport() {
-                historyReportContainer.innerHTML = '';
-                
-                for (let i = 0; i < 7; i++) {
-                    const dateStr = getDateStringDaysAgo(i);
-                    const dayTotals = getTotalsForDay(dateStr);
-                    const dayWeight = weightLog.find(w => w.date === dateStr);
+            // --- 12. REPORTS PAGE LOGIC (Replaces History) ---
+            function renderReports() {
+                // Ensure data is loaded
+                loadData(); 
 
-                    const cardHTML = `
-                        <div class="history-day-card">
-                            <h3 class="history-day-title">
-                                ${formatDisplayDate(dateStr)}
-                            </h3>
-                            <div class="history-day-stats">
-                                <div class="history-stat">
-                                    <span class="history-stat-label">Calories Logged</span>
-                                    <span class="history-stat-value">${dayTotals.calories.toFixed(0)} kcal</span>
-                                </div>
-                                <div class="history-stat">
-                                    <span class="history-stat-label">Weight Logged</span>
-                                    <span class="history-stat-value">${dayWeight ? dayWeight.weight + ' kg' : '--'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    historyReportContainer.insertAdjacentHTML('beforeend', cardHTML);
+                // --- 1. Generate Labels for last 30 days ---
+                const labels = [];
+                const dateStrs = [];
+                for (let i = 29; i >= 0; i--) {
+                    const dateStr = getDateStringDaysAgo(i);
+                    dateStrs.push(dateStr);
+                    labels.push(formatChartDate(dateStr));
                 }
+
+                // --- 2. Process Weight Data ---
+                const weightData = [];
+                const weightLogMap = new Map(weightLog.map(entry => [entry.date, entry.weight]));
+                let lastKnownWeight = userProfile.startWeight;
+                // Find the first weight *before* the 30-day window to start from
+                for (const entry of weightLog) {
+                    if (entry.date < dateStrs[0]) {
+                        lastKnownWeight = entry.weight;
+                    } else {
+                        break; // Logs are sorted, so we can stop
+                    }
+                }
+                
+                dateStrs.forEach(dateStr => {
+                    if (weightLogMap.has(dateStr)) {
+                        lastKnownWeight = weightLogMap.get(dateStr);
+                        weightData.push(lastKnownWeight);
+                    } else {
+                        // Forward-fill: use the last known weight
+                        weightData.push(lastKnownWeight);
+                    }
+                });
+
+                // --- 3. Process Calorie Data ---
+                const calorieData = [];
+                const calorieGoalData = [];
+                dateStrs.forEach(dateStr => {
+                    const totals = getTotalsForDay(dateStr);
+                    calorieData.push(totals.calories.toFixed(0));
+                    calorieGoalData.push(DAILY_GOALS.calories); // Goal line
+                });
+
+                // --- 4. Render Weight Chart ---
+                const weightCtx = document.getElementById('weight-chart').getContext('2d');
+                if (weightChartInstance) {
+                    weightChartInstance.destroy(); // Destroy old chart before creating new one
+                }
+                weightChartInstance = new Chart(weightCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Weight (kg)',
+                            data: weightData,
+                            backgroundColor: 'rgba(64, 145, 108, 0.1)',
+                            borderColor: 'var(--medium-green)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.1, // Slight curve
+                            pointBackgroundColor: 'var(--medium-green)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: 'Weight (kg)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw} kg`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // --- 5. Render Calorie Chart ---
+                const calorieCtx = document.getElementById('calorie-chart').getContext('2d');
+                if (calorieChartInstance) {
+                    calorieChartInstance.destroy();
+                }
+                calorieChartInstance = new Chart(calorieCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Calories Eaten (kcal)',
+                                data: calorieData,
+                                backgroundColor: 'var(--light-green)',
+                                borderColor: 'var(--medium-green)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Calorie Goal (kcal)',
+                                data: calorieGoalData,
+                                type: 'line', // Overlay a line
+                                borderColor: 'var(--danger)',
+                                borderWidth: 2,
+                                pointRadius: 0, // No dots
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Calories (kcal)'
+                                }
+                            },
+                             x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw} kcal`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
             }
             
-            // --- NEW: 13. IMPORT/EXPORT LOGIC ---
-
-            /**
-             * Exports all user data to a JSON file.
-             */
+            // --- 13. IMPORT/EXPORT LOGIC ---
             function exportData() {
                 try {
                     const dataToExport = {
@@ -1907,7 +2047,7 @@
                         foodDatabase: JSON.parse(localStorage.getItem('foodDatabase') || '[]')
                     };
                     
-                    const dataStr = JSON.stringify(dataToExport, null, 2); // Pretty-print JSON
+                    const dataStr = JSON.stringify(dataToExport, null, 2);
                     const blob = new Blob([dataStr], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
                     
@@ -1915,7 +2055,7 @@
                     a.href = url;
                     a.download = `myTrackerData_${getTodayDateString()}.json`;
                     document.body.appendChild(a);
-                    a.click();
+a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     
@@ -1926,9 +2066,6 @@
                 }
             }
 
-            /**
-             * Handles the file import process and merges data.
-             */
             function importData(event) {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -1943,18 +2080,14 @@
                     try {
                         const importedData = JSON.parse(e.target.result);
                         
-                        // Validate imported data structure
                         if (!importedData.weightLog || !importedData.mealLog || !importedData.foodDatabase) {
                             throw new Error('Invalid file structure.');
                         }
 
                         // --- MERGE LOGIC ---
-
-                        // 1. Weight Log: Merge and de-duplicate by date (last-one-wins)
                         const currentWeightLog = JSON.parse(localStorage.getItem('weightLog')) || [];
                         const importedWeightLog = importedData.weightLog || [];
                         const weightMap = new Map();
-                        // Load current data first, then imported. This way imported data can update existing dates.
                         [...currentWeightLog, ...importedWeightLog].forEach(entry => {
                             if(entry.date && entry.weight) {
                                 weightMap.set(entry.date, entry.weight);
@@ -1963,7 +2096,6 @@
                         const mergedWeightLog = Array.from(weightMap, ([date, weight]) => ({ date, weight }))
                                                      .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                        // 2. Meal Log: Merge by date, concatenating arrays
                         const currentMealLog = JSON.parse(localStorage.getItem('mealLog')) || {};
                         const importedMealLog = importedData.mealLog || {};
                         const mergedMealLog = { ...currentMealLog };
@@ -1971,19 +2103,15 @@
                         Object.keys(importedMealLog).forEach(dateKey => {
                             const importedEntries = importedMealLog[dateKey] || [];
                             const currentEntries = mergedMealLog[dateKey] || [];
-                            // This just adds all imported entries. Simple and non-destructive.
                             mergedMealLog[dateKey] = [...currentEntries, ...importedEntries];
                         });
 
-                        // 3. Food Database: Merge and de-duplicate by name (preserves existing)
                         const currentFoodDB = JSON.parse(localStorage.getItem('foodDatabase')) || [];
                         const importedFoodDB = importedData.foodDatabase || [];
                         const foodMap = new Map();
-                        // Add current data first, so it is preserved on conflict
                         currentFoodDB.forEach(food => {
                             if(food.name) foodMap.set(food.name.toLowerCase().trim(), food)
                         });
-                        // Add imported data only if the name doesn't already exist
                         importedFoodDB.forEach(food => {
                             if (food.name && !foodMap.has(food.name.toLowerCase().trim())) {
                                 foodMap.set(food.name.toLowerCase().trim(), food);
@@ -1992,14 +2120,12 @@
                         const mergedFoodDB = Array.from(foodMap.values());
 
                         // --- SAVE MERGED DATA ---
-                        // We do NOT overwrite the userProfile, as per the "don't overwrite" rule.
                         localStorage.setItem('weightLog', JSON.stringify(mergedWeightLog));
                         localStorage.setItem('mealLog', JSON.stringify(mergedMealLog));
                         localStorage.setItem('foodDatabase', JSON.stringify(mergedFoodDB));
 
                         showToast('Data merged successfully!');
                         
-                        // Reload data into the app and refresh the view
                         loadData();
                         renderDashboard();
 
@@ -2007,7 +2133,6 @@
                         console.error('Error importing data:', error);
                         showToast('Error: Could not import file. Invalid format.');
                     } finally {
-                        // Reset file input to allow importing the same file again
                         event.target.value = null;
                     }
                 };
@@ -2015,7 +2140,6 @@
                 reader.readAsText(file);
             }
 
-            // Bind listeners for import/export
             exportDataBtn.addEventListener('click', exportData);
             importFileInput.addEventListener('change', importData);
 
@@ -2028,6 +2152,9 @@
                 logDatePickerRoutine.value = selectedLogDate;
                 weightLogDate.value = getTodayDateString();
 
+                // NEW: Add listener to food list search bar
+                foodListSearchInput.addEventListener('input', renderFoodDatabase);
+
                 loadData(); // This now loads the custom food DB
                 showPage('dashboard'); // Start on the dashboard
             }
@@ -2038,4 +2165,3 @@
 
 </body>
 </html>
-
