@@ -19,25 +19,25 @@
     <!-- Custom CSS for Modern, Sleek UI -->
     <style>
         :root {
-            /* Rich Color Palette */
-            --color-primary: #4A90E2; /* Vibrant Blue */
-            --color-primary-dark: #3A7BC8;
-            --color-secondary: #50E3C2; /* Teal/Mint */
-            --color-accent: #F5A623; /* Amber */
-            --color-success: #2ECC71; /* Green */
-            --color-danger: #E74C3C; /* Red */
-            --color-warning: #F39C12; /* Yellow */
-            --color-info: #3498DB; /* Light Blue */
+        /* Rich Color Palette */
+        --color-primary: #4A90E2; /* Vibrant Blue - Used for main navigation, buttons, and overall theme focus */
+        --color-primary-dark: #3A7BC8;
+        --color-secondary: #50E3C2; /* Teal/Mint - Used for FAB gradient and accents */
+        --color-accent: #F5A623; /* Amber - Secondary highlight color */
+        --color-success: #2ECC71; /* Green - Used for Income, positive balances, and successful actions */
+        --color-danger: #E74C3C; /* Red - Used for Spend, negative balances, and danger actions */
+        --color-warning: #F39C12; /* Yellow - Used for Loans and warnings */
+        --color-info: #3498DB; /* Light Blue - Used for Transfers and informational elements */
 
-            /* UI Colors */
-            --color-bg-primary: #F7F9FC; /* Light Gray Background */
-            --color-bg-secondary: #FFFFFF; /* Card/Modal Background */
-            --color-text-primary: #2C3E50; /* Dark Blue/Slate */
-            --color-text-secondary: #8FA1B3; /* Muted Gray */
-            --color-border: #E6ECF3;
-            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
+        /* UI Colors */
+        --color-bg-primary: #F7F9FC; /* Light Gray Background - Main app background */
+        --color-bg-secondary: #FFFFFF; /* Card/Modal Background - Surface color */
+        --color-text-primary: #2C3E50; /* Dark Blue/Slate - Main text color (high contrast) */
+        --color-text-secondary: #8FA1B3; /* Muted Gray - Secondary/caption text */
+        --color-border: #E6ECF3; /* Light Border Color */
+        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
 
         /* --- Global & Typography --- */
         body {
@@ -614,6 +614,34 @@
             
             <!-- Charts View -->
             <div class="view" id="chartsView">
+                <!-- NEW FILTER SECTION -->
+                <div class="card mb-3">
+                    <div class="card-header">Date Filter</div>
+                    <div class="card-body">
+                        <div id="chartFilterButtons" class="d-flex flex-wrap justify-content-center" style="gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <button class="btn btn-sm btn-primary chart-filter-btn active" data-range="all">All Time</button>
+                            <button class="btn btn-sm btn-outline-primary chart-filter-btn" data-range="month">Current Month</button>
+                            <button class="btn btn-sm btn-outline-primary chart-filter-btn" data-range="3months">Last 3 Months</button>
+                            <button class="btn btn-sm btn-outline-primary chart-filter-btn" data-range="6months">Last 6 Months</button>
+                            <button class="btn btn-sm btn-outline-primary chart-filter-btn" data-range="year">Last 1 Year</button>
+                            <button class="btn btn-sm btn-outline-secondary chart-filter-btn" data-range="custom">Custom Range</button>
+                        </div>
+                        <div id="customDateRangeInputs" style="display: none;" class="form-row align-items-end" style="gap: 0.5rem;">
+                            <div class="col-5">
+                                <label for="chartStartDate" class="small mb-0">Start Date</label>
+                                <input type="date" id="chartStartDate" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-5">
+                                <label for="chartEndDate" class="small mb-0">End Date</label>
+                                <input type="date" id="chartEndDate" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-2">
+                                <button id="applyCustomDateRangeBtn" class="btn btn-sm btn-primary btn-block"><i class="fas fa-check"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- END NEW FILTER SECTION -->
                 <div class="card">
                     <div class="card-header">Income vs. Spend Overview</div>
                     <div class="card-body chart-container">
@@ -1001,6 +1029,12 @@
         let investmentPortfolioChartInstance = null;
         let monthlySpendChartInstance = null;
 
+        // --- CHART FILTER STATE ---
+        let chartDateRange = 'all'; 
+        let chartStartDate = null;
+        let chartEndDate = null;
+
+
         // --- DOM Elements (Defined outside initApp for global access) ---
         const appContainerEl = document.getElementById('appContainer');
         const appTitleEl = document.getElementById('appTitle');
@@ -1094,6 +1128,12 @@
         const toggleAccountManagementBtn = document.getElementById('toggleAccountManagementBtn');
         const accountManagementContentEl = document.getElementById('accountManagementContent');
         const loginScreenEl = document.getElementById('loginScreen');
+        // New Chart Filter DOM elements
+        const chartFilterButtonsContainer = document.getElementById('chartFilterButtons');
+        const customDateRangeInputsEl = document.getElementById('customDateRangeInputs');
+        const chartStartDateEl = document.getElementById('chartStartDate');
+        const chartEndDateEl = document.getElementById('chartEndDate');
+        const applyCustomDateRangeBtn = document.getElementById('applyCustomDateRangeBtn');
 
 
         // --- Utility Functions ---
@@ -1158,6 +1198,88 @@
             if (showSecretAccountsToggleSettingsEl) showSecretAccountsToggleSettingsEl.checked = showSecretAccounts;
         }
 
+        // --- CHART DATE FILTERING LOGIC ---
+
+        function getDatesForRange(rangeKey) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Start of today
+            let startDate = null;
+            let endDate = new Date(today);
+            
+            // Set endDate to end of today (23:59:59.999) for accurate filtering inclusive of today
+            endDate.setDate(endDate.getDate() + 1);
+            endDate.setMilliseconds(endDate.getMilliseconds() - 1);
+
+            if (rangeKey === 'all') {
+                startDate = null; 
+            } else if (rangeKey === 'month') {
+                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            } else if (rangeKey === '3months') {
+                startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+            } else if (rangeKey === '6months') {
+                startDate = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+            } else if (rangeKey === 'year') {
+                startDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+            } else if (rangeKey === 'custom') {
+                // Use global state for custom range
+                startDate = chartStartDate;
+                // Since chartEndDate is just a Date object from input, set its time to end of day
+                endDate = chartEndDate ? new Date(chartEndDate.getFullYear(), chartEndDate.getMonth(), chartEndDate.getDate(), 23, 59, 59, 999) : endDate;
+                return { startDate, endDate };
+            }
+            
+            // Convert startDate to the start of that day (00:00:00.000)
+            if (startDate) {
+                startDate.setHours(0, 0, 0, 0);
+            }
+
+            return { startDate, endDate };
+        }
+
+        function filterTransactionsForCharts() {
+            const { startDate, endDate } = getDatesForRange(chartDateRange);
+            
+            // Convert dates to timestamps for comparison
+            const startTimestamp = startDate ? startDate.getTime() : 0;
+            const endTimestamp = endDate ? endDate.getTime() : Infinity;
+
+            return transactions.filter(t => {
+                const txDate = new Date(t.date);
+                const txTimestamp = txDate.getTime();
+                
+                return txTimestamp >= startTimestamp && txTimestamp <= endTimestamp;
+            });
+        }
+        
+        function renderChartFilters() {
+            if (!isAuthenticated || !chartFilterButtonsContainer) return;
+
+            // Handle button active state
+            document.querySelectorAll('.chart-filter-btn').forEach(btn => {
+                if (btn.dataset.range === chartDateRange) {
+                    btn.classList.add('active', 'btn-primary');
+                    btn.classList.remove('btn-outline-primary', 'btn-outline-secondary');
+                } else if (btn.dataset.range === 'custom') {
+                     // Special handling for the Custom button
+                    btn.classList.remove('active', 'btn-primary', 'btn-outline-primary');
+                    btn.classList.add('btn-outline-secondary');
+                } else {
+                    btn.classList.remove('active', 'btn-primary', 'btn-outline-secondary');
+                    btn.classList.add('btn-outline-primary');
+                }
+            });
+
+            // Handle custom date range input visibility
+            if (chartDateRange === 'custom') {
+                customDateRangeInputsEl.style.display = 'flex';
+                // Use formatDate helper for input values
+                chartStartDateEl.value = chartStartDate ? formatDate(chartStartDate) : '';
+                chartEndDateEl.value = chartEndDate ? formatDate(chartEndDate) : '';
+            } else {
+                customDateRangeInputsEl.style.display = 'none';
+            }
+        }
+        
         // --- Dropdown/Chip Population ---
         function populateAccountDropdown(selectElement, selectedValue = "") {
             if (!selectElement) return;
@@ -1284,6 +1406,7 @@
             
             // Re-render based on the activated view
             if (viewId === 'chartsView') { 
+                renderChartFilters(); // IMPORTANT: Render filters/state when entering chart view
                 renderSpendCategoryChart(); 
                 renderIncomeSpendChart(); 
                 renderInvestmentPortfolioChart(); 
@@ -1329,8 +1452,9 @@
 
         function renderSpendCategoryChart() { 
             if (!isAuthenticated || !spendCategoryChartCanvas) return;
+            const filteredTransactions = filterTransactionsForCharts(); // <-- USE FILTERED DATA
             const categorySpends = {}; 
-            transactions.filter(t => t.type === 'spend' && t.category && !investmentRelatedCategories.includes(t.category)).forEach(t => { 
+            filteredTransactions.filter(t => t.type === 'spend' && t.category && !investmentRelatedCategories.includes(t.category)).forEach(t => { 
                 categorySpends[t.category] = (categorySpends[t.category] || 0) + t.amount; 
             });
             
@@ -1383,10 +1507,11 @@
         function renderIncomeSpendChart() { 
             if (!isAuthenticated || !incomeSpendChartCanvas) return; 
             
+            const filteredTransactions = filterTransactionsForCharts(); // <-- USE FILTERED DATA
             let totalIncome = 0; 
             let totalSpend = 0;
             
-            transactions.forEach(t => { 
+            filteredTransactions.forEach(t => { 
                 if (t.type === 'income') totalIncome += t.amount; 
                 else if (t.type === 'spend') totalSpend += t.amount; 
                 else if (t.type === 'loan') { 
@@ -1439,6 +1564,7 @@
         function renderInvestmentPortfolioChart() { 
             if (!isAuthenticated || !investmentPortfolioChartCanvas) return; 
             
+            // NOTE: Investments are filtered by status, not transaction date, as investment records are separate entities.
             const activeInvestments = investments.filter(inv => inv.status === 'active');
             const portfolioData = {}; 
             
@@ -1497,9 +1623,10 @@
         function renderMonthlySpendChart() {
             if (!isAuthenticated || !document.getElementById('monthlySpendChartCanvas')) return;
             
+            const filteredTransactions = filterTransactionsForCharts(); // <-- USE FILTERED DATA
             const monthlyData = {};
 
-            transactions.forEach(t => {
+            filteredTransactions.forEach(t => {
                 let spendAmount = 0;
                 
                 if (t.type === 'spend' && !investmentRelatedCategories.includes(t.category)) {
@@ -2185,6 +2312,406 @@
             } 
         }
 
+        function renderCategoryManagementUI() {
+            if (!isAuthenticated || !spendCategoriesListContainerEl || !incomeCategoriesListContainerEl) return;
+
+            spendCategoriesListContainerEl.innerHTML = '';
+            if (spendCategories.length === 0) {
+                spendCategoriesListContainerEl.innerHTML = '<p class="text-muted text-center small m-0">No spend categories defined. Add one above.</p>';
+            } else {
+                spendCategories.sort().forEach(cat => {
+                    const chip = document.createElement('span');
+                    chip.className = 'mgmt-category-chip';
+                    chip.innerHTML = `
+                        ${cat}
+                        <button class="remove-chip-btn remove-category-btn" data-type="spend" data-category="${cat}" title="Remove ${cat}">&times;</button>
+                    `;
+                    spendCategoriesListContainerEl.appendChild(chip);
+                });
+            }
+
+            incomeCategoriesListContainerEl.innerHTML = '';
+            if (incomeCategories.length === 0) {
+                incomeCategoriesListContainerEl.innerHTML = '<p class="text-muted text-center small m-0">No income categories defined. Add one above.</p>';
+            } else {
+                incomeCategories.sort().forEach(cat => {
+                    const chip = document.createElement('span');
+                    chip.className = 'mgmt-category-chip';
+                    chip.innerHTML = `
+                        ${cat}
+                        <button class="remove-chip-btn remove-category-btn" data-type="income" data-category="${cat}" title="Remove ${cat}">&times;</button>
+                    `;
+                    incomeCategoriesListContainerEl.appendChild(chip);
+                });
+            }
+        }
+
+        function renderAccountManagementList() {
+            if (!isAuthenticated || !accountsListContainerEl) return;
+            accountsListContainerEl.innerHTML = ''; 
+
+            if (accounts.length === 0) {
+                if (noAccountsMessageSettingsEl) noAccountsMessageSettingsEl.style.display = 'block';
+                return;
+            }
+            if (noAccountsMessageSettingsEl) noAccountsMessageSettingsEl.style.display = 'none';
+
+            const ul = document.createElement('ul');
+            ul.className = 'list-group';
+
+            accounts.forEach(acc => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item account-list-item';
+
+                let statusBadge = '';
+                let toggleStatusBtnHtml = '';
+                let toggleSecretBtnHtml = '';
+
+                if (acc.status === 'inactive') {
+                    statusBadge = '<span class="badge badge-secondary">Inactive</span>';
+                    toggleStatusBtnHtml = `<button class="btn btn-sm btn-outline-success toggle-account-status-btn" data-id="${acc.id}" title="Activate">
+                        <i class="fas fa-toggle-on"></i> Activate
+                    </button>`;
+                } else if (acc.status === 'secret') {
+                    statusBadge = '<span class="badge badge-warning">Secret</span>';
+                    toggleStatusBtnHtml = `<button class="btn btn-sm btn-outline-danger toggle-account-status-btn" data-id="${acc.id}" title="Deactivate">
+                        <i class="fas fa-toggle-off"></i> Deactivate
+                    </button>`;
+                } else { // active
+                     statusBadge = '<span class="badge badge-primary">Active</span>';
+                     toggleStatusBtnHtml = `<button class="btn btn-sm btn-outline-danger toggle-account-status-btn" data-id="${acc.id}" title="Deactivate">
+                        <i class="fas fa-toggle-off"></i> Deactivate
+                    </button>`;
+                }
+
+                if (acc.status === 'secret') {
+                    toggleSecretBtnHtml = `<button class="btn btn-sm btn-outline-info toggle-account-secret-btn" data-id="${acc.id}" title="Make Public">
+                        <i class="fas fa-eye"></i> Public
+                    </button>`;
+                } else if (acc.status !== 'inactive') {
+                    toggleSecretBtnHtml = `<button class="btn btn-sm btn-outline-warning toggle-account-secret-btn" data-id="${acc.id}" title="Make Secret">
+                        <i class="fas fa-user-secret"></i> Secret
+                    </button>`;
+                }
+
+                li.innerHTML = `
+                     <div class="account-name-status">
+                        ${acc.name} (ID: ${acc.id}) ${statusBadge}
+                    </div>
+                    <div class="account-actions">
+                        ${toggleStatusBtnHtml}
+                        ${toggleSecretBtnHtml}
+                    </div>
+                 `;
+                ul.appendChild(li);
+            });
+            accountsListContainerEl.appendChild(ul);
+        }
+
+        function updateTransactionFormFields(transactionType = null) { 
+            if (!isAuthenticated || !transactionTypeEl || !accountGroupEl || !transferGroupEls.length || !spendCategoryChipsGroupEl || !incomeCategoryChipsGroupEl || !transactionDescriptionLabelEl || !transactionAccountLabelEl || !transactionAmountLabelEl) return;
+            
+            const type = transactionType || transactionTypeEl.value; 
+            
+            accountGroupEl.style.display = (type === 'income' || type === 'spend' || type === 'loan') ? 'block' : 'none'; 
+            transferGroupEls.forEach(el => el.style.display = (type === 'transfer') ? 'block' : 'none'); 
+            spendCategoryChipsGroupEl.style.display = (type === 'spend') ? 'block' : 'none'; 
+            incomeCategoryChipsGroupEl.style.display = (type === 'income') ? 'block' : 'none';
+            
+            document.getElementById('transactionAccount').required = (type !== 'transfer');
+            document.getElementById('transferFromAccount').required = (type === 'transfer');
+            document.getElementById('transferToAccount').required = (type === 'transfer');
+            
+            if (type === 'loan') { 
+                transactionAccountLabelEl.textContent = "Lent From Account"; 
+                transactionAmountLabelEl.textContent = "Amount Lent (₹)";
+                transactionDescriptionLabelEl.textContent = "Description (e.g., To Whom, Reason)"; 
+                document.getElementById('transactionAmount').min = "0.01";
+            } else if (type === 'transfer') {
+                transactionDescriptionLabelEl.textContent = "Description (Optional)";
+                transactionAmountLabelEl.textContent = "Amount (₹)";
+                document.getElementById('transactionAmount').min = "0.01";
+            } else { 
+                transactionAccountLabelEl.textContent = "Account";
+                transactionAmountLabelEl.textContent = "Amount (₹)"; 
+                transactionDescriptionLabelEl.textContent = 'Notes / Specifics (Optional)';
+                document.getElementById('transactionAmount').min = "0.01";
+            } 
+            
+            selectedCategoryInputEl.value = ''; 
+            document.querySelectorAll('#spendCategoryChipsContainer .category-chip.active').forEach(c => c.classList.remove('active')); 
+            document.querySelectorAll('#incomeCategoryChipsContainer .category-chip.active').forEach(c => c.classList.remove('active')); 
+            
+            if (type === 'spend') { 
+                populateSpendCategoryChips();
+            } else if (type === 'income') { 
+                populateIncomeCategoryChips(); 
+            }
+        }
+
+        function filterAndSearchTransactions() { 
+            if (!isAuthenticated) return []; 
+            let filtered = [...transactions];
+            
+            const searchQuery = txSearchInputEl ? txSearchInputEl.value.toLowerCase().trim() : ""; 
+            const amountQueryVal = txAmountFilterEl ? txAmountFilterEl.value.trim() : "";
+            const amountQuery = amountQueryVal ? parseFloat(amountQueryVal) : null; 
+            const selectedMonth = txMonthFilterEl ? txMonthFilterEl.value : "";
+            const selectedYear = txYearFilterEl ? txYearFilterEl.value : ""; 
+            const selectedType = txTypeFilterEl ? txTypeFilterEl.value : "";
+            
+            if (searchQuery) { 
+                filtered = filtered.filter(t => (
+                    (t.description && t.description.toLowerCase().includes(searchQuery)) || 
+                    (t.category && t.category.toLowerCase().includes(searchQuery)) || 
+                    (t.type === 'transfer' && (getAccountNameById(t.fromAccount)?.toLowerCase().includes(searchQuery) || getAccountNameById(t.toAccount)?.toLowerCase().includes(searchQuery))) || 
+                    (t.type !== 'transfer' && t.type !== 'loan' && getAccountNameById(t.account)?.toLowerCase().includes(searchQuery)) || 
+                    (t.type === 'loan' && getAccountNameById(t.account)?.toLowerCase().includes(searchQuery))
+                ));
+            } 
+            
+            if (amountQuery !== null && !isNaN(amountQuery)) { 
+                filtered = filtered.filter(t => 
+                    (t.type === 'loan' && t.amount === amountQuery) || 
+                    (t.type === 'loan' && t.returnDetails && t.returnDetails.returnAmount === amountQuery) || 
+                    (t.type !== 'loan' && t.amount === amountQuery)
+                );
+            } 
+            
+            if (selectedYear) { 
+                filtered = filtered.filter(t => new Date(t.date).getFullYear() === parseInt(selectedYear));
+            } 
+            if (selectedMonth !== "") { 
+                filtered = filtered.filter(t => new Date(t.date).getMonth() === parseInt(selectedMonth));
+            } 
+            
+            if (selectedType) { 
+                if (selectedType === "investment_purchase") { 
+                    filtered = filtered.filter(t => t.type === 'spend' && t.category === 'Investment Expense');
+                } else if (selectedType === "investment_sale") { 
+                    filtered = filtered.filter(t => t.type === 'income' && t.category === 'Investment Income');
+                } else if (selectedType === "loan_outstanding") { 
+                    filtered = filtered.filter(t => t.type === 'loan' && t.loanStatus === 'outstanding');
+                } else if (selectedType === "loan_returned") { 
+                    filtered = filtered.filter(t => t.type === 'loan' && t.loanStatus === 'returned');
+                } else { 
+                    filtered = filtered.filter(t => t.type === selectedType); 
+                } 
+            } 
+            return filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+        }
+
+        function populateFilters() { 
+            if (!isAuthenticated) return;
+            
+            if (txMonthFilterEl) { 
+                const currentMonth = txMonthFilterEl.value; 
+                txMonthFilterEl.innerHTML = '<option value="">All Months</option>';
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                monthNames.forEach((month, index) => { 
+                    const option = document.createElement('option'); 
+                    option.value = index; 
+                    option.textContent = month; 
+                    if (String(index) === currentMonth) option.selected = true; 
+                    txMonthFilterEl.appendChild(option); 
+                });
+            } 
+            
+            if (txYearFilterEl) { 
+                const currentYear = txYearFilterEl.value; 
+                const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))].sort((a, b) => b - a);
+                txYearFilterEl.innerHTML = '<option value="">All Years</option>'; 
+                years.forEach(year => { 
+                    const option = document.createElement('option'); 
+                    option.value = year; 
+                    option.textContent = year; 
+                    if (String(year) === currentYear) option.selected = true; 
+                    txYearFilterEl.appendChild(option); 
+                });
+            } 
+        }
+    
+        function renderFullTransactionList() { 
+            if (!isAuthenticated || !transactionListEl) return;
+            
+            populateFilters(); 
+            const transactionsToRender = filterAndSearchTransactions(); 
+            transactionListEl.innerHTML = ''; 
+            
+            let filteredIncome = 0; 
+            let filteredSpend = 0; 
+            let filteredTransfer = 0;
+
+            transactionsToRender.forEach(t => { 
+                if (t.type === 'income') {
+                    filteredIncome += t.amount; 
+                } else if (t.type === 'spend') {
+                    filteredSpend += t.amount; 
+                } else if (t.type === 'transfer') {
+                    filteredTransfer += t.amount; 
+                } else if (t.type === 'loan') { 
+                    filteredSpend += t.amount; 
+                    if (t.loanStatus === 'returned' && t.returnDetails) { 
+                        filteredIncome += t.returnDetails.returnAmount; 
+                    } 
+                } 
+            });
+
+            if (filteredTotalsContainerEl) { 
+                if (transactionsToRender.length > 0) { 
+                    filteredTotalsContainerEl.innerHTML = ` 
+                        <span class="filtered-total-item filtered-total-income text-success">Income: ${formatCurrency(filteredIncome)}</span> 
+                        <span class="filtered-total-item filtered-total-spend text-danger">Spend: ${formatCurrency(filteredSpend)}</span> 
+                        <span class="filtered-total-item filtered-total-transfer text-info">Transfers: ${formatCurrency(filteredTransfer)}</span> 
+                        <span class="filtered-total-item filtered-total-net ${filteredIncome - filteredSpend >= 0 ? 'text-primary' : 'text-danger'}">Net: ${formatCurrency(filteredIncome - filteredSpend)}</span> 
+                    `;
+                    filteredTotalsContainerEl.style.display = 'flex'; 
+                } else { 
+                    filteredTotalsContainerEl.style.display = 'none'; 
+                } 
+            } 
+            
+            if (transactionsToRender.length === 0) { 
+                if (noTransactionsMessageEl) { 
+                    noTransactionsMessageEl.textContent = transactions.length > 0 ? "No transactions match filters." : "No transactions yet."; 
+                    noTransactionsMessageEl.style.display = 'block'; 
+                    transactionListEl.appendChild(noTransactionsMessageEl);
+                } 
+            } else { 
+                if (noTransactionsMessageEl) noTransactionsMessageEl.style.display = 'none'; 
+                
+                transactionsToRender.forEach(t => { 
+                    let iconClass = '', sign = '', accInfo = '', amountDisplay = formatCurrency(t.amount); 
+                    let mainInfo = t.description || 'N/A'; 
+                    let loanDetailsHtml = ''; 
+                    
+                    let actionButtons = `
+                        <button class="btn btn-sm btn-outline-warning action-btn edit-btn" data-id="${t.id}" title="Edit"><i class="fas fa-edit"></i></button> 
+                        <button class="btn btn-sm btn-outline-danger action-btn delete-btn" data-id="${t.id}" data-type="transaction" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                    `; 
+                    
+                    if (t.type === 'income') { 
+                        iconClass = 'fa-arrow-down'; 
+                        sign = '+'; 
+                        accInfo = `To: ${getAccountNameById(t.account)}`; 
+                    } else if (t.type === 'spend') { 
+                        iconClass = 'fa-arrow-up'; 
+                        sign = '-'; 
+                        accInfo = `From: ${getAccountNameById(t.account)}`; 
+                    } else if (t.type === 'transfer') { 
+                        iconClass = 'fa-exchange-alt'; 
+                        accInfo = `From ${getAccountNameById(t.fromAccount)} to ${getAccountNameById(t.toAccount)}`; 
+                        mainInfo = t.description || 'Transfer';
+                    } else if (t.type === 'loan') { 
+                        iconClass = 'fa-hand-holding-usd';
+                        mainInfo = `Loan: ${t.description || 'N/A'}`; 
+                        
+                        mainInfo += `<span class="status-badge status-loan-${t.loanStatus}">${t.loanStatus.charAt(0).toUpperCase() + t.loanStatus.slice(1)}</span>`; 
+                        
+                        accInfo = `Lent: ${formatCurrency(t.amount)} from ${getAccountNameById(t.account)}`;
+                        amountDisplay = `-${formatCurrency(t.amount)}`; 
+                        
+                        if (t.loanStatus === 'outstanding') { 
+                            actionButtons += ` <button class="btn btn-sm btn-outline-success action-btn record-return-btn" data-id="${t.id}" title="Record Return"><i class="fas fa-undo-alt"></i> Return</button>`;
+                        } else if (t.loanStatus === 'returned' && t.returnDetails) { 
+                            loanDetailsHtml = `<div class="loan-details-info text-success">Returned: ${formatCurrency(t.returnDetails.returnAmount)} to ${getAccountNameById(t.returnDetails.returnAccount)} on ${displayDate(t.returnDetails.returnDate)}</div>`;
+                            amountDisplay = `(Lent: -${formatCurrency(t.amount)})<br><span class="text-success" style="font-weight: 700;">+${formatCurrency(t.returnDetails.returnAmount)}</span>`; 
+                        } 
+                    } 
+                    
+                    let categoryDisplay = t.category;
+                    if(categoryDisplay) {
+                         mainInfo = `<span class="category-info">${categoryDisplay}</span>`;
+                         if(t.description) mainInfo += `<span class="description-info text-muted"> (${t.description})</span>`;
+                    } else {
+                        mainInfo = t.description || t.type.charAt(0).toUpperCase() + t.type.slice(1);
+                    }
+
+                    const item = document.createElement('li'); 
+                    item.classList.add('list-group-item', `transaction-${t.type}`); 
+                    
+                    item.innerHTML = ` 
+                        <div class="list-item-icon"><i class="fas ${iconClass} ${t.type === 'income' ? 'text-success' : t.type === 'spend' ? 'text-danger' : 'text-info'}"></i></div> 
+                        <div class="list-item-details"> 
+                            <div style="font-weight: 500;">${mainInfo}</div> 
+                            <div class="sub-info">${displayDate(t.date)}</div> 
+                            <div class="account-info">${accInfo}</div> 
+                            ${loanDetailsHtml} 
+                        </div> 
+                        <div class="list-item-amount-actions"> 
+                            <span class="amount ${t.type === 'income' ? 'text-success' : t.type === 'spend' ? 'text-danger' : t.type === 'loan' && t.loanStatus === 'outstanding' ? 'text-danger' : 'text-primary'}">
+                                ${t.type === 'loan' && t.loanStatus === 'returned' ? amountDisplay : `${sign}${formatCurrency(t.amount)}`}
+                            </span> 
+                            <div class="item-actions"> 
+                                ${actionButtons} 
+                            </div> 
+                        </div>
+                    `; 
+                    transactionListEl.appendChild(item); 
+                });
+            } 
+        }
+
+        function renderInvestmentList() { 
+            if (!isAuthenticated || !investmentListEl) return; 
+            investmentListEl.innerHTML = '';
+            
+            const sortedInvestments = [...investments].sort((a, b) => (a.status === 'active' && b.status !== 'active') ? -1 : (a.status !== 'active' && b.status === 'active') ? 1 : new Date(b.date) - new Date(a.date));
+            
+            if (sortedInvestments.length === 0) { 
+                if (noInvestmentsMessageEl) { 
+                    noInvestmentsMessageEl.style.display = 'block'; 
+                    investmentListEl.appendChild(noInvestmentsMessageEl);
+                }
+            } else { 
+                if (noInvestmentsMessageEl) noInvestmentsMessageEl.style.display = 'none';
+                
+                sortedInvestments.forEach(inv => { 
+                    const item = document.createElement('li'); 
+                    item.classList.add('list-group-item', 'investment-item'); 
+                    if (inv.status === 'redeemed') item.classList.add('redeemed-investment'); 
+                    
+                    let valueDisplay = `<span class="amount text-muted">${formatCurrency(inv.amount)}</span> <small>(Invested)</small>`; 
+                    let profitLossDisplay = '';
+                    let actionButtonsHtml = '';
+
+                    if (inv.status === 'active') { 
+                        if (inv.currentValue !== null && inv.currentValue !== undefined) { 
+                            valueDisplay += `<br><span class="amount ${inv.currentValue >= inv.amount ? 'text-success' : 'text-danger'}">${formatCurrency(inv.currentValue)}</span> <small class="current-value-label">(Current)</small>`; 
+                        }
+                        actionButtonsHtml = `
+                            <div class="investment-item-actions">
+                                <button class="btn btn-info btn-sm update-value-btn" data-id="${inv.id}" title="Update Value"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-success btn-sm redeem-btn" data-id="${inv.id}" title="Redeem"><i class="fas fa-hand-holding-usd"></i></button>
+                            </div>`; 
+                    } else if (inv.status === 'redeemed') { 
+                        valueDisplay = `<span class="amount text-muted">${formatCurrency(inv.amount)}</span> <small>(Invested)</small><br><span class="amount">${formatCurrency(inv.redeemedAmount || 0)}</span> <small>(Redeemed)</small>`; 
+                        if (inv.profitOrLoss !== null && inv.profitOrLoss !== undefined) {
+                            profitLossDisplay = `<div class="investment-details ${inv.profitOrLoss >= 0 ? 'profit' : 'loss'}">P/L: ${formatCurrency(inv.profitOrLoss)}</div>`;
+                        }
+                    }
+                    
+                    item.innerHTML = `
+                        <div class="list-item-content">
+                            <div class="main-info">
+                                ${inv.description} 
+                                <span class="status-badge status-${inv.status}">${inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span>
+                            </div>
+                            <div class="sub-info">Type: ${investmentTypeNames[inv.type] || 'N/A'} | Invested: ${displayDate(inv.date)}</div>
+                            ${inv.status === 'active' && inv.maturityInfo ? `<div class="investment-details">Maturity: ${inv.maturityInfo}</div>` : ''}
+                            ${inv.status === 'redeemed' && inv.redemptionDate ? `<div class="investment-details">Redeemed: ${displayDate(inv.redemptionDate)}</div>` : ''}
+                            ${profitLossDisplay}
+                            <div class="investment-details">From: ${getAccountNameById(inv.sourceAccount)}</div>
+                        </div>
+                        <div class="list-item-amount text-right">${valueDisplay}</div>
+                        ${actionButtonsHtml}
+                        <button class="delete-btn btn btn-danger btn-sm" data-id="${inv.id}" data-type="investment" title="Delete" style="position: absolute; bottom: 5px; right: 5px;"><i class="fas fa-trash-alt"></i></button>
+                    `; 
+                    investmentListEl.appendChild(item); 
+                }); 
+            } 
+        }
+
 
         // --- Data Management Functions ---
         
@@ -2406,6 +2933,56 @@
             if (importFileEl) importFileEl.addEventListener('change', importData);
             if (resetDataBtn) resetDataBtn.addEventListener('click', handleResetData);
             
+            // Charts Filter Listeners
+            if (chartFilterButtonsContainer) {
+                chartFilterButtonsContainer.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.chart-filter-btn');
+                    if (btn) {
+                        chartDateRange = btn.dataset.range;
+                        
+                        // Clear custom date range if a preset is selected
+                        if (chartDateRange !== 'custom') {
+                            chartStartDate = null;
+                            chartEndDate = null;
+                            chartStartDateEl.value = '';
+                            chartEndDateEl.value = '';
+                            renderChartFilters(); 
+                            renderAllContent(); 
+                        } else {
+                            renderChartFilters(); // Just update UI to show custom inputs
+                        }
+                    }
+                });
+            }
+            
+            if (applyCustomDateRangeBtn) {
+                applyCustomDateRangeBtn.addEventListener('click', () => {
+                    const start = chartStartDateEl.value;
+                    const end = chartEndDateEl.value;
+
+                    if (!start || !end) {
+                        alert('Please select both start and end dates for the custom range.');
+                        return;
+                    }
+
+                    // Convert string dates to Date objects
+                    chartStartDate = new Date(start);
+                    chartEndDate = new Date(end);
+                    
+                    // Validation: End date must be >= start date
+                    if (chartStartDate.getTime() > chartEndDate.getTime()) {
+                        alert('Start date cannot be after the end date.');
+                        return;
+                    }
+
+                    // Ensure the range filter button is marked 'custom'
+                    chartDateRange = 'custom';
+                    renderChartFilters();
+                    renderAllContent();
+                });
+            }
+
+
             // FAB (Open Transaction Modal)
             if (fabOpenTransactionModal) { 
                 fabOpenTransactionModal.addEventListener('click', () => { 
