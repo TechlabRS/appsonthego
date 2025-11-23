@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Gen Analytics</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-enter { animation: slideUp 0.3s ease-out forwards; }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
+        .filter-chip.active {
+            background-color: #111827;
+            color: white;
+            border-color: #111827;
+        }
+        
+        .nav-item.active { color: #2563eb; }
+        .nav-item.active i { font-weight: bold; }
+
+        .inv-card-bg {
+            background-image: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        /* PIN input styling for better UX */
+        .pin-input {
+            width: 4rem;
+            height: 4rem;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            transition: border-color 0.2s;
+        }
+        .pin-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+        }
+        .pin-input::-webkit-outer-spin-button,
+        .pin-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-md space-y-2 pointer-events-none"></div>
+
+    <!-- HIDDEN FILE INPUT FOR IMPORT -->
+    <input type="file" id="import-file" accept=".json" class="hidden" onchange="handleFileSelect(event)">
+
+    <!-- AUTHENTICATION CONTAINER (Visible on load if not authenticated) -->
+    <div id="auth-container" class="fixed inset-0 bg-gray-50 z-[100] flex flex-col items-center justify-center p-6 transition-opacity duration-300">
+        <div class="max-w-md w-full text-center">
+            
+            <!-- App Branding -->
+            <div class="flex items-center justify-center gap-2 mb-8 text-blue-600">
+                <div class="bg-blue-600/10 p-2 rounded-lg">
+                    <i class="ph ph-brain text-2xl"></i>
+                </div>
+                <span class="text-2xl font-bold tracking-wide">Smart Gen Analytics</span>
+            </div>
+
+            <!-- Authentication Content goes here -->
+            <div id="auth-setup" class="space-y-6 hidden fade-in bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800">Set Up Your Security PIN</h2>
+                <p class="text-sm text-gray-500">Choose a secure 6-digit PIN to protect your financial data.</p>
+                <form id="setup-form" onsubmit="handleSetup(event)">
+                    <div class="flex justify-center gap-2 mb-4">
+                        <input type="number" id="setup-pin1" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'setup-pin2')" onkeyup="handlePinInput(event, 'setup-pin1')">
+                        <input type="number" id="setup-pin2" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'setup-pin3')" onkeyup="handlePinInput(event, 'setup-pin2')">
+                        <input type="number" id="setup-pin3" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'setup-pin4')" onkeyup="handlePinInput(event, 'setup-pin3')">
+                        <input type="number" id="setup-pin4" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'setup-pin5')" onkeyup="handlePinInput(event, 'setup-pin4')">
+                        <input type="number" id="setup-pin5" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'setup-pin6')" onkeyup="handlePinInput(event, 'setup-pin5')">
+                        <input type="number" id="setup-pin6" class="pin-input" maxlength="1" required onkeyup="handlePinInput(event, 'setup-pin6')">
+                    </div>
+                    
+                    <p class="text-sm font-semibold mb-2 mt-4 text-gray-600">Security Question (for PIN Reset)</p>
+                    <select id="setup-security-q" class="w-full bg-gray-100 border border-gray-200 rounded-xl py-3 px-4 text-sm mb-3">
+                        <option value="pet">What was the name of your first pet?</option>
+                        <option value="city">In what city were you born?</option>
+                        <option value="mother">What is your mother's maiden name?</option>
+                    </select>
+                    <input type="text" id="setup-security-a" required placeholder="Your Answer" class="w-full bg-gray-100 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg mt-6 hover:bg-blue-700 transition-colors">Set PIN & Secure Data</button>
+                </form>
+            </div>
+
+            <div id="auth-login" class="space-y-6 hidden fade-in bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800">Enter Your 6-Digit PIN</h2>
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="flex justify-center gap-2 mb-6">
+                        <input type="password" id="login-pin1" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'login-pin2')" onkeyup="handlePinInput(event, 'login-pin1')">
+                        <input type="password" id="login-pin2" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'login-pin3')" onkeyup="handlePinInput(event, 'login-pin2')">
+                        <input type="password" id="login-pin3" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'login-pin4')" onkeyup="handlePinInput(event, 'login-pin3')">
+                        <input type="password" id="login-pin4" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'login-pin5')" onkeyup="handlePinInput(event, 'login-pin4')">
+                        <input type="password" id="login-pin5" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'login-pin6')" onkeyup="handlePinInput(event, 'login-pin5')">
+                        <input type="password" id="login-pin6" class="pin-input" maxlength="1" required onkeyup="handlePinInput(event, 'login-pin6')">
+                    </div>
+                    <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-xl shadow-lg hover:bg-gray-800 transition-colors">Login</button>
+                </form>
+                <button type="button" onclick="showResetScreen()" class="text-sm text-gray-500 hover:text-blue-600 mt-4">Forgot PIN?</button>
+            </div>
+
+            <div id="auth-reset" class="space-y-6 hidden fade-in bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800">Reset PIN</h2>
+                <form id="reset-form" onsubmit="handleReset(event)">
+                    <p class="text-sm font-semibold mb-2 mt-4 text-gray-600">Answer Your Security Question</p>
+                    <p id="reset-security-q" class="font-medium text-blue-600 mb-3"></p>
+                    <input type="text" id="reset-security-a" required placeholder="Your Answer" class="w-full bg-gray-100 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    
+                    <p class="text-sm font-semibold mb-2 mt-4 text-gray-600">New 6-Digit PIN</p>
+                    <div class="flex justify-center gap-2 mb-4">
+                        <input type="number" id="reset-pin1" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'reset-pin2')" onkeyup="handlePinInput(event, 'reset-pin1')">
+                        <input type="number" id="reset-pin2" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'reset-pin3')" onkeyup="handlePinInput(event, 'reset-pin2')">
+                        <input type="number" id="reset-pin3" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'reset-pin4')" onkeyup="handlePinInput(event, 'reset-pin3')">
+                        <input type="number" id="reset-pin4" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'reset-pin5')" onkeyup="handlePinInput(event, 'reset-pin4')">
+                        <input type="number" id="reset-pin5" class="pin-input" maxlength="1" required oninput="moveToNext(this, 'reset-pin6')" onkeyup="handlePinInput(event, 'reset-pin5')">
+                        <input type="number" id="reset-pin6" class="pin-input" maxlength="1" required onkeyup="handlePinInput(event, 'reset-pin6')">
+                    </div>
+
+                    <button type="submit" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl shadow-lg mt-6 hover:bg-red-700 transition-colors">Reset PIN</button>
+                </form>
+                <button type="button" onclick="showLoginScreen()" class="text-sm text-gray-500 hover:text-blue-600 mt-4">Go Back to Login</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MAIN APPLICATION CONTAINER (Hidden until authenticated) -->
+    <div id="app-container" class="h-full flex flex-col hidden">
+
+        <!-- MAIN CONTENT -->
+        <main id="main-content" class="flex-1 overflow-y-auto pb-28 hide-scroll bg-gray-50">
+            
+            <!-- HEADER -->
+            <header class="bg-blue-600 text-white pt-6 pb-8 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden z-10">
+                <div class="absolute top-0 right-0 opacity-10 pointer-events-none">
+                    <i class="ph ph-currency-circle-dollar text-9xl"></i>
+                </div>
+
+                <!-- APP BRANDING -->
+                <div class="flex items-center gap-2 mb-6 opacity-90">
+                    <div class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+                        <i class="ph ph-brain text-xl"></i>
+                    </div>
+                    <span class="text-lg font-bold tracking-wide">Smart Gen Analytics</span>
+                </div>
+
+                <div class="flex justify-between items-center mb-2">
+                    <div>
+                        <p class="text-blue-100 text-xs font-medium uppercase tracking-wider">Total Net Worth</p>
+                        <h1 class="text-3xl font-bold mt-1" id="total-balance">₹ 0.00</h1>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="triggerImport()" title="Import Data" class="text-blue-200 hover:text-white hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="ph ph-upload-simple text-xl"></i></button>
+                        <button onclick="exportData()" title="Export Data" class="text-blue-200 hover:text-white hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="ph ph-download-simple text-xl"></i></button>
+                        <button onclick="logout()" title="Logout" class="text-blue-200 hover:text-white hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="ph ph-lock-key-open text-xl"></i></button>
+                        <button onclick="resetData()" title="Reset App" class="text-blue-200 hover:text-white hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="ph ph-trash text-xl"></i></button>
+                    </div>
+                </div>
+                
+                <!-- Financial Snapshot (All Time) -->
+                <div class="bg-white/10 rounded-xl p-4 backdrop-blur-md border border-white/10 mt-4 mb-4">
+                    <div class="flex justify-between items-center text-xs text-blue-100 mb-2 uppercase tracking-wider">
+                        <span>Financial Snapshot (All Time)</span>
+                        <i class="ph ph-chart-bar"></i>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 text-center">
+                        <div>
+                            <div class="text-[10px] text-emerald-200">Income</div>
+                            <div class="font-bold text-sm truncate" id="snap-income">₹0</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-red-200">Spend</div>
+                            <div class="font-bold text-sm truncate" id="snap-expense">₹0</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-indigo-200">Invest</div>
+                            <div class="font-bold text-sm truncate" id="snap-invest">₹0</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-orange-200">Lent</div>
+                            <div class="font-bold text-sm truncate" id="snap-lent">₹0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Stats -->
+                <div class="flex gap-3">
+                    <div class="bg-white/10 rounded-xl p-3 flex-1 backdrop-blur-md border border-white/10">
+                        <div class="text-blue-100 text-[10px] uppercase flex items-center gap-1"><i class="ph ph-trend-up"></i> Month In</div>
+                        <div class="font-semibold text-lg truncate" id="monthly-income">₹ 0</div>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-3 flex-1 backdrop-blur-md border border-white/10">
+                        <div class="text-blue-100 text-[10px] uppercase flex items-center gap-1"><i class="ph ph-trend-down"></i> Month Out</div>
+                        <div class="font-semibold text-lg truncate" id="monthly-expense">₹ 0</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ACCOUNTS CARDS -->
+            <div class="-mt-6 px-4 overflow-x-auto hide-scroll flex gap-3 pb-4 z-20 relative">
+                <div id="account-cards-container" class="flex gap-3"></div>
+            </div>
+
+            <!-- DASHBOARD VIEW -->
+            <div id="view-dashboard" class="px-4 mt-2 space-y-6 fade-in pb-6">
+                <div id="alerts-section" class="hidden">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1"><i class="ph ph-bell-ringing text-orange-500"></i> Action Required</h3>
+                    <div id="alerts-list" class="space-y-2"></div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-end mb-3">
+                        <h3 class="text-lg font-bold text-gray-800">Recent Activity</h3>
+                        <button onclick="switchTab('history')" class="text-sm text-blue-600 font-medium">View All</button>
+                    </div>
+                    <div id="recent-transactions" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- PORTFOLIO VIEW -->
+            <div id="view-portfolio" class="px-4 mt-4 space-y-4 hidden fade-in pb-20">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Portfolio</h2>
+                    <div class="text-xs text-right">
+                        <div class="text-gray-400 uppercase font-bold">Current Value</div>
+                        <div class="text-lg font-bold text-indigo-600" id="portfolio-total">₹ 0</div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-200 p-1 rounded-xl flex text-sm font-bold mb-4">
+                    <button onclick="renderPortfolio('active')" id="tab-active" class="flex-1 py-2 rounded-lg bg-white shadow-sm text-gray-800 transition-all">Active</button>
+                    <button onclick="renderPortfolio('redeemed')" id="tab-redeemed" class="flex-1 py-2 rounded-lg text-gray-500 transition-all">Redeemed</button>
+                </div>
+
+                <div id="portfolio-list" class="space-y-3"></div>
+            </div>
+
+            <!-- ANALYTICS VIEW -->
+            <div id="view-analytics" class="px-4 mt-4 space-y-4 hidden fade-in pb-20">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-2xl font-bold">Insights</h2>
+                    <select id="analytics-period" onchange="updateCharts()" class="bg-white border border-gray-200 text-sm rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="thisMonth">This Month</option>
+                        <option value="lastMonth">Last Month</option>
+                        <option value="last3Months">Last 3 Months</option>
+                        <option value="yearToDate">Year to Date</option>
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
+                
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Spending Trend</h3>
+                    <div class="h-64 relative">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-2 text-center italic">*Excludes transfers & investments</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <!-- Spending Categories -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Expenses</h3>
+                        <div class="h-64 relative">
+                            <canvas id="spendingChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Asset Allocation -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Asset Allocation</h3>
+                        <div class="h-64 relative">
+                            <canvas id="investmentChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Investment Breakdown Chart -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 md:col-span-2">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Portfolio Breakdown</h3>
+                        <div class="h-64 relative">
+                            <canvas id="investBreakdownChart"></canvas>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-2 text-center italic">*Based on current market value of active investments</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PLANNING VIEW -->
+            <div id="view-planning" class="px-4 mt-4 space-y-4 hidden fade-in pb-20">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold">Planner</h2>
+                        <p class="text-xs text-gray-500">Bills, Loans & Receivables</p>
+                    </div>
+                    <button onclick="openModal('reminder')" class="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg shadow-indigo-200 flex items-center gap-1 transition-transform active:scale-95">
+                        <i class="ph ph-plus-bold"></i> New Alert
+                    </button>
+                </div>
+                <div id="all-reminders" class="space-y-3"></div>
+            </div>
+
+            <!-- HISTORY VIEW -->
+            <div id="view-history" class="hidden fade-in flex flex-col h-full">
+                <div class="bg-gray-50 pt-4 px-4 pb-2 sticky top-0 z-30 shadow-sm">
+                    <h2 class="text-2xl font-bold mb-3">Transactions</h2>
+                    
+                    <!-- Search & Filters -->
+                    <div class="flex gap-2 mb-3">
+                        <div class="relative flex-1">
+                            <i class="ph ph-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" id="history-search" oninput="applyHistoryFilters()" placeholder="Search category, note..." class="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <button onclick="openModal('filter')" class="bg-white border border-gray-200 w-11 rounded-xl flex items-center justify-center text-gray-600 shadow-sm active:bg-gray-100 transition-colors">
+                            <i class="ph ph-faders text-lg"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Filter Chips -->
+                    <div class="flex gap-2 overflow-x-auto hide-scroll pb-2">
+                        <button onclick="setQuickFilter('all')" class="filter-chip active px-4 py-1.5 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 transition-colors whitespace-nowrap" id="chip-all">All</button>
+                        <button onclick="setQuickFilter('expense')" class="filter-chip px-4 py-1.5 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 transition-colors whitespace-nowrap" id="chip-expense">Spends</button>
+                        <button onclick="setQuickFilter('income')" class="filter-chip px-4 py-1.5 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 transition-colors whitespace-nowrap" id="chip-income">Income</button>
+                        <button onclick="setQuickFilter('investment')" class="filter-chip px-4 py-1.5 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 transition-colors whitespace-nowrap" id="chip-investment">Invest</button>
+                    </div>
+
+                    <!-- Detailed History Summary Bar -->
+                    <div class="flex gap-2 mt-2 pt-2 border-t border-gray-100 overflow-x-auto hide-scroll pb-1">
+                        <div class="min-w-[80px] flex-1 bg-emerald-50 rounded-lg px-2 py-1.5 text-center shrink-0">
+                            <div class="text-[9px] text-emerald-600 font-bold uppercase">Income</div>
+                            <div class="text-xs font-bold text-emerald-700 truncate" id="h-inc">₹0</div>
+                        </div>
+                        <div class="min-w-[80px] flex-1 bg-rose-50 rounded-lg px-2 py-1.5 text-center shrink-0">
+                            <div class="text-[9px] text-rose-600 font-bold uppercase">Spent</div>
+                            <div class="text-xs font-bold text-rose-700 truncate" id="h-exp">₹0</div>
+                        </div>
+                        <div class="min-w-[80px] flex-1 bg-indigo-50 rounded-lg px-2 py-1.5 text-center shrink-0">
+                            <div class="text-[9px] text-indigo-600 font-bold uppercase">Invest</div>
+                            <div class="text-xs font-bold text-indigo-700 truncate" id="h-inv">₹0</div>
+                        </div>
+                        <div class="min-w-[80px] flex-1 bg-blue-50 rounded-lg px-2 py-1.5 text-center shrink-0">
+                            <div class="text-[9px] text-blue-600 font-bold uppercase">Transfer</div>
+                            <div class="text-xs font-bold text-blue-700 truncate" id="h-tra">₹0</div>
+                        </div>
+                        <div class="min-w-[80px] flex-1 bg-orange-50 rounded-lg px-2 py-1.5 text-center shrink-0">
+                            <div class="text-[9px] text-orange-600 font-bold uppercase">Lent</div>
+                            <div class="text-xs font-bold text-orange-700 truncate" id="h-len">₹0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="full-history-list" class="px-4 pb-24 pt-3 space-y-3 overflow-y-auto"></div>
+            </div>
+
+            <!-- FOOTER INFO -->
+            <div class="text-center py-8 text-gray-400 pb-24">
+                <div class="flex justify-center items-center gap-1 mb-1">
+                    <i class="ph ph-copyright"></i>
+                    <span class="text-xs font-medium">2025 Smart Gen Analytics</span>
+                </div>
+                <p class="text-[10px] uppercase tracking-widest opacity-60">Empowering Financial Freedom</p>
+            </div>
+        </main>
+
+        <!-- FAB (Z-INDEX 50 FIXED) -->
+        <button onclick="openModal('transaction')" class="fixed bottom-24 right-4 bg-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-3xl hover:scale-105 transition-transform z-50 ring-4 ring-white">
+            <i class="ph ph-plus"></i>
+        </button>
+
+        <!-- NAVBAR -->
+        <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 pb-safe pt-2 px-6 flex justify-between items-center z-40 h-20">
+            <button onclick="switchTab('dashboard')" class="nav-item active flex flex-col items-center space-y-1 text-gray-400 w-14 transition-colors">
+                <i class="ph ph-house text-2xl"></i><span class="text-[10px] font-medium">Home</span>
+            </button>
+            <button onclick="switchTab('portfolio')" class="nav-item flex flex-col items-center space-y-1 text-gray-400 w-14 transition-colors">
+                <i class="ph ph-plant text-2xl"></i><span class="text-[10px] font-medium">Invest</span>
+            </button>
+            <button onclick="switchTab('analytics')" class="nav-item flex flex-col items-center space-y-1 text-gray-400 w-14 transition-colors">
+                <i class="ph ph-chart-pie-slice text-2xl"></i><span class="text-[10px] font-medium">Insights</span>
+            </button>
+            <button onclick="switchTab('planning')" class="nav-item flex flex-col items-center space-y-1 text-gray-400 w-14 transition-colors">
+                <i class="ph ph-calendar-check text-2xl"></i><span class="text-[10px] font-medium">Plan</span>
+            </button>
+            <button onclick="switchTab('history')" class="nav-item flex flex-col items-center space-y-1 text-gray-400 w-14 transition-colors">
+                <i class="ph ph-list-dashes text-2xl"></i><span class="text-[10px] font-medium">History</span>
+            </button>
+        </nav>
+    </div> <!-- End of app-container -->
+
+    <!-- MODALS (kept outside app-container for z-indexing) -->
+    
+    <!-- Transaction Modal -->
+    <div id="transaction-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 modal-enter max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold" id="tx-modal-title">New Transaction</h3>
+                <button onclick="closeModal('transaction')" class="bg-gray-100 rounded-full p-2 text-gray-500 hover:bg-gray-200"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
+                <button onclick="setTxType('expense')" id="btn-expense" class="flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-white shadow-sm text-red-600 transition-all">Spend</button>
+                <button onclick="setTxType('income')" id="btn-income" class="flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide text-gray-500 transition-all">Income</button>
+                <button onclick="setTxType('transfer')" id="btn-transfer" class="flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide text-gray-500 transition-all">Transfer</button>
+                <button onclick="setTxType('investment')" id="btn-investment" class="flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide text-gray-500 transition-all">Invest</button>
+            </div>
+            <form id="tx-form" onsubmit="handleTransactionSubmit(event)" class="space-y-4">
+                <input type="hidden" id="tx-type" value="expense">
+                <input type="hidden" id="editing-tx-id"> 
+                
+                <div>
+                    <label class="block text-xs text-gray-500 uppercase font-bold mb-1">Amount</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold text-lg">₹</span>
+                        <input type="number" id="tx-amount" step="0.01" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3.5 pl-10 pr-4 text-xl font-bold focus:ring-2 focus:ring-black outline-none" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-500 uppercase font-bold mb-1" id="label-from">From</label>
+                        <select id="tx-from-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-3 text-sm font-medium focus:ring-2 focus:ring-black outline-none"></select>
+                    </div>
+                    <div id="field-to-account" class="hidden">
+                        <label class="block text-xs text-gray-500 uppercase font-bold mb-1">To</label>
+                        <select id="tx-to-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-3 text-sm font-medium focus:ring-2 focus:ring-black outline-none"></select>
+                    </div>
+                </div>
+                <div id="field-category">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs text-gray-500 uppercase font-bold">Category</label>
+                        <button type="button" onclick="addNewCategory()" class="text-[10px] text-blue-600 font-bold uppercase border border-blue-200 px-2 py-0.5 rounded hover:bg-blue-50">+ Add</button>
+                    </div>
+                    <select id="tx-category" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-black outline-none appearance-none"></select>
+                </div>
+                <div id="field-maturity" class="hidden bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                    <label class="block text-xs text-indigo-800 uppercase font-bold mb-1">Maturity Date (Optional)</label>
+                    <input type="date" id="tx-maturity" class="w-full bg-white border border-indigo-200 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs text-gray-500 uppercase font-bold mb-1">Note</label>
+                        <input type="text" id="tx-note" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-black outline-none" placeholder="Description">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 uppercase font-bold mb-1">Date</label>
+                        <input type="date" id="tx-date" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-2 text-sm focus:ring-2 focus:ring-black outline-none">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-black text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 transition-colors mt-2">Save Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Redeem Modal -->
+    <div id="redeem-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-indigo-700">Redeem Investment</h3>
+                <button onclick="closeModal('redeem')" class="bg-gray-100 rounded-full p-2 text-gray-500 hover:bg-gray-200"><i class="ph ph-x"></i></button>
+            </div>
+            <form id="redeem-form" onsubmit="handleRedeemSubmit(event)" class="space-y-4">
+                <input type="hidden" id="redeem-id">
+                <div>
+                    <label class="block text-xs text-gray-500 uppercase font-bold mb-1">Invested Principal</label>
+                    <input type="text" id="redeem-principal" disabled class="w-full bg-gray-100 border border-gray-200 rounded-xl py-3 px-4 text-gray-500 font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 uppercase font-bold mb-1">Final Redeemed Value</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                        <input type="number" id="redeem-amount" step="0.01" required class="w-full bg-white border border-gray-200 rounded-xl py-3 pl-8 pr-4 text-lg font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 uppercase font-bold mb-1">Deposit To</label>
+                    <select id="redeem-to-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"></select>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg mt-2 hover:bg-indigo-700 transition-colors">Confirm Redemption</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reminder Modal -->
+    <div id="reminder-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Add Alert</h3>
+                <button onclick="closeModal('reminder')" class="bg-gray-100 rounded-full p-2 text-gray-500 hover:bg-gray-200"><i class="ph ph-x"></i></button>
+            </div>
+            <form id="reminder-form" onsubmit="handleReminderSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-500 uppercase font-bold mb-2">Alert Type</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="setRemType('bill')" id="rt-bill" class="py-2 rounded-lg text-xs font-bold border border-blue-500 bg-blue-50 text-blue-700 transition-colors">Bill</button>
+                        <button type="button" onclick="setRemType('loan_taken')" id="rt-loan_taken" class="py-2 rounded-lg text-xs font-bold border border-red-500 bg-red-50 text-red-700 transition-colors">Debt</button>
+                        <button type="button" onclick="setRemType('loan_given')" id="rt-loan_given" class="py-2 rounded-lg text-xs font-bold border border-emerald-500 bg-emerald-50 text-emerald-700 transition-colors">Receive</button>
+                    </div>
+                    <input type="hidden" id="rem-type" value="bill">
+                </div>
+                <input type="text" id="rem-title" required placeholder="Name / Description" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-black outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="rem-amount" step="0.01" required placeholder="Amount" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-black outline-none">
+                    <input type="date" id="rem-date" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-black outline-none">
+                </div>
+                
+                <!-- CHECKBOX FOR RECORDING TRANSACTION NOW -->
+                <div id="record-tx-option" class="hidden flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <input type="checkbox" id="record-now" class="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300">
+                    <label for="record-now" class="text-sm text-gray-700 select-none">Record this as a transaction now?</label>
+                </div>
+                <div id="record-tx-account" class="hidden">
+                    <label class="block text-xs text-gray-500 uppercase font-bold mb-1">Paid From / Received To</label>
+                    <select id="rem-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-black outline-none"></select>
+                </div>
+
+                <button type="submit" class="w-full bg-black text-white font-bold py-4 rounded-xl shadow-lg mt-2 hover:bg-gray-800 transition-colors">Save Alert</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div id="filter-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Filters</h3>
+                <button onclick="closeModal('filter')" class="bg-gray-100 rounded-full p-2 text-gray-500 hover:bg-gray-200"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-500 uppercase font-bold mb-2">Date Range</label>
+                    <select id="filter-date" onchange="applyHistoryFilters()" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm">
+                        <option value="all">All Time</option>
+                        <option value="thisMonth">This Month</option>
+                        <option value="lastMonth">Last Month</option>
+                        <option value="thisYear">This Year</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 uppercase font-bold mb-2">Account</label>
+                    <select id="filter-account" onchange="applyHistoryFilters()" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm">
+                        <option value="all">All Accounts</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 uppercase font-bold mb-2">Sort By</label>
+                    <select id="filter-sort" onchange="applyHistoryFilters()" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm">
+                        <option value="date-desc">Newest First</option>
+                        <option value="amount-desc">Highest Amount</option>
+                    </select>
+                </div>
+                <button onclick="resetFilters()" class="w-full py-3 text-sm font-bold text-white bg-blue-600 rounded-xl shadow-lg hover:bg-blue-700 transition-colors mt-2">Reset All Filters</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONSTANTS ---
+        const PIN_HASH_KEY = 'sga_pin_hash_v16';
+        const SEC_Q_KEY = 'sga_sec_q_v16';
+        const SEC_A_HASH_KEY = 'sga_sec_a_hash_v16';
+        const AUTH_STATE_KEY = 'sga_is_authenticated_v16';
+
+        const DEFAULT_ACCOUNTS = [
+            { id: 'acc_1', name: 'Cash / Wallet', type: 'cash', color: 'from-green-400 to-emerald-600', icon: 'ph-money' },
+            { id: 'acc_2', name: 'Bank A (Salary)', type: 'bank', color: 'from-blue-400 to-blue-600', icon: 'ph-bank' },
+            { id: 'acc_3', name: 'Bank B (Savings)', type: 'bank', color: 'from-indigo-400 to-purple-600', icon: 'ph-bank' },
+            { id: 'acc_4', name: 'Bank C (UPI)', type: 'bank', color: 'from-gray-400 to-gray-600', icon: 'ph-qr-code' },
+            { id: 'acc_inv', name: 'Investments', type: 'investment', color: 'from-orange-400 to-red-500', icon: 'ph-trend-up' }
+        ];
+
+        const DEFAULT_CATEGORIES = {
+            expense: ['Food & Dining', 'Transport', 'Shopping', 'Bills & Utilities', 'Rent', 'Health', 'Entertainment', 'Lent / Loan Given'],
+            income: ['Salary', 'Freelance', 'Refunds', 'Dividends', 'Investment Return', 'Loan Repayment'],
+            investment: ['Fixed Deposit', 'SIP / Mutual Fund', 'Postal Savings', 'Stocks', 'Gold']
+        };
+
+        let appData = { transactions: [], balances: {}, categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)), reminders: [], portfolio: [] };
+        let filterState = { search: '', type: 'all', date: 'all', account: 'all', sort: 'date-desc' };
+        let charts = { spending: null, investment: null, trend: null, invBreakdown: null };
+        let currentRemType = 'bill', currentPortfolioView = 'active', activeReminderIndex = null;
+        
+        // --- UTILITY FUNCTIONS FOR HASHING ---
+
+        // Converts an ArrayBuffer to a hex string
+        function arrayBufferToHex(buffer) {
+            return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
+        }
+
+        // Hashes a string (like a PIN or security answer) using SHA-256
+        async function hashString(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            return arrayBufferToHex(hashBuffer);
+        }
+
+        // Combines PIN inputs into a single string
+        function getPin(prefix) {
+            let pin = '';
+            for (let i = 1; i <= 6; i++) {
+                const input = document.getElementById(`${prefix}-pin${i}`);
+                if (input && input.value) {
+                    pin += input.value;
+                } else {
+                    // Check if all inputs are present, even if empty, for validation
+                    if (!input) return null; 
+                }
+            }
+            return pin.length === 6 ? pin : null;
+        }
+
+        // Handles moving focus in PIN inputs
+        function moveToNext(currentInput, nextId) {
+            if (currentInput.value.length === currentInput.maxLength) {
+                const nextInput = document.getElementById(nextId);
+                if (nextInput) {
+                    nextInput.focus();
+                }
+            }
+        }
+
+        // Handles backspace and ensures only one digit per box
+        function handlePinInput(event, currentId) {
+            const input = document.getElementById(currentId);
+            // Limit to 1 character
+            if (input.value.length > 1) {
+                input.value = input.value.slice(0, 1);
+            }
+
+            // Move to previous box on backspace
+            if (event.key === 'Backspace' && input.value === '') {
+                const prevIndex = parseInt(currentId.slice(-1)) - 1;
+                if (prevIndex >= 1) {
+                    const prevId = currentId.slice(0, -1) + prevIndex;
+                    document.getElementById(prevId).focus();
+                }
+            }
+        }
+
+
+        // --- AUTHENTICATION LOGIC ---
+
+        function isPinSet() {
+            return localStorage.getItem(PIN_HASH_KEY) !== null;
+        }
+
+        function setAuthenticated(status) {
+            sessionStorage.setItem(AUTH_STATE_KEY, status ? 'true' : 'false');
+            if (status) {
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                // Only load data/render when authenticated
+                loadData();
+                renderAll();
+            } else {
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+                // Clear all pin fields on logout
+                document.querySelectorAll('input[type="password"], input[type="number"].pin-input').forEach(input => input.value = '');
+                showLoginScreen();
+            }
+        }
+        
+        function logout() {
+            if (confirm("Are you sure you want to log out?")) {
+                setAuthenticated(false);
+                showToast("Logged out successfully");
+            }
+        }
+
+        function showAuthScreen(screenId) {
+            ['auth-setup', 'auth-login', 'auth-reset'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+            // Focus on the first pin input of the visible form
+            document.querySelector(`#${screenId} .pin-input`).focus();
+        }
+
+        function showLoginScreen() { showAuthScreen('auth-login'); }
+        
+        function showResetScreen() {
+            const q = localStorage.getItem(SEC_Q_KEY);
+            if (!q) {
+                showToast("Security question not set. Please contact support.", true);
+                return;
+            }
+            document.getElementById('reset-security-q').textContent = q;
+            showAuthScreen('auth-reset');
+        }
+
+
+        async function handleSetup(e) {
+            e.preventDefault();
+            const pin = getPin('setup');
+            const secQ = document.getElementById('setup-security-q').options[document.getElementById('setup-security-q').selectedIndex].text;
+            const secA = document.getElementById('setup-security-a').value.trim();
+
+            if (!pin) { showToast("Please enter a 6-digit PIN.", true); return; }
+            if (secA === '') { showToast("Please provide an answer to the security question.", true); return; }
+
+            const pinHash = await hashString(pin);
+            const secAHash = await hashString(secA.toLowerCase());
+
+            localStorage.setItem(PIN_HASH_KEY, pinHash);
+            localStorage.setItem(SEC_Q_KEY, secQ);
+            localStorage.setItem(SEC_A_HASH_KEY, secAHash);
+
+            showToast("PIN set successfully! Logging in...");
+            setAuthenticated(true);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const pin = getPin('login');
+            if (!pin) { showToast("Please enter the 6-digit PIN.", true); return; }
+
+            const inputHash = await hashString(pin);
+            const storedHash = localStorage.getItem(PIN_HASH_KEY);
+
+            if (inputHash === storedHash) {
+                showToast("Login successful!");
+                setAuthenticated(true);
+            } else {
+                showToast("Invalid PIN. Please try again.", true);
+            }
+        }
+
+        async function handleReset(e) {
+            e.preventDefault();
+            const secAInput = document.getElementById('reset-security-a').value.trim();
+            const newPin = getPin('reset');
+
+            if (secAInput === '') { showToast("Please answer the security question.", true); return; }
+            if (!newPin) { showToast("Please enter a new 6-digit PIN.", true); return; }
+            
+            const secAInputHash = await hashString(secAInput.toLowerCase());
+            const storedSecAHash = localStorage.getItem(SEC_A_HASH_KEY);
+
+            if (secAInputHash === storedSecAHash) {
+                const newPinHash = await hashString(newPin);
+                localStorage.setItem(PIN_HASH_KEY, newPinHash);
+                showToast("PIN reset successful! Please log in with your new PIN.");
+                showLoginScreen();
+            } else {
+                showToast("Incorrect security answer.", true);
+            }
+        }
+
+        // --- CORE APP LOGIC (RESTORED) ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check authentication status first
+            if (isPinSet()) {
+                if (sessionStorage.getItem(AUTH_STATE_KEY) === 'true') {
+                    setAuthenticated(true);
+                } else {
+                    setAuthenticated(false); // Show login screen
+                }
+            } else {
+                showAuthScreen('auth-setup'); // Show setup screen
+            }
+
+            // Common setup that runs regardless of auth status initially
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tx-date').value = today;
+            document.getElementById('rem-date').value = today;
+            populateAccountFilter();
+            populateAccountSelect('rem-account'); // For Reminder Modal
+        });
+
+        function loadData() {
+            // This function now runs only after successful authentication
+            const stored = localStorage.getItem('wealthflow_v15_data');
+            if (stored) {
+                appData = JSON.parse(stored);
+                if(!appData.portfolio) appData.portfolio = [];
+            } else {
+                DEFAULT_ACCOUNTS.forEach(acc => appData.balances[acc.id] = 0);
+                saveData();
+            }
+        }
+
+        function saveData() { localStorage.setItem('wealthflow_v15_data', JSON.stringify(appData)); renderAll(); }
+        
+        function resetData() { 
+            if(confirm('WARNING: This will delete ALL your data permanently.\n\nAre you sure?')) { 
+                localStorage.removeItem('wealthflow_v15_data'); 
+                localStorage.removeItem(PIN_HASH_KEY);
+                localStorage.removeItem(SEC_Q_KEY);
+                localStorage.removeItem(SEC_A_HASH_KEY);
+                sessionStorage.removeItem(AUTH_STATE_KEY);
+                location.reload(); 
+            } 
+        }
+
+        function renderAll() {
+            updateHeaderStats(); renderAccounts();
+            renderRecentList(appData.transactions.slice(-5).reverse(), 'recent-transactions');
+            renderReminders(); renderPortfolio(currentPortfolioView);
+            applyHistoryFilters(); updateCharts();
+        }
+
+        function updateHeaderStats() {
+            let netWorth = 0;
+            DEFAULT_ACCOUNTS.forEach(a => { if(a.type !== 'investment') netWorth += (appData.balances[a.id] || 0); });
+            appData.portfolio.filter(p => p.status === 'active').forEach(p => netWorth += (p.currentValue || p.amount));
+            document.getElementById('total-balance').textContent = formatCurrency(netWorth);
+
+            let tIncome = 0, tExpense = 0, tInvest = 0, tLent = 0;
+            appData.transactions.forEach(tx => {
+                if(tx.type === 'income') tIncome += tx.amount;
+                if(tx.type === 'expense') { if(tx.category === 'Lent / Loan Given') tLent += tx.amount; else tExpense += tx.amount; }
+                if(tx.type === 'investment') tInvest += tx.amount;
+            });
+
+            document.getElementById('snap-income').textContent = formatCurrency(tIncome);
+            document.getElementById('snap-expense').textContent = formatCurrency(tExpense);
+            document.getElementById('snap-invest').textContent = formatCurrency(tInvest);
+            document.getElementById('snap-lent').textContent = formatCurrency(tLent);
+
+            const n = new Date(); let mI=0, mE=0;
+            appData.transactions.forEach(x => { 
+                const d = new Date(x.date); 
+                if(d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear()) { if(x.type==='income') mI+=x.amount; if(x.type==='expense') mE+=x.amount; } 
+            });
+            document.getElementById('monthly-income').textContent = formatCurrency(mI);
+            document.getElementById('monthly-expense').textContent = formatCurrency(mE);
+        }
+
+        function updateInvestValue(id) {
+            const idx = appData.portfolio.findIndex(p => p.id === id);
+            if (idx === -1) return;
+            const p = appData.portfolio[idx];
+            const currentVal = p.currentValue || p.amount;
+            const newValStr = prompt(`Update Current Market Value for ${p.name}\n\nInitial: ${formatCurrency(p.amount)}\nCurrent: ${formatCurrency(currentVal)}`, currentVal);
+            if (newValStr !== null && newValStr.trim() !== "") {
+                const newVal = parseFloat(newValStr);
+                if (!isNaN(newVal)) { appData.portfolio[idx].currentValue = newVal; saveData(); showToast("Market Value Updated"); }
+            }
+        }
+
+        function resolveAlert(i) {
+            activeReminderIndex = i; const r = appData.reminders[i];
+            openModal('transaction'); 
+            document.getElementById('tx-amount').value = r.amount; 
+            document.getElementById('tx-note').value = r.title;
+            if (r.type === 'loan_given') { setTxType('income'); document.getElementById('tx-category').value = 'Loan Repayment'; } 
+            else if (r.type === 'loan_taken') { setTxType('expense'); document.getElementById('tx-category').value = 'Lent / Loan Given'; } 
+            else { setTxType('expense'); }
+            showToast('Verify details & click Save', false);
+        }
+
+        function setRemType(t) { 
+            currentRemType = t; document.getElementById('rem-type').value = t;
+            document.querySelectorAll('#reminder-modal button[type="button"]').forEach(btn => btn.className = 'py-2 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 transition-colors hover:bg-gray-50');
+            const activeBtn = document.getElementById(`rt-${t}`);
+            if(t === 'bill') activeBtn.className = 'py-2 rounded-lg text-xs font-bold border border-blue-500 bg-blue-50 text-blue-700 transition-colors';
+            if(t === 'loan_taken') activeBtn.className = 'py-2 rounded-lg text-xs font-bold border border-red-500 bg-red-50 text-red-700 transition-colors';
+            if(t === 'loan_given') activeBtn.className = 'py-2 rounded-lg text-xs font-bold border border-emerald-500 bg-emerald-50 text-emerald-700 transition-colors';
+            const showRecord = (t === 'loan_given' || t === 'loan_taken');
+            document.getElementById('record-tx-option').classList.toggle('hidden', !showRecord);
+            document.getElementById('record-tx-account').classList.toggle('hidden', !showRecord);
+        }
+
+        function handleReminderSubmit(e) { 
+            e.preventDefault(); 
+            const title = document.getElementById('rem-title').value;
+            const amount = parseFloat(document.getElementById('rem-amount').value);
+            const date = document.getElementById('rem-date').value;
+            const type = currentRemType;
+            const recordNow = document.getElementById('record-now').checked;
+            const accountId = document.getElementById('rem-account').value;
+            appData.reminders.push({ title, amount, date, type }); 
+            if (recordNow && (type === 'loan_given' || type === 'loan_taken')) {
+                const txType = type === 'loan_given' ? 'expense' : 'income'; 
+                const category = type === 'loan_given' ? 'Lent / Loan Given' : 'Loan / Debt Taken';
+                const tx = { id: Date.now(), type: txType, amount: amount, date: new Date().toISOString().split('T')[0], note: `${type === 'loan_given' ? 'Lent to' : 'Borrowed from'}: ${title}`, from: accountId, category: category, to: (txType === 'income') ? accountId : null };
+                if (txType === 'expense') appData.balances[accountId] -= amount; else appData.balances[accountId] += amount;
+                appData.transactions.push(tx);
+                showToast("Transaction & Alert Saved!");
+            } else { showToast("Alert Saved"); }
+            saveData(); closeModal('reminder'); 
+        }
+        
+        function revertBalance(tx) {
+            if (tx.type === 'expense') { appData.balances[tx.from] += tx.amount; }
+            else if (tx.type === 'income') { appData.balances[tx.from] -= tx.amount; }
+            else if (tx.type === 'transfer') { appData.balances[tx.from] += tx.amount; appData.balances[tx.to] -= tx.amount; }
+            else if (tx.type === 'investment') { appData.balances[tx.from] += tx.amount; appData.balances['acc_inv'] -= tx.amount; const pIdx = appData.portfolio.findIndex(p => p.id === tx.id); if(pIdx > -1) appData.portfolio.splice(pIdx, 1); }
+        }
+        function deleteTransaction(id) { if(!confirm("Delete transaction?")) return; const idx = appData.transactions.findIndex(t => t.id === id); if (idx > -1) { revertBalance(appData.transactions[idx]); appData.transactions.splice(idx, 1); saveData(); showToast("Deleted"); } }
+        function editTransaction(id) {
+            const tx = appData.transactions.find(t => t.id === id); if(!tx) return;
+            openModal('transaction'); document.getElementById('tx-modal-title').innerText = "Edit"; document.getElementById('editing-tx-id').value = tx.id;
+            setTxType(tx.type); document.getElementById('tx-amount').value = tx.amount; document.getElementById('tx-date').value = tx.date; document.getElementById('tx-note').value = tx.note || ''; document.getElementById('tx-from-account').value = tx.from;
+            if(tx.type === 'transfer') document.getElementById('tx-to-account').value = tx.to; else document.getElementById('tx-category').value = tx.category;
+            if(tx.type === 'investment') { const p = appData.portfolio.find(p => p.id === tx.id); if(p && p.maturityDate) document.getElementById('tx-maturity').value = p.maturityDate; }
+        }
+        function handleTransactionSubmit(e) {
+            e.preventDefault(); const amt = parseFloat(document.getElementById('tx-amount').value); const type = document.getElementById('tx-type').value; const from = document.getElementById('tx-from-account').value; const date = document.getElementById('tx-date').value; const note = document.getElementById('tx-note').value; const editId = document.getElementById('editing-tx-id').value;
+            if(!amt || amt <= 0) return showToast('Invalid Amount', true);
+            if (editId) { const oldIdx = appData.transactions.findIndex(t => t.id == editId); if (oldIdx > -1) { revertBalance(appData.transactions[oldIdx]); appData.transactions.splice(oldIdx, 1); } }
+            const finalId = editId ? parseInt(editId) : Date.now();
+            const tx = { id: finalId, type, amount: amt, date, note, from };
+            if(type==='expense') { appData.balances[from] -= amt; tx.category = document.getElementById('tx-category').value; }
+            else if(type==='income') { appData.balances[from] += amt; tx.category = document.getElementById('tx-category').value; tx.to = from; }
+            else if(type==='transfer') { const to = document.getElementById('tx-to-account').value; if(from===to) return alert('Same account'); appData.balances[from] -= amt; appData.balances[to] += amt; tx.to = to; tx.category = 'Transfer'; }
+            else { appData.balances[from] -= amt; appData.balances['acc_inv'] += amt; tx.to = 'acc_inv'; tx.category = document.getElementById('tx-category').value; appData.portfolio.push({ id: finalId, name: note || tx.category, type: tx.category, amount: amt, currentValue: amt, date: date, maturityDate: document.getElementById('tx-maturity').value, status: 'active' }); }
+            appData.transactions.push(tx); if(activeReminderIndex !== null) { appData.reminders.splice(activeReminderIndex, 1); activeReminderIndex = null; }
+            saveData(); closeModal('transaction'); showToast('Saved');
+        }
+        function setTxType(type) {
+            document.getElementById('tx-type').value = type;
+            ['expense','income','transfer','investment'].forEach(t => { const b = document.getElementById(`btn-${t}`); const a = { expense: 'bg-white text-red-600 shadow-sm', income: 'bg-white text-green-600 shadow-sm', transfer: 'bg-white text-blue-600 shadow-sm', investment: 'bg-white text-indigo-600 shadow-sm' }; b.className = t===type ? `flex-1 py-2.5 rounded-lg text-xs font-bold uppercase border ${a[t]}` : 'flex-1 py-2.5 rounded-lg text-xs font-bold uppercase text-gray-400 hover:bg-gray-100'; });
+            populateAccountSelect('tx-from-account');
+            document.getElementById('field-to-account').classList.toggle('hidden', type!=='transfer'); document.getElementById('field-category').classList.toggle('hidden', type==='transfer'); document.getElementById('field-maturity').classList.toggle('hidden', type!=='investment');
+            if(type==='transfer') populateAccountSelect('tx-to-account'); else populateCategorySelect(type);
+        }
+        function renderPortfolio(status) {
+            currentPortfolioView = status; const c = document.getElementById('portfolio-list'); c.innerHTML = '';
+            document.getElementById('tab-active').className = status==='active' ? 'flex-1 py-2 rounded-lg bg-white shadow-sm text-gray-800' : 'flex-1 py-2 rounded-lg text-gray-500';
+            document.getElementById('tab-redeemed').className = status==='redeemed' ? 'flex-1 py-2 rounded-lg bg-white shadow-sm text-gray-800' : 'flex-1 py-2 rounded-lg text-gray-500';
+            let total=0; appData.portfolio.filter(p=>p.status==='active').forEach(p=>total+=(p.currentValue||p.amount)); document.getElementById('portfolio-total').textContent = formatCurrency(total);
+            const list = appData.portfolio.filter(p => p.status === status);
+            if(list.length===0) { c.innerHTML = `<div class="text-center text-gray-400 py-8 text-sm">No ${status} investments.</div>`; return; }
+            list.forEach(inv => {
+                let footerHtml, actionBtn;
+                if(status==='active') {
+                    const curVal = inv.currentValue || inv.amount;
+                    const growth = curVal - inv.amount;
+                    const growthPerc = ((growth/inv.amount)*100).toFixed(1);
+                    const growthClass = growth >= 0 ? 'text-green-600' : 'text-red-600';
+                    footerHtml = `<div class="flex justify-between w-full text-xs"><span class="text-gray-400">Princ: ${formatCurrency(inv.amount)}</span><span class="font-bold ${growthClass}">${growth>=0?'+':''}${formatCurrency(growth)} (${growthPerc}%)</span></div>`;
+                    actionBtn = `<div class="flex gap-1"><button onclick="updateInvestValue(${inv.id})" class="w-7 h-7 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="ph ph-trend-up"></i></button><button onclick="openRedeemModal(${inv.id})" class="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">Redeem</button></div>`;
+                } else {
+                    const profit = inv.finalAmount - inv.amount; footerHtml = `<div class="flex items-center gap-2 mt-1"><span class="text-xs font-bold ${profit>=0?'text-green-600':'text-red-600'}">${profit>=0?'Gain':'Loss'}: ${formatCurrency(Math.abs(profit))}</span></div>`;
+                }
+                c.innerHTML += `<div class="inv-card-bg p-4 rounded-xl border border-gray-100 shadow-sm"><div class="flex justify-between items-start mb-2"><div><div class="text-xs text-indigo-500 font-bold uppercase">${inv.type}</div><div class="font-bold text-gray-800 text-lg">${inv.name || inv.type}</div><div class="text-[10px] text-gray-400">Val: ${formatCurrency(inv.currentValue||inv.amount)}</div></div><div class="text-right">${actionBtn||''}</div></div><div class="border-t border-gray-100 pt-2 mt-2 flex justify-between items-center">${footerHtml}</div></div>`;
+            });
+        }
+        
+        function openRedeemModal(id) { const inv = appData.portfolio.find(p=>p.id===id); document.getElementById('redeem-id').value = id; document.getElementById('redeem-principal').value = formatCurrency(inv.amount); document.getElementById('redeem-amount').value = ''; const s = document.getElementById('redeem-to-account'); s.innerHTML=''; DEFAULT_ACCOUNTS.forEach(a=>{ if(a.type!=='investment') s.innerHTML+=`<option value="${a.id}">${a.name}</option>`; }); document.getElementById('redeem-modal').classList.remove('hidden'); }
+        function handleRedeemSubmit(e) { e.preventDefault(); const id = parseInt(document.getElementById('redeem-id').value); const amt = parseFloat(document.getElementById('redeem-amount').value); const to = document.getElementById('redeem-to-account').value; if(!amt) return; const idx = appData.portfolio.findIndex(p=>p.id===id); const inv = appData.portfolio[idx]; appData.portfolio[idx].status='redeemed'; appData.portfolio[idx].finalAmount=amt; appData.portfolio[idx].redeemDate=new Date().toISOString(); appData.balances['acc_inv'] -= inv.amount; appData.balances[to] += amt; appData.transactions.push({ id: Date.now(), type: 'income', category: 'Investment Return', amount: amt, date: new Date().toISOString().split('T')[0], note: `Redeemed: ${inv.name}`, from: to, to: to }); saveData(); closeModal('redeem'); }
+        function populateAccountSelect(el) { const s = document.getElementById(el); s.innerHTML=''; DEFAULT_ACCOUNTS.forEach(a=>{ if(a.type==='investment' && document.getElementById('tx-type')?.value!=='investment') return; s.innerHTML+=`<option value="${a.id}">${a.name} (${formatCurrency(appData.balances[a.id]||0)})</option>` }); }
+        function populateCategorySelect(t) { const s = document.getElementById('tx-category'); s.innerHTML=''; appData.categories[t].forEach(c=>s.innerHTML+=`<option>${c}</option>`); }
+        function addNewCategory() { const n = prompt('Name:'); if(n) { appData.categories[document.getElementById('tx-type').value].push(n); populateCategorySelect(document.getElementById('tx-type').value); } }
+        function populateAccountFilter() { const s = document.getElementById('filter-account'); DEFAULT_ACCOUNTS.forEach(a=>s.innerHTML+=`<option value="${a.id}">${a.name}</option>`); }
+        function renderAccounts() { const c = document.getElementById('account-cards-container'); c.innerHTML=''; DEFAULT_ACCOUNTS.forEach(a => { c.innerHTML += `<div class="min-w-[140px] h-24 rounded-2xl bg-gradient-to-br ${a.color} text-white p-4 flex flex-col justify-between shadow-md relative overflow-hidden shrink-0"><div class="absolute right-[-10px] top-[-10px] opacity-20"><i class="ph ${a.icon} text-6xl"></i></div><div class="text-[10px] font-bold opacity-90 relative z-10 uppercase tracking-wide">${a.name}</div><div class="font-bold text-lg relative z-10 truncate">${formatCurrency(appData.balances[a.id]||0)}</div></div>`; }); }
+        
+        function renderRecentList(d, el) { 
+            const c = document.getElementById(el); c.innerHTML=''; 
+            if(d.length===0) { c.innerHTML='<div class="text-center text-gray-400 py-4">No transactions</div>'; return; } 
+            d.forEach(t => { 
+                const cCol = t.type==='income'?'text-green-600 bg-green-50':(t.type==='expense'?'text-red-600 bg-red-50':'text-blue-600 bg-blue-50'); 
+                const ic = t.type==='income'?'ph-arrow-down-left':(t.type==='expense'?'ph-shopping-bag':'ph-arrows-left-right'); 
+                c.innerHTML += `
+                <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-50 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center ${cCol}"><i class="ph ${ic} text-lg"></i></div>
+                        <div><div class="font-bold text-sm text-gray-800">${t.category}</div><div class="text-[10px] text-gray-500">${t.note||''}</div></div>
+                    </div>
+                    <div class="text-right flex items-center gap-2">
+                        <div><div class="font-bold text-sm ${t.type==='income'?'text-green-600':'text-gray-800'}">${t.type==='expense'?'-':''}${formatCurrency(t.amount)}</div><div class="text-[10px] text-gray-400">${new Date(t.date).toLocaleDateString()}</div></div>
+                        <div class="flex gap-1">
+                            <button onclick="editTransaction(${t.id})" class="w-7 h-7 rounded-full bg-gray-50 text-blue-400 hover:text-blue-600 flex items-center justify-center"><i class="ph ph-pencil-simple"></i></button>
+                            <button onclick="deleteTransaction(${t.id})" class="w-7 h-7 rounded-full bg-gray-50 text-gray-300 hover:text-red-500 flex items-center justify-center"><i class="ph ph-trash"></i></button>
+                        </div>
+                    </div>
+                </div>`; 
+            }); 
+        }
+        
+        function renderReminders() { const l = document.getElementById('all-reminders'), al = document.getElementById('alerts-list'); l.innerHTML=''; al.innerHTML=''; let has=false; if(appData.reminders.length===0) l.innerHTML='<div class="text-center text-gray-400 py-4 text-sm">No alerts</div>'; appData.reminders.forEach((r,i) => { const d = Math.ceil((new Date(r.date)-new Date())/86400000); if(d<=3) has=true; const html = `<div class="bg-white border-l-4 ${r.type==='loan_given'?'border-green-500':r.type==='loan_taken'?'border-red-500':'border-blue-500'} p-3 rounded-r-xl shadow-sm flex justify-between items-center"><div><div class="font-bold text-sm">${r.title}</div><div class="text-xs text-gray-500">${d<0?'Overdue':d+' days'}</div></div><div class="flex gap-2"><span class="font-bold text-sm">${formatCurrency(r.amount)}</span><button onclick="resolveAlert(${i})" class="bg-green-100 text-green-600 w-8 h-8 rounded-full flex items-center justify-center"><i class="ph ph-check-bold"></i></button><button onclick="appData.reminders.splice(${i},1);saveData()" class="text-red-400"><i class="ph ph-trash"></i></button></div></div>`; l.innerHTML+=html; if(d<=3) al.innerHTML+=html; }); document.getElementById('alerts-section').style.display = has ? 'block' : 'none'; }
+        
+        function applyHistoryFilters() { 
+            let r = [...appData.transactions];
+            const s = document.getElementById('history-search').value.toLowerCase();
+            const d = document.getElementById('filter-date').value;
+            const a = document.getElementById('filter-account').value;
+            const o = document.getElementById('filter-sort').value;
+
+            if(filterState.type !== 'all') r = r.filter(t => t.type === filterState.type);
+            if(s) r = r.filter(t => (t.category||'').toLowerCase().includes(s) || (t.note||'').toLowerCase().includes(s));
+            
+            if(d !== 'all') { 
+                const now = new Date(); 
+                r = r.filter(t => { 
+                    const x = new Date(t.date); 
+                    if(d==='thisMonth') return x.getMonth()===now.getMonth() && x.getFullYear()===now.getFullYear();
+                    if(d==='lastMonth') { const lm = new Date(now.getFullYear(), now.getMonth()-1, 1); return x.getMonth()===lm.getMonth() && x.getFullYear()===lm.getFullYear(); }
+                    if(d==='thisYear') return x.getFullYear()===now.getFullYear();
+                    return true;
+                }); 
+            }
+            if(a !== 'all') r = r.filter(t => t.from === a || t.to === a);
+            
+            let hInc=0, hExp=0, hInv=0, hTra=0, hLen=0;
+            r.forEach(t => {
+                if(t.type === 'income') hInc += t.amount;
+                else if(t.type === 'investment') hInv += t.amount;
+                else if(t.type === 'transfer') hTra += t.amount;
+                else if(t.type === 'expense') {
+                    if(t.category === 'Lent / Loan Given') hLen += t.amount;
+                    else hExp += t.amount;
+                }
+            });
+            
+            document.getElementById('h-inc').textContent = formatCurrency(hInc);
+            document.getElementById('h-exp').textContent = formatCurrency(hExp);
+            document.getElementById('h-inv').textContent = formatCurrency(hInv);
+            document.getElementById('h-tra').textContent = formatCurrency(hTra);
+            document.getElementById('h-len').textContent = formatCurrency(hLen);
+
+            r.sort((x,y) => {
+                if(o==='date-desc') return new Date(y.date) - new Date(x.date);
+                if(o==='amount-desc') return y.amount - x.amount;
+                return 0;
+            });
+            renderRecentList(r, 'full-history-list');
+        }
+
+        function setQuickFilter(t) { filterState.type = t; document.querySelectorAll('.filter-chip').forEach(b => b.classList.toggle('active', b.id===`chip-${t}`)); applyHistoryFilters(); }
+        function resetFilters() { document.getElementById('history-search').value=''; document.getElementById('filter-date').value='all'; document.getElementById('filter-account').value='all'; setQuickFilter('all'); closeModal('filter'); }
+        function formatCurrency(n) { return "₹ " + n.toLocaleString('en-IN'); }
+        function showToast(m,e=false) { const t=document.createElement('div'); t.className=`${e?'bg-red-600':'bg-black'} text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-2 text-sm fade-in`; t.innerHTML=`<i class="ph ${e?'ph-warning':'ph-check-circle'}"></i> ${m}`; document.getElementById('toast-container').appendChild(t); setTimeout(()=>t.remove(),3000); }
+        function switchTab(t) { ['dashboard','portfolio','analytics','planning','history'].forEach(x=>document.getElementById(`view-${x}`).classList.add('hidden')); document.getElementById(`view-${t}`).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.innerText.toLowerCase().includes(t==='dashboard'?'home':t))); if(t==='portfolio') renderPortfolio('active'); if(t==='analytics') updateCharts(); if(t==='history') applyHistoryFilters(); }
+        function openModal(n) { 
+            document.getElementById(`${n}-modal`).classList.remove('hidden'); 
+            if(n==='transaction') { 
+                document.getElementById('tx-modal-title').innerText="New Transaction"; 
+                document.getElementById('editing-tx-id').value=""; 
+                if(activeReminderIndex===null) { 
+                    document.getElementById('tx-form').reset(); 
+                    document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+                    setTxType('expense'); 
+                } 
+            }
+            if(n==='reminder') {
+                document.getElementById('reminder-form').reset();
+                document.getElementById('rem-date').value = new Date().toISOString().split('T')[0];
+                setRemType('bill');
+            }
+        }
+        function closeModal(n) { document.getElementById(`${n}-modal`).classList.add('hidden'); if(n==='transaction') activeReminderIndex=null; }
+        function exportData() { 
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+            const filename = `wealthflow_backup_${dateStr}_${timeStr}.json`;
+            const s = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData)); 
+            const a = document.createElement('a'); 
+            a.href=s; 
+            a.download=filename; 
+            document.body.appendChild(a); 
+            a.click(); 
+            a.remove(); 
+        }
+        function triggerImport() { document.getElementById('import-file').click(); }
+        function handleFileSelect(e) { const r = new FileReader(); r.onload=ev=>{ try { const d=JSON.parse(ev.target.result); appData=d; saveData(); location.reload(); } catch(e){alert('Error');} }; r.readAsText(e.target.files[0]); }
+        
+        // RESTORED: updateCharts function
+        function updateCharts() {
+            const period = document.getElementById('analytics-period').value;
+            const ctxSpend = document.getElementById('spendingChart').getContext('2d');
+            const ctxInv = document.getElementById('investmentChart').getContext('2d');
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            // NEW: Context for breakdown chart
+            const ctxInvBreakdown = document.getElementById('investBreakdownChart').getContext('2d');
+            const now = new Date();
+
+            if(charts.spending) charts.spending.destroy();
+            if(charts.investment) charts.investment.destroy();
+            if(charts.trend) charts.trend.destroy();
+            if(charts.invBreakdown) charts.invBreakdown.destroy();
+
+            let filteredTx = appData.transactions.filter(tx => {
+                const txDate = new Date(tx.date);
+                if(period === 'all') return true;
+                if(period === 'thisMonth') return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+                if(period === 'lastMonth') { const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1); return txDate.getMonth() === lm.getMonth() && txDate.getFullYear() === lm.getFullYear(); }
+                if(period === 'last3Months') { const tm = new Date(now.getFullYear(), now.getMonth() - 3, 1); return txDate >= tm; }
+                if(period === 'yearToDate') return txDate.getFullYear() === now.getFullYear();
+                return true;
+            });
+
+            const sData = {};
+            filteredTx.filter(t => t.type === 'expense').forEach(t => sData[t.category] = (sData[t.category] || 0) + t.amount);
+            charts.spending = new Chart(ctxSpend, { type: 'doughnut', data: { labels: Object.keys(sData).length ? Object.keys(sData) : ['No Data'], datasets: [{ data: Object.values(sData).length ? Object.values(sData) : [1], backgroundColor: ['#f87171', '#fb923c', '#fbbf24', '#a3e635', '#34d399', '#22d3ee', '#818cf8'] }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } } });
+
+            let cash = 0, bank = 0, inv = 0;
+            DEFAULT_ACCOUNTS.forEach(a => { if (a.type === 'cash') cash += appData.balances[a.id] || 0; else if (a.type === 'bank') bank += appData.balances[a.id] || 0; else inv += appData.balances[a.id] || 0; });
+            charts.investment = new Chart(ctxInv, { type: 'pie', data: { labels: ['Cash', 'Bank', 'Inv'], datasets: [{ data: [cash, bank, inv], backgroundColor: ['#34d399', '#3b82f6', '#8b5cf6'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+
+            const mSpends = {};
+            filteredTx.filter(t => t.type === 'expense').forEach(t => { const k = new Date(t.date).toLocaleString('default', { month: 'short' }); mSpends[k] = (mSpends[k] || 0) + t.amount; });
+            charts.trend = new Chart(ctxTrend, { type: 'bar', data: { labels: Object.keys(mSpends), datasets: [{ data: Object.values(mSpends), backgroundColor: '#6366f1', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } }, y: { grid: { display: false } } }, plugins: { legend: { display: false } } } });
+
+            // NEW: Investment Breakdown Chart Logic
+            const invData = {};
+            appData.portfolio.filter(p => p.status === 'active').forEach(p => {
+                // Use current value if available, else amount
+                const val = p.currentValue || p.amount;
+                invData[p.type] = (invData[p.type] || 0) + val;
+            });
+
+            charts.invBreakdown = new Chart(ctxInvBreakdown, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(invData).length ? Object.keys(invData) : ['No Active Inv'],
+                    datasets: [{
+                        data: Object.keys(invData).length ? Object.values(invData) : [1],
+                        backgroundColor: ['#818cf8', '#c084fc', '#f472b6', '#2dd4bf', '#fbbf24', '#60a5fa', '#34d399']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 10, usePointStyle: true, font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        window.onclick = e => { if(e.target.classList.contains('fixed')) e.target.classList.add('hidden'); }
+    </script>
