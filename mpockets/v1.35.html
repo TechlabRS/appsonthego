@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SmaRGht Gen Analytics</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-enter { animation: slideUp 0.3s ease-out forwards; }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
+        .filter-chip.active {
+            background-color: #111827;
+            color: white;
+            border-color: #111827;
+        }
+
+        .category-chip {
+            transition: all 0.2s;
+            border: 1px solid #e5e7eb;
+        }
+        .category-chip:active { transform: scale(0.95); }
+        .category-chip.selected {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+            font-weight: 600;
+        }
+        
+        .nav-item.active { color: #2563eb; }
+        .nav-item.active i { font-weight: bold; }
+
+        .inv-card-bg {
+            background-image: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .pin-input {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-width: 1px;
+            border-color: rgb(209 213 219);
+            border-radius: 0.5rem;
+            transition: all 0.15s;
+        }
+        .pin-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-md space-y-2 pointer-events-none"></div>
+
+    <!-- HIDDEN FILE INPUT -->
+    <input type="file" id="import-file" accept=".json" class="hidden" onchange="handleFileSelect(event)">
+
+    <!-- AUTHENTICATION CONTAINER -->
+    <div id="auth-container" class="fixed inset-0 bg-gray-50 z-[100] flex flex-col items-center justify-center p-6 transition-opacity duration-300">
+        <div class="max-w-md w-full text-center">
+            <div class="flex items-center justify-center gap-2 mb-8 text-blue-600">
+                <div class="bg-blue-600/10 p-2 rounded-lg"><i class="ph ph-brain text-2xl"></i></div>
+                <span class="text-2xl font-bold tracking-wide">SmaRGht Gen Analytics</span>
+            </div>
+
+            <!-- Dynamic Auth Forms -->
+            <div id="auth-forms-wrapper">
+                <!-- Forms injected by JS to reduce HTML redundancy -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- MAIN APP -->
+    <div id="app-container" class="h-full flex flex-col hidden">
+        <main id="main-content" class="flex-1 overflow-y-auto pb-28 hide-scroll bg-gray-50">
+            <!-- Header -->
+            <header class="bg-blue-600 text-white pt-6 pb-8 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden z-10">
+                <div class="absolute top-0 right-0 opacity-10 pointer-events-none"><i class="ph ph-currency-inr text-8xl"></i></div>
+                <div class="flex items-center gap-2 mb-6 opacity-90">
+                    <div class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm"><i class="ph ph-brain text-xl"></i></div>
+                    <span class="text-lg font-bold tracking-wide">SmaRGht Gen Analytics</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <div>
+                        <p class="text-blue-100 text-xs font-medium uppercase tracking-wider">Total Net Worth</p>
+                        <h1 class="text-3xl font-bold mt-1" id="total-balance">₹ 0.00</h1>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="triggerImport()" class="text-blue-200 hover:text-white hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="ph ph-upload-simple text-xl"></i></button>
+                        <button onclick="exportData()" class="text-blue-200 hover:text-white hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="ph ph-download-simple text-xl"></i></button>
+                        <button onclick="logout()" class="text-blue-200 hover:text-white hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="ph ph-lock-key-open text-xl"></i></button>
+                        <button onclick="resetData()" class="text-blue-200 hover:text-white hover:bg-white/10 w-8 h-8 rounded-full flex items-center justify-center transition-all"><i class="ph ph-trash text-xl"></i></button>
+                    </div>
+                </div>
+                <!-- Snapshots -->
+                <div class="bg-white/10 rounded-xl p-4 backdrop-blur-md border border-white/10 mt-4 mb-4">
+                    <div class="flex justify-between items-center text-xs text-blue-100 mb-2 uppercase tracking-wider"><span>Snapshot (All Time)</span><i class="ph ph-chart-bar"></i></div>
+                    <div class="grid grid-cols-4 gap-2 text-center">
+                        <div><div class="text-[10px] text-emerald-200">Income</div><div class="font-bold text-sm truncate" id="snap-income">₹0</div></div>
+                        <div><div class="text-[10px] text-red-200">Spend</div><div class="font-bold text-sm truncate" id="snap-expense">₹0</div></div>
+                        <div><div class="text-[10px] text-indigo-200">Invest</div><div class="font-bold text-sm truncate" id="snap-invest">₹0</div></div>
+                        <div><div class="text-[10px] text-orange-200">Lent</div><div class="font-bold text-sm truncate" id="snap-lent">₹0</div></div>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <div class="bg-white/10 rounded-xl p-3 flex-1 backdrop-blur-md border border-white/10"><div class="text-blue-100 text-[10px] uppercase flex items-center gap-1"><i class="ph ph-trend-up"></i> Month In</div><div class="font-semibold text-lg truncate" id="monthly-income">₹ 0</div></div>
+                    <div class="bg-white/10 rounded-xl p-3 flex-1 backdrop-blur-md border border-white/10"><div class="text-blue-100 text-[10px] uppercase flex items-center gap-1"><i class="ph ph-trend-down"></i> Month Out</div><div class="font-semibold text-lg truncate" id="monthly-expense">₹ 0</div></div>
+                </div>
+            </header>
+
+            <!-- Accounts -->
+            <div class="-mt-6 px-4 overflow-x-auto hide-scroll flex gap-3 pb-4 z-20 relative"><div id="account-cards-container" class="flex gap-3"></div></div>
+
+            <!-- Dashboard -->
+            <div id="view-dashboard" class="px-4 mt-2 space-y-6 fade-in pb-6">
+                <div id="alerts-section" class="hidden">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1"><i class="ph ph-bell-ringing text-orange-500"></i> Action Required</h3>
+                    <div id="alerts-list" class="space-y-2"></div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-end mb-3"><h3 class="text-lg font-bold text-gray-800">Recent Activity</h3><button onclick="switchTab('history')" class="text-sm text-blue-600 font-medium">View All</button></div>
+                    <div id="recent-transactions" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- Portfolio -->
+            <div id="view-portfolio" class="px-4 mt-4 space-y-4 hidden fade-in pb-20">
+                <div class="flex justify-between items-center"><h2 class="text-2xl font-bold">Portfolio</h2><div class="text-xs text-right"><div class="text-gray-400 uppercase font-bold">Current Value</div><div class="text-lg font-bold text-indigo-600" id="portfolio-total">₹ 0</div></div></div>
+                <div class="bg-gray-200 p-1 rounded-xl flex text-sm font-bold mb-4">
+                    <button onclick="renderPortfolio('active')" id="tab-active" class="flex-1 py-2 rounded-lg bg-white shadow-sm text-gray-800 transition-all">Active</button>
+                    <button onclick="renderPortfolio('redeemed')" id="tab-redeemed" class="flex-1 py-2 rounded-lg text-gray-500 transition-all">Redeemed</button>
+                </div>
+                <div id="portfolio-list" class="space-y-3"></div>
+            </div>
+
+            <!-- Analytics -->
+            <div id="view-analytics" class="px-4 mt-4 space-y-4 hidden fade-in pb-20">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-2xl font-bold">Insights</h2>
+                    <select id="analytics-period" onchange="updateCharts()" class="bg-white border border-gray-200 text-sm rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="thisMonth">This Month</option><option value="lastMonth">Last Month</option><option value="last3Months">Last 3 Months</option><option value="yearToDate">Year to Date</option><option value="all">All Time</option></select>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Spending Trend</h3><div class="h-64 relative"><canvas id="trendChart"></canvas></div></div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Expenses</h3><div class="h-64 relative"><canvas id="spendingChart"></canvas></div></div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Asset Allocation</h3><div class="h-64 relative"><canvas id="investmentChart"></canvas></div></div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 md:col-span-2"><h3 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Portfolio Breakdown</h3><div class="h-64 relative"><canvas id="investBreakdownChart"></canvas></div></div>
+                </div>
+            </div>
+
+            <!-- Planning -->
+            <div id="view-planning" class="px-4 mt-4 space-y-4 hidden fade-in pb-20">
+                <div class="flex justify-between items-center"><div><h2 class="text-2xl font-bold">Planner</h2><p class="text-xs text-gray-500">Bills, Loans & Receivables</p></div><button onclick="openModal('reminder')" class="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-1 transition-transform active:scale-95"><i class="ph ph-plus-bold"></i> New Alert</button></div>
+                <div id="all-reminders" class="space-y-3"></div>
+            </div>
+
+            <!-- History -->
+            <div id="view-history" class="hidden fade-in flex flex-col h-full">
+                <div class="bg-gray-50 pt-4 px-4 pb-2 sticky top-0 z-30 shadow-sm">
+                    <h2 class="text-2xl font-bold mb-3">Transactions</h2>
+                    <div class="flex gap-2 mb-3">
+                        <div class="relative flex-1"><i class="ph ph-magnifying-glass absolute left-3 top-3 text-gray-400"></i><input type="text" id="history-search" oninput="applyHistoryFilters()" placeholder="Search..." class="w-full bg-white border border-gray-200 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></div>
+                        <button onclick="openModal('filter')" class="bg-white border border-gray-200 w-11 rounded-xl flex items-center justify-center text-gray-600 shadow-sm active:bg-gray-100"><i class="ph ph-faders text-lg"></i></button>
+                    </div>
+                    <div class="flex gap-2 overflow-x-auto hide-scroll pb-2">
+                        <button onclick="setQuickFilter('all')" class="filter-chip active px-4 py-1.5 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 whitespace-nowrap" id="chip-all">All</button>
+                        <button onclick="setQuickFilter('expense')" class="filter-chip px-4 py-1.5 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 whitespace-nowrap" id="chip-expense">Spends</button>
+                        <button onclick="setQuickFilter('income')" class="filter-chip px-4 py-1.5 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 whitespace-nowrap" id="chip-income">Income</button>
+                        <button onclick="setQuickFilter('investment')" class="filter-chip px-4 py-1.5 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 whitespace-nowrap" id="chip-investment">Invest</button>
+                    </div>
+                    <div class="flex gap-2 mt-2 pt-2 border-t border-gray-100 overflow-x-auto hide-scroll pb-1">
+                         <div class="min-w-[80px] flex-1 bg-emerald-50 rounded-lg px-2 py-1.5 text-center shrink-0"><div class="text-[9px] text-emerald-600 font-bold uppercase">Income</div><div class="text-xs font-bold text-emerald-700 truncate" id="h-inc">₹0</div></div>
+                         <div class="min-w-[80px] flex-1 bg-rose-50 rounded-lg px-2 py-1.5 text-center shrink-0"><div class="text-[9px] text-rose-600 font-bold uppercase">Spent</div><div class="text-xs font-bold text-rose-700 truncate" id="h-exp">₹0</div></div>
+                         <div class="min-w-[80px] flex-1 bg-indigo-50 rounded-lg px-2 py-1.5 text-center shrink-0"><div class="text-[9px] text-indigo-600 font-bold uppercase">Invest</div><div class="text-xs font-bold text-indigo-700 truncate" id="h-inv">₹0</div></div>
+                         <div class="min-w-[80px] flex-1 bg-blue-50 rounded-lg px-2 py-1.5 text-center shrink-0"><div class="text-[9px] text-blue-600 font-bold uppercase">Transfer</div><div class="text-xs font-bold text-blue-700 truncate" id="h-tra">₹0</div></div>
+                         <div class="min-w-[80px] flex-1 bg-orange-50 rounded-lg px-2 py-1.5 text-center shrink-0"><div class="text-[9px] text-orange-600 font-bold uppercase">Lent</div><div class="text-xs font-bold text-orange-700 truncate" id="h-len">₹0</div></div>
+                    </div>
+                </div>
+                <div id="full-history-list" class="px-4 pb-24 pt-3 space-y-4 overflow-y-auto"></div>
+            </div>
+
+            <div class="text-center py-8 text-gray-400 pb-24"><p class="text-[10px] uppercase tracking-widest opacity-60">SmaRGht Gen Analytics</p></div>
+        </main>
+
+        <!-- FAB -->
+        <button onclick="openModal('transaction')" class="fixed bottom-24 right-4 bg-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-3xl hover:scale-105 transition-transform z-50 ring-4 ring-white"><i class="ph ph-plus"></i></button>
+
+        <!-- Navbar -->
+        <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 pb-safe pt-2 px-6 flex justify-between items-center z-40 h-20">
+            <button onclick="switchTab('dashboard')" class="nav-item active flex flex-col items-center space-y-1 text-gray-400 w-14 transition-colors"><i class="ph ph-house text-2xl"></i><span class="text-[10px] font-medium">Home</span></button>
+            <button onclick="switchTab('portfolio')" class="nav-item flex flex-col items-center space-y-1 text-gray-400 w-14 transition-colors"><i class="ph ph-plant text-2xl"></i><span class="text-[10px] font-medium">Invest</span></button>
+            <button onclick="switchTab('analytics')" class="nav-item flex flex-col items-center space-y-1 text-gray-400 w-14 transition-colors"><i class="ph ph-chart-pie-slice text-2xl"></i><span class="text-[10px] font-medium">Insights</span></button>
+            <button onclick="switchTab('planning')" class="nav-item flex flex-col items-center space-y-1 text-gray-400 w-14 transition-colors"><i class="ph ph-calendar-check text-2xl"></i><span class="text-[10px] font-medium">Plan</span></button>
+            <button onclick="switchTab('history')" class="nav-item flex flex-col items-center space-y-1 text-gray-400 w-14 transition-colors"><i class="ph ph-list-dashes text-2xl"></i><span class="text-[10px] font-medium">History</span></button>
+        </nav>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Transaction -->
+    <div id="transaction-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 modal-enter max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6"><h3 class="text-xl font-bold" id="tx-modal-title">New Transaction</h3><button onclick="closeModal('transaction')" class="bg-gray-100 rounded-full p-2 text-gray-500 hover:bg-gray-200"><i class="ph ph-x"></i></button></div>
+            <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
+                <button onclick="setTxType('expense')" id="btn-expense" class="flex-1 py-2.5 rounded-lg text-xs font-bold uppercase transition-all">Spend</button>
+                <button onclick="setTxType('income')" id="btn-income" class="flex-1 py-2.5 rounded-lg text-xs font-bold uppercase transition-all">Income</button>
+                <button onclick="setTxType('transfer')" id="btn-transfer" class="flex-1 py-2.5 rounded-lg text-xs font-bold uppercase transition-all">Transfer</button>
+                <button onclick="setTxType('investment')" id="btn-investment" class="flex-1 py-2.5 rounded-lg text-xs font-bold uppercase transition-all">Invest</button>
+            </div>
+            <form id="tx-form" onsubmit="handleTransactionSubmit(event)" class="space-y-4">
+                <input type="hidden" id="tx-type" value="expense"><input type="hidden" id="editing-tx-id">
+                
+                <!-- NEW AMOUNT INPUT WITH MATH & BREAKDOWN -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs text-gray-500 uppercase font-bold">Amount</label>
+                        <button type="button" onclick="toggleBreakdown()" class="text-xs font-bold text-blue-600 flex items-center gap-1 hover:bg-blue-50 px-2 py-0.5 rounded-lg transition-colors">
+                            <i class="ph ph-list-plus"></i> Split / Details
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold text-lg">₹</span>
+                        <input type="text" id="tx-amount" onblur="evaluateMath(this)" inputmode="text" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3.5 pl-10 pr-4 text-xl font-bold focus:ring-2 focus:ring-black outline-none" placeholder="e.g. 20+40+50">
+                    </div>
+                    
+                    <!-- NEW: Item Breakdown Section -->
+                    <div id="tx-breakdown" class="hidden mt-3 bg-gray-50 rounded-xl p-3 border border-gray-200">
+                        <div id="breakdown-list" class="space-y-2 mb-3"></div>
+                        <button type="button" onclick="addBreakdownItem()" class="w-full py-2 text-xs font-bold text-gray-500 border border-dashed border-gray-300 rounded-lg hover:bg-white hover:text-blue-600 transition-colors">+ Add Item</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs text-gray-500 uppercase font-bold mb-1" id="label-from">From</label><select id="tx-from-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-3 text-sm font-medium focus:ring-2 focus:ring-black outline-none"></select></div>
+                    <div id="field-to-account" class="hidden"><label class="block text-xs text-gray-500 uppercase font-bold mb-1">To</label><select id="tx-to-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-3 text-sm font-medium focus:ring-2 focus:ring-black outline-none"></select></div>
+                </div>
+                <div id="field-category"><label class="block text-xs text-gray-500 uppercase font-bold mb-1">Category</label><div id="category-selection-container" class="flex flex-wrap gap-2 mt-2"></div><input type="hidden" id="tx-category" required></div>
+                <div id="field-maturity" class="hidden bg-indigo-50 p-3 rounded-xl border border-indigo-100"><label class="block text-xs text-indigo-800 uppercase font-bold mb-1">Maturity Date</label><input type="date" id="tx-maturity" class="w-full bg-white border border-indigo-200 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></div>
+                <div><label class="block text-xs text-gray-500 uppercase font-bold mb-1">Tags</label><div class="relative"><i class="ph ph-hash absolute left-4 top-3.5 text-gray-400 text-lg"></i><input type="text" id="tx-tags" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 pl-10 text-sm focus:ring-2 focus:ring-black outline-none" placeholder="Comma separated"></div></div>
+                <div class="grid grid-cols-3 gap-4"><div class="col-span-2"><label class="block text-xs text-gray-500 uppercase font-bold mb-1">Note</label><input type="text" id="tx-note" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-black outline-none" placeholder="Description"></div><div><label class="block text-xs text-gray-500 uppercase font-bold mb-1">Date</label><input type="date" id="tx-date" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-2 text-sm focus:ring-2 focus:ring-black outline-none"></div></div>
+                <button type="submit" class="w-full bg-black text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 transition-colors mt-2">Save Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Redeem -->
+    <div id="redeem-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 modal-enter">
+            <div class="flex justify-between items-center mb-6"><h3 class="text-xl font-bold text-indigo-700">Redeem</h3><button onclick="closeModal('redeem')" class="bg-gray-100 rounded-full p-2 text-gray-500 hover:bg-gray-200"><i class="ph ph-x"></i></button></div>
+            <form id="redeem-form" onsubmit="handleRedeemSubmit(event)" class="space-y-4">
+                <input type="hidden" id="redeem-id">
+                <div><label class="block text-xs text-gray-500 uppercase font-bold mb-1">Principal</label><input type="text" id="redeem-principal" disabled class="w-full bg-gray-100 border border-gray-200 rounded-xl py-3 px-4 text-gray-500 font-bold"></div>
+                <div><label class="block text-xs text-gray-500 uppercase font-bold mb-1">Final Value</label><div class="relative"><span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">₹</span><input type="number" id="redeem-amount" step="0.01" required class="w-full bg-white border border-gray-200 rounded-xl py-3 pl-8 pr-4 text-lg font-bold focus:ring-2 focus:ring-indigo-500 outline-none" inputmode="decimal"></div></div>
+                <div><label class="block text-xs text-gray-500 uppercase font-bold mb-1">Deposit To</label><select id="redeem-to-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"></select></div>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg mt-2 hover:bg-indigo-700 transition-colors">Confirm</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reminder -->
+    <div id="reminder-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 modal-enter">
+            <div class="flex justify-between items-center mb-6"><h3 class="text-xl font-bold">Add Alert</h3><button onclick="closeModal('reminder')" class="bg-gray-100 rounded-full p-2 text-gray-500 hover:bg-gray-200"><i class="ph ph-x"></i></button></div>
+            <form id="reminder-form" onsubmit="handleReminderSubmit(event)" class="space-y-4">
+                <div><label class="block text-xs text-gray-500 uppercase font-bold mb-2">Type</label><div class="grid grid-cols-3 gap-2"><button type="button" onclick="setRemType('bill')" id="rt-bill" class="py-2 rounded-lg text-xs font-bold border">Bill</button><button type="button" onclick="setRemType('loan_taken')" id="rt-loan_taken" class="py-2 rounded-lg text-xs font-bold border">Debt</button><button type="button" onclick="setRemType('loan_given')" id="rt-loan_given" class="py-2 rounded-lg text-xs font-bold border">Receive</button></div><input type="hidden" id="rem-type" value="bill"></div>
+                <input type="text" id="rem-title" required placeholder="Name / Description" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-black outline-none">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="rem-amount" step="0.01" required placeholder="Amount" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-black outline-none" inputmode="decimal">
+                    <input type="date" id="rem-date" required class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-black outline-none">
+                </div>
+                <div id="record-tx-option" class="hidden flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100"><input type="checkbox" id="record-now" class="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"><label for="record-now" class="text-sm text-gray-700 select-none">Record as transaction?</label></div>
+                <div id="record-tx-account" class="hidden"><label class="block text-xs text-gray-500 uppercase font-bold mb-1">Account</label><select id="rem-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-black outline-none"></select></div>
+                <button type="submit" class="w-full bg-black text-white font-bold py-4 rounded-xl shadow-lg mt-2 hover:bg-gray-800 transition-colors">Save Alert</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div id="filter-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 modal-enter">
+            <div class="flex justify-between items-center mb-6"><h3 class="text-xl font-bold">Filters</h3><button onclick="closeModal('filter')" class="bg-gray-100 rounded-full p-2 text-gray-500 hover:bg-gray-200"><i class="ph ph-x"></i></button></div>
+            <div class="space-y-4">
+                <div><label class="block text-xs text-gray-500 uppercase font-bold mb-2">Date Range</label><select id="filter-date" onchange="applyHistoryFilters()" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm"><option value="all">All Time</option><option value="thisMonth">This Month</option><option value="lastMonth">Last Month</option><option value="thisYear">This Year</option></select></div>
+                <div><label class="block text-xs text-gray-500 uppercase font-bold mb-2">Account</label><select id="filter-account" onchange="applyHistoryFilters()" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm"><option value="all">All Accounts</option></select></div>
+                <div><label class="block text-xs text-gray-500 uppercase font-bold mb-2">Sort By</label><select id="filter-sort" onchange="applyHistoryFilters()" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm"><option value="date-desc">Newest First</option><option value="amount-desc">Highest Amount</option></select></div>
+                <button onclick="resetFilters()" class="w-full py-3 text-sm font-bold text-white bg-blue-600 rounded-xl shadow-lg hover:bg-blue-700 transition-colors mt-2">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* --- CONFIGURATION (DRY & MAINTENANCE) --- */
+        const CONSTANTS = { PIN: 'sga_pin_hash_v16', SEC_Q: 'sga_sec_q_v16', SEC_A: 'sga_sec_a_hash_v16', AUTH: 'sga_is_authenticated_v16', DATA: 'wealthflow_v15_data' };
+        const DEFAULT_ACCOUNTS = [
+            { id: 'acc_1', name: 'Cash / Wallet', type: 'cash', color: 'from-green-400 to-emerald-600', icon: 'ph-money' },
+            { id: 'acc_2', name: 'Bank A (Salary)', type: 'bank', color: 'from-blue-400 to-blue-600', icon: 'ph-bank' },
+            { id: 'acc_3', name: 'Bank B (Savings)', type: 'bank', color: 'from-indigo-400 to-purple-600', icon: 'ph-bank' },
+            { id: 'acc_4', name: 'Bank C (UPI)', type: 'bank', color: 'from-gray-400 to-gray-600', icon: 'ph-qr-code' },
+            { id: 'acc_inv', name: 'Investments', type: 'investment', color: 'from-orange-400 to-red-500', icon: 'ph-trend-up' }
+        ];
+        const DEFAULT_CATEGORIES = {
+            expense: ['Food', 'Transport', 'Shop', 'Bills', 'Rent', 'Health', 'Fun', 'Lent'],
+            income: ['Salary', 'Freelance', 'Refund', 'Dividend', 'Inv Return', 'Loan Back'],
+            investment: ['FD', 'SIP/MF', 'Savings', 'Stocks', 'Gold']
+        };
+        // Central config for Transaction Types to reduce repeated if/else
+        const TX_CONFIG = {
+            income: { icon: 'ph-arrow-down-left', bg: 'bg-green-50', text: 'text-green-600', btnStyle: 'text-green-600 shadow-sm' },
+            expense: { icon: 'ph-shopping-bag', bg: 'bg-red-50', text: 'text-red-600', btnStyle: 'text-red-600 shadow-sm' },
+            transfer: { icon: 'ph-arrows-left-right', bg: 'bg-blue-50', text: 'text-blue-600', btnStyle: 'text-blue-600 shadow-sm' },
+            investment: { icon: 'ph-trend-up', bg: 'bg-indigo-50', text: 'text-indigo-600', btnStyle: 'text-indigo-600 shadow-sm' }
+        };
+
+        let appData = { transactions: [], balances: {}, categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)), reminders: [], portfolio: [] };
+        let filterState = { search: '', type: 'all', date: 'all', account: 'all', sort: 'date-desc' };
+        let charts = { spending: null, investment: null, trend: null, invBreakdown: null };
+        let currentRemType = 'bill', currentPortfolioView = 'active', activeReminderIndex = null;
+
+        /* --- UTILITIES --- */
+        const formatCurrency = n => "₹ " + n.toLocaleString('en-IN');
+        const showToast = (msg, err=false) => {
+            const t = document.createElement('div');
+            t.className = `${err?'bg-red-600':'bg-black'} text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-2 text-sm fade-in`;
+            t.innerHTML = `<i class="ph ${err?'ph-warning':'ph-check-circle'}"></i> ${msg}`;
+            document.getElementById('toast-container').appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        };
+        const arrayBufferToHex = b => Array.prototype.map.call(new Uint8Array(b), x => ('00' + x.toString(16)).slice(-2)).join('');
+        async function hashString(s) { const e=new TextEncoder(),d=e.encode(s),h=await crypto.subtle.digest('SHA-256',d); return arrayBufferToHex(h); }
+        
+        /* --- AUTHENTICATION --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAuthForms(); // Inject auth HTML dynamically to be DRY
+            if(localStorage.getItem(CONSTANTS.PIN) !== null) {
+                sessionStorage.getItem(CONSTANTS.AUTH) === 'true' ? setAuthenticated(true) : showAuthScreen('auth-login');
+            } else showAuthScreen('auth-setup');
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tx-date').value = today;
+            document.getElementById('rem-date').value = today;
+            populateAccountFilter();
+            populateAccountSelect('rem-account');
+        });
+
+        function renderAuthForms() {
+            const pinInputs = (id) => `<div class="flex justify-center gap-2 mb-4">${[1,2,3,4,5,6].map(i => `<input type="password" id="${id}-pin${i}" class="pin-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" oninput="moveToNext(this, '${id}-pin${i+1}')" onkeyup="handlePinInput(event, '${id}-pin${i}')">`).join('')}</div>`;
+            
+            const forms = `
+            <div id="auth-setup" class="hidden fade-in bg-white p-6 rounded-2xl shadow-xl border border-gray-100 space-y-6">
+                <h2 class="text-xl font-bold text-gray-800">Set 6-Digit PIN</h2>
+                <form onsubmit="handleSetup(event)">
+                    ${pinInputs('setup')}
+                    <p class="text-sm font-semibold mb-2 text-gray-600">Security Question</p>
+                    <select id="setup-security-q" class="w-full bg-gray-100 border border-gray-200 rounded-xl py-3 px-4 text-sm mb-3"><option value="pet">First Pet Name?</option><option value="city">Birth City?</option><option value="mother">Mother's Maiden Name?</option></select>
+                    <input type="text" id="setup-security-a" required placeholder="Answer" class="w-full bg-gray-100 border border-gray-200 rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg mt-4">Set PIN</button>
+                </form>
+            </div>
+            <div id="auth-login" class="hidden fade-in bg-white p-6 rounded-2xl shadow-xl border border-gray-100 space-y-6">
+                <h2 class="text-xl font-bold text-gray-800">Enter PIN</h2>
+                <form onsubmit="handleLogin(event)">${pinInputs('login')}<button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-xl shadow-lg mt-4">Login</button></form>
+                <button onclick="showResetScreen()" class="text-sm text-gray-500 hover:text-blue-600 mt-4 block w-full">Forgot PIN?</button>
+            </div>
+            <div id="auth-reset" class="hidden fade-in bg-white p-6 rounded-2xl shadow-xl border border-gray-100 space-y-6">
+                <h2 class="text-xl font-bold text-gray-800">Reset PIN</h2>
+                <form onsubmit="handleReset(event)">
+                    <p class="text-sm font-semibold text-gray-600">Security Answer: <span id="reset-security-q" class="text-blue-600"></span></p>
+                    <input type="text" id="reset-security-a" required placeholder="Answer" class="w-full bg-gray-100 border border-gray-200 rounded-xl py-3 px-4 text-sm mb-4 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <p class="text-sm font-semibold mb-2 text-gray-600">New PIN</p>
+                    ${pinInputs('reset')}
+                    <button type="submit" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl shadow-lg mt-4">Reset</button>
+                </form>
+                <button onclick="showLoginScreen()" class="text-sm text-gray-500 hover:text-blue-600 mt-4 block w-full">Back</button>
+            </div>`;
+            document.getElementById('auth-forms-wrapper').innerHTML = forms;
+        }
+
+        function moveToNext(c, n) { if(c.value.length===c.maxLength) document.getElementById(n)?.focus(); }
+        function handlePinInput(e, c) { if(e.key==='Backspace' && !e.target.value) { const p = c.slice(0,-1) + (parseInt(c.slice(-1))-1); document.getElementById(p)?.focus(); } }
+        function getPin(p) { let s=''; for(let i=1;i<=6;i++){ const v=document.getElementById(`${p}-pin${i}`).value; if(!v) return null; s+=v; } return s; }
+        
+        function showAuthScreen(id) { ['auth-setup','auth-login','auth-reset'].forEach(x=>document.getElementById(x).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); document.getElementById(`${id}-pin1`)?.focus(); }
+        function showLoginScreen() { showAuthScreen('auth-login'); }
+        function showResetScreen() { const q=localStorage.getItem(CONSTANTS.SEC_Q); if(!q) return showToast('Error loading security question', true); document.getElementById('reset-security-q').textContent=q; showAuthScreen('auth-reset'); }
+        function setAuthenticated(s) { 
+            sessionStorage.setItem(CONSTANTS.AUTH, s?'true':'false'); 
+            if(s) { document.getElementById('auth-container').classList.add('hidden'); document.getElementById('app-container').classList.remove('hidden'); loadData(); renderAll(); }
+            else { document.getElementById('auth-container').classList.remove('hidden'); document.getElementById('app-container').classList.add('hidden'); document.querySelectorAll('.pin-input').forEach(i=>i.value=''); showLoginScreen(); }
+        }
+        function logout() { if(confirm("Log out?")) setAuthenticated(false); }
+
+        async function handleSetup(e) { e.preventDefault(); const p=getPin('setup'), a=document.getElementById('setup-security-a').value.trim(); if(!p||!a) return showToast("Fill all fields", true); localStorage.setItem(CONSTANTS.PIN, await hashString(p)); localStorage.setItem(CONSTANTS.SEC_Q, document.getElementById('setup-security-q').options[document.getElementById('setup-security-q').selectedIndex].text); localStorage.setItem(CONSTANTS.SEC_A, await hashString(a.toLowerCase())); setAuthenticated(true); }
+        async function handleLogin(e) { e.preventDefault(); const p=getPin('login'); if(!p) return; (await hashString(p)) === localStorage.getItem(CONSTANTS.PIN) ? setAuthenticated(true) : showToast("Invalid PIN", true); }
+        async function handleReset(e) { e.preventDefault(); const p=getPin('reset'), a=document.getElementById('reset-security-a').value.trim(); if(!p||!a) return; if((await hashString(a.toLowerCase())) === localStorage.getItem(CONSTANTS.SEC_A)) { localStorage.setItem(CONSTANTS.PIN, await hashString(p)); showToast("PIN Reset"); showLoginScreen(); } else showToast("Wrong Answer", true); }
+
+        /* --- DATA MANAGEMENT --- */
+        function loadData() {
+            const s = localStorage.getItem(CONSTANTS.DATA);
+            if (s) {
+                appData = JSON.parse(s);
+                if(!appData.portfolio) appData.portfolio = [];
+                if(!appData.categories) appData.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+                appData.transactions.forEach(t => { if(!t.tags) t.tags=[]; });
+            } else {
+                DEFAULT_ACCOUNTS.forEach(a => appData.balances[a.id] = 0);
+                saveData();
+            }
+        }
+        function saveData() { localStorage.setItem(CONSTANTS.DATA, JSON.stringify(appData)); renderAll(); }
+        function resetData() { if(confirm('Delete ALL data permanently?')) { localStorage.removeItem(CONSTANTS.DATA); localStorage.removeItem(CONSTANTS.PIN); location.reload(); } }
+        function updateAccountBalance(id, amount) { appData.balances[id] = (appData.balances[id] || 0) + amount; }
+
+        /* --- RENDERING & LOGIC --- */
+        function renderAll() {
+            updateHeaderStats(); renderAccounts(); renderRecentList(appData.transactions.slice(-10).reverse());
+            renderReminders(); renderPortfolio(currentPortfolioView); applyHistoryFilters(); updateCharts();
+        }
+
+        function updateHeaderStats() {
+            let net = 0, stats = { income: 0, expense: 0, invest: 0, lent: 0 };
+            // Net Worth
+            DEFAULT_ACCOUNTS.forEach(a => { if(a.type!=='investment') net += (appData.balances[a.id] || 0); });
+            appData.portfolio.filter(p => p.status === 'active').forEach(p => net += (p.currentValue || p.amount));
+            document.getElementById('total-balance').textContent = formatCurrency(net);
+
+            // All Time Stats
+            appData.transactions.forEach(t => {
+                if(t.type==='income') stats.income += t.amount;
+                else if(t.type==='investment') stats.invest += t.amount;
+                else if(t.type==='expense') { if(t.category.includes('Lent')) stats.lent += t.amount; else stats.expense += t.amount; }
+            });
+            ['income', 'expense', 'invest', 'lent'].forEach(k => document.getElementById(`snap-${k}`).textContent = formatCurrency(stats[k]));
+
+            // Monthly
+            const now = new Date();
+            const mTx = appData.transactions.filter(t => { const d=new Date(t.date); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); });
+            document.getElementById('monthly-income').textContent = formatCurrency(mTx.filter(t=>t.type==='income').reduce((a,b)=>a+b.amount,0));
+            document.getElementById('monthly-expense').textContent = formatCurrency(mTx.filter(t=>t.type==='expense').reduce((a,b)=>a+b.amount,0));
+        }
+
+        function renderAccounts() {
+            const c = document.getElementById('account-cards-container'); c.innerHTML = '';
+            DEFAULT_ACCOUNTS.forEach(a => {
+                c.innerHTML += `<div class="min-w-[140px] h-24 rounded-2xl bg-gradient-to-br ${a.color} text-white p-4 flex flex-col justify-between shadow-md shrink-0 relative overflow-hidden"><div class="absolute right-[-10px] top-[-10px] opacity-20"><i class="ph ${a.icon} text-6xl"></i></div><div class="text-[10px] font-bold opacity-90 uppercase tracking-wide relative z-10">${a.name}</div><div class="font-bold text-lg truncate relative z-10">${formatCurrency(appData.balances[a.id]||0)}</div></div>`;
+            });
+        }
+
+        function renderRecentList(list, targetId='recent-transactions') {
+            const c = document.getElementById(targetId); c.innerHTML = '';
+            if(list.length === 0) { c.innerHTML = '<div class="text-center text-gray-400 py-8 text-sm">No transactions yet</div>'; return; }
+            list.forEach(t => c.innerHTML += renderTransactionCard(t));
+        }
+
+        function renderTransactionCard(t) {
+            const conf = TX_CONFIG[t.type];
+            let accName = DEFAULT_ACCOUNTS.find(a => a.id === t.from)?.name || 'Unknown';
+            if(t.type === 'transfer') accName += ` → ${DEFAULT_ACCOUNTS.find(a => a.id === t.to)?.name || 'Unknown'}`;
+            else if(t.type === 'income') accName = `To: ${accName}`;
+            
+            const isNeg = t.type === 'expense' || t.type === 'investment';
+            const tagsHtml = (t.tags||[]).map(tag => `<span class="bg-gray-100 text-gray-500 px-1.5 rounded text-[9px]">#${tag}</span>`).join('');
+
+            // Generate Mini-Table for Items
+            let itemsHtml = '';
+            if(t.items && t.items.length > 0) {
+                itemsHtml = `<div class="mt-2 pt-2 border-t border-dashed border-gray-100 space-y-0.5">`;
+                t.items.forEach(i => {
+                    itemsHtml += `<div class="flex justify-between text-[10px] text-gray-500"><span>${i.name}</span><span class="font-medium">₹${i.amount}</span></div>`;
+                });
+                itemsHtml += `</div>`;
+            }
+
+            return `<div class="bg-white rounded-xl p-3 shadow-sm border border-gray-50 flex flex-col">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center ${conf.bg} ${conf.text} shrink-0"><i class="ph ${conf.icon} text-xl"></i></div>
+                        <div>
+                            <div class="font-bold text-gray-800 text-sm">${t.category}</div>
+                            <div class="text-xs text-gray-500">${t.note || ''}</div>
+                            <div class="text-[10px] text-gray-400 font-medium mt-0.5">${accName}</div>
+                            <div class="flex gap-1 mt-1">${tagsHtml}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <div class="font-bold text-sm ${isNeg ? 'text-gray-800' : 'text-green-600'}">${isNeg?'-':'+'} ${formatCurrency(t.amount).replace('₹ ', '₹')}</div>
+                            <div class="text-[10px] text-gray-400">${new Date(t.date).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'2-digit'})}</div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="editTransaction(${t.id})" class="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center hover:bg-blue-100"><i class="ph ph-pencil-simple"></i></button>
+                            <button onclick="deleteTransaction(${t.id})" class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-red-50 hover:text-red-500"><i class="ph ph-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+                ${itemsHtml}
+            </div>`;
+        }
+
+        /* --- FILTERS (Restored) --- */
+        function applyHistoryFilters() {
+            let r = [...appData.transactions];
+            const s = document.getElementById('history-search').value.toLowerCase().trim();
+            const d = document.getElementById('filter-date').value;
+            const a = document.getElementById('filter-account').value;
+            const o = document.getElementById('filter-sort').value;
+
+            if (s) {
+                r = r.filter(t => 
+                    (t.category || '').toLowerCase().includes(s) || 
+                    (t.note || '').toLowerCase().includes(s) || 
+                    t.amount.toString().includes(s) || 
+                    (t.tags || []).some(tag => tag.toLowerCase().includes(s))
+                );
+            }
+
+            if (filterState.type !== 'all') {
+                r = r.filter(t => t.type === filterState.type);
+            }
+
+            if (d !== 'all') {
+                const now = new Date();
+                r = r.filter(t => {
+                    const txDate = new Date(t.date);
+                    if (d === 'thisMonth') return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+                    if (d === 'lastMonth') {
+                        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                        return txDate.getMonth() === lastMonth.getMonth() && txDate.getFullYear() === lastMonth.getFullYear();
+                    }
+                    if (d === 'thisYear') return txDate.getFullYear() === now.getFullYear();
+                    return true;
+                });
+            }
+
+            if (a !== 'all') {
+                r = r.filter(t => t.from === a || t.to === a);
+            }
+
+            r.sort((x, y) => {
+                if (o === 'amount-desc') return y.amount - x.amount;
+                return new Date(y.date) - new Date(x.date);
+            });
+
+            let stats = { income: 0, expense: 0, invest: 0, transfer: 0, lent: 0 };
+            r.forEach(t => {
+                if (t.type === 'income') stats.income += t.amount;
+                else if (t.type === 'investment') stats.invest += t.amount;
+                else if (t.type === 'transfer') stats.transfer += t.amount;
+                else { 
+                    if ((t.category||'').includes('Lent')) stats.lent += t.amount;
+                    else stats.expense += t.amount;
+                }
+            });
+
+            document.getElementById('h-inc').textContent = formatCurrency(stats.income);
+            document.getElementById('h-exp').textContent = formatCurrency(stats.expense);
+            document.getElementById('h-inv').textContent = formatCurrency(stats.invest);
+            document.getElementById('h-tra').textContent = formatCurrency(stats.transfer);
+            document.getElementById('h-len').textContent = formatCurrency(stats.lent);
+
+            renderRecentList(r, 'full-history-list');
+        }
+
+        function setQuickFilter(type) {
+            filterState.type = type;
+            document.querySelectorAll('.filter-chip').forEach(b => {
+                b.classList.toggle('active', b.id === `chip-${type}`);
+            });
+            applyHistoryFilters();
+        }
+
+        function resetFilters() {
+            document.getElementById('history-search').value = '';
+            document.getElementById('filter-date').value = 'all';
+            document.getElementById('filter-account').value = 'all';
+            document.getElementById('filter-sort').value = 'date-desc';
+            setQuickFilter('all');
+            closeModal('filter');
+        }
+
+        /* --- TRANSACTIONS & CATEGORIES --- */
+        function setTxType(t) {
+            document.getElementById('tx-type').value = t;
+            ['expense','income','transfer','investment'].forEach(x => {
+                const btn = document.getElementById(`btn-${x}`);
+                const conf = TX_CONFIG[x];
+                btn.className = `flex-1 py-2.5 rounded-lg text-xs font-bold uppercase border transition-all ${x===t ? `bg-white ${conf.btnStyle}` : 'text-gray-400 hover:bg-gray-100'}`;
+            });
+            
+            populateAccountSelect('tx-from-account');
+            const isTransfer = t === 'transfer';
+            document.getElementById('field-to-account').classList.toggle('hidden', !isTransfer);
+            document.getElementById('field-category').classList.toggle('hidden', isTransfer);
+            document.getElementById('field-maturity').classList.toggle('hidden', t !== 'investment');
+            
+            if(isTransfer) populateAccountSelect('tx-to-account');
+            else renderCategoryChips(t);
+        }
+
+        function renderCategoryChips(type) {
+            const container = document.getElementById('category-selection-container');
+            container.innerHTML = '';
+            (appData.categories[type] || []).forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'category-chip px-4 py-2 rounded-full text-xs font-medium bg-white text-gray-600';
+                btn.textContent = cat;
+                btn.type = 'button';
+                btn.onclick = () => selectCategory(cat, btn);
+                container.appendChild(btn);
+            });
+            const addBtn = document.createElement('button');
+            addBtn.className = 'category-chip px-3 py-2 rounded-full text-xs font-bold border-dashed border-2 border-gray-300 text-blue-600 bg-blue-50';
+            addBtn.innerHTML = '<i class="ph ph-plus"></i> Add';
+            addBtn.type = 'button';
+            addBtn.onclick = () => addNewCategory(type);
+            container.appendChild(addBtn);
+        }
+
+        function selectCategory(cat, el) {
+            document.getElementById('tx-category').value = cat;
+            document.querySelectorAll('.category-chip').forEach(b => b.classList.remove('selected'));
+            if(el) el.classList.add('selected');
+            else Array.from(document.querySelectorAll('.category-chip')).find(b => b.textContent === cat)?.classList.add('selected');
+        }
+
+        function addNewCategory(type) {
+            const name = prompt(`New ${type} category:`);
+            if(name?.trim()) {
+                const clean = name.trim();
+                if(!appData.categories[type].includes(clean)) {
+                    appData.categories[type].push(clean);
+                    saveData();
+                    renderCategoryChips(type);
+                    selectCategory(clean);
+                    showToast(`Added ${clean}`);
+                } else showToast('Category exists', true);
+            }
+        }
+
+        /* --- NEW MATH & BREAKDOWN FUNCTIONS --- */
+        function evaluateMath(el) {
+            let val = el.value.trim();
+            // Allow numbers, math operators, spaces, parens
+            if (/^[0-9+\-*/.\s()]+$/.test(val)) {
+                try {
+                    const result = Function('"use strict";return (' + val + ')')();
+                    if(isFinite(result)) {
+                        el.value = parseFloat(result).toFixed(2).replace(/\.00$/, '');
+                    }
+                } catch (e) { /* ignore */ }
+            }
+        }
+        
+        let currentTxItems = [];
+        function toggleBreakdown() {
+            const box = document.getElementById('tx-breakdown');
+            box.classList.toggle('hidden');
+            if(!box.classList.contains('hidden') && document.getElementById('breakdown-list').children.length === 0) {
+                addBreakdownItem();
+            }
+        }
+
+        function addBreakdownItem(name='', cost='') {
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 items-center';
+            div.innerHTML = `
+                <input type="text" placeholder="Item Name" value="${name}" class="bd-name flex-[2] bg-white border border-gray-200 rounded-lg py-2 px-2 text-xs outline-none focus:border-blue-500">
+                <input type="number" placeholder="0" value="${cost}" oninput="updateTotalFromBreakdown()" class="bd-cost flex-1 bg-white border border-gray-200 rounded-lg py-2 px-2 text-xs outline-none focus:border-blue-500 font-bold text-right">
+                <button type="button" onclick="this.parentElement.remove(); updateTotalFromBreakdown()" class="text-red-400 hover:text-red-600 px-1"><i class="ph ph-x"></i></button>
+            `;
+            document.getElementById('breakdown-list').appendChild(div);
+        }
+
+        function updateTotalFromBreakdown() {
+            let total = 0;
+            document.querySelectorAll('.bd-cost').forEach(inp => {
+                total += parseFloat(inp.value) || 0;
+            });
+            if(total > 0) document.getElementById('tx-amount').value = total;
+        }
+
+        function handleTransactionSubmit(e) {
+            e.preventDefault();
+            const amt = parseFloat(document.getElementById('tx-amount').value),
+                  type = document.getElementById('tx-type').value,
+                  from = document.getElementById('tx-from-account').value,
+                  editId = document.getElementById('editing-tx-id').value;
+
+            if(!amt || amt <= 0) return showToast("Invalid Amount", true);
+
+            // Revert old if editing
+            if(editId) {
+                const idx = appData.transactions.findIndex(t => t.id == editId);
+                if(idx > -1) { revertBalance(appData.transactions[idx]); appData.transactions.splice(idx, 1); }
+            }
+
+            // Capture Items
+            const breakdownItems = [];
+            document.querySelectorAll('#breakdown-list > div').forEach(row => {
+                const name = row.querySelector('.bd-name').value.trim();
+                const cost = parseFloat(row.querySelector('.bd-cost').value);
+                if(name && cost) breakdownItems.push({ name, amount: cost });
+            });
+
+            const tx = {
+                id: editId ? parseInt(editId) : Date.now(),
+                type, amount: amt, from,
+                date: document.getElementById('tx-date').value,
+                note: document.getElementById('tx-note').value,
+                tags: document.getElementById('tx-tags').value.split(',').map(t=>t.trim()).filter(t=>t),
+                items: breakdownItems
+            };
+
+            if (type === 'transfer') {
+                tx.to = document.getElementById('tx-to-account').value;
+                if(from === tx.to) return showToast("Accounts must be different", true);
+                tx.category = 'Transfer';
+                updateAccountBalance(from, -amt);
+                updateAccountBalance(tx.to, amt);
+            } else {
+                tx.category = document.getElementById('tx-category').value;
+                if(!tx.category) return showToast("Select Category", true);
+                
+                if(type === 'expense') updateAccountBalance(from, -amt);
+                else if(type === 'income') { updateAccountBalance(from, amt); tx.to = from; }
+                else if(type === 'investment') {
+                    updateAccountBalance(from, -amt);
+                    updateAccountBalance('acc_inv', amt);
+                    tx.to = 'acc_inv';
+                    appData.portfolio.push({
+                        id: tx.id, name: tx.note || tx.category, type: tx.category,
+                        amount: amt, currentValue: amt, date: tx.date, status: 'active',
+                        maturityDate: document.getElementById('tx-maturity').value
+                    });
+                }
+            }
+
+            appData.transactions.push(tx);
+            
+            // --- UPDATED PARTIAL PAYMENT LOGIC ---
+            if(activeReminderIndex !== null) {
+                const r = appData.reminders[activeReminderIndex];
+                // Check if payment is less than reminder amount (Partial)
+                if(amt < r.amount) {
+                    r.amount -= amt;
+                    showToast(`Remaining: ${formatCurrency(r.amount)}`);
+                    // We DO NOT splice the reminder here, keeping it active
+                } else {
+                    // Full payment or overpayment: Remove alert
+                    appData.reminders.splice(activeReminderIndex, 1);
+                }
+                activeReminderIndex = null;
+            }
+            
+            saveData();
+            closeModal('transaction');
+            showToast("Transaction Saved");
+        }
+
+        function revertBalance(t) {
+            if(t.type === 'transfer') { updateAccountBalance(t.from, t.amount); updateAccountBalance(t.to, -t.amount); }
+            else if(t.type === 'expense') updateAccountBalance(t.from, t.amount);
+            else if(t.type === 'income') updateAccountBalance(t.from, -t.amount);
+            else { // Investment
+                updateAccountBalance(t.from, t.amount);
+                updateAccountBalance('acc_inv', -t.amount);
+                const pIdx = appData.portfolio.findIndex(p => p.id === t.id);
+                if(pIdx > -1) appData.portfolio.splice(pIdx, 1);
+            }
+        }
+
+        function editTransaction(id) {
+            const tx = appData.transactions.find(t => t.id === id);
+            if(!tx) return;
+            openModal('transaction');
+            document.getElementById('tx-modal-title').textContent = "Edit Transaction";
+            document.getElementById('editing-tx-id').value = tx.id;
+            setTxType(tx.type);
+            document.getElementById('tx-amount').value = tx.amount;
+            document.getElementById('tx-date').value = tx.date;
+            document.getElementById('tx-note').value = tx.note || '';
+            document.getElementById('tx-from-account').value = tx.from;
+            document.getElementById('tx-tags').value = (tx.tags || []).join(', ');
+            
+            // Populate breakdown
+            document.getElementById('breakdown-list').innerHTML = '';
+            if(tx.items && tx.items.length > 0) {
+                document.getElementById('tx-breakdown').classList.remove('hidden');
+                tx.items.forEach(i => addBreakdownItem(i.name, i.amount));
+            } else {
+                document.getElementById('tx-breakdown').classList.add('hidden');
+            }
+            
+            if(tx.type === 'transfer') document.getElementById('tx-to-account').value = tx.to;
+            else if(tx.type === 'investment') {
+                const p = appData.portfolio.find(p => p.id === tx.id);
+                if(p?.maturityDate) document.getElementById('tx-maturity').value = p.maturityDate;
+                setTimeout(() => selectCategory(tx.category), 50);
+            } else {
+                setTimeout(() => selectCategory(tx.category), 50);
+            }
+        }
+
+        function deleteTransaction(id) {
+            if(confirm("Delete this transaction?")) {
+                const idx = appData.transactions.findIndex(t => t.id === id);
+                if(idx > -1) { revertBalance(appData.transactions[idx]); appData.transactions.splice(idx, 1); saveData(); showToast("Deleted"); }
+            }
+        }
+
+        /* --- REMINDERS --- */
+        function setRemType(t) {
+            currentRemType = t; document.getElementById('rem-type').value = t;
+            const map = { bill: { id:'rt-bill', style:'bg-blue-50 text-blue-700 border-blue-500' }, loan_taken: { id:'rt-loan_taken', style:'bg-red-50 text-red-700 border-red-500' }, loan_given: { id:'rt-loan_given', style:'bg-emerald-50 text-emerald-700 border-emerald-500' } };
+            document.querySelectorAll('#reminder-modal button[type="button"]').forEach(b => b.className = 'py-2 rounded-lg text-xs font-bold border text-gray-500 hover:bg-gray-50 transition-all');
+            document.getElementById(map[t].id).className = `py-2 rounded-lg text-xs font-bold border transition-all ${map[t].style}`;
+            
+            const isLoan = t !== 'bill';
+            document.getElementById('record-tx-option').classList.toggle('hidden', !isLoan);
+            document.getElementById('record-tx-account').classList.toggle('hidden', !isLoan);
+        }
+
+        function handleReminderSubmit(e) {
+            e.preventDefault();
+            const r = {
+                title: document.getElementById('rem-title').value,
+                amount: parseFloat(document.getElementById('rem-amount').value),
+                date: document.getElementById('rem-date').value,
+                type: currentRemType
+            };
+            appData.reminders.push(r);
+            
+            if(document.getElementById('record-now').checked && currentRemType !== 'bill') {
+                const acc = document.getElementById('rem-account').value;
+                const isGiven = currentRemType === 'loan_given';
+                const tx = {
+                    id: Date.now(),
+                    type: isGiven ? 'expense' : 'income',
+                    amount: r.amount, date: r.date, from: acc,
+                    category: isGiven ? 'Lent' : 'Loan Back',
+                    note: `${isGiven?'Lent to':'Borrowed from'}: ${r.title}`,
+                    tags: ['alert']
+                };
+                if(!isGiven) tx.to = acc;
+                updateAccountBalance(acc, isGiven ? -r.amount : r.amount);
+                appData.transactions.push(tx);
+            }
+            saveData(); closeModal('reminder'); showToast("Alert Saved");
+        }
+
+        function resolveAlert(i) {
+            activeReminderIndex = i; const r = appData.reminders[i];
+            openModal('transaction');
+            document.getElementById('tx-amount').value = r.amount;
+            document.getElementById('tx-note').value = r.title;
+            if(r.type === 'loan_given') { setTxType('income'); setTimeout(()=>selectCategory('Loan Back'), 100); }
+            else if(r.type === 'loan_taken') { setTxType('expense'); setTimeout(()=>selectCategory('Lent'), 100); }
+            else { setTxType('expense'); setTimeout(()=>selectCategory('Bills'), 100); }
+            showToast('Verify details', false);
+        }
+
+        function renderReminders() {
+            const c = document.getElementById('all-reminders'), al = document.getElementById('alerts-list');
+            c.innerHTML = ''; al.innerHTML = '';
+            if(appData.reminders.length === 0) { c.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">No alerts</div>'; document.getElementById('alerts-section').style.display = 'none'; return; }
+            
+            let hasAlerts = false;
+            appData.reminders.forEach((r, i) => {
+                const days = Math.ceil((new Date(r.date) - new Date()) / 86400000);
+                if(days <= 3) hasAlerts = true;
+                const color = r.type === 'loan_given' ? 'border-green-500' : r.type === 'loan_taken' ? 'border-red-500' : 'border-blue-500';
+                const html = `<div class="bg-white border-l-4 ${color} p-3 rounded-r-xl shadow-sm flex justify-between items-center mb-2">
+                    <div><div class="font-bold text-sm">${r.title}</div><div class="text-xs text-gray-500">${days < 0 ? 'Overdue' : days + ' days'}</div></div>
+                    <div class="flex gap-2"><span class="font-bold text-sm">${formatCurrency(r.amount)}</span>
+                        <button onclick="resolveAlert(${i})" class="bg-green-50 text-green-600 w-8 h-8 rounded-full flex items-center justify-center"><i class="ph ph-check-bold"></i></button>
+                        <button onclick="appData.reminders.splice(${i},1);saveData()" class="text-red-400 w-8 h-8 flex items-center justify-center"><i class="ph ph-trash"></i></button>
+                    </div></div>`;
+                c.innerHTML += html;
+                if(days <= 3) al.innerHTML += html;
+            });
+            document.getElementById('alerts-section').style.display = hasAlerts ? 'block' : 'none';
+        }
+
+        /* --- PORTFOLIO --- */
+        function renderPortfolio(status) {
+            currentPortfolioView = status;
+            const c = document.getElementById('portfolio-list'); c.innerHTML = '';
+            const isActive = status === 'active';
+            document.getElementById('tab-active').className = isActive ? 'flex-1 py-2 rounded-lg bg-white shadow-sm text-gray-800 transition-all' : 'flex-1 py-2 rounded-lg text-gray-500 transition-all';
+            document.getElementById('tab-redeemed').className = !isActive ? 'flex-1 py-2 rounded-lg bg-white shadow-sm text-gray-800 transition-all' : 'flex-1 py-2 rounded-lg text-gray-500 transition-all';
+            
+            let total = 0;
+            appData.portfolio.filter(p => p.status === 'active').forEach(p => total += (p.currentValue || p.amount));
+            document.getElementById('portfolio-total').textContent = formatCurrency(total);
+
+            const list = appData.portfolio.filter(p => p.status === status);
+            if(list.length === 0) { c.innerHTML = `<div class="text-center text-gray-400 py-8 text-sm">No ${status} investments</div>`; return; }
+
+            list.forEach(p => {
+                let footer = '';
+                if(isActive) {
+                    const growth = (p.currentValue || p.amount) - p.amount;
+                    const perc = ((growth/p.amount)*100).toFixed(1);
+                    footer = `<div class="flex justify-between w-full text-xs mt-2 pt-2 border-t border-gray-100"><span class="text-gray-400">Princ: ${formatCurrency(p.amount)}</span><span class="font-bold ${growth>=0?'text-green-600':'text-red-600'}">${growth>=0?'+':''}${formatCurrency(growth)} (${perc}%)</span></div>`;
+                } else {
+                    const profit = p.finalAmount - p.amount;
+                    footer = `<div class="mt-2 pt-2 border-t border-gray-100 text-xs font-bold ${profit>=0?'text-green-600':'text-red-600'}">${profit>=0?'Profit':'Loss'}: ${formatCurrency(Math.abs(profit))}</div>`;
+                }
+
+                c.innerHTML += `<div class="inv-card-bg p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div><div class="text-xs text-indigo-500 font-bold uppercase">${p.type}</div><div class="font-bold text-gray-800 text-lg">${p.name}</div><div class="text-[10px] text-gray-400">Val: ${formatCurrency(isActive ? (p.currentValue||p.amount) : p.finalAmount)}</div></div>
+                        ${isActive ? `<div class="flex gap-1"><button onclick="updateInvestValue(${p.id})" class="w-7 h-7 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="ph ph-trend-up"></i></button><button onclick="openRedeemModal(${p.id})" class="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">Redeem</button></div>` : ''}
+                    </div>
+                    ${footer}
+                </div>`;
+            });
+        }
+
+        function updateInvestValue(id) {
+            const p = appData.portfolio.find(x => x.id === id);
+            const val = prompt(`Update Market Value for ${p.name}:`, p.currentValue || p.amount);
+            if(val && !isNaN(parseFloat(val))) { p.currentValue = parseFloat(val); saveData(); showToast("Updated"); }
+        }
+
+        function openRedeemModal(id) {
+            const p = appData.portfolio.find(x => x.id === id);
+            document.getElementById('redeem-id').value = id;
+            document.getElementById('redeem-principal').value = formatCurrency(p.amount);
+            document.getElementById('redeem-amount').value = '';
+            populateAccountSelect('redeem-to-account');
+            openModal('redeem');
+        }
+
+        function handleRedeemSubmit(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('redeem-id').value),
+                  amt = parseFloat(document.getElementById('redeem-amount').value),
+                  to = document.getElementById('redeem-to-account').value;
+            
+            if(!amt) return;
+            const p = appData.portfolio.find(x => x.id === id);
+            p.status = 'redeemed'; p.finalAmount = amt; p.redeemDate = new Date().toISOString();
+            
+            updateAccountBalance('acc_inv', -p.amount);
+            updateAccountBalance(to, amt);
+            
+            appData.transactions.push({
+                id: Date.now(), type: 'income', category: 'Inv Return', amount: amt,
+                date: new Date().toISOString().split('T')[0], note: `Redeemed: ${p.name}`, from: to, to: to
+            });
+            saveData(); closeModal('redeem'); showToast("Redeemed Successfully");
+        }
+
+        /* --- SUPPORT --- */
+        function populateAccountSelect(id) { const s=document.getElementById(id); s.innerHTML=''; DEFAULT_ACCOUNTS.forEach(a=>{ if(a.type!=='investment') s.innerHTML+=`<option value="${a.id}">${a.name}</option>` }); }
+        function populateAccountFilter() { const s=document.getElementById('filter-account'); DEFAULT_ACCOUNTS.forEach(a=>s.innerHTML+=`<option value="${a.id}">${a.name}</option>`); }
+        function handleFileSelect(e) { const r=new FileReader(); r.onload=ev=>{ try{appData=JSON.parse(ev.target.result);saveData();location.reload();}catch(x){showToast("Error importing file", true);} }; r.readAsText(e.target.files[0]); }
+        function triggerImport(){document.getElementById('import-file').click()} 
+        function exportData(){ const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+			const s="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(appData)); const a=document.createElement('a'); a.href=s; a.download=`smart_gen_backup_${dateStr}_${timeStr}.json`; document.body.appendChild(a); a.click(); a.remove(); }
+        
+        /* --- UI MANAGERS --- */
+        function switchTab(t) { ['dashboard','portfolio','analytics','planning','history'].forEach(x=>document.getElementById(`view-${x}`).classList.add('hidden')); document.getElementById(`view-${t}`).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.innerText.toLowerCase().includes(t==='dashboard'?'home':t))); if(t==='portfolio') renderPortfolio('active'); if(t==='analytics') updateCharts(); if(t==='history') applyHistoryFilters(); }
+        
+        function openModal(n) { 
+            document.getElementById(`${n}-modal`).classList.remove('hidden'); 
+            if(n==='transaction') { 
+                document.getElementById('tx-modal-title').innerText="New Transaction"; 
+                document.getElementById('editing-tx-id').value=""; 
+                document.getElementById('tx-form').reset(); 
+                document.getElementById('tx-date').value = new Date().toISOString().split('T')[0]; 
+                document.getElementById('breakdown-list').innerHTML = '';
+                document.getElementById('tx-breakdown').classList.add('hidden');
+                setTxType('expense');
+                document.getElementById('tx-amount').focus();
+            } 
+            if(n==='reminder') { 
+                document.getElementById('reminder-form').reset(); 
+                setRemType('bill'); 
+                document.getElementById('rem-date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('rem-title').focus();
+            } 
+        }
+        function closeModal(n) { document.getElementById(`${n}-modal`).classList.add('hidden'); if(n==='transaction') activeReminderIndex=null; }
+
+        // Same chart logic as before, compacted for file size
+        function updateCharts() {
+            const p=document.getElementById('analytics-period').value, now=new Date(); 
+            let f=appData.transactions.filter(t=>{ const d=new Date(t.date); if(p==='all')return true; if(p==='thisMonth') return d.getMonth()===now.getMonth(); if(p==='lastMonth') return d.getMonth()===now.getMonth()-1; if(p==='yearToDate') return d.getFullYear()===now.getFullYear(); return d>new Date(now.setMonth(now.getMonth()-3)); }); 
+            const sd={}; f.filter(t=>t.type==='expense').forEach(t=>sd[t.category]=(sd[t.category]||0)+t.amount); 
+            if(charts.spending)charts.spending.destroy(); charts.spending=new Chart(document.getElementById('spendingChart'), {type:'doughnut',data:{labels:Object.keys(sd),datasets:[{data:Object.values(sd),backgroundColor:['#f87171','#fb923c','#fbbf24','#a3e635','#34d399','#22d3ee','#818cf8']}]}}); 
+            
+            let c=0,b=0,i=0; DEFAULT_ACCOUNTS.forEach(a=>{if(a.type==='cash')c+=appData.balances[a.id]||0;else if(a.type==='bank')b+=appData.balances[a.id]||0;else i+=appData.balances[a.id]||0;});
+            if(charts.investment)charts.investment.destroy(); charts.investment=new Chart(document.getElementById('investmentChart'), {type:'pie',data:{labels:['Cash','Bank','Inv'],datasets:[{data:[c,b,i],backgroundColor:['#34d399','#3b82f6','#8b5cf6']}]}});
+
+            const md={}; f.filter(t=>t.type==='expense').forEach(t=>{const k=new Date(t.date).toLocaleString('default',{month:'short'});md[k]=(md[k]||0)+t.amount;});
+            if(charts.trend)charts.trend.destroy(); charts.trend=new Chart(document.getElementById('trendChart'), {type:'bar',data:{labels:Object.keys(md),datasets:[{data:Object.values(md),backgroundColor:'#6366f1',borderRadius:4}]},options:{scales:{x:{grid:{display:false}},y:{grid:{display:false}}},plugins:{legend:{display:false}}}});
+
+            const id={}; appData.portfolio.filter(p=>p.status==='active').forEach(p=>id[p.type]=(id[p.type]||0)+(p.currentValue||p.amount));
+            if(charts.invBreakdown)charts.invBreakdown.destroy(); charts.invBreakdown=new Chart(document.getElementById('investBreakdownChart'), {type:'doughnut',data:{labels:Object.keys(id),datasets:[{data:Object.values(id),backgroundColor:['#818cf8','#c084fc','#f472b6','#2dd4bf','#fbbf24','#60a5fa','#34d399']}]}});
+        }
+
+        window.onclick = e => { if(e.target.classList.contains('fixed')) e.target.classList.add('hidden'); }
+    </script>
+</body>
+</html>
