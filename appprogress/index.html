@@ -1,0 +1,1136 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job/Application Tracker - Full Upgrade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .active-btn {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        button, .btn {
+            padding: 0.5rem 1rem;
+            margin-right: 0.5rem;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+        }
+        #status {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            margin-top: 16px;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background-color: #d1d5db;
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .progress-fill {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 4px;
+            background-color: #3b82f6;
+            transform: translateY(-50%);
+            z-index: 1;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .progress-step {
+            position: relative;
+            z-index: 2;
+            background-color: white;
+            border: 2px solid #d1d5db;
+            color: #6b7280;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease, transform 0.3s ease;
+        }
+
+        .progress-step.active {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 8px #3b82f6;
+        }
+        .progress-step.hold {
+            background-color: #f59e0b;
+            border-color: #f59e0b;
+            color: white;
+        }
+        .progress-step.notcleared {
+            background-color: #ef4444; 
+            border-color: #ef4444;
+            color: white;
+            transform: scale(1.1);
+        }
+
+
+        .progress-label {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 4px;
+            max-width: 60px; 
+            overflow-wrap: break-word;
+        }
+
+        .add-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 32px;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+            transition: background-color 0.3s;
+        }
+
+        .add-btn:hover {
+            background-color: #2563eb;
+        }
+
+        .offered-card {
+            border: 4px solid #48bb78;
+        }
+
+        .offered-row {
+            background-color: #f0fff4;
+        }
+
+        .stage-date-tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            z-index: 10;
+            bottom: -32px; 
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            display: none;
+            text-align: left;
+        }
+         .stage-date-tooltip div { margin-bottom: 2px; }
+
+
+        .progress-step:hover .stage-date-tooltip {
+            display: block;
+        }
+
+        .copy-btn {
+            background-color: #4caf50;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .copy-btn:hover {
+            background-color: #45a049;
+        }
+
+        @media (max-width: 768px) { 
+            .progress-step {
+                width: 28px;
+                height: 28px;
+                font-size: 10px;
+            }
+
+            .progress-label {
+                font-size: 9px;
+            }
+            .action-buttons-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); 
+                gap: 0.5rem;
+            }
+             .btn-danger.text-xs { 
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+             }
+        }
+        .form-input, .form-select, .form-textarea {
+            @apply w-full border p-2 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500;
+        }
+        .form-textarea { @apply h-24; }
+
+        .btn { 
+            @apply px-4 py-2 rounded font-semibold shadow-md transition-colors duration-150;
+        }
+        .btn-primary {
+            @apply bg-blue-600 text-white hover:bg-blue-700;
+        }
+        .btn-secondary {
+            @apply bg-gray-400 text-white hover:bg-gray-500;
+        }
+        .btn-danger { 
+            @apply bg-red-500 text-white hover:bg-red-600;
+        }
+        .btn-warning {
+            @apply bg-yellow-500 text-white hover:bg-yellow-600;
+        }
+        .btn-success {
+            @apply bg-green-500 text-white hover:bg-green-600;
+        }
+        .btn-info {
+            @apply bg-sky-500 text-white hover:bg-sky-600;
+        }
+
+    </style>
+
+</head>
+
+<body class="bg-gray-100 p-4 min-h-screen relative">
+    <div class="max-w-5xl mx-auto space-y-4">
+        <h1 class="text-3xl font-bold text-center text-gray-700">📋 Job / Application Tracker</h1>
+
+        <div id="summary" class="bg-white p-4 rounded-lg shadow-md text-sm text-gray-600">
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-2 sm:space-y-0">
+            <input type="text" id="search" placeholder="🔍 Search company, skill, or HR..." class="form-input w-full sm:w-1/2">
+            <div class="flex space-x-2">
+                <button id="cardViewBtn" class="btn btn-primary active-btn">Card View</button>
+                <button id="tableViewBtn" class="btn btn-primary">Table View</button>
+            </div>
+        </div>
+        <div class="my-4 p-3 bg-white rounded-lg shadow-md">
+            <h2 class="text-lg font-semibold text-gray-700 mb-2">🔁 Firebase Sync for <code>entries</code></h2>
+            <div class="flex space-x-2">
+                <button onclick="syncToFirebase()" class="btn btn-info">☁️ Sync to Firebase</button>
+                <button onclick="restoreFromFirebase()" class="btn btn-success">⬇️ Restore from Firebase</button>
+            </div>
+            <div id="status" class="mt-2 text-sm"></div>
+        </div>
+
+        <div class="my-4 p-3 bg-white rounded-lg shadow-md">
+            <h2 class="text-lg font-semibold text-gray-700 mb-2">💾 Local Data Management</h2>
+            <div class="flex flex-col sm:flex-row gap-2 mt-2">
+                <button onclick="exportData()" class="btn btn-info">📤 Export Data to File</button>
+                <div>
+                    <label for="importFile" class="btn btn-success cursor-pointer inline-block">📥 Import Data from File</label>
+                    <input type="file" id="importFile" accept=".json" class="hidden" onchange="importDataFromFile(event)">
+                </div>
+            </div>
+            <div id="importExportStatus" class="mt-2 text-sm"></div>
+        </div>
+
+        <div id="displayArea" class="space-y-4"></div>
+    </div>
+
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md space-y-4 shadow-xl">
+            <h2 id="modalTitle" class="text-2xl font-bold text-blue-700">➕ Add New Application</h2>
+            <form id="entryForm" class="space-y-3">
+                <input required name="company" placeholder="🏢 Company Name" class="form-input">
+                <input name="hr" placeholder="👤 HR Name (Optional)" class="form-input">
+                <input name="mobile" placeholder="📱 Mobile (Optional)" class="form-input">
+                <input name="skill" placeholder="💡 Key Skill/Role" class="form-input">
+                <input name="np" placeholder="⏳ Notice Period (e.g., 30 days)" class="form-input">
+                <textarea name="notes" placeholder="📝 Additional Notes (Optional)" class="form-textarea"></textarea>
+                <div class="flex space-x-2">
+                    <button type="submit" class="btn btn-primary w-full">Save</button>
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary w-full">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="stageDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md space-y-4 shadow-xl">
+            <h2 id="stageDetailModalTitle" class="text-xl font-bold text-blue-700">Update Stage Details</h2>
+            <form id="stageDetailForm" class="space-y-4">
+                <div>
+                    <label for="stageDateInput" class="block text-sm font-medium text-gray-700">Date:</label>
+                    <input type="date" name="stageDate" id="stageDateInput" class="form-input mt-1">
+                </div>
+                <div>
+                    <label for="stageOutcomeInput" class="block text-sm font-medium text-gray-700">Outcome:</label>
+                    <select name="stageOutcome" id="stageOutcomeInput" class="form-select mt-1">
+                        <option value="">-- Select Outcome --</option>
+                        <option value="OnGoing">OnGoing</option>
+                        <option value="Passed">Shortlisted</option>
+                        <option value="NotCleared">Not Shortlisted</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="stageFeedbackInput" class="block text-sm font-medium text-gray-700">Feedback:</label>
+                    <textarea name="stageFeedback" id="stageFeedbackInput" class="form-textarea mt-1" placeholder="Enter any feedback for this stage..."></textarea>
+                </div>
+                <input type="hidden" id="stageDetailOriginalEntryIndex">
+                <input type="hidden" id="stageDetailStageIndex">
+                <div class="flex space-x-2 pt-2">
+                    <button type="submit" class="btn btn-primary w-full">Save Stage Details</button>
+                    <button type="button" onclick="closeStageDetailModal()" class="btn btn-secondary w-full">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="add-btn" onclick="openModal()">+</div>
+
+    <script>
+        const entryForm = document.getElementById('entryForm');
+        const displayArea = document.getElementById('displayArea');
+        const searchInput = document.getElementById('search'); 
+        const cardViewBtn = document.getElementById('cardViewBtn');
+        const tableViewBtn = document.getElementById('tableViewBtn');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modalTitle');
+        const summaryDiv = document.getElementById('summary');
+        
+        const stageDetailModal = document.getElementById('stageDetailModal');
+        const stageDetailModalTitle = document.getElementById('stageDetailModalTitle');
+        const stageDetailForm = document.getElementById('stageDetailForm');
+        const stageDateInput = document.getElementById('stageDateInput');
+        const stageOutcomeInput = document.getElementById('stageOutcomeInput');
+        const stageFeedbackInput = document.getElementById('stageFeedbackInput');
+        const stageDetailOriginalEntryIndex = document.getElementById('stageDetailOriginalEntryIndex');
+        const stageDetailStageIndex = document.getElementById('stageDetailStageIndex');
+
+
+        const linearStages = ["Call Recvd", "Call Schedule", "L1 Clear", "L2 Clear", "Final Disc(HR)", "Offered"];
+        let entries = JSON.parse(localStorage.getItem('entries') || '[]');
+        let isCardView = true;
+        let currentlyEditingOriginalIndex = null; 
+
+        function saveData() {
+            localStorage.setItem('entries', JSON.stringify(entries));
+            render();
+            updateSummary();
+        }
+
+        function initializeNewStageData() {
+            const now = new Date().toISOString();
+            const stageDetails = linearStages.map((name, index) => {
+                if (index === 0) { 
+                    return { date: now, outcome: "Passed", feedback: null };
+                }
+                return { date: null, outcome: null, feedback: null }; 
+            });
+            return {
+                lastLinearStageIndex: 0, 
+                linearStageDetails: stageDetails, 
+                currentOverallStatus: "Active", 
+                statusReason: "", 
+                statusSetDate: null,
+                createdAt: now,
+                updatedAt: now
+            };
+        }
+        
+        function jsEscape(str) {
+            if (typeof str !== 'string') return '';
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+
+        function setOverallStatus(originalEntryIndex, newStatus) {
+            const entry = entries[originalEntryIndex];
+            if (!entry) return;
+
+            if (!entry.stage) { 
+                 entry.stage = initializeNewStageData(); 
+            }
+
+            let reason = "";
+            if (newStatus === "On Hold" || newStatus === "Not Positive") {
+                reason = prompt(`Reason for setting status to "${newStatus}" for ${entry.company} (Optional):`);
+                entry.stage.statusSetDate = new Date().toISOString();
+                entry.stage.statusReason = reason || "";
+            } else if (newStatus === "Active") {
+                entry.stage.statusSetDate = null;
+                entry.stage.statusReason = "";
+            }
+
+            entry.stage.currentOverallStatus = newStatus;
+            entry.stage.updatedAt = new Date().toISOString();
+            saveData();
+        }
+        
+        function resumeApplication(originalEntryIndex) {
+            const entry = entries[originalEntryIndex];
+            if (!entry || !entry.stage || entry.stage.currentOverallStatus !== "On Hold") {
+                alert("This application is not 'On Hold'.");
+                return;
+            }
+            entry.stage.statusSetDate = null;
+            entry.stage.statusReason = "";
+            setOverallStatus(originalEntryIndex, "Active");
+        }
+
+        function recalculateLastLinearStageIndex(entry) {
+            let newLLS = -1;
+            if (entry.stage && entry.stage.linearStageDetails) {
+                if (entry.stage.currentOverallStatus === "Active") {
+                    for (let i = 0; i < entry.stage.linearStageDetails.length; i++) {
+                        const stageDetail = entry.stage.linearStageDetails[i];
+                        if (stageDetail && stageDetail.outcome === "Passed") {
+                            newLLS = i;
+                        } else if (stageDetail && stageDetail.outcome === "Notcleared") {
+                            newLLS = i; 
+                            break; 
+                        } else if (!stageDetail || !stageDetail.date || (stageDetail.outcome !== "Passed" && stageDetail.outcome !== "Notcleared") ) { 
+                            break; 
+                        }
+                    }
+                } else { 
+                     for (let i = 0; i < entry.stage.linearStageDetails.length; i++) {
+                        if (entry.stage.linearStageDetails[i] && (entry.stage.linearStageDetails[i].date || entry.stage.linearStageDetails[i].outcome)) {
+                            newLLS = i;
+                        }
+                     }
+                }
+            }
+            entry.stage.lastLinearStageIndex = newLLS;
+        }
+
+
+        function render() {
+            let entriesWithOriginalIndex = entries.map((entry, index) => ({ entry, originalIndex: index }));
+
+            entriesWithOriginalIndex.sort((a, b) => {
+                const stageA = a.entry.stage || {};
+                const stageB = b.entry.stage || {};
+                const dateA = new Date(stageA.updatedAt || stageA.createdAt || 0);
+                const dateB = new Date(stageB.updatedAt || stageB.createdAt || 0);
+                return dateB - dateA;
+            });
+
+            const keyword = searchInput.value.toLowerCase();
+            const filteredAndSortedEntries = entriesWithOriginalIndex.filter(({ entry }) =>
+                entry.company.toLowerCase().includes(keyword) ||
+                (entry.hr && entry.hr.toLowerCase().includes(keyword)) ||
+                (entry.skill && entry.skill.toLowerCase().includes(keyword))
+            );
+            displayArea.innerHTML = '';
+
+            if (filteredAndSortedEntries.length === 0) {
+                displayArea.innerHTML = `<p class="text-center text-gray-500">No applications found matching your criteria.</p>`;
+                return;
+            }
+            
+            filteredAndSortedEntries.forEach(({ entry: e, originalIndex }) => {
+                if (!e.stage) {
+                    e.stage = initializeNewStageData();
+                } else {
+                    const defaultS = initializeNewStageData(); 
+                    if (typeof e.stage.createdAt === 'undefined') {
+                        let firstDate = null;
+                        if(Array.isArray(e.stage.linearStageDetails)){
+                            const firstDatedStage = e.stage.linearStageDetails.find(d => d && d.date);
+                            if(firstDatedStage) firstDate = firstDatedStage.date;
+                        } else if (Array.isArray(e.stage.linearStageDates)) { // Legacy check for old data structure
+                             const firstDatedLegacyStage = e.stage.linearStageDates.find(d => d);
+                             if(firstDatedLegacyStage) firstDate = firstDatedLegacyStage;
+                        }
+                        e.stage.createdAt = firstDate || defaultS.createdAt;
+                    }
+                    if (typeof e.stage.updatedAt === 'undefined') {
+                        e.stage.updatedAt = e.stage.createdAt;
+                    }
+                    
+                    // Convert old linearStageDates (array of date strings) to new linearStageDetails (array of objects)
+                    if (Array.isArray(e.stage.linearStageDates) && (!Array.isArray(e.stage.linearStageDetails) || e.stage.linearStageDetails.every(sd => sd.date === null && sd.outcome === null && sd.feedback === null))) {
+                        e.stage.linearStageDetails = linearStages.map((_, idx) => {
+                            const oldDate = e.stage.linearStageDates[idx];
+                            return {
+                                date: oldDate || null,
+                                outcome: oldDate ? "Passed" : null, 
+                                feedback: null
+                            };
+                        });
+                        delete e.stage.linearStageDates; 
+                    } else if (!Array.isArray(e.stage.linearStageDetails) || e.stage.linearStageDetails.length !== linearStages.length) {
+                        const currentDetails = Array.isArray(e.stage.linearStageDetails) ? e.stage.linearStageDetails : [];
+                        const newDetails = linearStages.map((_,idx) => ({ 
+                            date: null, outcome: null, feedback: null,
+                            ...(defaultS.linearStageDetails[idx] || {}) 
+                        })); 
+                        for (let i = 0; i < Math.min(newDetails.length, currentDetails.length); i++) {
+                            if(currentDetails[i] && typeof currentDetails[i] === 'object') { 
+                               newDetails[i].date = currentDetails[i].date || newDetails[i].date;
+                               newDetails[i].outcome = currentDetails[i].outcome || newDetails[i].outcome;
+                               newDetails[i].feedback = currentDetails[i].feedback || newDetails[i].feedback;
+                            }
+                        }
+                        e.stage.linearStageDetails = newDetails;
+                    }
+                    
+                    recalculateLastLinearStageIndex(e);
+
+                    if (typeof e.stage.currentOverallStatus !== 'string' || !["Active", "On Hold", "Not Positive"].includes(e.stage.currentOverallStatus)) {
+                        e.stage.currentOverallStatus = defaultS.currentOverallStatus; 
+                    }
+                    if (typeof e.stage.statusReason === 'undefined') e.stage.statusReason = defaultS.statusReason;
+                    if (typeof e.stage.statusSetDate === 'undefined') e.stage.statusSetDate = defaultS.statusSetDate;
+                }
+
+
+                if (isCardView) {
+                    let progressPercent = 0;
+                    if (e.stage.currentOverallStatus !== "Not Positive" && e.stage.lastLinearStageIndex >= 0) {
+                         progressPercent = (e.stage.lastLinearStageIndex + 1) / linearStages.length * 100;
+                         const lastActiveStageDetail = e.stage.linearStageDetails[e.stage.lastLinearStageIndex];
+                         if (lastActiveStageDetail && lastActiveStageDetail.outcome === "Passed" && linearStages[e.stage.lastLinearStageIndex] === "Offered") {
+                            progressPercent = 100;
+                         }
+                         if(lastActiveStageDetail && lastActiveStageDetail.outcome === "Notcleared") {
+                            progressPercent = (e.stage.lastLinearStageIndex +1) / linearStages.length * 100; 
+                         }
+                    }
+
+                    let cardClass = "bg-white p-4 rounded-lg shadow-md space-y-2";
+                    const offeredStageIndex = linearStages.indexOf("Offered");
+                    const offeredStageDetail = e.stage.linearStageDetails && e.stage.linearStageDetails[offeredStageIndex] ? e.stage.linearStageDetails[offeredStageIndex] : null;
+
+                    if (offeredStageDetail && offeredStageDetail.outcome === "Passed" && e.stage.currentOverallStatus !== "Not Positive") {
+                        cardClass += " offered-card";
+                    }
+
+                    let stageDotsHTML = linearStages.map((stageName, idx) => {
+                        const stageDetail = e.stage.linearStageDetails[idx];
+                        let tooltipHTML = '';
+                        if (stageDetail && stageDetail.date) {
+                            const formattedDate = new Date(stageDetail.date).toLocaleDateString();
+                            tooltipHTML += `<div>Date: ${formattedDate}</div>`;
+                        }
+                        if (stageDetail && stageDetail.outcome) {
+                            tooltipHTML += `<div>Outcome: ${stageDetail.outcome}</div>`;
+                        }
+                        if(tooltipHTML) {
+                            tooltipHTML = `<div class="stage-date-tooltip">${tooltipHTML}</div>`;
+                        }
+                        
+                        let stepDotClass = 'progress-step';
+                        if (stageDetail) {
+                            if (stageDetail.outcome === "Passed") {
+                                stepDotClass += ' active';
+                            } else if (stageDetail.outcome === "Notcleared") {
+                                stepDotClass += ' Notcleared'; 
+                            } else if (stageDetail.date && (stageDetail.outcome === "OnGoing" || stageDetail.outcome === null)) { 
+                                stepDotClass += ' active'; 
+                            }
+                        }
+                        
+                        if ((e.stage.currentOverallStatus === "Active" || e.stage.currentOverallStatus === "On Hold") && idx <= e.stage.lastLinearStageIndex) {
+                            if (!stepDotClass.includes(' active') && !stepDotClass.includes(' Notcleared')) {
+                                stepDotClass += ' active'; 
+                            }
+                        }
+                        if (e.stage.currentOverallStatus === "On Hold" && idx === e.stage.lastLinearStageIndex && (stepDotClass.includes('active'))) {
+                           stepDotClass += ' hold';
+                        }
+                        if (e.stage.currentOverallStatus === "Not Positive" && (stepDotClass.includes('active') || stepDotClass.includes('hold'))) {
+                            if (! (stageDetail && stageDetail.outcome === "Passed" && idx <= e.stage.lastLinearStageIndex) ) {
+                                stepDotClass = 'progress-step'; 
+                                if(stageDetail && stageDetail.outcome === "Notcleared") stepDotClass += ' Notcleared';
+                            }
+                        }
+                        return `
+                            <div class="flex flex-col items-center">
+                                <div class="${stepDotClass}" onclick="openStageDetailModal(${originalIndex}, ${idx}, '${jsEscape(linearStages[idx])}')">
+                                    ${idx + 1}
+                                    ${tooltipHTML}
+                                </div>
+                                <div class="progress-label">${stageName}</div>
+                            </div>`;
+                    }).join('');
+                    
+                    const overallStatusColor = e.stage.currentOverallStatus === 'Not Positive' ? 'text-red-600' :
+                                           e.stage.currentOverallStatus === 'On Hold' ? 'text-yellow-600' :
+                                           (offeredStageDetail && offeredStageDetail.outcome === "Passed" && e.stage.currentOverallStatus !== "Not Positive" ? 'text-green-600' : 'text-blue-600');
+                    
+                    let stageDetailsListHTML = "";
+                    if(e.stage.linearStageDetails) {
+                        stageDetailsListHTML = linearStages.map((stageName, idx) => {
+                            const stageDetail = e.stage.linearStageDetails[idx];
+                            if (stageDetail && (stageDetail.date || stageDetail.outcome || stageDetail.feedback)) {
+                                let detailString = `<strong>${stageName}:</strong>`;
+                                if (stageDetail.date) detailString += ` ${new Date(stageDetail.date).toLocaleDateString()}`;
+                                if (stageDetail.outcome) detailString += ` - ${stageDetail.outcome}`;
+                                if (stageDetail.feedback) detailString += ` <em class="text-gray-500 block pl-2">- "${jsEscape(stageDetail.feedback)}"</em>`;
+                                return `<div class="text-xs py-0.5">${detailString}</div>`;
+                            }
+                            return '';
+                        }).filter(Boolean).join('');
+                    }
+                    if (!stageDetailsListHTML) {
+                        stageDetailsListHTML = '<div class="text-xs text-gray-400 py-0.5">No specific stage details recorded.</div>';
+                    }
+
+                    displayArea.innerHTML += `
+                      <div class="${cardClass}">
+                        <h2 class="font-bold ${overallStatusColor} text-xl">${e.company}</h2>
+                        <div><strong>Status:</strong> <span class="font-semibold ${overallStatusColor}">${e.stage.currentOverallStatus}</span>
+                            ${e.stage.statusReason ? ` <span class="text-sm text-gray-500">(${jsEscape(e.stage.statusReason)})</span>` : ''}
+                            ${e.stage.statusSetDate && e.stage.currentOverallStatus !== 'Active' ?
+                              ` <span class="text-xs text-gray-400">- ${new Date(e.stage.statusSetDate).toLocaleDateString()}</span>` : ''}
+                        </div>
+
+                        <div class="flex flex-col md:flex-row gap-x-4 gap-y-2 mt-2 text-sm">
+                            <div class="md:w-3/5 space-y-1"> 
+                                ${e.hr ? `<div>👤 <strong>HR:</strong> ${e.hr}</div>` : ''}
+                                ${e.skill ? `<div>💡 <strong>Skill/Role:</strong> ${e.skill}</div>` : ''}
+                                ${e.np ? `<div>⏳ <strong>NP:</strong> ${e.np}</div>` : ''}
+                                ${e.mobile ? `<div>📱 <strong>Mobile:</strong> ${e.mobile} <button class="copy-btn" onclick="copyToClipboard('${e.mobile}')">Copy</button></div>` : ''}
+                                ${e.notes ? `<div class="text-xs text-gray-600 mt-1">📝 <strong>Notes:</strong><br>${e.notes.replace(/\n/g, '<br>')}</div>` : ''}
+                            </div>
+                            <div class="md:w-2/5 space-y-1 md:border-l md:pl-3"> 
+                                <div> 
+                                    <strong class="text-xs text-gray-500 block mb-1">STAGE DETAILS:</strong>
+                                    ${stageDetailsListHTML}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="progress-container mt-3 mb-3">
+                          <div class="progress-line"></div>
+                          <div class="progress-fill" style="width:${progressPercent}%"></div>
+                           ${stageDotsHTML}
+                        </div>
+
+                        <div class="action-buttons-grid mt-3 border-t pt-3">
+                          <button onclick="setOverallStatus(${originalIndex}, 'On Hold')" class="btn btn-warning text-xs">Hold</button>
+                          <button onclick="setOverallStatus(${originalIndex}, 'Not Positive')" class="btn btn-danger text-xs whitespace-nowrap">Not Positive</button>
+                          ${e.stage.currentOverallStatus === 'On Hold' ?
+                            `<button onclick="resumeApplication(${originalIndex})" class="btn btn-success text-xs">Resume</button>` : ''}
+                          <button onclick="editEntry(${originalIndex})" class="btn btn-info text-xs">Edit Details</button>
+                          <button onclick="deleteEntry(${originalIndex})" class="btn btn-secondary text-xs">Delete Entry</button>
+                        </div>
+                      </div>`;
+                } else { 
+                    let table = `<div class="overflow-x-auto bg-white rounded-lg shadow-md"><table class="w-full text-sm">
+                        <thead class="bg-gray-200 text-gray-600 uppercase"><tr>
+                          <th class="p-3 text-left">Company</th><th class="p-3 text-left">Overall Status</th><th class="p-3 text-left">Current Linear Stage</th><th class="p-3 text-left">HR</th><th class="p-3 text-left">Skill/Role</th><th class="p-3 text-left">Actions</th>
+                        </tr></thead><tbody class="text-gray-700">`;
+                    filteredAndSortedEntries.forEach(({ entry: e, originalIndex }) => {
+                        let rowClass = "border-t border-gray-200 hover:bg-gray-50";
+                        const offeredStageDetailTable = e.stage && e.stage.linearStageDetails ? e.stage.linearStageDetails[linearStages.indexOf("Offered")] : null;
+                        if (offeredStageDetailTable && offeredStageDetailTable.outcome === "Passed" && e.stage.currentOverallStatus !== "Not Positive") {
+                            rowClass += " offered-row";
+                        }
+                         const overallStatusColorTable = e.stage.currentOverallStatus === 'Not Positive' ? 'text-red-600' :
+                                               e.stage.currentOverallStatus === 'On Hold' ? 'text-yellow-600' :
+                                               (offeredStageDetailTable && offeredStageDetailTable.outcome === "Passed" ? 'text-green-600' : 'text-blue-600');
+
+                        const currentLLS_Table = (e.stage && typeof e.stage.lastLinearStageIndex === 'number' && e.stage.lastLinearStageIndex >=0) ? e.stage.lastLinearStageIndex : -1;
+                        const currentLinearStageNameTable = currentLLS_Table !== -1 ? linearStages[currentLLS_Table] : 'N/A';
+                        const currentStageDetailTable = currentLLS_Table !== -1 && e.stage.linearStageDetails ? e.stage.linearStageDetails[currentLLS_Table] : null;
+                        const linearStageDateTable = (currentStageDetailTable && currentStageDetailTable.date) ? new Date(currentStageDetailTable.date).toLocaleDateString() : 'N/A';
+                        const linearStageOutcomeTable = (currentStageDetailTable && currentStageDetailTable.outcome) ? ` (${currentStageDetailTable.outcome})` : '';
+
+
+                        table += `<tr class="${rowClass}">
+                          <td class="p-3 font-semibold">${e.company}</td>
+                          <td class="p-3"><span class="font-semibold ${overallStatusColorTable}">${e.stage.currentOverallStatus}</span> ${e.stage.statusReason ?
+                            `<span class="text-xs text-gray-500">(${jsEscape(e.stage.statusReason)})</span>`:""}</td>
+                          <td class="p-3">${currentLinearStageNameTable} <span class="text-xs text-gray-400">(${linearStageDateTable})${linearStageOutcomeTable}</span></td>
+                          <td class="p-3">${e.hr || '-'}</td>
+                          <td class="p-3">${e.skill || '-'}</td>
+                          <td class="p-3 whitespace-nowrap action-buttons-grid">
+                            <button onclick="setOverallStatus(${originalIndex}, 'On Hold')" class="btn btn-warning btn-xs">Hold</button>
+                            <button onclick="setOverallStatus(${originalIndex}, 'Not Positive')" class="btn btn-danger btn-xs whitespace-nowrap">Not Positive</button>
+                            ${e.stage.currentOverallStatus === 'On Hold' ?
+                              `<button onclick="resumeApplication(${originalIndex})" class="btn btn-success btn-xs">Resume</button>` : ''}
+                            <button onclick="editEntry(${originalIndex})" class="btn btn-info btn-xs">Edit</button>
+                            <button onclick="deleteEntry(${originalIndex})" class="btn btn-secondary btn-xs">Del</button>
+                          </td></tr>`;
+                    });
+                    table += '</tbody></table></div>';
+                    displayArea.innerHTML = table;
+                }
+            }); 
+        } 
+
+
+        function editEntry(originalIndex) {
+            const entryToEdit = entries[originalIndex];
+            if (!entryToEdit) return;
+
+            currentlyEditingOriginalIndex = originalIndex;
+            modalTitle.textContent = `✏️ Edit Application: ${entryToEdit.company}`;
+            openModal();
+            entryForm.company.value = entryToEdit.company;
+            entryForm.hr.value = entryToEdit.hr || '';
+            entryForm.mobile.value = entryToEdit.mobile || '';
+            entryForm.skill.value = entryToEdit.skill || '';
+            entryForm.np.value = entryToEdit.np || '';
+            entryForm.notes.value = entryToEdit.notes || '';
+        }
+
+        function deleteEntry(originalIndex) {
+            const entryToDelete = entries[originalIndex];
+            if (confirm(`Are you sure you want to delete the application for ${entryToDelete.company}?`)) {
+                entries.splice(originalIndex, 1);
+                saveData();
+            }
+        }
+
+        function openModal() {
+            if(currentlyEditingOriginalIndex === null) { 
+                 modalTitle.textContent = '➕ Add New Application';
+                 entryForm.reset(); 
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            entryForm.reset();
+            currentlyEditingOriginalIndex = null; 
+            modalTitle.textContent = '➕ Add New Application';
+        }
+
+        function openStageDetailModal(entryIndex, stageIdx, stageName) {
+            stageDetailOriginalEntryIndex.value = entryIndex;
+            stageDetailStageIndex.value = stageIdx;
+            stageDetailModalTitle.textContent = `Update Stage: ${jsEscape(stageName)}`;
+            
+            const entry = entries[entryIndex];
+            const stageDetail = (entry && entry.stage && entry.stage.linearStageDetails) ? entry.stage.linearStageDetails[stageIdx] : {date: null, outcome: null, feedback: null};
+
+            stageDateInput.value = stageDetail.date ? new Date(stageDetail.date).toISOString().split('T')[0] : '';
+            stageOutcomeInput.value = stageDetail.outcome || "";
+            stageFeedbackInput.value = stageDetail.feedback || "";
+            
+            stageDetailModal.classList.remove('hidden');
+        }
+
+        function closeStageDetailModal() {
+            stageDetailModal.classList.add('hidden');
+            stageDetailForm.reset(); 
+        }
+        
+        stageDetailForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const originalEntryIdx = parseInt(stageDetailOriginalEntryIndex.value);
+            const stageIdx = parseInt(stageDetailStageIndex.value);
+            const newDateValue = stageDateInput.value;
+            const newOutcome = stageOutcomeInput.value === "" ? null : stageOutcomeInput.value;
+            const newFeedback = stageFeedbackInput.value.trim() === "" ? null : stageFeedbackInput.value.trim();
+
+
+            if (isNaN(originalEntryIdx) || isNaN(stageIdx)) {
+                alert("Error: Could not save stage details.");
+                return;
+            }
+
+            const entry = entries[originalEntryIdx];
+            if (!entry || !entry.stage || !entry.stage.linearStageDetails) return;
+
+            entry.stage.linearStageDetails[stageIdx] = {
+                date: newDateValue ? new Date(newDateValue + "T12:00:00Z").toISOString() : null,
+                outcome: newOutcome,
+                feedback: newFeedback
+            };
+            entry.stage.updatedAt = new Date().toISOString();
+
+            recalculateLastLinearStageIndex(entry); 
+
+            const currentStageDetail = entry.stage.linearStageDetails[stageIdx];
+            if (currentStageDetail.outcome === "Passed" && linearStages[stageIdx] === "Offered" && entry.stage.currentOverallStatus !== "Not Positive") {
+                 alert(`🎉 Congratulations! You received an offer from ${entry.company}! 🎉`);
+            }
+            
+            if (newOutcome === "Notcleared" && entry.stage.currentOverallStatus === "Active") {
+                if (confirm(`Stage "${linearStages[stageIdx]}" was marked as "Notcleared". Do you want to update the overall application status to "Not Positive"?`)) {
+                    setOverallStatus(originalEntryIdx, "Not Positive"); 
+                } else {
+                    saveData(); 
+                }
+            } else {
+                 saveData();
+            }
+            closeStageDetailModal();
+        });
+
+
+        entryForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const formData = {
+                company: entryForm.company.value.trim(),
+                hr: entryForm.hr.value.trim(),
+                mobile: entryForm.mobile.value.trim(),
+                skill: entryForm.skill.value.trim(),
+                np: entryForm.np.value.trim(),
+                notes: entryForm.notes.value.trim()
+            };
+
+            if (!formData.company) {
+                alert("Company name is required.");
+                return;
+            }
+
+            if (currentlyEditingOriginalIndex !== null) {
+                const entryToUpdate = entries[currentlyEditingOriginalIndex];
+                Object.assign(entryToUpdate, formData); 
+                if (!entryToUpdate.stage) entryToUpdate.stage = initializeNewStageData(); 
+                entryToUpdate.stage.updatedAt = new Date().toISOString();
+            } else {
+                const newEntry = {
+                    ...formData,
+                    stage: initializeNewStageData()
+                };
+                entries.push(newEntry);
+            }
+            saveData();
+            closeModal();
+        });
+
+        searchInput.addEventListener('input', render);
+        cardViewBtn.addEventListener('click', () => {
+            isCardView = true;
+            render();
+            cardViewBtn.classList.add('active-btn');
+            tableViewBtn.classList.remove('active-btn');
+            cardViewBtn.classList.add('btn-primary'); 
+            tableViewBtn.classList.remove('btn-primary'); 
+            tableViewBtn.classList.add('btn-secondary');
+        });
+        tableViewBtn.addEventListener('click', () => {
+            isCardView = false;
+            render();
+            tableViewBtn.classList.add('active-btn');
+            cardViewBtn.classList.remove('active-btn');
+            tableViewBtn.classList.add('btn-primary');
+            cardViewBtn.classList.remove('btn-primary');
+            cardViewBtn.classList.add('btn-secondary');
+        });
+        function updateSummary() {
+            const totalApplications = entries.length;
+            let offeredCount = 0;
+            entries.forEach(e => {
+                if (e.stage && e.stage.linearStageDetails) {
+                    const offeredStage = e.stage.linearStageDetails[linearStages.indexOf("Offered")];
+                    if (offeredStage && offeredStage.outcome === "Passed" && e.stage.currentOverallStatus !== "Not Positive") {
+                        offeredCount++;
+                    }
+                }
+            });
+            const onHoldCount = entries.filter(e => e.stage && e.stage.currentOverallStatus === "On Hold").length;
+            const notPositiveCount = entries.filter(e => e.stage && e.stage.currentOverallStatus === "Not Positive").length;
+            const activeCount = entries.filter(e => e.stage && e.stage.currentOverallStatus === "Active" && !(e.stage.linearStageDetails && e.stage.linearStageDetails[linearStages.indexOf("Offered")] && e.stage.linearStageDetails[linearStages.indexOf("Offered")].outcome === "Passed")).length;
+            
+            summaryDiv.innerHTML = `
+              <span class="mr-3"><strong>Total:</strong> ${totalApplications}</span>
+              <span class="mr-3 text-blue-600"><strong>Active:</strong> ${activeCount}</span>
+              <span class="mr-3 text-green-600"><strong>Offered:</strong> ${offeredCount}</span>
+              <span class="mr-3 text-yellow-600"><strong>On Hold:</strong> ${onHoldCount}</span>
+              <span class="text-red-600"><strong>Not Positive:</strong> ${notPositiveCount}</span>
+            `;
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text)
+                .then(() => alert(`Copied "${text}" to clipboard.`))
+                .catch(err => console.error('Could not copy text: ', err));
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(entries, null, 2);
+            const dataBlob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement("a");
+            link.href = url;
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-').replace('T', '_');
+            link.download = `job_tracker_backup_${timestamp}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            const statusEl = document.getElementById("importExportStatus");
+            statusEl.textContent = "✅ Data exported successfully.";
+            statusEl.className = "mt-2 text-sm text-green-600";
+            setTimeout(() => { statusEl.textContent = ""; }, 3000);
+        }
+
+        function importDataFromFile(event) {
+            const file = event.target.files[0];
+            const statusEl = document.getElementById("importExportStatus");
+
+            if (!file) {
+                statusEl.textContent = "⚠️ No file selected.";
+                statusEl.className = "mt-2 text-sm text-yellow-600";
+                return;
+            }
+
+            if (file.type !== "application/json") {
+                statusEl.textContent = "⚠️ Invalid file type. Please select a .json file.";
+                statusEl.className = "mt-2 text-sm text-red-600";
+                event.target.value = null; 
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedEntries = JSON.parse(e.target.result);
+                    if (!Array.isArray(importedEntries)) {
+                        throw new Error("Imported data is not a valid array.");
+                    }
+
+                    if (confirm(`Are you sure you want to import ${importedEntries.length} entries? This will overwrite your current local data.`)) {
+                        entries = importedEntries.map(entry => {
+                            const defaultStageFull = initializeNewStageData(); 
+                            const existingStage = entry.stage || {};
+                            
+                            const createdAt = existingStage.createdAt || defaultStageFull.createdAt;
+                            const updatedAt = existingStage.updatedAt || createdAt; 
+
+                            let processedLinearStageDetails = defaultStageFull.linearStageDetails.map(dsd => ({...dsd})); 
+
+                            if (Array.isArray(existingStage.linearStageDetails) && existingStage.linearStageDetails.length > 0) {
+                                processedLinearStageDetails = linearStages.map((stageName, idx) => {
+                                    const detailFromImport = existingStage.linearStageDetails[idx];
+                                    if (detailFromImport && typeof detailFromImport === 'object') {
+                                        return {
+                                            date: detailFromImport.date || null,
+                                            outcome: ["Passed", "Notcleared", "OnGoing"].includes(detailFromImport.outcome) ? detailFromImport.outcome : null,
+                                            feedback: detailFromImport.feedback || null
+                                        };
+                                    }
+                                    return { ...(defaultStageFull.linearStageDetails[idx] || { date: null, outcome: null, feedback: null }) };
+                                });
+                            } else if (Array.isArray(existingStage.linearStageDates) && existingStage.linearStageDates.length > 0) { // Legacy: convert from old linearStageDates
+                                processedLinearStageDetails = linearStages.map((stageName, idx) => {
+                                    const dateFromImport = existingStage.linearStageDates[idx];
+                                    if (dateFromImport) {
+                                        return {
+                                            date: dateFromImport,
+                                            outcome: "Passed", 
+                                            feedback: null
+                                        };
+                                    }
+                                    return { ...(defaultStageFull.linearStageDetails[idx] || { date: null, outcome: null, feedback: null }) };
+                                });
+                            }
+
+
+                            const newStage = {
+                                ...defaultStageFull, 
+                                ...existingStage, 
+                                createdAt: createdAt,
+                                updatedAt: updatedAt,
+                                linearStageDetails: processedLinearStageDetails,
+                                lastLinearStageIndex: typeof existingStage.lastLinearStageIndex === 'number' && existingStage.lastLinearStageIndex >= -1 && existingStage.lastLinearStageIndex < linearStages.length ? existingStage.lastLinearStageIndex : defaultStageFull.lastLinearStageIndex,
+                                currentOverallStatus: ["Active", "On Hold", "Not Positive"].includes(existingStage.currentOverallStatus) ? existingStage.currentOverallStatus : defaultStageFull.currentOverallStatus,
+                                statusReason: typeof existingStage.statusReason === 'string' ? existingStage.statusReason : defaultStageFull.statusReason,
+                                statusSetDate: existingStage.statusSetDate 
+                            };
+                            if(newStage.currentOverallStatus !== "Active" && newStage.currentOverallStatus !== "On Hold" && !newStage.statusSetDate){
+                                newStage.statusSetDate = newStage.updatedAt;
+                            }
+                            if(newStage.currentOverallStatus === "Active"){ 
+                                newStage.statusReason = "";
+                                newStage.statusSetDate = null;
+                            }
+                            recalculateLastLinearStageIndex({stage: newStage}); 
+
+                            entry.stage = newStage;
+                            return entry;
+                        });
+                        saveData(); 
+                        statusEl.textContent = `✅ Successfully imported ${entries.length} entries.`;
+                        statusEl.className = "mt-2 text-sm text-green-600";
+                    } else {
+                        statusEl.textContent = "ℹ️ Import cancelled by user.";
+                        statusEl.className = "mt-2 text-sm text-blue-600";
+                    }
+                } catch (error) {
+                    console.error("Error importing data:", error);
+                    statusEl.textContent = "❌ Error importing data: " + error.message;
+                    statusEl.className = "mt-2 text-sm text-red-600";
+                } finally {
+                    event.target.value = null; 
+                    setTimeout(() => { statusEl.textContent = ""; }, 5000);
+                }
+            };
+            reader.onerror = function() {
+                statusEl.textContent = "❌ Error reading file.";
+                statusEl.className = "mt-2 text-sm text-red-600";
+                event.target.value = null;
+                setTimeout(() => { statusEl.textContent = ""; }, 3000);
+            };
+            reader.readAsText(file);
+        }
+
+
+        // Initial setup
+        if (isCardView) {
+             cardViewBtn.classList.add('btn-primary');
+             tableViewBtn.classList.add('btn-secondary');
+        } else {
+            tableViewBtn.classList.add('btn-primary');
+             cardViewBtn.classList.add('btn-secondary');
+        }
+        render(); 
+        updateSummary(); 
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script>
+    const firebaseConfig = {
+      apiKey: "A X3TzqrKQa5w",
+      authDomain: "rpr app.com", 
+      databaseURL: "https://rp ", 
+      projectId: "rp b", // Replace with your actual project ID
+      storageBucket: "rpr ot.com", 
+      messagingSenderId: "452 37", 
+      appId: "1:452736310737:web:79c2ec7 14f0", 
+      measurementId: "G-HK 2"
+    };
+    let db;
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+        console.log("Firebase initialized successfully.");
+    } catch (e) {
+        console.error("Firebase initialization failed:", e);
+        document.getElementById("status").textContent = "⚠️ Firebase initialization failed. Sync disabled.";
+    }
+
+
+    function syncToFirebase() {
+        if (!db) {
+            document.getElementById("status").textContent = "⚠️ Firebase not initialized. Cannot sync.";
+            return;
+        }
+        const localEntries = JSON.parse(localStorage.getItem("entries") || "[]");
+        if (!Array.isArray(localEntries) || localEntries.length === 0) {
+            if (confirm("Local data is empty. Do you want to proceed and potentially clear Firebase data?")) {
+            } else {
+                document.getElementById("status").textContent = "⚠️ Sync cancelled by user due to empty local data.";
+                return;
+            }
+        }
+
+        db.ref("entries").set(localEntries)
+            .then(() => {
+            document.getElementById("status").textContent = "✅ Entries synced to Firebase.";
+            })
+            .catch(error => {
+            document.getElementById("status").textContent = "❌ Sync failed: " + error.message;
+            console.error("Firebase sync error:", error);
+            });
+    }
+
+    function restoreFromFirebase() {
+         if (!db) {
+            document.getElementById("status").textContent = "⚠️ Firebase not initialized. Cannot restore.";
+            return;
+        }
+        if (confirm("This will overwrite your local data with data from Firebase. Are you sure?")) {
+            db.ref("entries").once("value")
+            .then(snapshot => {
+                const data = snapshot.val() || [];
+                 entries = data.map(entry => { 
+                    const defaultStageFull = initializeNewStageData();
+                    const existingStage = entry.stage || {};
+                    const createdAt = existingStage.createdAt || defaultStageFull.createdAt;
+                    const updatedAt = existingStage.updatedAt || createdAt;
+
+                    let processedLinearStageDetails = defaultStageFull.linearStageDetails.map(dsd => ({...dsd})); 
+
+                    if (Array.isArray(existingStage.linearStageDetails) && existingStage.linearStageDetails.length > 0) {
+                        processedLinearStageDetails = linearStages.map((stageName, idx) => {
+                            const detailFromFirebase = existingStage.linearStageDetails[idx];
+                            if (detailFromFirebase && typeof detailFromFirebase === 'object') {
+                                return {
+                                    date: detailFromFirebase.date || null,
+                                    outcome: ["Passed", "Notcleared", "OnGoing"].includes(detailFromFirebase.outcome) ? detailFromFirebase.outcome : null,
+                                    feedback: detailFromFirebase.feedback || null
+                                };
+                            }
+                            return { ...(defaultStageFull.linearStageDetails[idx] || { date: null, outcome: null, feedback: null }) };
+                        });
+                    } else if (Array.isArray(existingStage.linearStageDates) && existingStage.linearStageDates.length > 0) { 
+                        processedLinearStageDetails = linearStages.map((stageName, idx) => {
+                            const dateFromFirebase = existingStage.linearStageDates[idx];
+                            if (dateFromFirebase) {
+                                return {
+                                    date: dateFromFirebase,
+                                    outcome: "Passed", 
+                                    feedback: null
+                                };
+                            }
+                            return { ...(defaultStageFull.linearStageDetails[idx] || { date: null, outcome: null, feedback: null }) };
+                        });
+                    }
+
+
+                    const newStage = {
+                        ...defaultStageFull,
+                        ...existingStage,
+                        createdAt: createdAt,
+                        updatedAt: updatedAt,
+                        linearStageDetails: processedLinearStageDetails,
+                        lastLinearStageIndex: typeof existingStage.lastLinearStageIndex === 'number' && existingStage.lastLinearStageIndex >= -1 && existingStage.lastLinearStageIndex < linearStages.length ? existingStage.lastLinearStageIndex : defaultStageFull.lastLinearStageIndex,
+                        currentOverallStatus: ["Active", "On Hold", "Not Positive"].includes(existingStage.currentOverallStatus) ? existingStage.currentOverallStatus : defaultStageFull.currentOverallStatus,
+                        statusReason: typeof existingStage.statusReason === 'string' ? existingStage.statusReason : defaultStageFull.statusReason,
+                        statusSetDate: existingStage.statusSetDate
+                    };
+                     if(newStage.currentOverallStatus !== "Active" && newStage.currentOverallStatus !== "On Hold" && !newStage.statusSetDate){
+                        newStage.statusSetDate = newStage.updatedAt;
+                    }
+                    if(newStage.currentOverallStatus === "Active"){ 
+                        newStage.statusReason = "";
+                        newStage.statusSetDate = null;
+                    }
+                    recalculateLastLinearStageIndex({stage: newStage});
+
+                    entry.stage = newStage;
+                    return entry;
+                });
+                saveData(); 
+                document.getElementById("status").textContent = "✅ Entries restored from Firebase.";
+            })
+            .catch(error => {
+                document.getElementById("status").textContent = "❌ Restore failed: " + error.message;
+                console.error("Firebase restore error:", error);
+            });
+        } else {
+             document.getElementById("status").textContent = "⚠️ Restore cancelled by user.";
+        }
+    }
+    </script>
+</body>
+</html>
