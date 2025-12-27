@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classroom Pulse | Live Feedback</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Classroom Pulse | Random Qs</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,302 +14,302 @@
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Chart.js for Analytics -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        /* Mobile Reset */
         body {
             font-family: 'Outfit', sans-serif;
             background-color: #0f172a;
             color: white;
+            min-height: 100dvh; 
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* ------------------
-           Background Effects 
-           ------------------ */
-        .gradient-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: -1;
-            opacity: 0.6;
-            animation: float 10s infinite ease-in-out;
-        }
-        .orb-1 { width: 300px; height: 300px; background: #6366f1; top: -50px; left: -50px; }
-        .orb-2 { width: 400px; height: 400px; background: #ec4899; bottom: -100px; right: -100px; animation-delay: 2s; }
-        .orb-3 { width: 200px; height: 200px; background: #06b6d4; top: 40%; left: 40%; animation-delay: 4s; }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(30px, -30px); }
-        }
-
-        /* ------------------
-           Glassmorphism 
-           ------------------ */
+        /* Glassmorphism */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
 
-        /* ------------------
-           Custom Inputs 
-           ------------------ */
+        /* Dynamic Tap Buttons */
+        .tap-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+        .tap-btn.active {
+            background: rgba(236, 72, 153, 0.2);
+            border-color: #ec4899;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Inputs */
         .custom-input {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
+            font-size: 16px;
         }
-        .custom-input:focus {
-            border-color: #ec4899;
-            box-shadow: 0 0 15px rgba(236, 72, 153, 0.3);
-            outline: none;
-        }
+        .custom-input:focus { border-color: #ec4899; outline: none; }
 
-        /* Range Slider Styling */
-        input[type=range] {
-            -webkit-appearance: none;
-            background: transparent;
-        }
+        /* Slider */
+        input[type=range] { -webkit-appearance: none; background: transparent; width: 100%; }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 28px;
-            width: 28px;
-            border-radius: 50%;
-            background: white;
-            cursor: pointer;
-            margin-top: -10px;
+            -webkit-appearance: none; height: 28px; width: 28px;
+            border-radius: 50%; background: white; cursor: pointer; margin-top: -12px;
             box-shadow: 0 0 15px rgba(255,255,255,0.8);
-            transition: transform 0.1s;
         }
-        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); }
         input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 8px;
-            background: linear-gradient(to right, #6366f1, #ec4899);
-            border-radius: 10px;
+            width: 100%; height: 4px; background: linear-gradient(to right, #6366f1, #ec4899); border-radius: 10px;
         }
 
-        /* ------------------
-           Animations 
-           ------------------ */
-        .slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* Animations */
+        .slide-up { animation: slideUp 0.5s forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .shake { animation: shake 0.4s both; }
+        @keyframes shake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); } }
+        .hidden-screen { display: none !important; }
 
-        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-
-        .hidden-screen { display: none; }
-        
-        /* Teacher Mode Transition */
-        .dashboard-view {
-            transform: rotateY(180deg);
-        }
+        /* Background */
+        .gradient-orb { position: absolute; border-radius: 50%; filter: blur(60px); z-index: -1; opacity: 0.5; animation: float 10s infinite; pointer-events: none; }
+        .orb-1 { width: 200px; height: 200px; background: #6366f1; top: -20px; left: -20px; }
+        .orb-2 { width: 250px; height: 250px; background: #ec4899; bottom: -50px; right: -50px; animation-delay: 2s; }
+        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(20px, -20px); } }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center relative p-4">
+<body class="flex flex-col items-center justify-center p-4">
 
-    <!-- Ambient Background -->
     <div class="gradient-orb orb-1"></div>
     <div class="gradient-orb orb-2"></div>
-    <div class="gradient-orb orb-3"></div>
 
-    <!-- Main App Container -->
-    <div id="appContainer" class="w-full max-w-md perspective-1000">
+    <div id="appContainer" class="w-full max-w-sm sm:max-w-md relative">
         
         <!-- STUDENT VIEW -->
-        <div id="studentView" class="glass-panel rounded-3xl p-8 relative overflow-hidden slide-up">
+        <div id="studentView" class="glass-panel rounded-3xl p-6 relative overflow-hidden slide-up">
             
-            <!-- Header (Secret Click Area) -->
-            <div class="flex justify-between items-center mb-8 select-none">
-                <div onclick="triggerTeacherMode()" class="cursor-pointer group">
-                    <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-pink-500">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6 select-none">
+                <div onclick="triggerTeacherMode()" class="cursor-pointer group py-2">
+                    <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-pink-500">
                         Classroom Pulse
                     </h1>
-                    <div class="h-1 w-8 bg-pink-500 rounded-full group-hover:w-full transition-all duration-300"></div>
                 </div>
-                <div class="text-xs bg-white/10 px-2 py-1 rounded-full flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <div class="text-[10px] uppercase tracking-wider bg-white/5 border border-white/10 px-2 py-1 rounded-full flex items-center gap-2 text-gray-300">
+                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(34,197,94,0.8)]"></span>
                     Live
                 </div>
             </div>
 
-            <!-- STEP 1: Identification -->
+            <!-- STEP 1: Login -->
             <div id="step-identity">
-                <p class="text-gray-300 mb-6 text-sm">Let's get started. Your honest feedback helps me improve.</p>
-                
+                <p class="text-gray-400 mb-6 text-sm font-light">Join the live session.</p>
                 <div class="space-y-4">
-                    <div class="relative group">
-                        <i class="fa-solid fa-user absolute left-4 top-4 text-gray-500 group-focus-within:text-pink-500 transition-colors"></i>
-                        <input type="text" id="inpName" placeholder="Your Name" class="custom-input w-full p-3 pl-10 rounded-xl text-white placeholder-gray-500">
-                    </div>
-                    
-                    <div class="relative group">
-                        <i class="fa-solid fa-id-card absolute left-4 top-4 text-gray-500 group-focus-within:text-cyan-500 transition-colors"></i>
-                        <input type="text" id="inpRoll" placeholder="Roll Number (e.g. 2105)" class="custom-input w-full p-3 pl-10 rounded-xl text-white placeholder-gray-500">
-                    </div>
+                    <input type="text" id="inpName" placeholder="Your Name" class="custom-input w-full py-3.5 px-4 rounded-xl text-white placeholder-gray-500">
+                    <input type="tel" id="inpRoll" placeholder="Roll Number" class="custom-input w-full py-3.5 px-4 rounded-xl text-white placeholder-gray-500">
                 </div>
-
-                <button onclick="nextStep()" class="mt-8 w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2">
-                    Start Feedback <i class="fa-solid fa-arrow-right"></i>
+                <button onclick="nextStep()" class="mt-8 w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-4 rounded-xl shadow-lg transform transition active:scale-[0.98] text-sm uppercase tracking-wide">
+                    Start <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
                 </button>
             </div>
 
-            <!-- STEP 2: Rating & Feedback -->
+            <!-- STEP 2: The Feedback Form -->
             <div id="step-feedback" class="hidden-screen slide-up">
-                <div class="text-center mb-6">
-                    <div class="text-7xl mb-4 transition-transform duration-200" id="emojiDisplay">😐</div>
-                    <h2 class="text-xl font-bold text-white" id="ratingLabel">It was okay</h2>
-                </div>
-
-                <!-- Slider -->
-                <div class="px-2 mb-8">
-                    <input type="range" id="inpRating" min="1" max="5" value="3" class="w-full" oninput="updateEmoji()">
-                    <div class="flex justify-between text-xs text-gray-400 mt-2 font-mono">
-                        <span>Needs Work</span>
-                        <span>Masterpiece</span>
+                
+                <!-- Persistent: Rating -->
+                <div class="text-center mb-8">
+                    <p class="text-[10px] text-gray-400 uppercase font-bold mb-2">How much do you rate it?</p>
+                    <div class="text-5xl mb-2 inline-block transition-transform duration-200" id="emojiDisplay">😐</div>
+                    <div class="px-2">
+                        <input type="range" id="inpRating" min="1" max="5" value="3" oninput="updateEmoji()">
                     </div>
                 </div>
 
-                <!-- Text Area with AI Guardrail -->
-                <div class="relative">
-                    <label class="text-xs font-bold text-gray-400 uppercase ml-1 mb-1 block">Quick Note</label>
-                    <textarea id="inpNote" rows="3" placeholder="What should I change next time?" class="custom-input w-full p-3 rounded-xl text-white placeholder-gray-500 resize-none"></textarea>
-                    
-                    <!-- AI Warning Toast -->
-                    <div id="aiWarning" class="hidden absolute -top-12 left-0 right-0 bg-red-500/90 backdrop-blur border border-red-400 text-white text-xs p-2 rounded-lg text-center shadow-xl z-10">
-                        <i class="fa-solid fa-robot"></i> <b>AI Filter:</b> Let's keep it constructive & clean! 🚫
-                    </div>
+                <!-- Dynamic Questions Container -->
+                <div id="dynamicQuestionsArea" class="space-y-6 mb-6">
+                    <!-- Javascript will inject 3 random questions here -->
                 </div>
 
-                <button id="btnSubmit" onclick="submitData()" class="mt-6 w-full bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold py-4 rounded-xl shadow-lg transform transition active:scale-95 flex justify-center items-center gap-2">
-                    Submit Feedback <i class="fa-solid fa-paper-plane"></i>
-                </button>
-                <button onclick="prevStep()" class="mt-4 w-full text-gray-500 text-sm hover:text-white">Back</button>
+                <!-- AI Warning (Hidden) -->
+                <div id="aiWarning" class="hidden fixed top-4 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[10px] py-2 px-4 rounded-full shadow-xl z-50 font-bold border border-rose-400">
+                    🚫 Please keep feedback constructive!
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button onclick="prevStep()" class="w-1/4 bg-white/5 text-gray-400 rounded-xl py-3 text-xs">Back</button>
+                    <button id="btnSubmit" onclick="submitData()" class="flex-1 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 text-white font-bold py-3 rounded-xl shadow-lg text-sm uppercase">
+                        Submit
+                    </button>
+                </div>
             </div>
 
-            <!-- STEP 3: Success -->
-            <div id="step-success" class="hidden-screen text-center py-10 slide-up">
+            <!-- Success -->
+            <div id="step-success" class="hidden-screen text-center py-12 slide-up">
                 <div class="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fa-solid fa-check text-4xl text-green-400"></i>
+                    <i class="fa-solid fa-check text-3xl text-green-400"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-white">Feedback Sent!</h2>
-                <p class="text-gray-400 mt-2 text-sm">Thanks for helping me improve.</p>
-                <div class="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
-                    <p class="text-xs text-gray-400 uppercase tracking-wider">Session Status</p>
-                    <div class="flex items-center justify-center gap-2 mt-2">
-                        <span class="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-cyan-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
-                        <span class="text-cyan-400 font-mono text-sm">Database Sync Active</span>
-                    </div>
-                </div>
-                <button onclick="location.reload()" class="mt-8 text-gray-500 text-xs hover:text-white underline">New Entry</button>
+                <h2 class="text-2xl font-bold text-white">Received!</h2>
+                <button onclick="location.reload()" class="mt-6 text-xs text-gray-500 hover:text-white border-b border-gray-600 pb-0.5">Submit another</button>
             </div>
-
         </div>
 
-        <!-- TEACHER DASHBOARD (Hidden) -->
-        <div id="teacherView" class="hidden-screen glass-panel rounded-3xl p-6 slide-up border-pink-500/30">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-chart-line text-pink-500 mr-2"></i>Teacher Analytics</h2>
-                <button onclick="closeTeacherMode()" class="bg-white/10 p-2 rounded-full hover:bg-white/20 transition"><i class="fa-solid fa-times"></i></button>
+        <!-- TEACHER DASHBOARD (ADMIN) -->
+        <div id="teacherView" class="hidden-screen glass-panel rounded-3xl p-5 slide-up border-t-4 border-pink-500 min-h-[500px]">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Admin Console</h2>
+                    <p class="text-xs text-gray-400">Moderation & Analytics</p>
+                </div>
+                <button onclick="closeTeacherMode()" class="w-8 h-8 flex items-center justify-center bg-white/5 rounded-full hover:bg-white/10 transition">
+                    <i class="fa-solid fa-times text-gray-400 text-sm"></i>
+                </button>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-black/40 p-4 rounded-xl border border-white/5">
-                    <p class="text-gray-400 text-xs">Total Feedbacks</p>
-                    <h3 class="text-3xl font-bold text-white" id="statTotal">--</h3>
+            <!-- Stats -->
+            <div class="flex gap-3 mb-6">
+                <div class="flex-1 bg-white/5 p-3 rounded-xl text-center">
+                    <p class="text-[10px] uppercase text-gray-400">Avg Rating</p>
+                    <h3 class="text-2xl font-bold text-cyan-400" id="statTodayAvg">--</h3>
                 </div>
-                <div class="bg-black/40 p-4 rounded-xl border border-white/5">
-                    <p class="text-gray-400 text-xs">Avg Rating</p>
-                    <h3 class="text-3xl font-bold text-cyan-400" id="statAvg">--</h3>
+                <div class="flex-1 bg-white/5 p-3 rounded-xl text-center">
+                    <p class="text-[10px] uppercase text-gray-400">Responses</p>
+                    <h3 class="text-2xl font-bold text-white" id="statTodayCount">--</h3>
                 </div>
             </div>
 
             <!-- Chart -->
-            <div class="bg-black/20 p-2 rounded-xl border border-white/5 mb-6 h-48">
-                <canvas id="progressChart"></canvas>
+            <div class="bg-black/20 p-2 rounded-xl border border-white/5 mb-6 h-40 w-full">
+                <canvas id="sessionChart"></canvas>
             </div>
 
-            <!-- Recent Comments -->
-            <h3 class="text-sm font-bold text-gray-400 uppercase mb-3">Recent Notes</h3>
-            <div id="commentsList" class="space-y-3 max-h-48 overflow-y-auto pr-1">
-                <div class="text-center text-gray-500 text-sm italic">Loading data...</div>
-            </div>
+            <!-- Feedback Feed -->
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Student Voices</h3>
+            <div id="commentsList" class="space-y-3 overflow-y-auto max-h-60 pb-10 pr-1 custom-scrollbar"></div>
         </div>
-
     </div>
 
-    <!-- FIREBASE & APP LOGIC -->
+    <!-- LOGIC -->
     <script type="module">
-        // Import Firebase (No build tools needed)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIGURATION ---
         const firebaseConfig = {
-          apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+		apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
   authDomain: "stuattnd.firebaseapp.com",
   projectId: "stuattnd",
   storageBucket: "stuattnd.firebasestorage.app",
   messagingSenderId: "511533506488",
   appId: "1:511533506488:web:aca4de3d513915d012f94d",
   measurementId: "G-9PZZM5LFKX"
-        };
+		};
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- GLOBAL VARIABLES ---
         let currentUser = null;
-        let clickCount = 0;
-        let clickTimer = null;
         let chartInstance = null;
-
-        // --- AUTHENTICATION ---
-        // We use anonymous auth so students don't need to sign up, but DB is secure
-        signInAnonymously(auth).catch((error) => {
-            console.error("Auth Error", error);
-        });
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                console.log("Connected to Secure Cloud");
-            }
-        });
-
-        // --- UI LOGIC: STUDENT ---
+        let clickCount = 0, clickTimer = null;
         
+        // This holds the specific 3 questions generated for this session
+        let activeQuestions = []; 
+        let userResponses = {}; // Stores answers: { qId: "answer" }
+
+        signInAnonymously(auth).catch(console.error);
+        onAuthStateChanged(auth, (user) => { if(user) currentUser = user; });
+
+        // --- THE QUESTION BANK (15 Questions) ---
+        const questionBank = [
+            { id: 'q1', type: 'options', text: "How was the explanation?", options: ['Confusing', 'Okay', 'Crystal Clear'] },
+            { id: 'q2', type: 'text', text: "Any thing changes needed?", placeholder: "E.g. font size, voice..." },
+            { id: 'q3', type: 'text', text: "Highlight any plus points", placeholder: "What worked well?" },
+            { id: 'q4', type: 'options', text: "Are u comfortable for interactive?", options: ['No / Shy', 'Maybe', 'Yes!'] },
+            { id: 'q5', type: 'options', text: "Was the session pace okay?", options: ['Too Slow', 'Perfect', 'Too Fast'] },
+            { id: 'q6', type: 'options', text: "Did you feel bored?", options: ['Yes', 'A little', 'No'] },
+            { id: 'q7', type: 'options', text: "Confidence to solve problems?", options: ['Low', 'Medium', 'High'] },
+            { id: 'q8', type: 'text', text: "One word to describe today?", placeholder: "E.g. Fun, Heavy, Fast..." },
+            { id: 'q9', type: 'options', text: "Examples were helpful?", options: ['No', 'Somewhat', 'Very'] },
+            { id: 'q10', type: 'options', text: "Voice clarity?", options: ['Low', 'Good', 'Loud'] },
+            { id: 'q11', type: 'text', text: "Most confusing topic?", placeholder: "Topic name..." },
+            { id: 'q12', type: 'options', text: "Should we use more visuals?", options: ['No', 'Yes'] },
+            { id: 'q13', type: 'options', text: "Overall Energy?", options: ['Low', 'High'] },
+            { id: 'q14', type: 'text', text: "Any doubts remaining?", placeholder: "Ask here..." },
+            { id: 'q15', type: 'options', text: "Ready for next class?", options: ['Need Break', 'Ready'] }
+        ];
+
+        // --- RANDOMIZER LOGIC ---
+        function generateRandomQuestions() {
+            // Shuffle array
+            const shuffled = [...questionBank].sort(() => 0.5 - Math.random());
+            // Pick first 3
+            activeQuestions = shuffled.slice(0, 3);
+            renderQuestions();
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('dynamicQuestionsArea');
+            container.innerHTML = '';
+            userResponses = {}; // Reset responses
+
+            activeQuestions.forEach(q => {
+                const wrapper = document.createElement('div');
+                
+                const label = document.createElement('p');
+                label.className = "text-[10px] text-gray-400 uppercase font-bold mb-2 ml-1";
+                label.innerText = q.text;
+                wrapper.appendChild(label);
+
+                if (q.type === 'options') {
+                    // Render Buttons
+                    const btnGrid = document.createElement('div');
+                    btnGrid.className = "grid grid-cols-" + q.options.length + " gap-2";
+                    
+                    q.options.forEach(opt => {
+                        const btn = document.createElement('button');
+                        btn.className = "tap-btn py-3 rounded-xl text-xs";
+                        btn.innerText = opt;
+                        btn.onclick = () => {
+                            // Handle click selection
+                            Array.from(btnGrid.children).forEach(c => c.classList.remove('active'));
+                            btn.classList.add('active');
+                            userResponses[q.id] = { question: q.text, answer: opt };
+                        };
+                        btnGrid.appendChild(btn);
+                    });
+                    wrapper.appendChild(btnGrid);
+                } else {
+                    // Render Text Input
+                    const input = document.createElement('textarea');
+                    input.rows = 2;
+                    input.className = "custom-input w-full p-3 rounded-xl text-white placeholder-gray-600 resize-none text-sm";
+                    input.placeholder = q.placeholder;
+                    input.oninput = (e) => {
+                        userResponses[q.id] = { question: q.text, answer: e.target.value };
+                    };
+                    wrapper.appendChild(input);
+                }
+                
+                container.appendChild(wrapper);
+            });
+        }
+
+        // --- UI NAVIGATION ---
         window.nextStep = function() {
-            const name = document.getElementById('inpName').value;
-            const roll = document.getElementById('inpRoll').value;
-            
-            if (!name || !roll) {
-                // Shake animation for error
+            if(!document.getElementById('inpName').value || !document.getElementById('inpRoll').value) {
                 const card = document.getElementById('studentView');
                 card.classList.add('shake');
                 setTimeout(() => card.classList.remove('shake'), 500);
                 return;
             }
-            
+            generateRandomQuestions(); // Generate fresh Qs
             document.getElementById('step-identity').classList.add('hidden-screen');
             document.getElementById('step-feedback').classList.remove('hidden-screen');
             document.getElementById('step-feedback').classList.add('slide-up');
@@ -321,91 +321,78 @@
         }
 
         const emojis = ['😭', '😕', '😐', '🙂', '🤩'];
-        const labels = ['Needs Improvement', 'Confusing', 'It was okay', 'Good Session', 'Masterpiece!'];
-        
         window.updateEmoji = function() {
             const val = document.getElementById('inpRating').value;
             const emojiEl = document.getElementById('emojiDisplay');
             emojiEl.innerText = emojis[val-1];
-            document.getElementById('ratingLabel').innerText = labels[val-1];
-            
-            // Pop animation
-            emojiEl.style.transform = 'scale(1.3) rotate(' + (val*10 - 30) + 'deg)';
+            emojiEl.style.transform = `scale(1.2) rotate(${(val*10 - 30)}deg)`;
             setTimeout(() => emojiEl.style.transform = 'scale(1) rotate(0deg)', 200);
         }
 
-        // --- AI FILTER LOGIC (Client Side) ---
-        const toxicWords = ['stupid', 'idiot', 'useless', 'bad teacher', 'waste', 'shut up', 'boring', 'worst'];
+        // --- SUBMIT ---
+        const toxicWords = ['stupid', 'idiot', 'worst', 'useless', 'trash', 'shut up'];
         
-        function isToxic(text) {
-            const lower = text.toLowerCase();
-            return toxicWords.some(word => lower.includes(word));
-        }
-
         window.submitData = async function() {
-            if(!currentUser) return; // Wait for auth
+            if(!currentUser) return;
+            
+            // Check toxicity in text answers
+            let isToxic = false;
+            Object.values(userResponses).forEach(resp => {
+                if (toxicWords.some(w => resp.answer.toLowerCase().includes(w))) isToxic = true;
+            });
 
-            const feedbackText = document.getElementById('inpNote').value;
-            const warning = document.getElementById('aiWarning');
-
-            // 1. AI Filter Check
-            if (isToxic(feedbackText)) {
+            if (isToxic) {
+                const warning = document.getElementById('aiWarning');
                 warning.classList.remove('hidden');
-                warning.classList.add('shake');
-                setTimeout(() => warning.classList.remove('shake'), 500);
-                setTimeout(() => warning.classList.add('hidden'), 4000);
+                setTimeout(() => warning.classList.add('hidden'), 3000);
                 return;
             }
 
-            // 2. UI Loading State
             const btn = document.getElementById('btnSubmit');
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Syncing...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             btn.disabled = true;
 
             try {
-                // 3. Save to Firestore
-                // Path: /artifacts/{appId}/public/data/feedback
-                const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'feedback');
-                
-                await addDoc(collectionRef, {
+                // Prepare Payload
+                const payload = {
                     name: document.getElementById('inpName').value,
                     roll: document.getElementById('inpRoll').value,
                     rating: parseInt(document.getElementById('inpRating').value),
-                    note: feedbackText,
-                    timestamp: serverTimestamp(), // Server time is crucial for charts
-                    uid: currentUser.uid
-                });
+                    timestamp: serverTimestamp(),
+                    uid: currentUser.uid,
+                    // Save the random questions and answers as an array
+                    responses: Object.values(userResponses) 
+                };
 
-                // 4. Success Screen
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'feedback'), payload);
+                
                 document.getElementById('step-feedback').classList.add('hidden-screen');
                 document.getElementById('step-success').classList.remove('hidden-screen');
                 document.getElementById('step-success').classList.add('slide-up');
-
-            } catch (error) {
-                console.error("Write Error", error);
+            } catch (e) {
+                console.error(e);
                 btn.innerHTML = originalHTML;
                 btn.disabled = false;
-                alert("Connection failed. Please try again.");
+                alert("Error connecting.");
             }
         }
 
+        // --- ADMIN FUNCTIONS ---
+        window.deleteFeedback = async function(id) {
+            if(!confirm("Delete this?")) return;
+            try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'feedback', id)); } catch (e) {}
+        }
 
-        // --- TEACHER MODE (Secret Access) ---
-        
         window.triggerTeacherMode = function() {
             clickCount++;
-            if (clickTimer) clearTimeout(clickTimer);
-            
-            // Reset count if not clicked fast enough
-            clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
-
+            clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => { clickCount = 0; }, 800);
             if (clickCount === 3) {
-                // Unlock Dashboard
                 document.getElementById('studentView').classList.add('hidden-screen');
                 document.getElementById('teacherView').classList.remove('hidden-screen');
                 document.getElementById('teacherView').classList.add('slide-up');
-                loadDashboardData();
+                initDashboard();
                 clickCount = 0;
             }
         }
@@ -415,103 +402,86 @@
             document.getElementById('studentView').classList.remove('hidden-screen');
         }
 
-        let unsubscribeSnapshot = null;
-
-        function loadDashboardData() {
-            if (!currentUser) return;
-
+        function initDashboard() {
             const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'feedback');
-            
-            // Listen for Real-time Updates
-            // Note: Rule 2 forbids 'orderBy' in query, so we sort in JS
-            unsubscribeSnapshot = onSnapshot(collectionRef, (snapshot) => {
-                let data = [];
+            onSnapshot(collectionRef, (snapshot) => {
+                let rawData = [];
                 snapshot.forEach(doc => {
                     const d = doc.data();
-                    // Handle timestamp (might be null immediately after write)
-                    const time = d.timestamp ? d.timestamp.toDate() : new Date();
-                    data.push({ ...d, date: time });
+                    if(d.timestamp) rawData.push({ ...d, dateObj: d.timestamp.toDate(), id: doc.id });
                 });
-
-                // Sort by Date (Newest first for list, Oldest first for chart)
-                data.sort((a, b) => b.date - a.date);
-
-                updateStats(data);
-                updateChart(data);
-                updateComments(data);
-            }, (error) => {
-                console.error("Read Error", error);
-            });
-        }
-
-        function updateStats(data) {
-            document.getElementById('statTotal').innerText = data.length;
-            
-            if (data.length === 0) {
-                document.getElementById('statAvg').innerText = "0.0";
-                return;
-            }
-
-            const sum = data.reduce((acc, curr) => acc + curr.rating, 0);
-            const avg = (sum / data.length).toFixed(1);
-            document.getElementById('statAvg').innerText = avg;
-        }
-
-        function updateComments(data) {
-            const list = document.getElementById('commentsList');
-            list.innerHTML = '';
-            
-            // Show top 10 recent
-            data.slice(0, 10).forEach(item => {
-                if(!item.note) return;
+                rawData.sort((a, b) => b.dateObj - a.dateObj);
                 
-                const div = document.createElement('div');
-                div.className = 'bg-white/5 p-3 rounded-lg text-sm border-l-2 border-pink-500';
-                div.innerHTML = `
-                    <div class="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>${item.roll}</span>
-                        <span class="text-yellow-400">★ ${item.rating}</span>
-                    </div>
-                    <p class="text-gray-200">"${item.note}"</p>
-                `;
-                list.appendChild(div);
+                // Chart Logic (Same as before)
+                const sessionMap = {};
+                rawData.forEach(item => {
+                    const key = item.dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    if(!sessionMap[key]) sessionMap[key] = { sum: 0, count: 0 };
+                    sessionMap[key].sum += item.rating;
+                    sessionMap[key].count += 1;
+                });
+                const labels = Object.keys(sessionMap).reverse();
+                const values = labels.map(k => (sessionMap[k].sum / sessionMap[k].count).toFixed(1));
+                
+                const todayKey = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                if(sessionMap[todayKey]) {
+                    document.getElementById('statTodayAvg').innerText = (sessionMap[todayKey].sum / sessionMap[todayKey].count).toFixed(1);
+                    document.getElementById('statTodayCount').innerText = sessionMap[todayKey].count;
+                }
+                renderChart(labels, values);
+                renderComments(rawData);
             });
         }
 
-        function updateChart(data) {
-            // Sort oldest to newest for the line chart
-            const chartData = [...data].sort((a, b) => a.date - b.date);
-            
-            // We need to group roughly by "session" or just plot every point
-            // For simplicity, let's plot the last 20 ratings moving average
-            
-            const ctx = document.getElementById('progressChart').getContext('2d');
-            
+        function renderChart(labels, dataPoints) {
+            const ctx = document.getElementById('sessionChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
-
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData.map((_, i) => i + 1), // Just count 1, 2, 3...
-                    datasets: [{
-                        label: 'Progressive Rating',
-                        data: chartData.map(d => d.rating),
-                        borderColor: '#06b6d4',
-                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 3
-                    }]
+                    labels: labels,
+                    datasets: [{ data: dataPoints, borderColor: '#ec4899', borderWidth: 2, pointRadius: 3, tension: 0.4 }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, max: 5.5, grid: { color: 'rgba(255,255,255,0.1)' } },
-                        x: { display: false }
-                    }
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { display: false, min: 1, max: 5 }, x: { display: false } }
                 }
+            });
+        }
+
+        function renderComments(data) {
+            const list = document.getElementById('commentsList');
+            list.innerHTML = '';
+            data.slice(0, 30).forEach(item => {
+                const isAlert = item.rating <= 2;
+                const borderClass = isAlert ? 'border-l-4 border-red-500 bg-red-900/10' : 'border border-white/5 bg-white/5';
+
+                // Build HTML for the specific questions this student answered
+                let responsesHTML = '';
+                if(item.responses) {
+                    item.responses.forEach(r => {
+                        responsesHTML += `
+                            <div class="mt-2 text-[10px] bg-black/20 p-2 rounded">
+                                <span class="text-gray-400 block mb-0.5">${r.question}</span>
+                                <span class="text-white">${r.answer}</span>
+                            </div>
+                        `;
+                    });
+                }
+
+                const div = document.createElement('div');
+                div.className = `${borderClass} p-3 rounded-xl mb-2 relative group`;
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] text-cyan-400 font-mono">${item.name}</span>
+                        <div class="flex items-center gap-2">
+                             <span class="text-[10px] text-yellow-400">★${item.rating}</span>
+                             <button onclick="deleteFeedback('${item.id}')" class="text-gray-500 hover:text-red-500 transition px-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                    </div>
+                    ${responsesHTML}
+                `;
+                list.appendChild(div);
             });
         }
     </script>
