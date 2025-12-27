@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Classroom Pulse | Random Qs</title>
+    <title>Classroom Pulse | Slide UI</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -26,6 +26,7 @@
             min-height: 100dvh; 
             overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
         /* Glassmorphism */
@@ -37,7 +38,7 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
 
-        /* Dynamic Tap Buttons */
+        /* Tap Buttons */
         .tap-btn {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -51,14 +52,31 @@
             font-weight: 600;
         }
 
-        /* Inputs */
+        /* Custom Inputs */
         .custom-input {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
             font-size: 16px;
+            text-transform: uppercase;
         }
         .custom-input:focus { border-color: #ec4899; outline: none; }
+        .custom-input:disabled { opacity: 0.6; cursor: not-allowed; background: rgba(255,255,255,0.05); }
+
+        /* Privacy Blur Class */
+        .privacy-mask {
+            filter: blur(6px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            color: transparent;
+        }
+        .privacy-mask.revealed {
+            filter: blur(0);
+            background: transparent;
+            color: #22d3ee; 
+        }
 
         /* Slider */
         input[type=range] { -webkit-appearance: none; background: transparent; width: 100%; }
@@ -71,12 +89,72 @@
             width: 100%; height: 4px; background: linear-gradient(to right, #6366f1, #ec4899); border-radius: 10px;
         }
 
+        /* Secret Mode Indicator */
+        .secret-unlocked {
+            color: #22d3ee !important;
+            text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+        }
+
         /* Animations */
         .slide-up { animation: slideUp 0.5s forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .hidden-screen { display: none !important; }
         .shake { animation: shake 0.4s both; }
         @keyframes shake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); } }
-        .hidden-screen { display: none !important; }
+        
+        .pulse-ring {
+            box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7);
+            animation: pulse-ring 1.25s infinite cubic-bezier(0.66, 0, 0, 1);
+        }
+        @keyframes pulse-ring {
+            to { box-shadow: 0 0 0 10px rgba(236, 72, 153, 0); }
+        }
+
+        /* Swipe Button Styles */
+        .swipe-container {
+            position: relative;
+            width: 100%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 30px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+            touch-action: none; /* Critical for dragging */
+        }
+        .swipe-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .swipe-handle {
+            position: absolute;
+            left: 4px;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            z-index: 10;
+        }
+        .swipe-handle:active { cursor: grabbing; transform: scale(0.95); }
+        .swipe-handle.submitted {
+            background: #22c55e;
+            transition: all 0.3s;
+        }
 
         /* Background */
         .gradient-orb { position: absolute; border-radius: 50%; filter: blur(60px); z-index: -1; opacity: 0.5; animation: float 10s infinite; pointer-events: none; }
@@ -108,22 +186,35 @@
                 </div>
             </div>
 
-            <!-- STEP 1: Login -->
+            <!-- STEP 1: Identity (Auto-Locks) -->
             <div id="step-identity">
-                <p class="text-gray-400 mb-6 text-sm font-light">Join the live session.</p>
+                <p class="text-gray-400 mb-6 text-sm font-light">Join the session.</p>
+                
                 <div class="space-y-4">
-                    <input type="text" id="inpName" placeholder="Your Name" class="custom-input w-full py-3.5 px-4 rounded-xl text-white placeholder-gray-500">
-                    <input type="tel" id="inpRoll" placeholder="Roll Number" class="custom-input w-full py-3.5 px-4 rounded-xl text-white placeholder-gray-500">
+                    <div class="relative">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold ml-1 mb-1 block">Full Name</label>
+                        <input type="text" id="inpName" placeholder="JOHN DOE" class="custom-input w-full py-3.5 px-4 rounded-xl text-white placeholder-gray-500">
+                    </div>
+                    
+                    <div class="relative">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold ml-1 mb-1 block">Roll No</label>
+                        <input type="text" id="inpRoll" placeholder="21A91A0501" class="custom-input w-full py-3.5 px-4 rounded-xl text-white placeholder-gray-500">
+                    </div>
                 </div>
-                <button onclick="nextStep()" class="mt-8 w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-4 rounded-xl shadow-lg transform transition active:scale-[0.98] text-sm uppercase tracking-wide">
-                    Start <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+
+                <div class="flex justify-between items-center mt-2">
+                    <button id="resetLink" onclick="resetIdentity()" class="text-[10px] text-gray-500 hover:text-pink-400 hidden underline">Not you? Reset</button>
+                </div>
+
+                <button onclick="nextStep()" class="mt-6 w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-4 rounded-xl shadow-lg transform transition active:scale-[0.98] text-sm uppercase tracking-wide">
+                    Start Feedback <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
                 </button>
             </div>
 
-            <!-- STEP 2: The Feedback Form -->
+            <!-- STEP 2: Feedback Questions -->
             <div id="step-feedback" class="hidden-screen slide-up">
                 
-                <!-- Persistent: Rating -->
+                <!-- Rating -->
                 <div class="text-center mb-8">
                     <p class="text-[10px] text-gray-400 uppercase font-bold mb-2">How much do you rate it?</p>
                     <div class="text-5xl mb-2 inline-block transition-transform duration-200" id="emojiDisplay">😐</div>
@@ -132,22 +223,26 @@
                     </div>
                 </div>
 
-                <!-- Dynamic Questions Container -->
-                <div id="dynamicQuestionsArea" class="space-y-6 mb-6">
-                    <!-- Javascript will inject 3 random questions here -->
-                </div>
+                <!-- Dynamic Qs -->
+                <div id="dynamicQuestionsArea" class="space-y-6 mb-6"></div>
 
-                <!-- AI Warning (Hidden) -->
+                <!-- AI Warning -->
                 <div id="aiWarning" class="hidden fixed top-4 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[10px] py-2 px-4 rounded-full shadow-xl z-50 font-bold border border-rose-400">
-                    🚫 Please keep feedback constructive!
+                    🚫 Keep it constructive!
                 </div>
 
-                <div class="flex gap-3 mt-6">
-                    <button onclick="prevStep()" class="w-1/4 bg-white/5 text-gray-400 rounded-xl py-3 text-xs">Back</button>
-                    <button id="btnSubmit" onclick="submitData()" class="flex-1 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 text-white font-bold py-3 rounded-xl shadow-lg text-sm uppercase">
-                        Submit
-                    </button>
+                <!-- SLIDE TO SUBMIT UI -->
+                <div class="mt-8 relative">
+                    <div class="swipe-container" id="swipeTrack">
+                        <div class="swipe-text" id="swipeText">Slide to Submit <i class="fa-solid fa-chevron-right ml-1"></i><i class="fa-solid fa-chevron-right"></i></div>
+                        <div class="swipe-handle" id="swipeHandle">
+                            <i class="fa-solid fa-paper-plane text-white" id="swipeIcon"></i>
+                        </div>
+                    </div>
+                    
+                    <button onclick="prevStep()" class="mt-4 w-full text-[10px] text-gray-500 hover:text-white uppercase tracking-wider transition">Go Back</button>
                 </div>
+
             </div>
 
             <!-- Success -->
@@ -161,11 +256,14 @@
         </div>
 
         <!-- TEACHER DASHBOARD (ADMIN) -->
-        <div id="teacherView" class="hidden-screen glass-panel rounded-3xl p-5 slide-up border-t-4 border-pink-500 min-h-[500px]">
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <h2 class="text-lg font-bold text-white">Admin Console</h2>
-                    <p class="text-xs text-gray-400">Moderation & Analytics</p>
+        <div id="teacherView" class="hidden-screen glass-panel rounded-3xl p-5 slide-up border-t-4 border-pink-500 min-h-[600px]">
+            <div class="flex justify-between items-start mb-4">
+                <div class="relative cursor-pointer select-none" id="adminHeader" onmousedown="startLongPress()" ontouchstart="startLongPress()" onmouseup="cancelLongPress()" ontouchend="cancelLongPress()" onmouseleave="cancelLongPress()">
+                    <h2 class="text-lg font-bold text-white transition-colors duration-500" id="adminTitle">
+                        Admin Console <i id="lockIcon" class="fa-solid fa-lock text-xs ml-1 text-gray-500"></i>
+                    </h2>
+                    <p class="text-[10px] text-gray-400" id="viewModeText">Anonymous Mode</p>
+                    <div id="longPressLoader" class="hidden absolute -left-3 top-1 h-full w-1 bg-cyan-400 rounded-full transition-all duration-[3000ms] h-0"></div>
                 </div>
                 <button onclick="closeTeacherMode()" class="w-8 h-8 flex items-center justify-center bg-white/5 rounded-full hover:bg-white/10 transition">
                     <i class="fa-solid fa-times text-gray-400 text-sm"></i>
@@ -189,9 +287,11 @@
                 <canvas id="sessionChart"></canvas>
             </div>
 
-            <!-- Feedback Feed -->
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Student Voices</h3>
-            <div id="commentsList" class="space-y-3 overflow-y-auto max-h-60 pb-10 pr-1 custom-scrollbar"></div>
+            <!-- Feedback List -->
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                <span id="listTitle">Recent Feedback</span>
+            </h3>
+            <div id="commentsList" class="space-y-3 overflow-y-auto max-h-[300px] pb-10 pr-1 custom-scrollbar"></div>
         </div>
     </div>
 
@@ -202,14 +302,14 @@
         import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
-		apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
   authDomain: "stuattnd.firebaseapp.com",
   projectId: "stuattnd",
   storageBucket: "stuattnd.firebasestorage.app",
   messagingSenderId: "511533506488",
   appId: "1:511533506488:web:aca4de3d513915d012f94d",
-  measurementId: "G-9PZZM5LFKX"
-		};
+  measurementId: "G-9PZZM5LFKX"};
+//JSON.parse(__firebase_config);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -218,15 +318,42 @@
         let currentUser = null;
         let chartInstance = null;
         let clickCount = 0, clickTimer = null;
-        
-        // This holds the specific 3 questions generated for this session
         let activeQuestions = []; 
-        let userResponses = {}; // Stores answers: { qId: "answer" }
+        let userResponses = {}; 
+        
+        let adminViewMode = 'anonymous'; 
+        let currentAdminData = []; 
+        let longPressTimer;
+        const LONG_PRESS_DURATION = 3000; 
 
         signInAnonymously(auth).catch(console.error);
         onAuthStateChanged(auth, (user) => { if(user) currentUser = user; });
 
-        // --- THE QUESTION BANK (15 Questions) ---
+        // --- LOCAL STORAGE ---
+        window.addEventListener('load', () => {
+            const savedName = localStorage.getItem('pulse_name');
+            const savedRoll = localStorage.getItem('pulse_roll');
+            if (savedName && savedRoll) {
+                const nameInp = document.getElementById('inpName');
+                const rollInp = document.getElementById('inpRoll');
+                nameInp.value = savedName;
+                rollInp.value = savedRoll;
+                nameInp.disabled = true;
+                rollInp.disabled = true;
+                document.getElementById('resetLink').classList.remove('hidden');
+            }
+            initSwipeSlider(); // Init swipe logic
+        });
+
+        window.resetIdentity = function() {
+            if(confirm("Reset identity?")) {
+                localStorage.removeItem('pulse_name');
+                localStorage.removeItem('pulse_roll');
+                location.reload();
+            }
+        }
+
+        // --- QUESTIONS ---
         const questionBank = [
             { id: 'q1', type: 'options', text: "How was the explanation?", options: ['Confusing', 'Okay', 'Crystal Clear'] },
             { id: 'q2', type: 'text', text: "Any thing changes needed?", placeholder: "E.g. font size, voice..." },
@@ -242,42 +369,35 @@
             { id: 'q12', type: 'options', text: "Should we use more visuals?", options: ['No', 'Yes'] },
             { id: 'q13', type: 'options', text: "Overall Energy?", options: ['Low', 'High'] },
             { id: 'q14', type: 'text', text: "Any doubts remaining?", placeholder: "Ask here..." },
-            { id: 'q15', type: 'options', text: "Ready for next class?", options: ['Need Break', 'Ready'] }
+            { id: 'q15', type: 'options', text: "Ready for next class?", options: ['Need Break', 'Ready'] },
+            { id: 'q16', type: 'options', text: "Was the session interesting?", options: ['Yes', 'No'] }
         ];
 
-        // --- RANDOMIZER LOGIC ---
         function generateRandomQuestions() {
-            // Shuffle array
-            const shuffled = [...questionBank].sort(() => 0.5 - Math.random());
-            // Pick first 3
-            activeQuestions = shuffled.slice(0, 3);
+            activeQuestions = [...questionBank].sort(() => 0.5 - Math.random()).slice(0, 3);
             renderQuestions();
         }
 
         function renderQuestions() {
             const container = document.getElementById('dynamicQuestionsArea');
             container.innerHTML = '';
-            userResponses = {}; // Reset responses
+            userResponses = {};
 
             activeQuestions.forEach(q => {
                 const wrapper = document.createElement('div');
-                
                 const label = document.createElement('p');
                 label.className = "text-[10px] text-gray-400 uppercase font-bold mb-2 ml-1";
                 label.innerText = q.text;
                 wrapper.appendChild(label);
 
                 if (q.type === 'options') {
-                    // Render Buttons
                     const btnGrid = document.createElement('div');
                     btnGrid.className = "grid grid-cols-" + q.options.length + " gap-2";
-                    
                     q.options.forEach(opt => {
                         const btn = document.createElement('button');
                         btn.className = "tap-btn py-3 rounded-xl text-xs";
                         btn.innerText = opt;
                         btn.onclick = () => {
-                            // Handle click selection
                             Array.from(btnGrid.children).forEach(c => c.classList.remove('active'));
                             btn.classList.add('active');
                             userResponses[q.id] = { question: q.text, answer: opt };
@@ -286,7 +406,6 @@
                     });
                     wrapper.appendChild(btnGrid);
                 } else {
-                    // Render Text Input
                     const input = document.createElement('textarea');
                     input.rows = 2;
                     input.className = "custom-input w-full p-3 rounded-xl text-white placeholder-gray-600 resize-none text-sm";
@@ -296,23 +415,159 @@
                     };
                     wrapper.appendChild(input);
                 }
-                
                 container.appendChild(wrapper);
             });
         }
 
-        // --- UI NAVIGATION ---
+        // --- SWIPE SLIDER LOGIC ---
+        function initSwipeSlider() {
+            const track = document.getElementById('swipeTrack');
+            const handle = document.getElementById('swipeHandle');
+            const text = document.getElementById('swipeText');
+            const icon = document.getElementById('swipeIcon');
+            
+            let isDragging = false;
+            let startX = 0;
+            let currentX = 0;
+            
+            const onDragStart = (e) => {
+                if(handle.classList.contains('submitted')) return; // Locked
+                isDragging = true;
+                startX = (e.touches ? e.touches[0].clientX : e.clientX);
+                handle.style.transition = 'none'; // No lag while dragging
+            };
+            
+            const onDragMove = (e) => {
+                if (!isDragging) return;
+                const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+                let diff = clientX - startX;
+                
+                // Constraints
+                const maxMove = track.clientWidth - handle.clientWidth - 8; // 8px buffer
+                if (diff < 0) diff = 0;
+                if (diff > maxMove) diff = maxMove;
+                
+                currentX = diff;
+                handle.style.transform = `translateX(${diff}px)`;
+                
+                // Opacity of text
+                const opacity = 1 - (diff / maxMove);
+                text.style.opacity = opacity;
+                
+                // Icon Rotation
+                icon.style.transform = `rotate(${diff * 0.5}deg)`;
+            };
+            
+            const onDragEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                handle.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                
+                const maxMove = track.clientWidth - handle.clientWidth - 8;
+                
+                // Threshold to trigger submit (90%)
+                if (currentX > maxMove * 0.9) {
+                    // Snap to end
+                    handle.style.transform = `translateX(${maxMove}px)`;
+                    text.style.opacity = 0;
+                    
+                    // Trigger Submit
+                    submitData();
+                    
+                    // Visual feedback
+                    handle.classList.add('submitted');
+                    icon.className = "fa-solid fa-check text-white";
+                    icon.style.transform = "rotate(0deg)";
+                } else {
+                    // Snap back
+                    handle.style.transform = `translateX(0px)`;
+                    text.style.opacity = 1;
+                    icon.style.transform = "rotate(0deg)";
+                }
+            };
+            
+            // Events
+            handle.addEventListener('mousedown', onDragStart);
+            document.addEventListener('mousemove', onDragMove);
+            document.addEventListener('mouseup', onDragEnd);
+            
+            handle.addEventListener('touchstart', onDragStart);
+            document.addEventListener('touchmove', onDragMove);
+            document.addEventListener('touchend', onDragEnd);
+        }
+
+        // --- SUBMIT ---
+        const toxicWords = ['stupid', 'idiot', 'worst', 'useless', 'trash', 'shut up'];
+        window.submitData = async function() {
+            if(!currentUser) return;
+            
+            // Toxicity check
+            let isToxic = false;
+            Object.values(userResponses).forEach(resp => {
+                if (toxicWords.some(w => resp.answer.toLowerCase().includes(w))) isToxic = true;
+            });
+
+            if (isToxic) {
+                const warning = document.getElementById('aiWarning');
+                warning.classList.remove('hidden');
+                setTimeout(() => warning.classList.add('hidden'), 3000);
+                
+                // Reset slider
+                const handle = document.getElementById('swipeHandle');
+                handle.style.transform = `translateX(0px)`;
+                handle.classList.remove('submitted');
+                document.getElementById('swipeText').style.opacity = 1;
+                document.getElementById('swipeIcon').className = "fa-solid fa-paper-plane text-white";
+                return;
+            }
+
+            try {
+                const finalName = document.getElementById('inpName').value.toUpperCase();
+                const finalRoll = document.getElementById('inpRoll').value.toUpperCase();
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'feedback'), {
+                    name: finalName, roll: finalRoll, rating: parseInt(document.getElementById('inpRating').value),
+                    timestamp: serverTimestamp(), uid: currentUser.uid, responses: Object.values(userResponses) 
+                });
+                
+                // Success Transition (delay slightly for visual effect)
+                setTimeout(() => {
+                    document.getElementById('step-feedback').classList.add('hidden-screen');
+                    document.getElementById('step-success').classList.remove('hidden-screen');
+                    document.getElementById('step-success').classList.add('slide-up');
+                }, 500);
+                
+            } catch (e) {
+                alert("Error connecting.");
+                // Reset slider
+                const handle = document.getElementById('swipeHandle');
+                handle.style.transform = `translateX(0px)`;
+                handle.classList.remove('submitted');
+                document.getElementById('swipeText').style.opacity = 1;
+                document.getElementById('swipeIcon').className = "fa-solid fa-paper-plane text-white";
+            }
+        }
+
+        // --- NAV ---
         window.nextStep = function() {
-            if(!document.getElementById('inpName').value || !document.getElementById('inpRoll').value) {
+            const nameEl = document.getElementById('inpName');
+            const rollEl = document.getElementById('inpRoll');
+            if(!nameEl.value || !rollEl.value) {
                 const card = document.getElementById('studentView');
                 card.classList.add('shake');
                 setTimeout(() => card.classList.remove('shake'), 500);
                 return;
             }
-            generateRandomQuestions(); // Generate fresh Qs
+            const upperName = nameEl.value.toUpperCase();
+            const upperRoll = rollEl.value.toUpperCase();
+            localStorage.setItem('pulse_name', upperName);
+            localStorage.setItem('pulse_roll', upperRoll);
+            generateRandomQuestions();
             document.getElementById('step-identity').classList.add('hidden-screen');
             document.getElementById('step-feedback').classList.remove('hidden-screen');
             document.getElementById('step-feedback').classList.add('slide-up');
+            
+            // Re-calc slider width in case of layout shifts
+            initSwipeSlider();
         }
 
         window.prevStep = function() {
@@ -329,60 +584,46 @@
             setTimeout(() => emojiEl.style.transform = 'scale(1) rotate(0deg)', 200);
         }
 
-        // --- SUBMIT ---
-        const toxicWords = ['stupid', 'idiot', 'worst', 'useless', 'trash', 'shut up'];
-        
-        window.submitData = async function() {
-            if(!currentUser) return;
-            
-            // Check toxicity in text answers
-            let isToxic = false;
-            Object.values(userResponses).forEach(resp => {
-                if (toxicWords.some(w => resp.answer.toLowerCase().includes(w))) isToxic = true;
-            });
-
-            if (isToxic) {
-                const warning = document.getElementById('aiWarning');
-                warning.classList.remove('hidden');
-                setTimeout(() => warning.classList.add('hidden'), 3000);
-                return;
-            }
-
-            const btn = document.getElementById('btnSubmit');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            btn.disabled = true;
-
-            try {
-                // Prepare Payload
-                const payload = {
-                    name: document.getElementById('inpName').value,
-                    roll: document.getElementById('inpRoll').value,
-                    rating: parseInt(document.getElementById('inpRating').value),
-                    timestamp: serverTimestamp(),
-                    uid: currentUser.uid,
-                    // Save the random questions and answers as an array
-                    responses: Object.values(userResponses) 
-                };
-
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'feedback'), payload);
-                
-                document.getElementById('step-feedback').classList.add('hidden-screen');
-                document.getElementById('step-success').classList.remove('hidden-screen');
-                document.getElementById('step-success').classList.add('slide-up');
-            } catch (e) {
-                console.error(e);
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-                alert("Error connecting.");
-            }
-        }
-
-        // --- ADMIN FUNCTIONS ---
         window.deleteFeedback = async function(id) {
             if(!confirm("Delete this?")) return;
             try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'feedback', id)); } catch (e) {}
         }
+
+        window.toggleReveal = function(element) {
+            element.classList.toggle('revealed');
+            const icon = element.nextElementSibling.querySelector('i');
+            if (element.classList.contains('revealed')) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        window.startLongPress = function() {
+            longPressTimer = setTimeout(() => {
+                if (adminViewMode === 'anonymous') {
+                    adminViewMode = 'detailed';
+                    document.getElementById('adminTitle').classList.add('secret-unlocked');
+                    document.getElementById('lockIcon').className = "fa-solid fa-unlock text-cyan-400 text-xs ml-1";
+                    document.getElementById('viewModeText').innerText = "Detailed View Unlocked";
+                    document.getElementById('viewModeText').classList.add('text-cyan-400');
+                    document.getElementById('adminHeader').classList.add('pulse-ring');
+                    setTimeout(() => document.getElementById('adminHeader').classList.remove('pulse-ring'), 500);
+                } else {
+                    adminViewMode = 'anonymous';
+                    document.getElementById('adminTitle').classList.remove('secret-unlocked');
+                    document.getElementById('lockIcon').className = "fa-solid fa-lock text-gray-500 text-xs ml-1";
+                    document.getElementById('viewModeText').innerText = "Anonymous Mode";
+                    document.getElementById('viewModeText').classList.remove('text-cyan-400');
+                }
+                renderComments(currentAdminData);
+                if(navigator.vibrate) navigator.vibrate(50);
+            }, LONG_PRESS_DURATION);
+        }
+
+        window.cancelLongPress = function() { clearTimeout(longPressTimer); }
 
         window.triggerTeacherMode = function() {
             clickCount++;
@@ -400,6 +641,10 @@
         window.closeTeacherMode = function() {
             document.getElementById('teacherView').classList.add('hidden-screen');
             document.getElementById('studentView').classList.remove('hidden-screen');
+            adminViewMode = 'anonymous';
+            document.getElementById('adminTitle').classList.remove('secret-unlocked');
+            document.getElementById('lockIcon').className = "fa-solid fa-lock text-gray-500 text-xs ml-1";
+            document.getElementById('viewModeText').innerText = "Anonymous Mode";
         }
 
         function initDashboard() {
@@ -411,8 +656,8 @@
                     if(d.timestamp) rawData.push({ ...d, dateObj: d.timestamp.toDate(), id: doc.id });
                 });
                 rawData.sort((a, b) => b.dateObj - a.dateObj);
-                
-                // Chart Logic (Same as before)
+                currentAdminData = rawData; 
+
                 const sessionMap = {};
                 rawData.forEach(item => {
                     const key = item.dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -452,11 +697,9 @@
         function renderComments(data) {
             const list = document.getElementById('commentsList');
             list.innerHTML = '';
-            data.slice(0, 30).forEach(item => {
+            data.slice(0, 40).forEach(item => {
                 const isAlert = item.rating <= 2;
                 const borderClass = isAlert ? 'border-l-4 border-red-500 bg-red-900/10' : 'border border-white/5 bg-white/5';
-
-                // Build HTML for the specific questions this student answered
                 let responsesHTML = '';
                 if(item.responses) {
                     item.responses.forEach(r => {
@@ -468,19 +711,31 @@
                         `;
                     });
                 }
-
+                let headerContent = '';
+                if(adminViewMode === 'detailed') {
+                    headerContent = `
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <span class="text-[10px] text-cyan-400 font-mono font-bold privacy-mask" onclick="toggleReveal(this)">${item.name} (${item.roll})</span>
+                                <button onclick="toggleReveal(this.previousElementSibling)" class="text-gray-500 hover:text-cyan-400 px-1"><i class="fa-solid fa-eye text-xs"></i></button>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-yellow-400">★${item.rating}</span>
+                                <button onclick="deleteFeedback('${item.id}')" class="text-gray-500 hover:text-red-500 px-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    headerContent = `
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] text-gray-500 font-mono italic">Student Feedback</span>
+                            <span class="text-[10px] text-yellow-400">★${item.rating}</span>
+                        </div>
+                    `;
+                }
                 const div = document.createElement('div');
                 div.className = `${borderClass} p-3 rounded-xl mb-2 relative group`;
-                div.innerHTML = `
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-[10px] text-cyan-400 font-mono">${item.name}</span>
-                        <div class="flex items-center gap-2">
-                             <span class="text-[10px] text-yellow-400">★${item.rating}</span>
-                             <button onclick="deleteFeedback('${item.id}')" class="text-gray-500 hover:text-red-500 transition px-1"><i class="fa-solid fa-trash text-xs"></i></button>
-                        </div>
-                    </div>
-                    ${responsesHTML}
-                `;
+                div.innerHTML = `${headerContent}${responsesHTML}`;
                 list.appendChild(div);
             });
         }
