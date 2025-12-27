@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Pro Attendance</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- jsPDF for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            overscroll-behavior-y: none;
+        }
+        
+        .glass-panel {
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+        }
+
+        .hidden-section { display: none; }
+        .active-section {
+            display: block;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Attendance Cards */
+        .attendance-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .attendance-card:active { transform: scale(0.95); }
+        .attendance-card.present { border-top: 4px solid #10b981; background-color: #f0fdf4; }
+        .attendance-card.absent { border-top: 4px solid #ef4444; background-color: #fef2f2; }
+        
+        /* Lab/Score Cards */
+        .lab-card { border-top: 4px solid #cbd5e1; }
+        .lab-card.graded { border-top: 4px solid #3b82f6; background-color: #eff6ff; }
+
+        /* Scorer Buttons */
+        .score-btn {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 12px;
+            border: 1px solid #e2e8f0; background: white; color: #64748b;
+            transition: all 0.1s;
+        }
+        .score-btn.active {
+            background: #3b82f6; color: white; border-color: #3b82f6; transform: scale(1.1);
+        }
+
+        .loader {
+            border: 3px solid #e2e8f0; border-radius: 50%; border-top: 3px solid #3b82f6;
+            width: 24px; height: 24px; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* PIN Input */
+        .pin-input {
+            letter-spacing: 0.5em; text-align: center; font-size: 1.5rem;
+        }
+        
+        /* Filter Capsules */
+        .filter-capsule {
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .filter-capsule.active { transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        
+        /* Modal Backdrop */
+        #lab-modal-backdrop, #pin-modal-backdrop {
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+        }
+        #lab-modal-content { transition: transform 0.3s cubic-bezier(0,0,0.2,1); }
+
+        /* Grid Item truncate */
+        .truncate-text {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col overflow-hidden select-none">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center z-20 shadow-sm shrink-0">
+        <div class="flex items-center gap-2">
+            <div class="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-blue-200 shadow-lg">
+                <i class="fa-solid fa-clipboard-user text-sm"></i>
+            </div>
+            <h1 class="font-bold text-lg tracking-tight text-slate-900">Smart<span class="text-blue-600">Pro</span></h1>
+        </div>
+        <div id="user-header-info" class="flex items-center gap-3 hidden">
+            <span id="header-username" class="text-xs font-bold px-2 py-1 bg-slate-100 rounded text-slate-600 hidden sm:block">User</span>
+            <button onclick="app.logout()" class="text-slate-400 hover:text-red-500 transition p-2">
+                <i class="fa-solid fa-power-off"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 overflow-y-auto relative w-full max-w-5xl mx-auto" id="main-scroll">
+        
+        <!-- Loading Screen -->
+        <div id="view-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 z-50">
+            <div class="loader mb-4 w-8 h-8 border-4"></div>
+            <p class="text-slate-500 text-sm font-medium animate-pulse">Verifying Identity...</p>
+        </div>
+
+        <!-- Auth / Onboarding -->
+        <div id="view-auth" class="hidden-section p-6 pt-10">
+            <div class="glass-panel p-6 rounded-2xl max-w-md mx-auto">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900">Welcome</h2>
+                    <p class="text-slate-500 text-sm">Secure Access Portal</p>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">I am a...</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="role" value="student" class="peer sr-only" checked onchange="app.toggleAuthFields()">
+                            <div class="p-4 text-center border-2 border-slate-100 rounded-xl peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 transition group-hover:bg-slate-50">
+                                <i class="fa-solid fa-user-graduate text-xl mb-2 block opacity-50 peer-checked:opacity-100"></i>
+                                <span class="font-bold text-sm">Student</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="role" value="faculty" class="peer sr-only" onchange="app.toggleAuthFields()">
+                            <div class="p-4 text-center border-2 border-slate-100 rounded-xl peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 transition group-hover:bg-slate-50">
+                                <i class="fa-solid fa-chalkboard-user text-xl mb-2 block opacity-50 peer-checked:opacity-100"></i>
+                                <span class="font-bold text-sm">Faculty</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- STUDENT LOGIN FORM -->
+                <form id="form-student" onsubmit="app.handleStudentLogin(event)">
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Roll Number</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-id-card absolute left-4 top-4 text-slate-400"></i>
+                            <input type="text" id="auth-roll-no" required class="w-full pl-10 p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase font-mono tracking-wider" placeholder="e.g. 101">
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">Enter the ID provided by your Faculty.</p>
+                    </div>
+
+                    <!-- Confirmation Box (Hidden initially) -->
+                    <div id="student-confirm-box" class="hidden mb-6 bg-blue-50 border border-blue-100 p-4 rounded-xl text-center">
+                        <p class="text-xs text-blue-500 uppercase font-bold mb-1">Found Profile</p>
+                        <h3 class="text-lg font-bold text-slate-800 mb-1" id="confirm-name">--</h3>
+                        <p class="text-xs text-slate-500 mb-3" id="confirm-class">--</p>
+                        <div class="text-[10px] text-red-500 bg-red-50 p-2 rounded border border-red-100">
+                            <i class="fa-solid fa-lock mr-1"></i> Warning: This Roll No will be locked to this device.
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-student-action" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 active:scale-[0.99] transition shadow-xl shadow-blue-200">
+                        Verify Identity
+                    </button>
+                </form>
+
+                <!-- FACULTY LOGIN FORM (Hidden) -->
+                <form id="form-faculty" class="hidden" onsubmit="app.handleFacultySignup(event)">
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
+                        <input type="text" id="auth-fac-name" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="Faculty Name">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Set Security PIN (4 Digits)</label>
+                        <input type="password" inputmode="numeric" maxlength="4" id="auth-fac-pin" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-center tracking-[1em]" placeholder="0000">
+                    </div>
+                    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-black active:scale-[0.99] transition shadow-xl shadow-slate-200">
+                        Register Faculty
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Faculty Dashboard -->
+        <div id="view-faculty" class="hidden-section pb-24">
+            <!-- Tabs -->
+            <div class="sticky top-0 bg-[#f8fafc]/95 backdrop-blur z-10 px-4 py-3 border-b border-slate-200 flex gap-2 overflow-x-auto hide-scrollbar">
+                <button onclick="app.setFacultyTab('mark')" id="tab-btn-mark" class="flex-1 py-2 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1.5 bg-slate-900 text-white shadow-md whitespace-nowrap px-2">
+                    <i class="fa-regular fa-calendar-check"></i> Attendance
+                </button>
+                <button onclick="app.setFacultyTab('lab')" id="tab-btn-lab" class="flex-1 py-2 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white text-slate-500 border border-slate-200 whitespace-nowrap px-2">
+                    <i class="fa-solid fa-star-half-stroke"></i> Scores
+                </button>
+                <button onclick="app.setFacultyTab('report')" id="tab-btn-report" class="flex-1 py-2 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white text-slate-500 border border-slate-200 whitespace-nowrap px-2">
+                    <i class="fa-solid fa-chart-pie"></i> Reports
+                </button>
+                <button onclick="app.setFacultyTab('manage')" id="tab-btn-manage" class="flex-1 py-2 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white text-slate-500 border border-slate-200 whitespace-nowrap px-2">
+                    <i class="fa-solid fa-user-gear"></i> Manage
+                </button>
+            </div>
+
+            <div class="p-4">
+                <!-- 1. Mark Attendance Section -->
+                <div id="faculty-mark-section">
+                    <div class="glass-panel p-4 rounded-xl mb-4 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date</label>
+                                <input type="date" id="mark-date" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Session</label>
+                                <select id="mark-session" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 appearance-none">
+                                    <option value="S1">S1 (Hrs 1-2)</option>
+                                    <option value="S2">S2 (Hrs 3-4)</option>
+                                    <option value="S3">S3 (Hrs 5-6)</option>
+                                    <option value="S4">S4 (Hrs 6-7)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Subject</label>
+                                <select id="mark-subject" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 appearance-none subject-select">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Section</label>
+                                <input type="text" id="mark-class-input" class="w-full mt-1 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-semibold uppercase" placeholder="e.g. CS-A">
+                            </div>
+                        </div>
+                        <button onclick="app.loadAttendanceSheet()" class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold uppercase hover:bg-blue-100 transition">
+                            Load Students
+                        </button>
+                    </div>
+
+                    <!-- Search and Filter -->
+                    <div id="att-controls" class="hidden mb-4">
+                        <input type="text" id="search-attendance" onkeyup="app.filterAttendance()" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 shadow-sm" placeholder="Search by Name or Roll No...">
+                        
+                        <div class="flex gap-2">
+                            <button onclick="app.markAll(true)" class="flex-1 bg-emerald-100 text-emerald-700 py-2.5 rounded-lg text-xs font-bold hover:bg-emerald-200 transition shadow-sm border border-emerald-200 active:scale-95">
+                                <i class="fa-solid fa-check-double mr-1"></i> All Present
+                            </button>
+                            <button onclick="app.markAll(false)" class="flex-1 bg-red-100 text-red-700 py-2.5 rounded-lg text-xs font-bold hover:bg-red-200 transition shadow-sm border border-red-200 active:scale-95">
+                                <i class="fa-solid fa-xmark mr-1"></i> All Absent
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Responsive Student Grid -->
+                    <div id="student-grid-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 pb-20">
+                         <div class="col-span-full text-center py-10 opacity-50">
+                             <i class="fa-solid fa-users text-4xl mb-3 text-slate-300"></i>
+                             <p class="text-sm font-medium">Select Section & Load</p>
+                         </div>
+                    </div>
+                    
+                    <div id="save-fab-container" class="fixed bottom-6 right-4 left-4 z-30 transition-transform transform translate-y-24">
+                        <button onclick="app.saveAttendance()" id="save-btn" class="w-full bg-slate-900 text-white font-bold py-3.5 px-6 rounded-xl shadow-2xl flex items-center justify-center gap-3 hover:bg-black active:scale-[0.98] transition">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>Save Attendance</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Scores/Exams Section -->
+                <div id="faculty-lab-section" class="hidden">
+                    <div class="glass-panel p-4 rounded-xl mb-4 space-y-4 border-l-4 border-l-blue-500">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-slate-800"><i class="fa-solid fa-pen-to-square text-blue-500 mr-2"></i>Scores & Labs</h3>
+                            <span class="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded uppercase">Grading</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                             <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date</label>
+                                <input type="date" id="lab-date" class="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold">
+                             </div>
+                             <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Subject</label>
+                                <select id="lab-subject" class="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold subject-select">
+                                    <!-- Populated by JS -->
+                                </select>
+                             </div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assessment Title</label>
+                            <input type="text" id="lab-exp-title" class="w-full mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold" placeholder="e.g. Mid Exam 1 or Exp 5">
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Section</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="lab-class-input" class="flex-1 mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-semibold uppercase" placeholder="e.g. CS-A">
+                                <button onclick="app.loadLabStudents()" class="mt-1 px-4 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">Load</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search for Labs -->
+                    <div id="lab-controls" class="hidden mb-4">
+                        <input type="text" id="search-lab" onkeyup="app.filterLab()" class="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" placeholder="Search Student...">
+                    </div>
+
+                    <!-- Responsive Lab Grid -->
+                    <div id="lab-student-list" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 pb-24">
+                        <div class="col-span-full text-center py-10 opacity-50">
+                             <i class="fa-solid fa-list-check text-4xl mb-3 text-slate-300"></i>
+                             <p class="text-sm font-medium">Load students to grade</p>
+                         </div>
+                    </div>
+
+                    <div id="lab-save-fab" class="fixed bottom-6 right-4 left-4 z-30 transition-transform transform translate-y-32">
+                        <button onclick="app.submitLabSession()" id="lab-submit-btn" class="w-full bg-blue-600 text-white font-bold py-3.5 px-6 rounded-xl shadow-2xl flex items-center justify-center gap-3 hover:bg-blue-700 active:scale-[0.98] transition">
+                            <i class="fa-solid fa-check-double"></i>
+                            <span>Submit Scores</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Report Section -->
+                <div id="faculty-report-section" class="hidden">
+                    <div class="glass-panel p-4 rounded-xl mb-4">
+                        
+                        <!-- Report Type Toggle -->
+                        <div class="flex gap-2 p-1 bg-slate-100 rounded-xl mb-4">
+                            <button onclick="app.setReportMode('summary')" id="btn-mode-summary" class="flex-1 py-2 rounded-lg text-xs font-bold shadow-sm bg-white text-slate-800 transition">Overall Summary</button>
+                            <button onclick="app.setReportMode('session')" id="btn-mode-session" class="flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition">Session Detail</button>
+                        </div>
+
+                        <!-- Overall Summary Inputs -->
+                        <div id="report-inputs-summary" class="space-y-3">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Overall Configuration</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                 <input type="text" id="report-class-input" class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-semibold uppercase" placeholder="Section (CS-A)">
+                                 <select id="report-subject" class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 subject-select">
+                                    <option value="ALL">All Subjects</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Session Detail Inputs (New) -->
+                        <div id="report-inputs-session" class="space-y-3 hidden">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Session Configuration</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="date" id="report-session-date" class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold">
+                                <select id="report-session-slot" class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold">
+                                    <option value="S1">S1 (Hrs 1-2)</option>
+                                    <option value="S2">S2 (Hrs 3-4)</option>
+                                    <option value="S3">S3 (Hrs 5-6)</option>
+                                    <option value="S4">S4 (Hrs 6-7)</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <select id="report-session-subject" class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold subject-select">
+                                    <!-- JS Populates -->
+                                </select>
+                                <input type="text" id="report-session-class" class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-semibold uppercase" placeholder="Section (CS-A)">
+                            </div>
+                        </div>
+
+                        <button onclick="app.handleReportGeneration()" class="w-full bg-slate-900 text-white py-3 mt-4 rounded-lg font-bold text-sm hover:bg-black transition">
+                            View Data
+                        </button>
+                    </div>
+
+                    <!-- Export Actions -->
+                    <div id="report-actions" class="hidden flex gap-3 mb-4">
+                        <button onclick="app.downloadPDF()" class="flex-1 bg-red-500 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 shadow-md">
+                            <i class="fa-solid fa-file-pdf"></i> PDF
+                        </button>
+                        <button onclick="app.downloadCSV()" class="flex-1 bg-emerald-500 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 shadow-md">
+                            <i class="fa-solid fa-file-csv"></i> CSV
+                        </button>
+                    </div>
+
+                    <div id="report-results" class="space-y-3 pb-20"></div>
+                </div>
+
+                <!-- 4. Manage/Import Section -->
+                <div id="faculty-manage-section" class="hidden">
+                    <div class="glass-panel p-5 rounded-xl mb-4">
+                        <h3 class="font-bold text-slate-800 mb-2">Bulk Import Students</h3>
+                        <p class="text-xs text-slate-500 mb-4">Format: <code class="bg-slate-100 px-1 text-slate-700">RollNo, Name, Section</code></p>
+                        <textarea id="import-text" rows="6" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="101, John Doe, CS-A"></textarea>
+                        <button onclick="app.handleImport()" id="import-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-sm shadow-lg shadow-blue-200 mb-6">Import Students</button>
+                        
+                        <h3 class="font-bold text-slate-800 mb-2">Reset Student Device Lock</h3>
+                        <p class="text-xs text-slate-500 mb-2">If a student loses their device.</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="reset-lock-id" class="flex-1 p-2 bg-slate-50 border rounded-lg text-sm font-mono uppercase" placeholder="Roll No">
+                            <button onclick="app.resetDeviceLock()" class="bg-red-500 text-white px-4 rounded-lg text-xs font-bold">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Dashboard -->
+        <div id="view-student" class="hidden-section p-4 pb-20">
+            <!-- Header Card -->
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl shadow-blue-200 mb-6 relative overflow-hidden">
+                <i class="fa-solid fa-graduation-cap absolute -right-6 -bottom-6 text-9xl text-white opacity-10"></i>
+                <div class="relative z-10">
+                    <h2 class="text-2xl font-bold" id="student-dash-name">--</h2>
+                    <p class="text-blue-100 text-sm font-mono opacity-80 mb-6" id="student-dash-class">--</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-5xl font-bold tracking-tight" id="student-overall-percent">--%</span>
+                        <span class="text-sm text-blue-200 mb-2 font-medium">Regularity</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lab Performance Card -->
+            <div class="glass-panel p-4 rounded-xl mb-6 flex items-center justify-between">
+                <div>
+                    <h4 class="font-bold text-slate-700">Avg. Score</h4>
+                    <p class="text-xs text-slate-400">Exams & Labs</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-2xl font-bold text-blue-600" id="student-lab-avg">--</span>
+                    <span class="text-xs text-slate-400 block">/ 20 Points</span>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-slate-800 mb-4 text-sm uppercase tracking-wider">Recent Activity</h3>
+            <div id="student-history-list" class="space-y-3"></div>
+        </div>
+    </main>
+
+    <!-- Lab Grading Bottom Sheet -->
+    <div id="lab-modal-backdrop" class="fixed inset-0 z-40 hidden flex items-end sm:items-center sm:justify-center">
+        <div id="lab-modal-content" class="bg-white w-full sm:w-[400px] sm:rounded-2xl rounded-t-2xl shadow-2xl p-5 transform translate-y-full transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+            
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-bold text-lg text-slate-800" id="lab-modal-name">Student Name</h3>
+                    <p class="text-xs text-slate-400 font-mono" id="lab-modal-id">ID: --</p>
+                </div>
+                <button onclick="app.closeLabModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 mb-6">
+                <!-- Generic Criteria for Labs OR Exams -->
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Criterion A (Obs/Part A)</label>
+                        <span class="text-xs font-bold text-blue-600" id="score-val-obs">0</span>
+                    </div>
+                    <div class="flex gap-2" id="btns-obs"></div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Criterion B (Rec/Part B)</label>
+                        <span class="text-xs font-bold text-blue-600" id="score-val-rec">0</span>
+                    </div>
+                    <div class="flex gap-2" id="btns-rec"></div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Criterion C (Time/Part C)</label>
+                        <span class="text-xs font-bold text-blue-600" id="score-val-pun">0</span>
+                    </div>
+                    <div class="flex gap-2" id="btns-pun"></div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Criterion D (Viva/Part D)</label>
+                        <span class="text-xs font-bold text-blue-600" id="score-val-per">0</span>
+                    </div>
+                    <div class="flex gap-2" id="btns-per"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg mb-4">
+                <span class="font-bold text-slate-600 text-sm">Total Score</span>
+                <span class="font-bold text-xl text-slate-900"><span id="lab-modal-total">0</span> <span class="text-xs text-slate-400 font-normal">/ 20</span></span>
+            </div>
+
+            <button onclick="app.saveStudentLabScore()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-black transition">
+                Save & Close
+            </button>
+        </div>
+    </div>
+
+    <!-- PIN Login Modal -->
+    <div id="pin-modal-backdrop" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-6 w-[300px] shadow-2xl text-center">
+            <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-lock text-xl"></i>
+            </div>
+            <h3 class="font-bold text-lg mb-1">Faculty Access</h3>
+            <p class="text-xs text-slate-500 mb-4">Enter your 4-digit security PIN</p>
+            
+            <input type="password" id="login-pin" maxlength="4" inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 pin-input focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="••••">
+            
+            <button onclick="app.verifyPin()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700">Unlock</button>
+            <p id="pin-error" class="text-xs text-red-500 mt-2 hidden">Incorrect PIN</p>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-full shadow-xl z-50 flex items-center gap-3 transition-all duration-300 opacity-0 -translate-y-4 pointer-events-none w-max max-w-[90%]">
+        <i class="fa-solid fa-circle-info text-blue-400"></i>
+        <span id="toast-msg" class="text-sm font-medium truncate">Message</span>
+    </div>
+
+    <!-- Logic -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, updateDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        // --- Constants ---
+        const SUBJECTS = [
+            "Optimization Techniques",
+            "Probability & Statistics",
+            "Machine Learning",
+            "Database Management Systems",
+            "Digital Logic & Computer Org",
+            "Machine Learning Lab",
+            "DBMS Lab",
+            "Full Stack Development",
+            "Design Thinking & Innovation"
+            
+        ];
+
+        // --- Config ---
+        const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+		apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+  authDomain: "stuattnd.firebaseapp.com",
+  projectId: "stuattnd",
+  storageBucket: "stuattnd.firebasestorage.app",
+  messagingSenderId: "511533506488",
+  appId: "1:511533506488:web:aca4de3d513915d012f94d",
+  measurementId: "G-9PZZM5LFKX"
+		};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+        
+        const firebaseApp = initializeApp(config);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+
+        // --- Core App ---
+        window.app = {
+            user: null,
+            profile: null,
+            currentStudents: [],
+            attendanceChanges: {}, 
+            labScores: {},
+            currentLabStudent: null,
+            currentReportData: null,
+            reportMode: 'summary', 
+            sessionReportData: null,
+            tempStudentData: null, // For auth confirmation
+
+            init: async function() {
+                this.populateSubjects();
+                this.renderScoreButtons();
+
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (e) { this.showToast("Connection failed."); }
+
+                onAuthStateChanged(auth, async (u) => {
+                    if (u) {
+                        this.user = u;
+                        await this.checkProfile(u.uid);
+                    }
+                });
+
+                const today = new Date().toISOString().split('T')[0];
+                if(document.getElementById('mark-date')) document.getElementById('mark-date').value = today;
+                if(document.getElementById('lab-date')) document.getElementById('lab-date').value = today;
+                if(document.getElementById('report-session-date')) document.getElementById('report-session-date').value = today;
+            },
+
+            populateSubjects: function() {
+                const selects = document.querySelectorAll('.subject-select');
+                selects.forEach(sel => {
+                    const keepAll = sel.querySelector('option[value="ALL"]');
+                    sel.innerHTML = '';
+                    if(keepAll) sel.appendChild(keepAll);
+                    SUBJECTS.forEach(sub => {
+                        const opt = document.createElement('option');
+                        opt.value = sub;
+                        opt.textContent = sub;
+                        sel.appendChild(opt);
+                    });
+                });
+            },
+
+            // --- Security Util ---
+            hashPin: async function(pin) {
+                const enc = new TextEncoder();
+                const hashBuffer = await crypto.subtle.digest('SHA-256', enc.encode(pin));
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            },
+
+            // --- NEW: Smart Profile Check ---
+            checkProfile: async function(uid) {
+                try {
+                    // 1. Check if Linked Student Account (Device Locked)
+                    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'), where('deviceUid', '==', uid));
+                    const qSnap = await getDocs(q);
+                    
+                    if (!qSnap.empty) {
+                        // Found linked student profile
+                        const docSnap = qSnap.docs[0];
+                        this.profile = { ...docSnap.data(), uid: docSnap.id }; // ID is Roll No
+                        this.routeUser();
+                        document.getElementById('view-loading').classList.add('hidden');
+                        return;
+                    }
+
+                    // 2. Check if Faculty or Direct User
+                    const ref = doc(db, 'artifacts', appId, 'public', 'data', 'users', uid);
+                    const snap = await getDoc(ref);
+                    
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        this.profile = { ...data, uid };
+                        if (data.role === 'faculty') {
+                            document.getElementById('view-loading').classList.add('hidden');
+                            document.getElementById('pin-modal-backdrop').classList.remove('hidden');
+                        } else {
+                            this.routeUser();
+                        }
+                    } else {
+                        this.switchView('view-auth');
+                    }
+                } catch (e) { 
+                    console.error(e);
+                    this.showToast("Error loading profile"); 
+                }
+                document.getElementById('view-loading').classList.add('hidden');
+            },
+
+            verifyPin: async function() {
+                const input = document.getElementById('login-pin').value;
+                const err = document.getElementById('pin-error');
+                if(input.length !== 4) { err.textContent = "Enter 4 digits"; err.classList.remove('hidden'); return; }
+                const hashed = await this.hashPin(input);
+                if (hashed === this.profile.pinHash) {
+                    document.getElementById('pin-modal-backdrop').classList.add('hidden');
+                    this.updateHeader();
+                    this.routeUser();
+                } else {
+                    err.textContent = "Incorrect PIN";
+                    err.classList.remove('hidden');
+                }
+            },
+
+            // --- NEW: Auth Handlers ---
+            toggleAuthFields: function() {
+                const role = document.querySelector('input[name="role"]:checked').value;
+                if(role === 'student') {
+                    document.getElementById('form-student').classList.remove('hidden');
+                    document.getElementById('form-faculty').classList.add('hidden');
+                } else {
+                    document.getElementById('form-student').classList.add('hidden');
+                    document.getElementById('form-faculty').classList.remove('hidden');
+                }
+            },
+
+            handleStudentLogin: async function(e) {
+                e.preventDefault();
+                const rollNo = document.getElementById('auth-roll-no').value.toUpperCase().trim();
+                const confirmBox = document.getElementById('student-confirm-box');
+                const btn = document.getElementById('btn-student-action');
+
+                if(!rollNo) return this.showToast("Enter Roll No");
+
+                // If verifying Identity
+                if(btn.innerText === "Verify Identity") {
+                    btn.disabled = true; btn.innerText = "Checking...";
+                    try {
+                        const ref = doc(db, 'artifacts', appId, 'public', 'data', 'users', rollNo);
+                        const snap = await getDoc(ref);
+                        
+                        if(snap.exists()) {
+                            const data = snap.data();
+                            // Check lock
+                            if(data.deviceUid && data.deviceUid !== this.user.uid) {
+                                this.showToast("Access Denied: Locked to another device.");
+                                btn.disabled = false; btn.innerText = "Verify Identity";
+                                return;
+                            }
+                            
+                            // Show Confirm
+                            this.tempStudentData = { id: rollNo, ...data };
+                            document.getElementById('confirm-name').textContent = data.name;
+                            document.getElementById('confirm-class').textContent = data.classId;
+                            confirmBox.classList.remove('hidden');
+                            btn.innerText = "Lock to Device & Login";
+                            btn.disabled = false;
+                            btn.classList.replace('bg-blue-600', 'bg-emerald-600');
+                            btn.classList.replace('hover:bg-blue-700', 'hover:bg-emerald-700');
+                        } else {
+                            this.showToast("Roll No Not Found. Contact Faculty.");
+                            btn.disabled = false; btn.innerText = "Verify Identity";
+                        }
+                    } catch(e) { console.error(e); this.showToast("Error verifying ID"); btn.disabled = false; btn.innerText = "Verify Identity"; }
+                } 
+                // If Locking Device
+                else {
+                    if(!this.tempStudentData) return;
+                    btn.disabled = true; btn.innerText = "Locking...";
+                    try {
+                        // Update DB with deviceUid lock
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', this.tempStudentData.id), {
+                            deviceUid: this.user.uid,
+                            lastLogin: new Date().toISOString()
+                        });
+                        
+                        this.profile = { ...this.tempStudentData, uid: this.tempStudentData.id };
+                        this.updateHeader();
+                        this.routeUser();
+                    } catch(e) {
+                        this.showToast("Error locking device");
+                        btn.disabled = false; btn.innerText = "Lock to Device & Login";
+                    }
+                }
+            },
+
+            handleFacultySignup: async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('auth-fac-name').value.trim();
+                const pin = document.getElementById('auth-fac-pin').value;
+                
+                if (!name || pin.length !== 4) return this.showToast("Enter Name and 4-digit PIN");
+                
+                const pinHash = await this.hashPin(pin);
+                const userData = { name, role: 'faculty', pinHash, joinedAt: new Date().toISOString() };
+                
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', this.user.uid), userData);
+                    this.profile = { ...userData, uid: this.user.uid };
+                    this.updateHeader();
+                    this.routeUser();
+                } catch(e) { this.showToast("Signup Failed"); }
+            },
+
+            routeUser: function() {
+                if (this.profile.role === 'faculty') this.switchView('view-faculty');
+                else {
+                    this.switchView('view-student');
+                    this.loadStudentData();
+                }
+            },
+
+            // --- Faculty Functions ---
+            
+            // ... (Attendance, Lab, Report functions remain exactly same as before) ...
+            
+            loadAttendanceSheet: async function() {
+                const classInput = document.getElementById('mark-class-input').value.toUpperCase().trim();
+                const date = document.getElementById('mark-date').value;
+                const session = document.getElementById('mark-session').value;
+                const subject = document.getElementById('mark-subject').value;
+                const grid = document.getElementById('student-grid-container');
+                const controls = document.getElementById('att-controls');
+                if (!classInput) return this.showToast("Enter Section");
+                grid.innerHTML = '<div class="col-span-full text-center py-8"><div class="loader mx-auto"></div></div>';
+                document.getElementById('save-fab-container').classList.add('translate-y-24');
+                controls.classList.add('hidden'); 
+                document.getElementById('search-attendance').value = '';
+                const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+                const students = [];
+                snap.forEach(d => { if(d.data().classId === classInput && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
+                if(students.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No students found.</p></div>';
+                    return;
+                }
+                this.currentStudents = students.sort((a,b) => a.id.localeCompare(b.id));
+                const attSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', `${date}_${classInput}_${session}_${subject}`));
+                const presentIds = attSnap.exists() ? attSnap.data().presentIds : [];
+                this.attendanceChanges = {};
+                this.currentStudents.forEach(s => {
+                    this.attendanceChanges[s.id] = presentIds.includes(s.id);
+                });
+                controls.classList.remove('hidden');
+                this.renderAttendanceGrid(this.currentStudents);
+                document.getElementById('save-fab-container').classList.remove('translate-y-24');
+            },
+
+            renderAttendanceGrid: function(studentList) {
+                const grid = document.getElementById('student-grid-container');
+                grid.innerHTML = '';
+                if(studentList.length === 0) {
+                     grid.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No matches found.</p></div>';
+                     return;
+                }
+                studentList.forEach(s => {
+                    const isPresent = this.attendanceChanges[s.id];
+                    const card = document.createElement('div');
+                    card.id = `att-card-${s.id}`;
+                    card.className = `attendance-card p-3 rounded-xl cursor-pointer border shadow-sm flex flex-col justify-between h-20 ${isPresent ? 'present' : 'absent'}`;
+                    card.onclick = () => this.toggleAttendance(s.id, card);
+                    card.innerHTML = `<div class="flex justify-between items-start"><div class="font-bold text-xs truncate-text w-full pr-1">${s.name}</div></div><div class="flex justify-between items-end mt-1"><span class="text-[10px] font-mono text-slate-400 bg-slate-100 px-1 rounded">${s.id}</span><div class="icon-status text-lg">${isPresent ? '<i class="fa-solid fa-circle-check text-emerald-500"></i>' : '<i class="fa-solid fa-circle-xmark text-red-400"></i>'}</div></div>`;
+                    grid.appendChild(card);
+                });
+            },
+
+            filterAttendance: function() {
+                const q = document.getElementById('search-attendance').value.toLowerCase();
+                const filtered = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
+                this.renderAttendanceGrid(filtered);
+            },
+
+            markAll: function(status) {
+                if(!this.currentStudents.length) return;
+                const q = document.getElementById('search-attendance').value.toLowerCase();
+                const targetStudents = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
+                targetStudents.forEach(s => { this.attendanceChanges[s.id] = status; });
+                this.renderAttendanceGrid(targetStudents);
+                this.showToast(status ? "Marked Visible Present" : "Marked Visible Absent");
+            },
+
+            toggleAttendance: function(uid, card) {
+                const next = !this.attendanceChanges[uid];
+                this.attendanceChanges[uid] = next;
+                if(next) { card.classList.replace('absent','present'); card.querySelector('.icon-status').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>'; } else { card.classList.replace('present','absent'); card.querySelector('.icon-status').innerHTML = '<i class="fa-solid fa-circle-xmark text-red-400"></i>'; }
+            },
+
+            saveAttendance: async function() {
+                const date = document.getElementById('mark-date').value;
+                const session = document.getElementById('mark-session').value;
+                const subject = document.getElementById('mark-subject').value;
+                const classId = document.getElementById('mark-class-input').value.toUpperCase().trim();
+                const btn = document.getElementById('save-btn');
+                btn.disabled = true; btn.innerHTML = 'Saving...';
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', `${date}_${classId}_${session}_${subject}`), {
+                    date, session, subject, classId, presentIds: Object.keys(this.attendanceChanges).filter(k => this.attendanceChanges[k]), type: 'theory'
+                });
+                this.showToast("Attendance Saved!");
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span>Save Attendance</span>';
+            },
+
+            loadLabStudents: async function() {
+                const classId = document.getElementById('lab-class-input').value.toUpperCase().trim();
+                const list = document.getElementById('lab-student-list');
+                const controls = document.getElementById('lab-controls');
+                if(!classId) return this.showToast("Enter Section");
+                list.innerHTML = '<div class="col-span-full text-center py-8"><div class="loader mx-auto"></div></div>';
+                document.getElementById('lab-save-fab').classList.add('translate-y-32');
+                controls.classList.add('hidden');
+                document.getElementById('search-lab').value = '';
+                const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+                const students = [];
+                snap.forEach(d => { if(d.data().classId === classId && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
+                this.currentStudents = students.sort((a,b) => a.id.localeCompare(b.id));
+                this.labScores = {};
+                if(students.length === 0) { list.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No students found.</p></div>'; return; }
+                controls.classList.remove('hidden');
+                this.renderLabGrid(this.currentStudents);
+                document.getElementById('lab-save-fab').classList.remove('translate-y-32');
+            },
+
+            renderLabGrid: function(studentList) {
+                const list = document.getElementById('lab-student-list');
+                list.innerHTML = '';
+                if(studentList.length === 0) { list.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No matches found.</p></div>'; return; }
+                studentList.forEach(s => {
+                    const isGraded = this.labScores[s.id] && this.labScores[s.id].total > 0;
+                    const div = document.createElement('div');
+                    div.id = `lab-card-${s.id}`;
+                    div.className = `lab-card bg-white p-3 rounded-xl shadow-sm border cursor-pointer flex flex-col justify-between h-20 active:scale-[0.98] transition ${isGraded ? 'graded' : ''}`;
+                    div.onclick = () => this.openLabModal(s);
+                    const scoreText = isGraded ? `<span class="text-blue-600 font-bold">${this.labScores[s.id].total}/20</span>` : '<span class="text-slate-300">--</span>';
+                    div.innerHTML = `<div class="flex justify-between items-start"><div class="font-bold text-xs truncate-text w-full pr-1">${s.name}</div></div><div class="flex justify-between items-end mt-1"><span class="text-[10px] font-mono text-slate-400 bg-slate-100 px-1 rounded">${s.id}</span><div class="score-summary text-xs">${scoreText}</div></div>`;
+                    list.appendChild(div);
+                });
+            },
+
+            filterLab: function() {
+                const q = document.getElementById('search-lab').value.toLowerCase();
+                const filtered = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
+                this.renderLabGrid(filtered);
+            },
+
+            renderScoreButtons: function() {
+                ['obs', 'rec', 'pun', 'per'].forEach(metric => {
+                    const container = document.getElementById(`btns-${metric}`);
+                    if(!container) return;
+                    container.innerHTML = '';
+                    [1,2,3,4,5].forEach(num => {
+                        const btn = document.createElement('div');
+                        btn.className = 'score-btn cursor-pointer';
+                        btn.textContent = num;
+                        btn.onclick = () => this.setModalScore(metric, num);
+                        container.appendChild(btn);
+                    });
+                });
+            },
+
+            openLabModal: function(student) {
+                this.currentLabStudent = student;
+                document.getElementById('lab-modal-name').textContent = student.name;
+                document.getElementById('lab-modal-id').textContent = `ID: ${student.id}`;
+                const scores = this.labScores[student.id] || { obs: 0, rec: 0, pun: 0, per: 0, total: 0 };
+                ['obs', 'rec', 'pun', 'per'].forEach(k => this.setModalScore(k, scores[k], false));
+                this.updateTotalScore();
+                const bd = document.getElementById('lab-modal-backdrop');
+                const ct = document.getElementById('lab-modal-content');
+                bd.classList.remove('hidden');
+                setTimeout(() => { ct.classList.remove('translate-y-full'); }, 10);
+            },
+
+            closeLabModal: function() {
+                const bd = document.getElementById('lab-modal-backdrop');
+                const ct = document.getElementById('lab-modal-content');
+                ct.classList.add('translate-y-full');
+                setTimeout(() => { bd.classList.add('hidden'); }, 300);
+            },
+
+            setModalScore: function(metric, val, update = true) {
+                const container = document.getElementById(`btns-${metric}`);
+                Array.from(container.children).forEach(btn => {
+                    if(parseInt(btn.textContent) === val) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                });
+                document.getElementById(`score-val-${metric}`).textContent = val;
+                if(update) this.updateTotalScore();
+            },
+
+            updateTotalScore: function() {
+                const getVal = (id) => parseInt(document.getElementById(`score-val-${id}`).textContent) || 0;
+                const total = getVal('obs') + getVal('rec') + getVal('pun') + getVal('per');
+                document.getElementById('lab-modal-total').textContent = total;
+            },
+
+            saveStudentLabScore: function() {
+                if(!this.currentLabStudent) return;
+                const getVal = (id) => parseInt(document.getElementById(`score-val-${id}`).textContent) || 0;
+                const scores = { obs: getVal('obs'), rec: getVal('rec'), pun: getVal('pun'), per: getVal('per') };
+                scores.total = scores.obs + scores.rec + scores.pun + scores.per;
+                this.labScores[this.currentLabStudent.id] = scores;
+                const q = document.getElementById('search-lab').value.toLowerCase();
+                const filtered = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
+                this.renderLabGrid(filtered);
+                this.closeLabModal();
+            },
+
+            submitLabSession: async function() {
+                const date = document.getElementById('lab-date').value;
+                const subject = document.getElementById('lab-subject').value;
+                const title = document.getElementById('lab-exp-title').value.trim() || 'Assessment';
+                const classId = document.getElementById('lab-class-input').value.toUpperCase().trim();
+                if(!classId) return this.showToast("Class ID missing");
+                if(Object.keys(this.labScores).length === 0) return this.showToast("Grade at least one student");
+                const btn = document.getElementById('lab-submit-btn');
+                btn.disabled = true; btn.innerHTML = 'Submitting...';
+                const safeTitle = title.replace(/[^a-zA-Z0-9]/g, '');
+                const sessionId = `LAB_${date}_${classId}_${subject}_${safeTitle}`;
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lab_sessions', sessionId), {
+                        date, subject, title, classId, scores: this.labScores, timestamp: new Date().toISOString()
+                    });
+                    this.showToast("Saved Successfully!");
+                } catch(e) { this.showToast("Error saving data."); }
+                finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check-double"></i> <span>Submit Scores</span>'; }
+            },
+
+            setReportMode: function(mode) {
+                this.reportMode = mode;
+                const btnSum = document.getElementById('btn-mode-summary');
+                const btnSes = document.getElementById('btn-mode-session');
+                const inpSum = document.getElementById('report-inputs-summary');
+                const inpSes = document.getElementById('report-inputs-session');
+                if(mode === 'summary') {
+                    btnSum.className = "flex-1 py-2 rounded-lg text-xs font-bold shadow-sm bg-white text-slate-800 transition";
+                    btnSes.className = "flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition";
+                    inpSum.classList.remove('hidden');
+                    inpSes.classList.add('hidden');
+                } else {
+                    btnSes.className = "flex-1 py-2 rounded-lg text-xs font-bold shadow-sm bg-white text-slate-800 transition";
+                    btnSum.className = "flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition";
+                    inpSes.classList.remove('hidden');
+                    inpSum.classList.add('hidden');
+                }
+                document.getElementById('report-results').innerHTML = '';
+                document.getElementById('report-actions').classList.add('hidden');
+            },
+
+            handleReportGeneration: function() {
+                if(this.reportMode === 'summary') {
+                    this.generateReport();
+                } else {
+                    this.generateSessionReport();
+                }
+            },
+
+            generateSessionReport: async function() {
+                const date = document.getElementById('report-session-date').value;
+                const session = document.getElementById('report-session-slot').value;
+                const subject = document.getElementById('report-session-subject').value;
+                const classId = document.getElementById('report-session-class').value.toUpperCase().trim();
+                const container = document.getElementById('report-results');
+                const actions = document.getElementById('report-actions');
+                if(!classId) return this.showToast("Enter Section");
+                container.innerHTML = '<div class="loader mx-auto"></div>';
+                actions.classList.add('hidden');
+                const sessionId = `${date}_${classId}_${session}_${subject}`;
+                const attRef = doc(db, 'artifacts', appId, 'public', 'data', 'attendance', sessionId);
+                const attSnap = await getDoc(attRef);
+                if(!attSnap.exists()) { container.innerHTML = '<div class="text-center py-8 opacity-50"><i class="fa-solid fa-ghost text-2xl mb-2"></i><p>No session data found.</p></div>'; return; }
+                const data = attSnap.data();
+                const presentIds = data.presentIds || [];
+                const userSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+                const students = [];
+                userSnap.forEach(d => { if(d.data().classId === classId && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
+                if(students.length === 0) { container.innerHTML = '<p class="text-center text-slate-400">No students found.</p>'; return; }
+                students.sort((a,b) => a.id.localeCompare(b.id));
+                const presentList = students.filter(s => presentIds.includes(s.id));
+                const absentList = students.filter(s => !presentIds.includes(s.id));
+                this.sessionReportData = { date, session, subject, classId, total: students.length, present: presentList, absent: absentList, all: students.map(s => ({...s, status: presentIds.includes(s.id) ? 'Present' : 'Absent'})) };
+                actions.classList.remove('hidden');
+                let html = `<div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-center"><div class="text-xl font-bold text-emerald-600">${presentList.length}</div><div class="text-[10px] font-bold text-emerald-400 uppercase">Present</div></div><div class="bg-red-50 border border-red-100 p-3 rounded-xl text-center"><div class="text-xl font-bold text-red-600">${absentList.length}</div><div class="text-[10px] font-bold text-red-400 uppercase">Absent</div></div></div><div class="flex gap-2 mb-4 overflow-x-auto pb-1"><div onclick="app.renderSessionList('all')" id="cap-all" class="filter-capsule active bg-slate-800 text-white px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">All (${students.length})</div><div onclick="app.renderSessionList('present')" id="cap-present" class="filter-capsule bg-white border border-slate-200 text-emerald-600 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Present (${presentList.length})</div><div onclick="app.renderSessionList('absent')" id="cap-absent" class="filter-capsule bg-white border border-slate-200 text-red-600 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Absent (${absentList.length})</div></div><div id="session-list-container" class="space-y-2"></div>`;
+                container.innerHTML = html;
+                this.renderSessionList('all');
+            },
+
+            renderSessionList: function(filter) {
+                const container = document.getElementById('session-list-container');
+                ['all', 'present', 'absent'].forEach(f => {
+                    const cap = document.getElementById(`cap-${f}`);
+                    if(f === filter) { cap.className = `filter-capsule active px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border ${f==='all' ? 'bg-slate-800 text-white border-transparent' : (f==='present'?'bg-emerald-100 border-emerald-200 text-emerald-700':'bg-red-100 border-red-200 text-red-700')}`; }
+                    else { cap.className = `filter-capsule bg-white border border-slate-200 text-slate-500 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap`; }
+                });
+                let list = [];
+                if(filter === 'all') list = this.sessionReportData.all; else if(filter === 'present') list = this.sessionReportData.present; else list = this.sessionReportData.absent;
+                if(list.length === 0) { container.innerHTML = '<p class="text-center text-slate-400 py-4 text-xs">List is empty.</p>'; return; }
+                container.innerHTML = list.map(s => {
+                    const status = s.status || (filter === 'present' ? 'Present' : 'Absent');
+                    const color = status === 'Present' ? 'text-emerald-500' : 'text-red-500';
+                    const icon = status === 'Present' ? '<i class="fa-solid fa-circle-check"></i>' : '<i class="fa-solid fa-circle-xmark"></i>';
+                    return `<div class="bg-white p-3 rounded-lg border border-slate-100 flex justify-between items-center shadow-sm"><div class="flex items-center gap-3"><span class="text-xs font-mono text-slate-400 bg-slate-50 px-1 rounded">${s.id}</span><span class="text-sm font-semibold text-slate-700">${s.name}</span></div><div class="${color} text-lg">${icon}</div></div>`;
+                }).join('');
+            },
+
+            generateReport: async function() {
+                const classId = document.getElementById('report-class-input').value.toUpperCase().trim();
+                const subject = document.getElementById('report-subject').value;
+                const container = document.getElementById('report-results');
+                const actions = document.getElementById('report-actions');
+                if(!classId) return;
+                container.innerHTML = '<div class="loader mx-auto"></div>';
+                actions.classList.add('hidden');
+                const userSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+                const students = [];
+                userSnap.forEach(d => { if(d.data().classId === classId && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
+                const attSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'attendance'));
+                const labSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'lab_sessions'));
+                const stats = {};
+                students.forEach(s => stats[s.id] = { name: s.name, attTotal: 0, attPresent: 0, labTotal: 0, labScore: 0 });
+                let totalAttSessions = 0;
+                let totalLabSessions = 0;
+                attSnap.forEach(d => {
+                    const data = d.data();
+                    if(data.classId === classId) {
+                        if(subject === 'ALL' || data.subject === subject) {
+                            totalAttSessions++;
+                            if(data.presentIds) data.presentIds.forEach(id => { if(stats[id]) stats[id].attPresent++; });
+                        }
+                    }
+                });
+                labSnap.forEach(d => {
+                    const data = d.data();
+                    if(data.classId === classId) {
+                        if(subject === 'ALL' || data.subject === subject) {
+                            totalLabSessions++;
+                            if(data.scores) Object.keys(data.scores).forEach(id => {
+                                if(stats[id]) { stats[id].labScore += data.scores[id].total; }
+                            });
+                        }
+                    }
+                });
+                if(totalAttSessions === 0 && totalLabSessions === 0) { container.innerHTML = '<p class="text-center text-slate-400">No data found.</p>'; return; }
+                actions.classList.remove('hidden');
+                students.sort((a,b) => a.id.localeCompare(b.id));
+                this.currentReportData = { classId, subject, students: [], totalAtt: totalAttSessions, totalLab: totalLabSessions };
+                let html = `<div class="bg-blue-50 text-blue-800 p-3 rounded-lg text-xs font-bold flex justify-between mb-2"><span>Theory Sessions: ${totalAttSessions}</span> <span>Assessments: ${totalLabSessions}</span></div>`;
+                html += `<div class="grid grid-cols-12 text-[10px] uppercase font-bold text-slate-400 px-2 mb-2"><div class="col-span-5">Student</div><div class="col-span-3 text-center">Att %</div><div class="col-span-4 text-right">Avg Score</div></div>`;
+                students.forEach(s => {
+                    const d = stats[s.id];
+                    const attPct = totalAttSessions ? Math.round((d.attPresent / totalAttSessions) * 100) : 0;
+                    const avgScore = totalLabSessions ? (d.labScore / totalLabSessions).toFixed(1) : 0;
+                    this.currentReportData.students.push({ id: s.id, name: s.name, att: d.attPresent, attPct, score: d.labScore, avgScore });
+                    let color = attPct >= 75 ? 'text-emerald-500' : (attPct >= 50 ? 'text-yellow-500' : 'text-red-500');
+                    html += `<div class="bg-white p-3 rounded-lg border border-slate-100 grid grid-cols-12 items-center shadow-sm mb-2"><div class="col-span-5"><div class="font-bold text-sm text-slate-700 truncate">${s.name}</div><div class="text-[10px] text-slate-400 font-mono">${s.id}</div></div><div class="col-span-3 text-center"><span class="text-xs font-bold ${color}">${attPct}%</span></div><div class="col-span-4 text-right"><span class="text-xs font-bold text-blue-600">${avgScore}</span><span class="text-[10px] text-slate-400">/20</span></div></div>`;
+                });
+                container.innerHTML = html;
+            },
+            
+            downloadCSV: function() {
+                if(!this.currentReportData && !this.sessionReportData) return;
+                if (this.reportMode === 'session' && this.sessionReportData) {
+                    const d = this.sessionReportData;
+                    let csv = `Session Report\nDate,${d.date}\nClass,${d.classId}\nSubject,${d.subject} - ${d.session}\n\nRoll No,Name,Status\n`;
+                    d.all.forEach(s => { csv += `${s.id},${s.name},${s.status}\n`; });
+                    const blob = new Blob([csv], {type: 'text/csv'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = `Session_Report_${d.date}.csv`; a.click();
+                } else {
+                    const d = this.currentReportData;
+                    let csv = `Roll No,Name,Present (Days),Total Days,Attendance %,Total Score,Avg Score (out of 20)\n`;
+                    d.students.forEach(s => csv += `${s.id},${s.name},${s.att},${d.totalAtt},${s.attPct}%,${s.score},${s.avgScore}\n`);
+                    const blob = new Blob([csv], {type: 'text/csv'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = 'report.csv'; a.click();
+                }
+            },
+
+            downloadPDF: function() {
+                if(!this.currentReportData && !this.sessionReportData) return;
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                if (this.reportMode === 'session' && this.sessionReportData) {
+                    const d = this.sessionReportData;
+                    doc.text(`Session Detail: ${d.date}`, 14, 20);
+                    doc.setFontSize(10);
+                    doc.text(`${d.classId} | ${d.subject} (${d.session})`, 14, 28);
+                    doc.text(`Present: ${d.present.length} | Absent: ${d.absent.length}`, 14, 34);
+                    doc.autoTable({ head: [['Roll No', 'Name', 'Status']], body: d.all.map(s => [s.id, s.name, s.status]), startY: 40, styles: { fontSize: 10 }, headStyles: { fillColor: [15, 23, 42] } });
+                    doc.save(`Session_${d.date}.pdf`);
+                } else {
+                    const d = this.currentReportData;
+                    doc.text(`Report: ${d.classId} - ${d.subject}`, 14, 20);
+                    doc.setFontSize(10);
+                    doc.text(`Total Theory: ${d.totalAtt} | Total Assessments: ${d.totalLab}`, 14, 28);
+                    doc.autoTable({ head: [['ID', 'Name', 'Attendance', 'Score (Avg)']], body: d.students.map(s => [s.id, s.name, `${s.attPct}% (${s.att}/${d.totalAtt})`, `${s.avgScore} / 20`]), startY: 35 });
+                    doc.save('report.pdf');
+                }
+            },
+
+            // --- Utils ---
+            switchView: function(id) {
+                document.querySelectorAll('.hidden-section').forEach(el => el.classList.remove('active-section'));
+                const target = document.getElementById(id);
+                if(target) target.classList.add('active-section');
+                document.getElementById('view-loading').classList.add('hidden');
+            },
+            toggleAuthFields: function() {
+                const role = document.querySelector('input[name="role"]:checked').value;
+                if(role === 'student') { document.getElementById('form-student').classList.remove('hidden'); document.getElementById('form-faculty').classList.add('hidden'); }
+                else { document.getElementById('form-student').classList.add('hidden'); document.getElementById('form-faculty').classList.remove('hidden'); }
+            },
+            setFacultyTab: function(tab) {
+                ['mark', 'lab', 'report', 'manage'].forEach(t => {
+                    const btn = document.getElementById(`tab-btn-${t}`);
+                    const sec = document.getElementById(`faculty-${t}-section`);
+                    if(t === tab) { btn.classList.add('bg-slate-900','text-white'); btn.classList.remove('bg-white','text-slate-500','border'); sec.classList.remove('hidden'); }
+                    else { btn.classList.add('bg-white','text-slate-500','border'); btn.classList.remove('bg-slate-900','text-white'); sec.classList.add('hidden'); }
+                });
+            },
+            updateHeader: function() {
+                document.getElementById('user-header-info').classList.remove('hidden');
+                document.getElementById('header-username').textContent = this.profile.name;
+            },
+            showToast: function(msg) {
+                const t = document.getElementById('toast');
+                document.getElementById('toast-msg').textContent = msg;
+                t.classList.remove('opacity-0', '-translate-y-4');
+                setTimeout(() => t.classList.add('opacity-0', '-translate-y-4'), 3000);
+            },
+            logout: async function() { await signOut(auth); window.location.reload(); },
+            handleImport: async function() {
+                const txt = document.getElementById('import-text').value;
+                if(!txt.trim()) return;
+                const lines = txt.split('\n');
+                let count = 0;
+                for (let line of lines) {
+                    const parts = line.split(',');
+                    if(parts.length >= 3) {
+                        const uid = parts[0].trim();
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid), {
+                            name: parts[1].trim(), role: 'student', classId: parts[2].trim().toUpperCase(), importedAt: new Date().toISOString()
+                        });
+                        count++;
+                    }
+                }
+                this.showToast(`Imported ${count} students!`);
+                document.getElementById('import-text').value = '';
+            },
+            
+            // --- NEW: Reset Lock ---
+            resetDeviceLock: async function() {
+                const id = document.getElementById('reset-lock-id').value.toUpperCase().trim();
+                if(!id) return this.showToast("Enter Roll No");
+                try {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), {
+                        deviceUid: null // Clear lock
+                    });
+                    this.showToast(`Reset lock for ${id}`);
+                    document.getElementById('reset-lock-id').value = '';
+                } catch(e) {
+                    this.showToast("Error resetting lock. Check ID.");
+                }
+            },
+
+            loadStudentData: async function() {
+                const uid = this.profile.uid; const classId = this.profile.classId;
+                document.getElementById('student-dash-name').textContent = this.profile.name;
+                document.getElementById('student-dash-class').textContent = classId;
+                const attSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'attendance'));
+                let totalAtt = 0, presentAtt = 0;
+                let history = [];
+                attSnap.forEach(d => {
+                    const data = d.data();
+                    if(data.classId === classId && data.presentIds) {
+                        totalAtt++;
+                        const present = data.presentIds.includes(uid);
+                        if(present) presentAtt++;
+                        history.push({ date: data.date, title: `${data.subject} (${data.session})`, type: 'ATT', val: present ? 'Present' : 'Absent' });
+                    }
+                });
+                document.getElementById('student-overall-percent').textContent = totalAtt ? Math.round((presentAtt/totalAtt)*100)+'%' : '0%';
+                const labSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'lab_sessions'));
+                let totalLabScore = 0, labCount = 0;
+                labSnap.forEach(d => {
+                    const data = d.data();
+                    if(data.classId === classId && data.scores && data.scores[uid]) {
+                        totalLabScore += data.scores[uid].total;
+                        labCount++;
+                        history.push({ date: data.date, title: `${data.subject} - ${data.title || 'Score'}`, type: 'LAB', val: data.scores[uid].total + '/20' });
+                    }
+                });
+                document.getElementById('student-lab-avg').textContent = labCount ? (totalLabScore/labCount).toFixed(1) : '--';
+                const list = document.getElementById('student-history-list');
+                if (history.length === 0) { list.innerHTML = '<p class="text-center text-slate-400 text-sm p-4">No recent activity.</p>'; } else {
+                    list.innerHTML = history.sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 10).map(h => `<div class="bg-white border-l-4 ${h.type === 'LAB' ? 'border-blue-500' : (h.val === 'Present' ? 'border-emerald-500' : 'border-red-400')} p-3 rounded-xl shadow-sm flex justify-between items-center"><div><div class="font-bold text-slate-700 text-sm">${h.date}</div><div class="text-[10px] text-slate-400 uppercase font-bold truncate max-w-[150px]">${h.title}</div></div><span class="text-xs font-bold ${h.type === 'LAB' ? 'text-blue-600 bg-blue-50' : (h.val === 'Present' ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50')} px-2 py-1 rounded-md whitespace-nowrap">${h.val}</span></div>`).join('');
+                }
+            }
+        };
+
+        window.app.init();
+    </script>
+</body>
+</html>
