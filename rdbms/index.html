@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rich Event System ERD Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/MotionPathPlugin.min.js"></script>
+    <style>
+        /* Base Environment */
+        body { 
+            background-color: #0b0f19; /* Deep dark blue/black */
+            color: #e2e8f0; 
+            overflow: hidden; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Rich Grid Background */
+        #erd-canvas {
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(30, 41, 59, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 41, 59, 0.3) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center center;
+        }
+
+        /* --- SVG STYLING --- */
+
+        /* Rich Entity Cards */
+        .entity-card-bg {
+            fill: rgba(30, 41, 59, 0.7);
+            stroke: #475569;
+            stroke-width: 2;
+            rx: 12; /* Rounded corners */
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+            transition: all 0.4s ease;
+        }
+        .entity-group:hover .entity-card-bg {
+            stroke: #60a5fa;
+            fill: rgba(30, 41, 59, 0.9);
+            filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.4));
+            cursor: pointer;
+        }
+        
+        .entity-header {
+            fill: url(#header-gradient-blue);
+            clip-path: inset(0 0 65% 0 round 12px 12px 0 0); /* Top part only */
+        }
+        
+        .entity-title {
+            font-size: 14px;
+            font-weight: 800;
+            fill: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .entity-icon-container {
+            fill: rgba(255,255,255,0.1);
+            stroke: rgba(255,255,255,0.2);
+            stroke-width: 1;
+        }
+
+        .entity-attr {
+            font-size: 11px;
+            fill: #94a3b8;
+            font-family: monospace;
+        }
+
+        /* Relationship Diamonds */
+        .rel-shape {
+            fill: #1e293b;
+            stroke: #64748b;
+            stroke-width: 2;
+            transform-origin: center;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            transition: all 0.3s;
+        }
+        .rel-text {
+            font-size: 10px;
+            fill: #cbd5e1;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 0 1px 2px black;
+        }
+        .rel-group:hover .rel-shape {
+            stroke: #fbbf24;
+            fill: #334155;
+            transform: scale(1.1);
+        }
+
+        /* Connectors */
+        .connector {
+            fill: none;
+            stroke: #334155;
+            stroke-width: 3;
+            stroke-linecap: round;
+            transition: stroke 0.5s;
+        }
+        
+        /* Active Paths (Modes) */
+        .connector.oltp-active {
+            stroke: #3b82f6; /* Blue */
+            stroke-width: 4;
+            filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.5));
+            opacity: 1;
+        }
+        .connector.olap-active {
+            stroke: #a855f7; /* Purple */
+            stroke-width: 4;
+            filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.5));
+            opacity: 1;
+        }
+        .connector.dimmed {
+            stroke: #1e293b;
+            stroke-width: 2;
+            opacity: 0.3;
+        }
+
+        /* Particles */
+        .particle {
+            fill: #fbbf24;
+            filter: drop-shadow(0 0 8px #fbbf24);
+            display: none;
+        }
+
+        /* OLAP specific styles */
+        .olap-card-bg {
+            stroke: #a855f7;
+            fill: rgba(88, 28, 135, 0.2);
+        }
+        .olap-header {
+            fill: url(#header-gradient-purple);
+        }
+
+
+        /* UI Controls */
+        .control-panel {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col">
+
+    <!-- Navbar -->
+    <header class="h-16 border-b border-slate-800 bg-[#0f172a] flex items-center justify-between px-6 z-50 shrink-0 shadow-lg">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <i class="fas fa-network-wired text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-xl text-white tracking-tight">EventSystem <span class="text-blue-400 font-light">Architect</span></h1>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest">Enterprise ERD Visualizer</p>
+            </div>
+        </div>
+        
+        <div class="flex bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+            <button onclick="switchMode('design')" id="btn-design" class="px-4 py-2 text-xs font-bold rounded-md bg-blue-600 text-white shadow-lg transition-all">Design</button>
+            <button onclick="switchMode('oltp')" id="btn-oltp" class="px-4 py-2 text-xs font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-all">OLTP Flow</button>
+            <button onclick="switchMode('olap')" id="btn-olap" class="px-4 py-2 text-xs font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-all">OLAP Analytics</button>
+        </div>
+    </header>
+
+    <!-- Canvas -->
+    <main class="flex-grow relative overflow-hidden">
+        <svg id="erd-canvas" viewBox="0 0 1400 800" preserveAspectRatio="xMidYMid meet">
+            
+            <!-- DEFINITIONS (Gradients & Markers) -->
+            <defs>
+                <linearGradient id="header-gradient-blue" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.8" />
+                    <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:0.1" />
+                </linearGradient>
+                <linearGradient id="header-gradient-purple" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#a855f7;stop-opacity:0.8" />
+                    <stop offset="100%" style="stop-color:#7e22ce;stop-opacity:0.1" />
+                </linearGradient>
+                
+                <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L9,3 z" fill="#3b82f6" />
+                </marker>
+                <marker id="crowfoot" markerWidth="14" markerHeight="14" refX="14" refY="7" orient="auto">
+                     <path d="M0,7 L14,7 M14,0 L14,14 M0,0 L14,7 L0,14" fill="none" stroke="#64748b" stroke-width="2"/>
+                </marker>
+                 <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+
+            <!-- CONNECTIONS LAYER -->
+            
+            <!-- 1. Dept -> Event -->
+            <path id="path-dept-event" d="M260,400 L400,400" class="connector oltp-path" />
+            <path id="path-event-host" d="M480,400 L620,400" class="connector oltp-path" marker-end="url(#crowfoot)" />
+            
+            <!-- 2. Event -> Activity -->
+            <path id="path-event-act" d="M780,400 L900,400" class="connector oltp-path" />
+            <path id="path-act-join" d="M980,400 L1100,400" class="connector oltp-path" marker-end="url(#crowfoot)" />
+            
+            <!-- 3. Student -> Activity (Vertical/Angled) -->
+            <path id="path-stud-act" d="M1180,600 L1180,480" class="connector oltp-path" />
+            
+            <!-- 4. Faculty -> Event (Vertical) -->
+            <path id="path-fac-event" d="M700,160 L700,320" class="connector oltp-path" />
+
+            <!-- 5. OLAP Path (Curved, dashing) -->
+            <path id="path-olap" d="M700,480 Q700,700 350,700" class="connector olap-path hidden" stroke-dasharray="10,5" />
+
+
+            <!-- ENTITIES LAYER -->
+
+            <!-- DEPT Entity (Left) -->
+            <g id="ent-dept" class="entity-group" transform="translate(100, 350)">
+                <rect width="160" height="100" class="entity-card-bg" />
+                <rect width="160" height="100" class="entity-header" />
+                <circle cx="30" cy="30" r="14" class="entity-icon-container" />
+                <!-- Icon Placeholder: Building -->
+                <text x="30" y="35" text-anchor="middle" font-family="FontAwesome" fill="white" font-size="14">&#xf1ad;</text>
+                
+                <text x="55" y="35" class="entity-title">DEPT</text>
+                
+                <!-- Attributes List -->
+                <g transform="translate(20, 60)">
+                    <text y="0" class="entity-attr">PK: Dept_ID</text>
+                    <text y="15" class="entity-attr">Name: String</text>
+                    <text y="30" class="entity-attr">HOD: String</text>
+                </g>
+            </g>
+
+            <!-- RELATIONSHIP: Hosts (Dept-Event) -->
+            <g id="rel-hosts" class="rel-group" transform="translate(400, 360)">
+                <polygon points="40,0 80,40 40,80 0,40" class="rel-shape" />
+                <text x="40" y="44" text-anchor="middle" class="rel-text">HOSTS</text>
+                <!-- Cardinality -->
+                <text x="5" y="20" class="text-[10px] fill-slate-500 font-bold">1</text>
+                <text x="70" y="20" class="text-[10px] fill-slate-500 font-bold">N</text>
+            </g>
+
+            <!-- EVENT Entity (Center) -->
+            <g id="ent-event" class="entity-group" transform="translate(620, 350)">
+                <rect width="160" height="100" class="entity-card-bg" />
+                <rect width="160" height="100" class="entity-header" />
+                <circle cx="30" cy="30" r="14" class="entity-icon-container" />
+                <text x="30" y="35" text-anchor="middle" font-family="FontAwesome" fill="white" font-size="14">&#xf073;</text>
+                
+                <text x="55" y="35" class="entity-title">EVENT</text>
+                
+                <g transform="translate(20, 60)">
+                    <text y="0" class="entity-attr">PK: Event_ID</text>
+                    <text y="15" class="entity-attr">Date: Date</text>
+                    <text y="30" class="entity-attr">Type: Enum</text>
+                </g>
+            </g>
+
+            <!-- FACULTY Entity (Top) -->
+            <g id="ent-faculty" class="entity-group" transform="translate(620, 60)">
+                <rect width="160" height="100" class="entity-card-bg" />
+                <rect width="160" height="100" class="entity-header" />
+                <circle cx="30" cy="30" r="14" class="entity-icon-container" />
+                <text x="30" y="35" text-anchor="middle" font-family="FontAwesome" fill="white" font-size="14">&#xf51c;</text>
+                
+                <text x="55" y="35" class="entity-title">FACULTY</text>
+                
+                <g transform="translate(20, 60)">
+                    <text y="0" class="entity-attr">PK: Fac_ID</text>
+                    <text y="15" class="entity-attr">Exp: Int</text>
+                </g>
+            </g>
+
+            <!-- RELATIONSHIP: Mentors (Faculty-Event) -->
+            <g id="rel-mentors" class="rel-group" transform="translate(660, 240)">
+                <polygon points="40,0 80,40 40,80 0,40" class="rel-shape" />
+                <text x="40" y="44" text-anchor="middle" class="rel-text">GUIDES</text>
+            </g>
+
+            <!-- RELATIONSHIP: Contains (Event-Activity) -->
+            <g id="rel-contains" class="rel-group" transform="translate(900, 360)">
+                <polygon points="40,0 80,40 40,80 0,40" class="rel-shape" />
+                <text x="40" y="44" text-anchor="middle" class="rel-text">HAS</text>
+            </g>
+
+            <!-- ACTIVITY Entity (Right) -->
+            <g id="ent-activity" class="entity-group" transform="translate(1100, 350)">
+                <rect width="160" height="100" class="entity-card-bg" />
+                <rect width="160" height="100" class="entity-header" />
+                <circle cx="30" cy="30" r="14" class="entity-icon-container" />
+                <text x="30" y="35" text-anchor="middle" font-family="FontAwesome" fill="white" font-size="14">&#xf2b5;</text>
+                
+                <text x="55" y="35" class="entity-title">ACTIVITY</text>
+                
+                <g transform="translate(20, 60)">
+                    <text y="0" class="entity-attr">PK: Act_ID</text>
+                    <text y="15" class="entity-attr">Type: Dance</text>
+                </g>
+            </g>
+
+            <!-- STUDENT Entity (Bottom Right) -->
+            <g id="ent-student" class="entity-group" transform="translate(1100, 600)">
+                <rect width="160" height="100" class="entity-card-bg" />
+                <rect width="160" height="100" class="entity-header" />
+                <circle cx="30" cy="30" r="14" class="entity-icon-container" />
+                <text x="30" y="35" text-anchor="middle" font-family="FontAwesome" fill="white" font-size="14">&#xf501;</text>
+                
+                <text x="55" y="35" class="entity-title">STUDENT</text>
+                
+                <g transform="translate(20, 60)">
+                    <text y="0" class="entity-attr">PK: Stud_ID</text>
+                    <text y="15" class="entity-attr">Year: 1st</text>
+                </g>
+            </g>
+            
+            <!-- RELATIONSHIP: Registers (Student-Activity) -->
+            <g id="rel-joins" class="rel-group" transform="translate(1140, 480)">
+                <polygon points="40,0 80,40 40,80 0,40" class="rel-shape" />
+                <text x="40" y="44" text-anchor="middle" class="rel-text">JOINS</text>
+            </g>
+
+            <!-- OLAP WAREHOUSE (Bottom Left - Hidden initially) -->
+            <g id="ent-olap" class="entity-group opacity-30 transition-opacity duration-500" transform="translate(200, 650)">
+                <rect width="180" height="110" class="entity-card-bg olap-card-bg" />
+                <rect width="180" height="110" class="entity-header olap-header" />
+                <circle cx="30" cy="30" r="14" class="entity-icon-container" />
+                <text x="30" y="35" text-anchor="middle" font-family="FontAwesome" fill="white" font-size="14">&#xf080;</text>
+                
+                <text x="55" y="35" class="entity-title">WAREHOUSE</text>
+                <text x="90" y="80" text-anchor="middle" class="entity-attr fill-purple-300 font-bold text-lg">ANNUAL REPORT</text>
+            </g>
+
+            <!-- PARTICLES -->
+            <circle id="p1" r="8" class="particle" />
+            <circle id="p2" r="8" class="particle" />
+            <circle id="p3" r="8" class="particle" />
+            <circle id="p4" r="8" class="particle" />
+
+        </svg>
+    </main>
+
+    <!-- Controls -->
+    <div class="fixed bottom-0 left-0 w-full control-panel p-6 z-40 transform transition-transform duration-300" id="controls-container">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            
+            <!-- OLTP Controls -->
+            <div id="ctrl-oltp" class="flex items-center gap-4 transition-opacity duration-300">
+                <div class="text-right border-r border-slate-700 pr-4 mr-2">
+                    <h3 class="text-green-400 font-bold text-sm uppercase">Transactions</h3>
+                    <p class="text-slate-500 text-[10px]">Operational Level</p>
+                </div>
+                
+                <button onclick="runSim('new_event')" class="group relative px-5 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg overflow-hidden transition-all">
+                    <div class="absolute inset-0 w-1 bg-green-500 transition-all group-hover:w-full opacity-10"></div>
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-plus-circle text-green-400 text-xl group-hover:scale-110 transition-transform"></i>
+                        <div class="text-left">
+                            <div class="text-xs font-bold text-slate-200">New Event</div>
+                            <div class="text-[9px] text-slate-500">Dept creates Event (1:N)</div>
+                        </div>
+                    </div>
+                </button>
+
+                <button onclick="runSim('join_activity')" class="group relative px-5 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg overflow-hidden transition-all">
+                    <div class="absolute inset-0 w-1 bg-blue-500 transition-all group-hover:w-full opacity-10"></div>
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-user-check text-blue-400 text-xl group-hover:scale-110 transition-transform"></i>
+                        <div class="text-left">
+                            <div class="text-xs font-bold text-slate-200">Register Student</div>
+                            <div class="text-[9px] text-slate-500">Student joins Activity (M:N)</div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- OLAP Controls -->
+            <div id="ctrl-olap" class="flex items-center gap-4 transition-opacity duration-300 opacity-50 pointer-events-none grayscale">
+                <div class="text-right border-r border-slate-700 pr-4 mr-2">
+                    <h3 class="text-purple-400 font-bold text-sm uppercase">Analytics</h3>
+                    <p class="text-slate-500 text-[10px]">Warehouse Level</p>
+                </div>
+
+                <button onclick="runSim('gen_report')" class="group relative px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg overflow-hidden transition-all w-64">
+                    <div class="absolute inset-0 w-1 bg-purple-500 transition-all group-hover:w-full opacity-10"></div>
+                    <div class="flex items-center justify-center gap-3">
+                        <i class="fas fa-chart-bar text-purple-400 text-xl group-hover:scale-110 transition-transform"></i>
+                        <div class="text-left">
+                            <div class="text-xs font-bold text-slate-200">Generate Annual Report</div>
+                            <div class="text-[9px] text-slate-500">Aggregate All Events</div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-24 right-8 bg-slate-800/90 border-l-4 border-blue-500 text-white p-4 rounded shadow-2xl backdrop-blur-md transform translate-x-96 transition-transform duration-500 z-50 max-w-sm">
+        <h4 id="toast-title" class="font-bold text-blue-400 mb-1">Notification</h4>
+        <p id="toast-msg" class="text-xs text-slate-300">Message body.</p>
+    </div>
+
+    <script>
+        gsap.registerPlugin(MotionPathPlugin);
+
+        // --- View Switching Logic ---
+        function switchMode(mode) {
+            // Reset Styles
+            document.querySelectorAll('.connector').forEach(c => {
+                c.classList.remove('oltp-active', 'olap-active', 'dimmed');
+            });
+            
+            const btnDesign = document.getElementById('btn-design');
+            const btnOltp = document.getElementById('btn-oltp');
+            const btnOlap = document.getElementById('btn-olap');
+            const ctrlOltp = document.getElementById('ctrl-oltp');
+            const ctrlOlap = document.getElementById('ctrl-olap');
+            const entOlap = document.getElementById('ent-olap');
+            const olapPath = document.getElementById('path-olap');
+
+            // Reset Buttons
+            [btnDesign, btnOltp, btnOlap].forEach(b => {
+                b.className = "px-4 py-2 text-xs font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-all";
+            });
+
+            // Hide/Show Logic
+            if (mode === 'design') {
+                btnDesign.className = "px-4 py-2 text-xs font-bold rounded-md bg-blue-600 text-white shadow-lg transition-all";
+                ctrlOltp.classList.remove('opacity-50', 'pointer-events-none', 'grayscale');
+                ctrlOlap.classList.add('opacity-50', 'pointer-events-none', 'grayscale');
+                entOlap.classList.add('opacity-30');
+                olapPath.classList.add('hidden');
+            } 
+            else if (mode === 'oltp') {
+                btnOltp.className = "px-4 py-2 text-xs font-bold rounded-md bg-blue-600 text-white shadow-lg transition-all";
+                
+                // Dim non-OLTP
+                document.querySelectorAll('.oltp-path').forEach(el => el.classList.add('oltp-active'));
+                
+                ctrlOltp.classList.remove('opacity-50', 'pointer-events-none', 'grayscale');
+                ctrlOlap.classList.add('opacity-50', 'pointer-events-none', 'grayscale');
+                entOlap.classList.add('opacity-30');
+                olapPath.classList.add('hidden');
+            } 
+            else if (mode === 'olap') {
+                btnOlap.className = "px-4 py-2 text-xs font-bold rounded-md bg-purple-600 text-white shadow-lg transition-all";
+                
+                // Dim OLTP, Highlight OLAP
+                document.querySelectorAll('.connector').forEach(el => el.classList.add('dimmed'));
+                olapPath.classList.remove('hidden');
+                olapPath.classList.add('olap-active');
+                olapPath.classList.remove('dimmed');
+
+                ctrlOltp.classList.add('opacity-50', 'pointer-events-none', 'grayscale');
+                ctrlOlap.classList.remove('opacity-50', 'pointer-events-none', 'grayscale');
+                entOlap.classList.remove('opacity-30');
+            }
+        }
+
+        function toast(title, msg) {
+            const el = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = msg;
+            el.classList.remove('translate-x-96');
+            setTimeout(() => el.classList.add('translate-x-96'), 3000);
+        }
+
+        // --- Simulation Logic ---
+        function runSim(action) {
+            gsap.killTweensOf(".particle");
+            gsap.set(".particle", { display: "none", opacity: 0 });
+
+            if (action === 'new_event') {
+                toast("Cardinality 1:N", "One Dept triggers creation of multiple Events.");
+                
+                const p1 = document.getElementById('p1');
+                gsap.set(p1, { display: "block", opacity: 1 });
+
+                // Path: Dept -> Hosts -> Event
+                const tl = gsap.timeline();
+                
+                // Step 1: Dept to Hosts Diamond
+                tl.to(p1, {
+                    motionPath: { path: "#path-dept-event", align: "#path-dept-event", alignOrigin: [0.5, 0.5] },
+                    duration: 0.8,
+                    ease: "power2.inOut"
+                });
+
+                // Step 2: Explosion at Diamond (1 split to N)
+                tl.call(() => {
+                    const diamond = document.querySelector("#rel-hosts .rel-shape");
+                    gsap.fromTo(diamond, {scale: 1}, {scale: 1.4, stroke: "#fbbf24", duration: 0.2, yoyo:true, repeat:1});
+                });
+
+                // Step 3: Multiple particles to Event
+                tl.call(() => {
+                    const p2 = document.getElementById('p2');
+                    const p3 = document.getElementById('p3');
+                    // Position them at diamond
+                    const startX = gsap.getProperty(p1, "x");
+                    const startY = gsap.getProperty(p1, "y");
+                    
+                    gsap.set([p2, p3], { x: startX, y: startY, display: "block", opacity: 1 });
+                    
+                    // Animate p1 (Main)
+                    gsap.to(p1, { motionPath: { path: "#path-event-host", align: "#path-event-host" }, duration: 0.8 });
+                    
+                    // Animate others slightly offset to simulate "Many"
+                    gsap.to(p2, { x: "+=220", y: "-=30", duration: 0.8, opacity: 0 }); // Fade out near end
+                    gsap.to(p3, { x: "+=220", y: "+=30", duration: 0.8, opacity: 0 });
+                });
+            }
+
+            if (action === 'join_activity') {
+                toast("Relationship M:N", "Student registers for an Activity.");
+                const p1 = document.getElementById('p1');
+                gsap.set(p1, { display: "block", opacity: 1 });
+
+                const tl = gsap.timeline();
+                
+                // Student -> Up to Activity
+                tl.to(p1, {
+                    motionPath: { path: "#path-stud-act", align: "#path-stud-act", autoRotate: true },
+                    duration: 1,
+                    ease: "power1.out"
+                });
+                
+                // Flash the Diamond
+                tl.to("#rel-joins .rel-shape", { fill: "#fbbf24", duration: 0.2, yoyo: true, repeat: 3 });
+                
+                // Flash Activity
+                tl.to("#ent-activity .entity-card-bg", { stroke: "#fbbf24", duration: 0.3, yoyo: true, repeat: 1 });
+            }
+
+            if (action === 'gen_report') {
+                toast("OLAP Aggregation", "Extracting data from all nodes to Warehouse.");
+                const particles = ["#p1", "#p2", "#p3", "#p4"];
+                gsap.set(particles, { display: "block", opacity: 0 });
+
+                // Animate from Event -> Warehouse (Curved path)
+                gsap.to(particles, {
+                    opacity: 1,
+                    motionPath: { path: "#path-olap", align: "#path-olap", alignOrigin: [0.5, 0.5] },
+                    duration: 2.5,
+                    stagger: 0.2,
+                    ease: "power1.inOut",
+                    onComplete: () => {
+                         gsap.to("#ent-olap .entity-card-bg", { fill: "#581c87", duration: 0.5, yoyo: true, repeat: 1 });
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
