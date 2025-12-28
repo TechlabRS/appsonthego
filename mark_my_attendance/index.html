@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smart Pro Attendance</title>
+    <title>Smart Pro Attends</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -84,7 +84,7 @@
         .filter-capsule.active { transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         
         /* Modal Backdrop */
-        #lab-modal-backdrop, #pin-modal-backdrop {
+        #lab-modal-backdrop, #pin-modal-backdrop, #delete-modal-backdrop {
             background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
         }
         #lab-modal-content { transition: transform 0.3s cubic-bezier(0,0,0.2,1); }
@@ -119,15 +119,15 @@
         <!-- Loading Screen -->
         <div id="view-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 z-50">
             <div class="loader mb-4 w-8 h-8 border-4"></div>
-            <p class="text-slate-500 text-sm font-medium animate-pulse">Verifying Identity...</p>
+            <p class="text-slate-500 text-sm font-medium animate-pulse">Checking Authorization...</p>
         </div>
 
         <!-- Auth / Onboarding -->
         <div id="view-auth" class="hidden-section p-6 pt-10">
             <div class="glass-panel p-6 rounded-2xl max-w-md mx-auto">
                 <div class="text-center mb-6">
-                    <h2 class="text-2xl font-bold text-slate-900">Welcome</h2>
-                    <p class="text-slate-500 text-sm">Secure Access Portal</p>
+                    <h2 class="text-2xl font-bold text-slate-900">Registration</h2>
+                    <p class="text-slate-500 text-sm">First time setup for this device</p>
                 </div>
                 
                 <div class="mb-6">
@@ -176,18 +176,28 @@
                     </button>
                 </form>
 
-                <!-- FACULTY LOGIN FORM (Hidden) -->
+                <!-- FACULTY REGISTRATION FORM (Secured) -->
                 <form id="form-faculty" class="hidden" onsubmit="app.handleFacultySignup(event)">
                     <div class="mb-5">
                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
                         <input type="text" id="auth-fac-name" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="Faculty Name">
                     </div>
+                    
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                            <i class="fa-solid fa-key text-yellow-500"></i> Department Master Key
+                        </label>
+                        <input type="password" id="auth-fac-secret" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 transition font-mono tracking-widest text-sm" placeholder="SECRET CODE">
+                        <p class="text-[10px] text-slate-500 mt-1">Contact Admin if you don't have this key.</p>
+                    </div>
+
                     <div class="mb-6">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Set Security PIN (4 Digits)</label>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Set Your Security PIN</label>
                         <input type="password" inputmode="numeric" maxlength="4" id="auth-fac-pin" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-center tracking-[1em]" placeholder="0000">
+                        <p class="text-[10px] text-slate-400 mt-1">You will use this PIN to login next time.</p>
                     </div>
                     <button type="submit" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-black active:scale-[0.99] transition shadow-xl shadow-slate-200">
-                        Register Faculty
+                        Authenticate & Register
                     </button>
                 </form>
             </div>
@@ -394,6 +404,7 @@
 
                 <!-- 4. Manage/Import Section -->
                 <div id="faculty-manage-section" class="hidden">
+                    <!-- Import -->
                     <div class="glass-panel p-5 rounded-xl mb-4">
                         <h3 class="font-bold text-slate-800 mb-2">Bulk Import Students</h3>
                         <p class="text-xs text-slate-500 mb-4">Format: <code class="bg-slate-100 px-1 text-slate-700">RollNo, Name, Section</code></p>
@@ -404,8 +415,23 @@
                         <p class="text-xs text-slate-500 mb-2">If a student loses their device.</p>
                         <div class="flex gap-2">
                             <input type="text" id="reset-lock-id" class="flex-1 p-2 bg-slate-50 border rounded-lg text-sm font-mono uppercase" placeholder="Roll No">
-                            <button onclick="app.resetDeviceLock()" class="bg-red-500 text-white px-4 rounded-lg text-xs font-bold">Reset</button>
+                            <button onclick="app.resetDeviceLock()" class="bg-blue-500 text-white px-4 rounded-lg text-xs font-bold">Reset</button>
                         </div>
+                    </div>
+
+                    <!-- Delete Section (Danger Zone) -->
+                    <div class="glass-panel p-5 rounded-xl border border-red-100 bg-red-50/30">
+                        <h3 class="font-bold text-red-700 mb-2"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Danger Zone</h3>
+                        <div class="mb-4">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">Delete Individual Student</label>
+                            <div class="flex gap-2 mt-1">
+                                <input type="text" id="delete-student-input" class="flex-1 p-2 bg-white border border-red-200 rounded-lg text-sm font-mono uppercase" placeholder="Roll No or Name">
+                                <button onclick="app.deleteStudent()" class="bg-red-500 text-white px-4 rounded-lg text-xs font-bold hover:bg-red-600">Delete</button>
+                            </div>
+                        </div>
+                        <button onclick="app.confirmDeleteAll()" class="w-full border border-red-300 text-red-600 py-3 rounded-lg text-sm font-bold hover:bg-red-50 transition">
+                            Delete ALL Students
+                        </button>
                     </div>
                 </div>
             </div>
@@ -516,6 +542,21 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal-backdrop" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-6 w-[320px] shadow-2xl text-center">
+            <div class="bg-red-100 text-red-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+            <h3 class="font-bold text-lg mb-1">Delete All Records?</h3>
+            <p class="text-xs text-slate-500 mb-4">This action cannot be undone. All student profiles, attendance, and scores will be wiped.</p>
+            <div class="flex gap-2">
+                <button onclick="document.getElementById('delete-modal-backdrop').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold text-sm">Cancel</button>
+                <button onclick="app.deleteAllStudents()" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-red-700">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-5 py-3 rounded-full shadow-xl z-50 flex items-center gap-3 transition-all duration-300 opacity-0 -translate-y-4 pointer-events-none w-max max-w-[90%]">
         <i class="fa-solid fa-circle-info text-blue-400"></i>
@@ -526,7 +567,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, updateDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         // --- Constants ---
         const SUBJECTS = [
@@ -539,8 +580,11 @@
             "DBMS Lab",
             "Full Stack Development",
             "Design Thinking & Innovation"
-            
         ];
+        
+        // --- SECURITY ---
+        // Hash for "ADMIN2025" (SHA-256)
+        const FACULTY_MASTER_HASH = "cf45e85c43ebe0960b354cfad32050ea705cbbd334268187bbb42b8ad386ddda";
 
         // --- Config ---
         const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
@@ -552,7 +596,7 @@
   appId: "1:511533506488:web:aca4de3d513915d012f94d",
   measurementId: "G-9PZZM5LFKX"
 		};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'fclty_mng';
         
         const firebaseApp = initializeApp(config);
         const auth = getAuth(firebaseApp);
@@ -569,7 +613,7 @@
             currentReportData: null,
             reportMode: 'summary', 
             sessionReportData: null,
-            tempStudentData: null, // For auth confirmation
+            tempStudentData: null, 
 
             init: async function() {
                 this.populateSubjects();
@@ -627,9 +671,8 @@
                     const qSnap = await getDocs(q);
                     
                     if (!qSnap.empty) {
-                        // Found linked student profile
                         const docSnap = qSnap.docs[0];
-                        this.profile = { ...docSnap.data(), uid: docSnap.id }; // ID is Roll No
+                        this.profile = { ...docSnap.data(), uid: docSnap.id };
                         this.routeUser();
                         document.getElementById('view-loading').classList.add('hidden');
                         return;
@@ -643,6 +686,9 @@
                         const data = snap.data();
                         this.profile = { ...data, uid };
                         if (data.role === 'faculty') {
+                            // HIDE AUTH SCREEN, SHOW PIN MODAL DIRECTLY
+                            document.getElementById('view-auth').classList.remove('active-section');
+                            document.getElementById('view-auth').classList.add('hidden-section');
                             document.getElementById('view-loading').classList.add('hidden');
                             document.getElementById('pin-modal-backdrop').classList.remove('hidden');
                         } else {
@@ -673,7 +719,6 @@
                 }
             },
 
-            // --- NEW: Auth Handlers ---
             toggleAuthFields: function() {
                 const role = document.querySelector('input[name="role"]:checked').value;
                 if(role === 'student') {
@@ -693,23 +738,18 @@
 
                 if(!rollNo) return this.showToast("Enter Roll No");
 
-                // If verifying Identity
                 if(btn.innerText === "Verify Identity") {
                     btn.disabled = true; btn.innerText = "Checking...";
                     try {
                         const ref = doc(db, 'artifacts', appId, 'public', 'data', 'users', rollNo);
                         const snap = await getDoc(ref);
-                        
                         if(snap.exists()) {
                             const data = snap.data();
-                            // Check lock
                             if(data.deviceUid && data.deviceUid !== this.user.uid) {
                                 this.showToast("Access Denied: Locked to another device.");
                                 btn.disabled = false; btn.innerText = "Verify Identity";
                                 return;
                             }
-                            
-                            // Show Confirm
                             this.tempStudentData = { id: rollNo, ...data };
                             document.getElementById('confirm-name').textContent = data.name;
                             document.getElementById('confirm-class').textContent = data.classId;
@@ -723,18 +763,14 @@
                             btn.disabled = false; btn.innerText = "Verify Identity";
                         }
                     } catch(e) { console.error(e); this.showToast("Error verifying ID"); btn.disabled = false; btn.innerText = "Verify Identity"; }
-                } 
-                // If Locking Device
-                else {
+                } else {
                     if(!this.tempStudentData) return;
                     btn.disabled = true; btn.innerText = "Locking...";
                     try {
-                        // Update DB with deviceUid lock
                         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', this.tempStudentData.id), {
                             deviceUid: this.user.uid,
                             lastLogin: new Date().toISOString()
                         });
-                        
                         this.profile = { ...this.tempStudentData, uid: this.tempStudentData.id };
                         this.updateHeader();
                         this.routeUser();
@@ -749,8 +785,14 @@
                 e.preventDefault();
                 const name = document.getElementById('auth-fac-name').value.trim();
                 const pin = document.getElementById('auth-fac-pin').value;
+                const secret = document.getElementById('auth-fac-secret').value;
                 
                 if (!name || pin.length !== 4) return this.showToast("Enter Name and 4-digit PIN");
+                if (!secret) return this.showToast("Enter Master Key");
+
+                // HASH CHECK
+                const secretHash = await this.hashPin(secret);
+                if (secretHash !== FACULTY_MASTER_HASH) return this.showToast("Invalid Master Key. Access Denied.");
                 
                 const pinHash = await this.hashPin(pin);
                 const userData = { name, role: 'faculty', pinHash, joinedAt: new Date().toISOString() };
@@ -763,6 +805,7 @@
                 } catch(e) { this.showToast("Signup Failed"); }
             },
 
+            // ... (Rest of the functions remain exactly as they were in the previous version) ...
             routeUser: function() {
                 if (this.profile.role === 'faculty') this.switchView('view-faculty');
                 else {
@@ -770,11 +813,9 @@
                     this.loadStudentData();
                 }
             },
-
-            // --- Faculty Functions ---
+            // ... (Includes all Attendance, Lab, Report, Delete logic from previous code) ...
             
-            // ... (Attendance, Lab, Report functions remain exactly same as before) ...
-            
+            // --- Copying key logic for completeness ---
             loadAttendanceSheet: async function() {
                 const classInput = document.getElementById('mark-class-input').value.toUpperCase().trim();
                 const date = document.getElementById('mark-date').value;
@@ -1219,6 +1260,47 @@
                 } catch(e) {
                     this.showToast("Error resetting lock. Check ID.");
                 }
+            },
+
+            // --- NEW: Delete Student ---
+            deleteStudent: async function() {
+                const input = document.getElementById('delete-student-input').value.trim();
+                if(!input) return this.showToast("Enter Roll No or Name");
+                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', input.toUpperCase());
+                const userSnap = await getDoc(userRef);
+                if(userSnap.exists() && userSnap.data().role === 'student') {
+                    await deleteDoc(userRef);
+                    this.showToast(`Deleted student: ${input}`);
+                    document.getElementById('delete-student-input').value = '';
+                    return;
+                }
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'), where('name', '==', input), where('role', '==', 'student'));
+                const qSnap = await getDocs(q);
+                if(!qSnap.empty) {
+                    const target = qSnap.docs[0];
+                    await deleteDoc(target.ref);
+                    this.showToast(`Deleted student: ${target.data().name}`);
+                    document.getElementById('delete-student-input').value = '';
+                } else {
+                    this.showToast("Student not found");
+                }
+            },
+
+            confirmDeleteAll: function() {
+                document.getElementById('delete-modal-backdrop').classList.remove('hidden');
+            },
+
+            deleteAllStudents: async function() {
+                document.getElementById('delete-modal-backdrop').classList.add('hidden');
+                this.showToast("Deleting all students...");
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'), where('role', '==', 'student'));
+                const snap = await getDocs(q);
+                let count = 0;
+                for(const d of snap.docs) {
+                    await deleteDoc(d.ref);
+                    count++;
+                }
+                this.showToast(`Deleted ${count} students.`);
             },
 
             loadStudentData: async function() {
