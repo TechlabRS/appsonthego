@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBMS Visualizer: Ultimate Reference</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* --- ANIMATION CORE --- */
+        @keyframes pulse-dirty {
+            0%, 100% { border-color: #f59e0b; box-shadow: 0 0 0 rgba(0,0,0,0); }
+            50% { border-color: #fbbf24; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+        }
+        @keyframes float-page {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+            100% { transform: translateY(0); }
+        }
+
+        .component-box {
+            transition: all 0.4s ease-out;
+        }
+        .component-box.active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+            background-color: rgba(30, 41, 59, 0.95);
+        }
+        .component-box.error {
+            border-color: #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+
+        /* UI Elements */
+        .buffer-frame {
+            transition: all 0.3s;
+        }
+        .buffer-frame.dirty {
+            animation: pulse-dirty 2s infinite;
+        }
+        
+        /* Table-Specific Colors for Visual Clarity */
+        .page-employees { border-left: 3px solid #3b82f6; }
+        .page-events { border-left: 3px solid #a855f7; }
+        .page-tasks { border-left: 3px solid #14b8a6; }
+
+        /* The "Flying Page" Element */
+        .flying-object {
+            position: fixed;
+            z-index: 9999;
+            background: #1e293b;
+            border: 2px solid #64748b;
+            border-radius: 6px;
+            pointer-events: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #cbd5e1;
+            /* Cubic bezier for realistic movement */
+            transition: top 1s cubic-bezier(0.25, 1, 0.5, 1), left 1s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .step-pill { opacity: 0.3; transform: scale(0.95); transition: all 0.3s; }
+        .step-pill.active { opacity: 1; transform: scale(1.05); background: #3b82f6; color: white; border-color: transparent; }
+        
+        .scenario-tab.active { border-bottom: 2px solid #3b82f6; color: #60a5fa; opacity: 1; }
+        .scenario-tab { opacity: 0.6; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 font-sans h-screen overflow-hidden flex flex-col">
+
+    <!-- Navbar -->
+    <header class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center z-20 shrink-0">
+        <div class="flex items-center gap-4">
+            <h1 class="text-lg font-bold text-blue-500 tracking-tight"><i class="fas fa-layer-group mr-2"></i>DBMS <span class="text-slate-500 font-light">Internal Simulator</span></h1>
+            <div id="txn-indicator" class="hidden px-2 py-0.5 bg-yellow-500/10 border border-yellow-500/40 text-yellow-500 text-[10px] font-bold rounded animate-pulse">TXN ACTIVE</div>
+        </div>
+        <div class="flex bg-slate-800 p-1 rounded-lg">
+            <button onclick="switchView('learn')" id="btn-learn" class="px-4 py-1.5 text-xs font-medium rounded-md text-slate-400 hover:text-white transition">Theory</button>
+            <button onclick="switchView('playground')" id="btn-play" class="px-4 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white shadow-md transition">Engine</button>
+        </div>
+    </header>
+
+    <!-- Content Wrapper -->
+    <main class="flex-grow relative w-full h-full overflow-hidden">
+        
+        <!-- VIEW 1: Scenarios -->
+        <div id="view-learn" class="hidden h-full flex-col p-6 overflow-y-auto max-w-6xl mx-auto w-full">
+            <div class="flex justify-center mb-8 border-b border-slate-800">
+                <button onclick="toggleScenario(1)" id="tab-1" class="scenario-tab active px-6 py-3 text-sm font-medium">1. Data Consistency</button>
+                <button onclick="toggleScenario(2)" id="tab-2" class="scenario-tab px-6 py-3 text-sm font-medium">2. Concurrency Control</button>
+            </div>
+
+            <!-- S1: Bank -->
+            <div id="scen-1" class="grid grid-cols-2 gap-10">
+                <div class="bg-slate-900 border border-red-900/30 p-6 rounded-xl relative group">
+                    <div class="absolute -top-3 left-4 bg-slate-950 px-2 text-red-400 text-xs font-bold">FILE SYSTEM</div>
+                    <div class="space-y-4 mt-2">
+                        <div class="bg-black p-3 rounded border border-slate-800 text-xs font-mono">
+                            <div class="text-slate-600 mb-1">HR_Data.csv</div>
+                            <div id="fs-u1">ID:101 | Name:Alice | Dept:<span id="fs-dept-1" class="text-blue-300">Sales</span></div>
+                        </div>
+                        <div class="bg-black p-3 rounded border border-slate-800 text-xs font-mono">
+                            <div class="text-slate-600 mb-1">Payroll.csv</div>
+                            <div id="fs-u2">ID:101 | Salary:$50k | Dept:<span id="fs-dept-2" class="text-blue-300">Sales</span></div>
+                        </div>
+                        <button onclick="runS1_FS()" class="w-full py-2 bg-slate-800 hover:bg-red-900/20 text-red-200 text-xs rounded border border-slate-700 transition">Simulate: Update Dept (Crash Midway)</button>
+                        <div id="res-s1-fs" class="h-4 text-center text-xs font-bold text-red-500"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-green-900/30 p-6 rounded-xl relative group">
+                    <div class="absolute -top-3 left-4 bg-slate-950 px-2 text-green-400 text-xs font-bold">DBMS</div>
+                    <div class="space-y-4 mt-2">
+                        <div class="bg-black p-3 rounded border border-slate-800 text-xs font-mono">
+                            <div class="text-slate-600 mb-1">Employees Table (PK: ID)</div>
+                            <div>101 | Alice | <span id="db-dept-1" class="text-blue-300">Sales</span></div>
+                        </div>
+                        <div class="bg-black p-3 rounded border border-slate-800 text-xs font-mono opacity-70">
+                            <div class="text-slate-600 mb-1">Payroll Table (FK: EmpID)</div>
+                            <div>$50k | EmpID: 101 <span class="text-slate-500">(Ref)</span></div>
+                        </div>
+                        <button onclick="runS1_DB()" class="w-full py-2 bg-slate-800 hover:bg-green-900/20 text-green-200 text-xs rounded border border-slate-700 transition">Execute SQL UPDATE</button>
+                        <div id="res-s1-db" class="h-4 text-center text-xs font-bold text-green-500"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- S2: Tickets -->
+            <div id="scen-2" class="hidden grid grid-cols-2 gap-10">
+                <div class="bg-slate-900 border border-red-900/30 p-6 rounded-xl relative">
+                    <div class="absolute -top-3 left-4 bg-slate-950 px-2 text-red-400 text-xs font-bold">FILE SYSTEM</div>
+                    <div class="mt-4 text-center">
+                        <div class="text-xs text-slate-500 mb-1">SEATS.TXT</div>
+                        <div id="fs-seats" class="text-3xl font-mono font-bold mb-4">1</div>
+                        <div class="flex gap-2">
+                            <div id="fs-usr1" class="flex-1 bg-slate-800 p-2 rounded text-xs opacity-50">User A</div>
+                            <div id="fs-usr2" class="flex-1 bg-slate-800 p-2 rounded text-xs opacity-50">User B</div>
+                        </div>
+                        <button onclick="runS2_FS()" class="mt-4 w-full py-2 bg-slate-800 text-red-200 text-xs rounded border border-slate-700">Simulate Race Condition</button>
+                        <div id="res-s2-fs" class="mt-2 h-4 text-xs font-bold text-red-500"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-green-900/30 p-6 rounded-xl relative">
+                    <div class="absolute -top-3 left-4 bg-slate-950 px-2 text-green-400 text-xs font-bold">DBMS</div>
+                    <div class="mt-4 text-center relative">
+                        <i id="db-lock" class="fas fa-unlock absolute top-0 right-0 text-slate-600"></i>
+                        <div class="text-xs text-slate-500 mb-1">TABLE: SEATS</div>
+                        <div id="db-seats" class="text-3xl font-mono font-bold mb-4">1</div>
+                        <div class="flex gap-2">
+                            <div id="db-usr1" class="flex-1 bg-slate-800 p-2 rounded text-xs opacity-50">User A</div>
+                            <div id="db-usr2" class="flex-1 bg-slate-800 p-2 rounded text-xs opacity-50">User B</div>
+                        </div>
+                        <button onclick="runS2_DB()" class="mt-4 w-full py-2 bg-slate-800 text-green-200 text-xs rounded border border-slate-700">Execute Transaction</button>
+                        <div id="res-s2-db" class="mt-2 h-4 text-xs font-bold text-green-500"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: Engine Playground -->
+        <div id="view-playground" class="flex h-full flex-col md:flex-row">
+            
+            <!-- Sidebar -->
+            <div class="w-full md:w-80 bg-slate-900 border-r border-slate-800 flex flex-col shadow-xl z-10 shrink-0">
+                <div class="p-4 border-b border-slate-800">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase mb-2">Transaction Control</div>
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <button onclick="startTxn()" class="px-2 py-1 bg-yellow-900/20 border border-yellow-700 hover:bg-yellow-900/40 text-yellow-500 text-[10px] rounded">BEGIN</button>
+                        <button onclick="commitTxn()" class="px-2 py-1 bg-green-900/20 border border-green-700 hover:bg-green-900/40 text-green-500 text-[10px] rounded">COMMIT</button>
+                        <button onclick="rollbackTxn()" class="px-2 py-1 bg-red-900/20 border border-red-700 hover:bg-red-900/40 text-red-500 text-[10px] rounded">ROLLBACK</button>
+                    </div>
+
+                    <div class="text-[10px] font-bold text-slate-500 uppercase mb-2">Query Builder</div>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <button onclick="fill('SELECT')" class="px-2 py-1 bg-slate-800 border border-slate-700 hover:border-blue-500 text-blue-200 text-[10px] rounded text-left">SELECT *</button>
+                        <button onclick="fill('INSERT')" class="px-2 py-1 bg-slate-800 border border-slate-700 hover:border-green-500 text-green-200 text-[10px] rounded text-left">INSERT</button>
+                        <button onclick="fill('UPDATE')" class="px-2 py-1 bg-slate-800 border border-slate-700 hover:border-amber-500 text-amber-200 text-[10px] rounded text-left">UPDATE</button>
+                        <button onclick="fill('DELETE')" class="px-2 py-1 bg-slate-800 border border-slate-700 hover:border-red-500 text-red-200 text-[10px] rounded text-left">DELETE</button>
+                    </div>
+
+                    <textarea id="sqlInput" class="w-full h-24 bg-slate-950 text-green-400 font-mono text-xs p-2 rounded border border-slate-700 focus:border-blue-500 outline-none resize-none mb-2" placeholder="SELECT * FROM employees;"></textarea>
+                    
+                    <button onclick="runQuery()" id="btn-exec" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded shadow-lg flex justify-center items-center gap-2">
+                        <i class="fas fa-bolt"></i> Execute
+                    </button>
+                </div>
+                
+                <div class="flex-grow bg-black p-3 font-mono text-[10px] overflow-y-auto" id="logs">
+                    <div class="text-slate-500 mb-1 border-b border-slate-800 pb-1">KERNEL LOGS</div>
+                    <div class="text-slate-400">> System Ready.</div>
+                    <div class="text-slate-400">> Buffer Pool size: 4 Frames.</div>
+                </div>
+            </div>
+
+            <!-- Engine Canvas -->
+            <div class="flex-grow bg-slate-950 relative p-4 md:p-8 flex flex-col items-center overflow-y-auto">
+                
+                <div class="w-full max-w-3xl flex flex-col items-center space-y-6 relative py-2">
+                    
+                    <!-- 1. Query Processor -->
+                    <div id="box-parser" class="component-box w-full bg-slate-900 p-3 rounded-xl border border-slate-700 relative z-10 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded bg-purple-500/10 flex items-center justify-center text-purple-400"><i class="fas fa-code"></i></div>
+                            <div>
+                                <div class="text-xs font-bold text-slate-200">Query Processor</div>
+                                <div class="text-[10px] text-slate-500">Parser, Binder, Optimizer</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-1">
+                            <span id="p-parse" class="step-pill px-2 py-0.5 rounded text-[9px] border border-slate-600">Parse</span>
+                            <span id="p-bind" class="step-pill px-2 py-0.5 rounded text-[9px] border border-slate-600">Bind</span>
+                            <span id="p-opt" class="step-pill px-2 py-0.5 rounded text-[9px] border border-slate-600">Opt</span>
+                        </div>
+                    </div>
+
+                    <!-- Connection -->
+                    <div class="w-0.5 h-6 bg-slate-800"></div>
+
+                    <!-- 2. Buffer Pool -->
+                    <div id="box-buffer" class="component-box w-full bg-slate-900 p-4 rounded-xl border border-slate-700 relative z-10">
+                        <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-memory text-amber-500"></i>
+                                <span class="text-xs font-bold">Buffer Pool (RAM)</span>
+                            </div>
+                            <span id="p-dirty" class="hidden px-2 py-0.5 bg-amber-500/20 text-amber-500 text-[9px] rounded font-bold">DIRTY PAGES</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-3" id="buffer-grid"></div>
+                    </div>
+
+                    <!-- Connection -->
+                    <div class="w-0.5 h-8 bg-slate-800 flex items-center justify-center relative">
+                        <div class="bg-slate-900 px-2 py-0.5 text-[8px] text-slate-500 border border-slate-800 rounded">I/O BUS</div>
+                    </div>
+
+                    <!-- 3. Disk -->
+                    <div id="box-disk" class="component-box w-full bg-slate-900 p-4 rounded-xl border border-slate-700 relative z-10">
+                        <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-hdd text-blue-500"></i>
+                                <span class="text-xs font-bold">Disk Storage (Persistent)</span>
+                            </div>
+                            <div class="flex gap-2 text-[9px]">
+                                <span class="text-blue-400">● Emp</span>
+                                <span class="text-purple-400">● Evt</span>
+                                <span class="text-teal-400">● Tsk</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3" id="disk-grid"></div>
+                    </div>
+
+                </div>
+
+                <!-- Result Toast -->
+                <div id="toast" class="fixed bottom-6 right-6 w-72 bg-slate-900 border border-slate-700 shadow-2xl rounded-lg transform translate-y-24 opacity-0 transition-all duration-300 z-50 overflow-hidden">
+                    <div class="bg-slate-800 px-3 py-2 flex justify-between items-center">
+                        <span class="text-xs font-bold text-white flex items-center gap-2">
+                            <i id="toast-icon" class="fas fa-info-circle"></i> Result
+                        </span>
+                        <button onclick="hideToast()" class="text-slate-400 hover:text-white"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div id="toast-body" class="p-3 text-[10px] font-mono text-slate-300 bg-black max-h-32 overflow-auto"></div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- CORE DATA STRUCTURES ---
+        const CATALOG = ['employees', 'events', 'tasks'];
+        
+        // Disk Pages (Simulated Storage)
+        let DISK = [
+            { id: 100, table: 'employees', rows: [{id:1, name:'Alice', role:'Dev'}, {id:2, name:'Bob', role:'Mgr'}] },
+            { id: 101, table: 'employees', rows: [{id:3, name:'Charlie', role:'Dev'}] },
+            { id: 200, table: 'events', rows: [{id:1, name:'Launch', date:'2025-01-01'}] },
+            { id: 300, table: 'tasks', rows: [{id:1, task:'Fix DB', status:'Open'}] },
+            { id: 301, table: 'tasks', rows: [] } // Empty page
+        ];
+
+        // Buffer Pool (Array of 4 Frames)
+        let BUFFER = [null, null, null, null]; 
+
+        // System State
+        let TXN_ACTIVE = false;
+        let IS_RUNNING = false;
+
+        // --- INIT ---
+        window.onload = () => {
+            renderDisk();
+            renderBuffer();
+            switchView('playground');
+        };
+
+        // --- MAIN QUERY ENGINE ---
+        async function runQuery() {
+            if(IS_RUNNING) return;
+            const sql = document.getElementById('sqlInput').value.trim();
+            if(!sql) return log("Input is empty.", "error");
+
+            IS_RUNNING = true;
+            toggleInputs(true); // Disable inputs while running
+            resetVisuals();
+            log(`Job: ${sql}`, "process");
+
+            // 1. PARSER PHASE
+            highlight('box-parser', true);
+            await wait(400);
+
+            try {
+                // Parse SQL
+                const ast = parseSQL(sql);
+                
+                // Handle TCL commands immediately
+                if(['BEGIN', 'COMMIT', 'ROLLBACK'].includes(ast.command)) {
+                    handleTCL(ast.command);
+                    finish();
+                    return;
+                }
+
+                highlightPill('p-parse', true);
+                await wait(300);
+
+                // Binder Check (Table Existence)
+                if(ast.table && !CATALOG.includes(ast.table.toLowerCase())) {
+                    throw new Error(`Table '${ast.table}' does not exist.`);
+                }
+                highlightPill('p-bind', true);
+                log(`Binder: Table '${ast.table}' verified.`, "detail");
+                await wait(300);
+
+                // Optimizer
+                highlightPill('p-opt', true);
+                log("Optimizer: Plan Generated (Seq Scan)", "detail");
+                await wait(400);
+                highlight('box-parser', false);
+
+                // 2. EXECUTION PHASE
+                highlight('box-buffer', true);
+                highlight('box-disk', true);
+                
+                let result = "";
+                
+                if(ast.command === "SELECT") {
+                    result = await executeSelect(ast);
+                } else if(ast.command === "INSERT") {
+                    result = await executeInsert(ast);
+                } else if(ast.command === "UPDATE") {
+                    result = await executeUpdate(ast);
+                } else if(ast.command === "DELETE") {
+                    result = await executeDelete(ast);
+                } else if(ast.command === "CREATE") {
+                    CATALOG.push(ast.table.toLowerCase());
+                    DISK.push({id: Math.floor(Math.random()*1000)+500, table:ast.table.toLowerCase(), rows:[]});
+                    renderDisk();
+                    result = `Table '${ast.table}' created.`;
+                } else if(ast.command === "DROP") {
+                    const idx = CATALOG.indexOf(ast.table.toLowerCase());
+                    if(idx > -1) CATALOG.splice(idx, 1);
+                    DISK = DISK.filter(p => p.table !== ast.table.toLowerCase());
+                    renderDisk();
+                    result = `Table '${ast.table}' dropped.`;
+                }
+
+                showToast(result, "success");
+
+            } catch (e) {
+                log(e.message, "error");
+                highlight('box-parser', true, true);
+                showToast(e.message, "error");
+            }
+
+            finish();
+        }
+
+        // --- SQL PARSER (REGEX) ---
+        function parseSQL(sql) {
+            const norm = sql.replace(/;$/, '').trim(); // Case sensitive preserve for values, regex handles keywords
+            
+            // Regex patterns
+            const reSelect = /^SELECT\s+(.+)\s+FROM\s+(\w+)/i;
+            const reInsert = /^INSERT\s+INTO\s+(\w+)\s+VALUES\s*\((.+)\)/i;
+            const reUpdate = /^UPDATE\s+(\w+)\s+SET\s+(\w+)\s*=\s*(.+)\s+WHERE\s+id\s*=\s*(\d+)/i;
+            const reDelete = /^DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+id\s*=\s*(\d+))?/i;
+            const reCreate = /^CREATE\s+TABLE\s+(\w+)/i;
+            const reDrop = /^DROP\s+TABLE\s+(\w+)/i;
+
+            if(norm.match(/^BEGIN/i)) return { command: 'BEGIN' };
+            if(norm.match(/^COMMIT/i)) return { command: 'COMMIT' };
+            if(norm.match(/^ROLLBACK/i)) return { command: 'ROLLBACK' };
+
+            let m;
+            if(m = norm.match(reSelect)) return { command: 'SELECT', cols: m[1], table: m[2] };
+            
+            if(m = norm.match(reInsert)) {
+                // Parse values: 99, 'Name' -> [99, "Name"]
+                const valStr = m[2];
+                const parts = valStr.split(',').map(s => {
+                    s = s.trim();
+                    if((s.startsWith("'") && s.endsWith("'")) || (s.startsWith('"') && s.endsWith('"'))) return s.slice(1,-1);
+                    return isNaN(s) ? s : Number(s);
+                });
+                
+                // Simple Object construction for demo
+                const obj = { id: parts[0] };
+                if(parts[1]) obj.col2 = parts[1];
+                if(parts[2]) obj.col3 = parts[2];
+                
+                return { command: 'INSERT', table: m[1], values: obj };
+            }
+
+            if(m = norm.match(reUpdate)) {
+                // Val clean
+                let val = m[3].trim();
+                if((val.startsWith("'") || val.startsWith('"'))) val = val.slice(1,-1);
+                return { command: 'UPDATE', table: m[1], col: m[2], val: val, id: parseInt(m[4]) };
+            }
+
+            if(m = norm.match(reDelete)) return { command: 'DELETE', table: m[1], id: m[2] ? parseInt(m[2]) : null };
+            if(m = norm.match(reCreate)) return { command: 'CREATE', table: m[1] };
+            if(m = norm.match(reDrop)) return { command: 'DROP', table: m[1] };
+
+            throw new Error("Syntax Error: Unknown or Malformed SQL.");
+        }
+
+        // --- EXECUTORS ---
+        async function executeSelect(ast) {
+            const table = ast.table.toLowerCase();
+            log(`Scanning pages for '${table}'...`, "process");
+            
+            let foundData = [];
+            for(let i=0; i<DISK.length; i++) {
+                if(DISK[i].table !== table || DISK[i].rows.length === 0) continue;
+                
+                await ioRead(DISK[i].id, i%4); // Animate Read
+                // Logic: Load to buffer
+                BUFFER[i%4] = JSON.parse(JSON.stringify(DISK[i]));
+                BUFFER[i%4].dirty = false;
+                renderBuffer();
+                foundData.push(...DISK[i].rows);
+                await wait(200);
+            }
+            return JSON.stringify(foundData, null, 2);
+        }
+
+        async function executeInsert(ast) {
+            const table = ast.table.toLowerCase();
+            // Find free page
+            let pIdx = DISK.findIndex(p => p.table === table && p.rows.length < 2);
+            if(pIdx === -1) {
+                // Alloc new
+                const newId = Math.max(...DISK.map(d=>d.id)) + 1;
+                DISK.push({id: newId, table: table, rows: []});
+                pIdx = DISK.length - 1;
+                renderDisk();
+                log(`Allocated new Page ${newId}.`, "detail");
+            }
+
+            const frame = 0; // Use frame 0
+            await ioRead(DISK[pIdx].id, frame);
+            
+            // Load
+            BUFFER[frame] = JSON.parse(JSON.stringify(DISK[pIdx]));
+            renderBuffer();
+            await wait(300);
+
+            // Modify
+            BUFFER[frame].rows.push(ast.values);
+            BUFFER[frame].dirty = true;
+            renderBuffer();
+            log("Tuple inserted. Page is DIRTY.", "process");
+            await wait(500);
+
+            // Write Strategy
+            await handleWrite(pIdx, frame);
+            return "1 Row Inserted.";
+        }
+
+        async function executeUpdate(ast) {
+            const table = ast.table.toLowerCase();
+            let pIdx = -1;
+            // Find page with ID
+            for(let i=0; i<DISK.length; i++) {
+                if(DISK[i].table === table && DISK[i].rows.find(r=>r.id === ast.id)) {
+                    pIdx = i; break;
+                }
+            }
+            if(pIdx === -1) throw new Error("ID not found.");
+
+            const frame = 0;
+            await ioRead(DISK[pIdx].id, frame);
+            
+            BUFFER[frame] = JSON.parse(JSON.stringify(DISK[pIdx]));
+            renderBuffer();
+            await wait(300);
+
+            // Modify
+            const row = BUFFER[frame].rows.find(r=>r.id === ast.id);
+            if(row) row[ast.col.toLowerCase()] = ast.val; // Simplified column mapping
+            
+            BUFFER[frame].dirty = true;
+            renderBuffer();
+            log("Update applied in RAM. Dirty.", "process");
+            await wait(500);
+
+            await handleWrite(pIdx, frame);
+            return "1 Row Updated.";
+        }
+
+        async function executeDelete(ast) {
+            const table = ast.table.toLowerCase();
+            let count = 0;
+            
+            for(let i=0; i<DISK.length; i++) {
+                if(DISK[i].table !== table) continue;
+                if(ast.id && !DISK[i].rows.find(r=>r.id === ast.id)) continue;
+
+                // Read
+                await ioRead(DISK[i].id, 0);
+                BUFFER[0] = JSON.parse(JSON.stringify(DISK[i]));
+                renderBuffer();
+
+                // Modify
+                const initialLen = BUFFER[0].rows.length;
+                if(ast.id) BUFFER[0].rows = BUFFER[0].rows.filter(r => r.id !== ast.id);
+                else BUFFER[0].rows = []; // Delete All
+
+                if(BUFFER[0].rows.length < initialLen) {
+                    count++;
+                    BUFFER[0].dirty = true;
+                    renderBuffer();
+                    await wait(400);
+                    await handleWrite(i, 0);
+                }
+            }
+            return `${count} Row(s) Deleted.`;
+        }
+
+        // --- IO & TXN HELPERS ---
+        async function handleWrite(diskIdx, bufIdx) {
+            if(TXN_ACTIVE) {
+                log("Txn Active: Write deferred in Buffer.", "process");
+                // Stays dirty in buffer
+            } else {
+                log("Auto-Commit: Flushing...", "detail");
+                await ioWrite(DISK[diskIdx].id, bufIdx);
+                DISK[diskIdx] = JSON.parse(JSON.stringify(BUFFER[bufIdx]));
+                BUFFER[bufIdx].dirty = false;
+                renderDisk();
+                renderBuffer();
+            }
+        }
+
+        function handleTCL(cmd) {
+            if(cmd === "BEGIN") {
+                TXN_ACTIVE = true;
+                document.getElementById('txn-indicator').classList.remove('hidden');
+                log("Transaction Started.", "process");
+            }
+            if(cmd === "COMMIT") {
+                commitTxn();
+            }
+            if(cmd === "ROLLBACK") {
+                rollbackTxn();
+            }
+        }
+
+        async function commitTxn() {
+            if(!TXN_ACTIVE) return log("No active transaction.", "error");
+            log("Committing...", "process");
+            
+            // Flush all dirty pages
+            for(let i=0; i<4; i++) {
+                if(BUFFER[i] && BUFFER[i].dirty) {
+                    const dIdx = DISK.findIndex(p => p.id === BUFFER[i].id);
+                    if(dIdx > -1) {
+                        await ioWrite(DISK[dIdx].id, i);
+                        DISK[dIdx] = JSON.parse(JSON.stringify(BUFFER[i]));
+                        BUFFER[i].dirty = false;
+                    }
+                }
+            }
+            renderDisk();
+            renderBuffer();
+            TXN_ACTIVE = false;
+            document.getElementById('txn-indicator').classList.add('hidden');
+            showToast("Transaction Committed.", "success");
+        }
+
+        function rollbackTxn() {
+            if(!TXN_ACTIVE) return log("No active transaction.", "error");
+            log("Rolling back...", "error");
+            
+            // Clear dirty buffers (revert state)
+            for(let i=0; i<4; i++) {
+                if(BUFFER[i] && BUFFER[i].dirty) {
+                    // In real DB, we reload from disk or undo log. Here we just clear buffer to simulate revert
+                    BUFFER[i] = null; 
+                }
+            }
+            renderBuffer();
+            TXN_ACTIVE = false;
+            document.getElementById('txn-indicator').classList.add('hidden');
+            showToast("Transaction Rolled Back.", "success");
+        }
+
+        // --- ANIMATIONS ---
+        async function ioRead(pageId, frameId) {
+            const diskEl = document.getElementById(`d-pg-${pageId}`);
+            const bufEl = document.getElementById(`b-fr-${frameId}`);
+            if(!diskEl || !bufEl) return;
+
+            const fly = createFlyer(pageId);
+            const r1 = diskEl.getBoundingClientRect();
+            const r2 = bufEl.getBoundingClientRect();
+
+            fly.style.top = r1.top + "px";
+            fly.style.left = r1.left + "px";
+            document.body.appendChild(fly);
+            
+            await wait(20);
+            fly.style.top = r2.top + "px";
+            fly.style.left = r2.left + "px";
+            
+            await wait(1000);
+            fly.remove();
+        }
+
+        async function ioWrite(pageId, frameId) {
+            const diskEl = document.getElementById(`d-pg-${pageId}`);
+            const bufEl = document.getElementById(`b-fr-${frameId}`);
+            if(!diskEl || !bufEl) return;
+
+            const fly = createFlyer(pageId);
+            fly.style.borderColor = "#f59e0b"; // Dirty color
+            const r1 = bufEl.getBoundingClientRect();
+            const r2 = diskEl.getBoundingClientRect();
+
+            fly.style.top = r1.top + "px";
+            fly.style.left = r1.left + "px";
+            document.body.appendChild(fly);
+            
+            await wait(20);
+            fly.style.top = r2.top + "px";
+            fly.style.left = r2.left + "px";
+            
+            await wait(1000);
+            fly.remove();
+        }
+
+        function createFlyer(id) {
+            const d = document.createElement('div');
+            d.className = "flying-object";
+            d.style.width = "60px"; d.style.height = "40px";
+            d.innerHTML = `PG ${id}`;
+            return d;
+        }
+
+        // --- RENDERING ---
+        function renderDisk() {
+            const c = document.getElementById('disk-grid');
+            c.innerHTML = '';
+            DISK.forEach(p => {
+                const rows = p.rows.map(r => `[${r.id}]`).join(' ');
+                c.innerHTML += `
+                <div id="d-pg-${p.id}" class="bg-slate-950 border border-slate-800 p-2 rounded h-20 relative page-${p.table}">
+                    <div class="text-[9px] text-slate-500 font-bold uppercase mb-1">${p.table}</div>
+                    <div class="absolute top-1 right-1 text-[8px] text-slate-600">#${p.id}</div>
+                    <div class="text-[9px] text-slate-400 break-all leading-tight font-mono">${rows || 'Empty'}</div>
+                </div>`;
+            });
+        }
+
+        function renderBuffer() {
+            const c = document.getElementById('buffer-grid');
+            c.innerHTML = '';
+            BUFFER.forEach((b, i) => {
+                let content = `<span class="text-slate-700 text-[10px]">Free</span>`;
+                let extraClass = "";
+                if(b) {
+                    const rows = b.rows.map(r => `[${r.id}]`).join(' ');
+                    extraClass = b.dirty ? "dirty border-amber-500" : "border-blue-500";
+                    content = `
+                    <div class="text-[9px] text-slate-400 font-bold mb-1">Pg ${b.id}</div>
+                    <div class="text-[8px] text-slate-500 break-all leading-tight font-mono">${rows}</div>
+                    `;
+                }
+                c.innerHTML += `
+                <div id="b-fr-${i}" class="buffer-frame h-20 bg-slate-900 border border-slate-700 rounded p-2 relative ${extraClass}">
+                    <div class="absolute top-1 right-1 text-[8px] text-slate-600">F${i}</div>
+                    ${content}
+                </div>`;
+            });
+        }
+
+        // --- SCENARIOS (Preserved from V2) ---
+        function toggleScenario(n) {
+            document.getElementById('scen-1').style.display = n===1?'grid':'none';
+            document.getElementById('scen-2').style.display = n===2?'grid':'none';
+            document.getElementById('tab-1').className = n===1?'scenario-tab active px-6 py-3 text-sm font-medium':'scenario-tab px-6 py-3 text-sm font-medium';
+            document.getElementById('tab-2').className = n===2?'scenario-tab active px-6 py-3 text-sm font-medium':'scenario-tab px-6 py-3 text-sm font-medium';
+        }
+        async function runS1_FS() {
+            document.getElementById('fs-dept-1').innerText = "IT"; document.getElementById('fs-dept-1').className = "text-yellow-400 font-bold";
+            await wait(600);
+            document.getElementById('res-s1-fs').innerText = "Crash! Payroll still says 'Sales'. Inconsistent.";
+        }
+        async function runS1_DB() {
+            document.getElementById('db-dept-1').innerText = "IT"; document.getElementById('db-dept-1').className = "text-green-400 font-bold";
+            document.getElementById('res-s1-db').innerText = "Success. Payroll links to ID 101 automatically.";
+        }
+        async function runS2_FS() {
+            document.getElementById('fs-seats').className = "text-3xl font-mono font-bold mb-4 text-red-500";
+            document.getElementById('fs-seats').innerText = "-1";
+            document.getElementById('res-s2-fs').innerText = "Race Condition! Double Booking.";
+        }
+        async function runS2_DB() {
+            document.getElementById('db-lock').className = "fas fa-lock absolute top-0 right-0 text-red-500";
+            await wait(600);
+            document.getElementById('db-seats').innerText = "0";
+            document.getElementById('db-lock').className = "fas fa-unlock absolute top-0 right-0 text-slate-600";
+            document.getElementById('res-s2-db').innerText = "Serialized. User B blocked until done.";
+        }
+
+        // --- UTILS ---
+        function log(msg, type) {
+            const d = document.createElement('div');
+            d.className = type==='error'?'text-red-400':(type==='process'?'text-blue-300':(type==='detail'?'text-slate-500 pl-2':'text-slate-400'));
+            d.innerText = "> " + msg;
+            const logBox = document.getElementById('logs');
+            logBox.appendChild(d);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function highlightPill(id, on) {
+            const el = document.getElementById(id);
+            if(el) el.classList.toggle('active', on);
+        }
+        function highlight(id, on, err) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.toggle('active', on && !err);
+                el.classList.toggle('error', on && err);
+            }
+        }
+        function resetVisuals() {
+            ['box-parser','box-buffer','box-disk'].forEach(i=>highlight(i,false));
+            ['p-parse','p-bind','p-opt'].forEach(i=>highlightPill(i,false));
+        }
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            const b = document.getElementById('toast-body');
+            const i = document.getElementById('toast-icon');
+            
+            t.classList.remove('translate-y-24', 'opacity-0');
+            t.classList.add('border-green-500'); 
+            if(type==='error') t.classList.replace('border-green-500', 'border-red-500');
+            
+            i.className = type==='error'?'fas fa-exclamation-triangle text-red-400':'fas fa-check-circle text-green-400';
+            b.innerText = msg;
+            
+            // Auto hide
+            setTimeout(()=>hideToast(), 4000);
+        }
+        function hideToast() {
+            document.getElementById('toast').classList.add('translate-y-24', 'opacity-0');
+        }
+        function toggleInputs(disabled) {
+            const btn = document.getElementById('btn-exec');
+            if (btn) {
+                btn.disabled = disabled;
+                btn.classList.toggle('opacity-50', disabled);
+                btn.classList.toggle('cursor-not-allowed', disabled);
+            }
+        }
+        function finish() {
+            IS_RUNNING = false;
+            toggleInputs(false);
+        }
+        function switchView(v) {
+            document.getElementById('view-learn').style.display = v==='learn'?'flex':'none';
+            document.getElementById('view-playground').style.display = v==='playground'?'flex':'none';
+            if(v==='learn') {
+                toggleScenario(1); 
+                document.getElementById('btn-learn').classList.add('bg-blue-600','text-white','shadow-md');
+                document.getElementById('btn-learn').classList.remove('text-slate-400');
+                document.getElementById('btn-play').classList.remove('bg-blue-600','text-white','shadow-md');
+                document.getElementById('btn-play').classList.add('text-slate-400');
+            } else {
+                renderDisk(); renderBuffer();
+                document.getElementById('btn-play').classList.add('bg-blue-600','text-white','shadow-md');
+                document.getElementById('btn-play').classList.remove('text-slate-400');
+                document.getElementById('btn-learn').classList.remove('bg-blue-600','text-white','shadow-md');
+                document.getElementById('btn-learn').classList.add('text-slate-400');
+            }
+        }
+        function fill(type) {
+            const map = {
+                'SELECT': "SELECT * FROM employees;",
+                'INSERT': "INSERT INTO employees VALUES (99, 'NewGuy', 'Intern');",
+                'UPDATE': "UPDATE employees SET role='Lead' WHERE id=1;",
+                'DELETE': "DELETE FROM events WHERE id=1;",
+                'CREATE': "CREATE TABLE projects;",
+                'DROP': "DROP TABLE tasks;"
+            };
+            document.getElementById('sqlInput').value = map[type];
+        }
+        function startTxn() { handleTCL("BEGIN"); }
+        const wait = ms => new Promise(r=>setTimeout(r, ms));
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBMS Visualizer: Complete Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* --- ANIMATIONS --- */
+        @keyframes pulse-dirty {
+            0% { box-shadow: 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; }
+            50% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.8); border-color: #fcd34d; }
+            100% { box-shadow: 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; }
+        }
+
+        .component-box {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .component-box.active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
+            background-color: rgba(30, 41, 59, 0.9);
+        }
+        
+        /* Buffer Frames */
+        .buffer-frame { transition: all 0.3s; }
+        .buffer-frame.dirty { animation: pulse-dirty 2s infinite; }
+        
+        /* Table Colors */
+        .table-employees { border-color: #3b82f6; } /* Blue */
+        .table-events { border-color: #a855f7; }    /* Purple */
+        .table-tasks { border-color: #14b8a6; }     /* Teal */
+
+        /* Flying Page Animation Object */
+        .flying-page {
+            position: fixed;
+            z-index: 100;
+            background: #1e293b;
+            border: 2px solid #64748b;
+            border-radius: 0.5rem;
+            pointer-events: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            transition: top 1.2s cubic-bezier(0.22, 1, 0.36, 1), left 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* Step Pills */
+        .step-pill { opacity: 0.2; transform: scale(0.95); transition: all 0.3s; }
+        .step-pill.step-active { opacity: 1; transform: scale(1.05); background-color: #3b82f6; color: white; box-shadow: 0 0 8px rgba(59, 130, 246, 0.6); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 font-sans h-screen overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 p-3 flex justify-between items-center shadow-lg z-20 shrink-0">
+        <div class="flex items-center gap-3">
+            <h1 class="text-xl font-bold text-blue-500"><i class="fas fa-database mr-2"></i>DBMS <span class="text-slate-400 font-light">Simulator</span></h1>
+            <span id="txn-badge" class="hidden px-2 py-0.5 bg-yellow-600/20 text-yellow-500 border border-yellow-600/50 rounded text-[10px] font-bold tracking-wider animate-pulse">TRANSACTION ACTIVE</span>
+        </div>
+        <div class="flex space-x-2 bg-slate-800 p-1 rounded-lg">
+            <button onclick="switchView('learn')" id="btn-learn" class="px-3 py-1.5 text-xs font-bold rounded-md transition-all duration-300 text-slate-400">File vs DBMS</button>
+            <button onclick="switchView('playground')" id="btn-play" class="px-3 py-1.5 text-xs font-bold rounded-md transition-all duration-300 bg-blue-600 text-white shadow">Engine Lab</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow relative w-full h-full overflow-hidden">
+        
+        <!-- VIEW 1: Scenarios (File vs DBMS) -->
+        <div id="view-learn" class="hidden h-full flex-col p-6 overflow-y-auto w-full max-w-5xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                <!-- File System -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 relative flex flex-col">
+                    <div class="absolute top-0 right-0 bg-red-900/30 text-red-400 text-[10px] px-3 py-1 rounded-bl border-l border-b border-red-900/50">FILE SYSTEM</div>
+                    <h3 class="text-lg font-bold text-red-400 mb-4"><i class="fas fa-file-alt mr-2"></i>The Problem</h3>
+                    <div class="flex-grow space-y-4">
+                        <div class="p-3 bg-black rounded border border-slate-700">
+                            <div class="text-[10px] text-slate-500 mb-1">DATA REDUNDANCY</div>
+                            <p class="text-xs text-slate-400">Updating 'Alice' in <span class="text-white bg-slate-800 px-1 rounded">HR_File.txt</span> does not update <span class="text-white bg-slate-800 px-1 rounded">Payroll.txt</span>.</p>
+                        </div>
+                        <div class="p-3 bg-black rounded border border-slate-700">
+                            <div class="text-[10px] text-slate-500 mb-1">CONCURRENCY</div>
+                            <p class="text-xs text-slate-400">Two users booking the last seat simultaneously causes <span class="text-red-400 font-bold">Double Booking</span> (Race Condition).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DBMS -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 relative flex flex-col">
+                    <div class="absolute top-0 right-0 bg-green-900/30 text-green-400 text-[10px] px-3 py-1 rounded-bl border-l border-b border-green-900/50">DBMS</div>
+                    <h3 class="text-lg font-bold text-green-400 mb-4"><i class="fas fa-server mr-2"></i>The Solution</h3>
+                    <div class="flex-grow space-y-4">
+                        <div class="p-3 bg-black rounded border border-slate-700">
+                            <div class="text-[10px] text-slate-500 mb-1">NORMALIZATION</div>
+                            <p class="text-xs text-slate-400">Data is stored in one place. Everyone references <span class="text-blue-400">User_ID</span>.</p>
+                        </div>
+                        <div class="p-3 bg-black rounded border border-slate-700">
+                            <div class="text-[10px] text-slate-500 mb-1">ACID TRANSACTIONS</div>
+                            <p class="text-xs text-slate-400">Locks rows during updates. Supports <span class="text-yellow-400">COMMIT</span> and <span class="text-red-400">ROLLBACK</span>.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: Storage Engine Playground -->
+        <div id="view-playground" class="flex h-full flex-col md:flex-row">
+            
+            <!-- Left Panel: Controls -->
+            <div class="w-full md:w-80 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl z-10 shrink-0">
+                <div class="p-4 border-b border-slate-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quick Commands</div>
+                    </div>
+                    
+                    <!-- Command Grid -->
+                    <div class="grid grid-cols-3 gap-1.5 mb-3">
+                        <button onclick="fill('SELECT')" class="px-2 py-1.5 bg-slate-800 hover:bg-blue-900/30 text-blue-200 text-[10px] rounded border border-slate-700">SELECT *</button>
+                        <button onclick="fill('INSERT')" class="px-2 py-1.5 bg-slate-800 hover:bg-green-900/30 text-green-200 text-[10px] rounded border border-slate-700">INSERT</button>
+                        <button onclick="fill('UPDATE')" class="px-2 py-1.5 bg-slate-800 hover:bg-amber-900/30 text-amber-200 text-[10px] rounded border border-slate-700">UPDATE</button>
+                        <button onclick="fill('DELETE')" class="px-2 py-1.5 bg-slate-800 hover:bg-red-900/30 text-red-200 text-[10px] rounded border border-slate-700">DELETE</button>
+                        <button onclick="fill('CREATE')" class="px-2 py-1.5 bg-slate-800 hover:bg-purple-900/30 text-purple-200 text-[10px] rounded border border-slate-700">CREATE</button>
+                        <button onclick="fill('DROP')" class="px-2 py-1.5 bg-slate-800 hover:bg-red-900/30 text-red-200 text-[10px] rounded border border-slate-700">DROP</button>
+                    </div>
+
+                    <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Transaction Control (TCL)</div>
+                    <div class="grid grid-cols-3 gap-1.5 mb-3">
+                        <button onclick="toggleTxn()" id="btn-txn" class="px-2 py-1.5 bg-slate-800 hover:bg-yellow-900/30 text-yellow-200 text-[10px] rounded border border-slate-700">BEGIN</button>
+                        <button onclick="commitTxn()" class="px-2 py-1.5 bg-slate-800 hover:bg-green-900/30 text-green-200 text-[10px] rounded border border-slate-700">COMMIT</button>
+                        <button onclick="rollbackTxn()" class="px-2 py-1.5 bg-slate-800 hover:bg-red-900/30 text-red-200 text-[10px] rounded border border-slate-700">ROLLBACK</button>
+                    </div>
+
+                    <textarea id="sqlInput" class="w-full h-20 bg-slate-950 text-green-400 font-mono text-xs p-2 rounded border border-slate-700 focus:border-blue-500 focus:outline-none resize-none mb-2" placeholder="SELECT * FROM employees..."></textarea>
+                    
+                    <button id="runBtn" onclick="runEngine()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded shadow-lg text-xs flex justify-center items-center gap-2">
+                        <i class="fas fa-play"></i> Run Query
+                    </button>
+                </div>
+                <div class="flex-grow bg-black p-3 overflow-y-auto font-mono text-[10px] space-y-1" id="logs">
+                    <div class="text-slate-500">> Kernel Booted.</div>
+                    <div class="text-slate-500">> Catalog Loaded: employees, events, tasks.</div>
+                </div>
+            </div>
+
+            <!-- Right Panel (Canvas) -->
+            <div class="flex-grow bg-slate-950 relative p-4 md:p-6 flex flex-col items-center overflow-y-auto">
+                
+                <div class="w-full max-w-4xl flex flex-col items-center space-y-6 relative py-4">
+                    
+                    <!-- Node: Query Processor -->
+                    <div id="node-parser" class="component-box w-full bg-slate-900 p-3 rounded-xl border border-slate-700 relative z-10 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded bg-purple-900/20 flex items-center justify-center text-purple-400"><i class="fas fa-code"></i></div>
+                            <div>
+                                <div class="text-xs font-bold text-slate-200">Query Processor</div>
+                                <div class="text-[10px] text-slate-500" id="status-parser">Parser & Optimizer</div>
+                            </div>
+                        </div>
+                        <div class="space-x-1 hidden md:block">
+                            <span id="step-parse" class="step-pill px-2 py-1 rounded text-[9px] border border-slate-600">Parse</span>
+                            <span id="step-bind" class="step-pill px-2 py-1 rounded text-[9px] border border-slate-600">Bind</span>
+                        </div>
+                    </div>
+
+                    <!-- Pipe -->
+                    <div class="w-0.5 h-4 bg-slate-700"></div>
+
+                    <!-- Node: Buffer Pool -->
+                    <div id="node-engine" class="component-box w-full bg-slate-900 p-4 rounded-xl border border-slate-700 relative z-10">
+                        <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded bg-amber-900/20 flex items-center justify-center text-amber-400"><i class="fas fa-memory"></i></div>
+                                <div>
+                                    <div class="text-xs font-bold text-slate-200">Buffer Pool (RAM)</div>
+                                    <div class="text-[10px] text-slate-500">Volatile Memory</div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <span id="lbl-dirty" class="step-pill px-2 py-1 rounded text-[9px] border border-slate-600 bg-amber-900/20 text-amber-300">Dirty Page</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-4 gap-3" id="buffer-grid"></div>
+                    </div>
+
+                    <!-- Pipe -->
+                    <div class="w-0.5 h-8 bg-slate-700 flex items-center justify-center"><div class="bg-slate-800 px-2 text-[9px] border border-slate-700 rounded text-slate-500">I/O</div></div>
+
+                    <!-- Node: Disk Storage -->
+                    <div id="node-disk" class="component-box w-full bg-slate-900 p-4 rounded-xl border border-slate-700 relative z-10">
+                        <div class="flex items-center gap-3 mb-3 pb-2 border-b border-slate-800">
+                            <div class="w-8 h-8 rounded bg-blue-900/20 flex items-center justify-center text-blue-400"><i class="fas fa-hdd"></i></div>
+                            <div>
+                                <div class="text-xs font-bold text-slate-200">Disk Storage (Primary)</div>
+                                <div class="flex gap-2 text-[9px] text-slate-500">
+                                    <span class="text-blue-400">● Employees</span>
+                                    <span class="text-purple-400">● Events</span>
+                                    <span class="text-teal-400">● Tasks</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3" id="disk-grid"></div>
+                    </div>
+
+                </div>
+
+                <!-- Result Box -->
+                <div id="result-box" class="fixed bottom-4 right-4 w-72 bg-slate-900 border border-slate-700 shadow-2xl rounded p-3 translate-y-full opacity-0 transition-all z-50">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-xs font-bold text-green-400"><i class="fas fa-check-circle mr-1"></i> Result</span>
+                        <button onclick="hideResult()" class="text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+                    </div>
+                    <pre id="result-text" class="text-[10px] font-mono text-slate-300 overflow-auto max-h-32 bg-black p-2 rounded"></pre>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- DATA MODEL ---
+        // Pre-populated data for "Real Examples"
+        const CATALOG = ['employees', 'events', 'tasks'];
+        
+        let disk = [
+            { id: 100, table: 'employees', rows: [{id:1, name:'Alice', role:'Dev'}, {id:2, name:'Bob', role:'Mgr'}] },
+            { id: 101, table: 'employees', rows: [{id:3, name:'Charlie', role:'Dev'}] },
+            { id: 200, table: 'events', rows: [{id:1, name:'Launch', date:'2025-01-01'}] },
+            { id: 300, table: 'tasks', rows: [{id:1, desc:'Fix Bug', status:'Open'}] },
+            { id: 301, table: 'tasks', rows: [] } // Empty page for tasks
+        ];
+        
+        // Buffer Slots
+        let buffer = [null, null, null, null];
+        
+        // Transaction State
+        let isTxnActive = false;
+        let pendingWrites = false; // Tracks if we have dirty pages waiting for commit
+
+        // --- INIT ---
+        window.onload = () => {
+            renderBuffer();
+            renderDisk();
+            switchView('playground');
+        };
+
+        // --- CORE ENGINE LOGIC ---
+        async function runEngine() {
+            const sql = document.getElementById('sqlInput').value.trim();
+            if(!sql) return log("Error: Empty SQL", "error");
+
+            resetUI();
+            log(`Running: ${sql}`, "process");
+            
+            // 1. PARSER & BINDER
+            highlight('node-parser', true);
+            await wait(300);
+            
+            try {
+                const ast = parseSQL(sql); 
+                
+                // --- TCL HANDLING ---
+                if(ast.command === "BEGIN") {
+                    startTxn();
+                    return;
+                }
+                if(ast.command === "COMMIT") {
+                    await performCommit();
+                    return;
+                }
+                if(ast.command === "ROLLBACK") {
+                    await performRollback();
+                    return;
+                }
+                // --------------------
+
+                highlightPill('step-parse', true);
+                await wait(300);
+
+                // Binder (Check Table)
+                if(ast.table && !CATALOG.includes(ast.table.toLowerCase())) {
+                    throw new Error(`Table '${ast.table}' not found in Catalog.`);
+                }
+                
+                highlightPill('step-bind', true);
+                log(`Binder: Table '${ast.table}' valid.`, "detail");
+                await wait(300);
+                highlight('node-parser', false);
+
+                // 2. EXECUTOR
+                highlight('node-engine', true);
+                await execute(ast);
+
+            } catch (e) {
+                log(e.message, "error");
+                highlight('node-parser', true, true);
+            }
+            
+            highlight('node-engine', false);
+        }
+
+        function parseSQL(sql) {
+            const norm = sql.trim().replace(/;$/, '');
+            const up = norm.toUpperCase();
+            
+            if(up === "BEGIN") return { command: "BEGIN" };
+            if(up === "COMMIT") return { command: "COMMIT" };
+            if(up === "ROLLBACK") return { command: "ROLLBACK" };
+
+            // SELECT
+            if(up.startsWith("SELECT")) {
+                const parts = norm.match(/SELECT\s+(.+)\s+FROM\s+(\w+)/i);
+                if(!parts) throw new Error("Syntax: SELECT * FROM table");
+                return { command: "SELECT", columns: parts[1], table: parts[2] };
+            }
+            // INSERT
+            if(up.startsWith("INSERT")) {
+                const parts = norm.match(/INSERT\s+INTO\s+(\w+)\s+VALUES\s*\((.+)\)/i);
+                if(!parts) throw new Error("Syntax: INSERT INTO table VALUES (...)");
+                
+                const rawVals = parts[2].split(',');
+                const vals = rawVals.map(s => {
+                    s = s.trim();
+                    if(s.startsWith("'") || s.startsWith('"')) return s.slice(1,-1);
+                    return isNaN(s) ? s : Number(s);
+                });
+                
+                // Simple Object Mapper for Demo (Assumes id, col2, col3 order)
+                let obj = { id: vals[0] };
+                if(vals[1]) obj.col2 = vals[1];
+                if(vals[2]) obj.col3 = vals[2];
+
+                return { command: "INSERT", table: parts[1], values: obj };
+            }
+            // UPDATE
+            if(up.startsWith("UPDATE")) {
+                const parts = norm.match(/UPDATE\s+(\w+)\s+SET\s+(\w+)=['"]?([^'"]+)['"]?\s+WHERE\s+id=(\d+)/i);
+                if(!parts) throw new Error("Syntax: UPDATE table SET col=val WHERE id=x");
+                return { command: "UPDATE", table: parts[1], col: parts[2], val: parts[3], id: parseInt(parts[4]) };
+            }
+            // DELETE
+            if(up.startsWith("DELETE")) {
+                const parts = norm.match(/DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+id\s*=\s*(\d+))?/i);
+                if(!parts) throw new Error("Syntax: DELETE FROM table [WHERE id=X]");
+                return { command: "DELETE", table: parts[1], targetId: parts[2] ? parseInt(parts[2]) : null };
+            }
+            // CREATE
+            if(up.startsWith("CREATE")) {
+                const parts = norm.match(/CREATE\s+TABLE\s+(\w+)/i);
+                if(!parts) throw new Error("Syntax: CREATE TABLE name ...");
+                return { command: "CREATE", table: parts[1] };
+            }
+            // DROP
+            if(up.startsWith("DROP")) {
+                const parts = norm.match(/DROP\s+TABLE\s+(\w+)/i);
+                if(!parts) throw new Error("Syntax: DROP TABLE name");
+                return { command: "DROP", table: parts[1] };
+            }
+
+            throw new Error("Unknown SQL Command.");
+        }
+
+        async function execute(ast) {
+            const table = ast.table.toLowerCase();
+
+            if(ast.command === "SELECT") {
+                log("Executor: Full Scan...", "process");
+                const results = [];
+                for(let i=0; i<disk.length; i++) {
+                    if(disk[i].table !== table || disk[i].rows.length === 0) continue;
+                    
+                    await animateIO(disk[i].id, i%4, 'read');
+                    buffer[i%4] = JSON.parse(JSON.stringify(disk[i])); // Load to buffer
+                    buffer[i%4].isDirty = false;
+                    renderBuffer();
+                    results.push(...disk[i].rows);
+                    await wait(200);
+                }
+                showResult(JSON.stringify(results, null, 2));
+            }
+            else if(ast.command === "INSERT") {
+                // Find a page for this table with space
+                let pIdx = disk.findIndex(p => p.table === table && p.rows.length < 2);
+                if(pIdx === -1) {
+                    // Alloc new page
+                    const newId = disk.length > 0 ? Math.max(...disk.map(p=>p.id)) + 1 : 100;
+                    disk.push({id: newId, table: table, rows: []});
+                    pIdx = disk.length - 1;
+                    renderDisk();
+                    log(`Allocated Page ${newId} for ${table}`, "detail");
+                }
+
+                const frameIdx = 0;
+                log(`Reading Page ${disk[pIdx].id}...`, "detail");
+                await animateIO(disk[pIdx].id, frameIdx, 'read');
+                
+                // Copy to buffer
+                buffer[frameIdx] = JSON.parse(JSON.stringify(disk[pIdx]));
+                buffer[frameIdx].isDirty = false;
+                renderBuffer();
+
+                // Modify
+                await wait(400);
+                buffer[frameIdx].rows.push(ast.values);
+                markDirty(frameIdx);
+                log("Buffer: Page marked DIRTY.", "process");
+                await wait(600);
+
+                await handleWriteStrategy(pIdx, frameIdx);
+                showResult("1 Row Inserted");
+            }
+            else if(ast.command === "UPDATE") {
+                // Find page with ID
+                let pIdx = -1;
+                for(let i=0; i<disk.length; i++) {
+                    if(disk[i].table === table && disk[i].rows.find(r => r.id === ast.id)) {
+                        pIdx = i; break;
+                    }
+                }
+
+                if(pIdx === -1) throw new Error(`ID ${ast.id} not found.`);
+
+                const frameIdx = 0;
+                log(`Reading Page ${disk[pIdx].id} containing ID ${ast.id}...`, "detail");
+                await animateIO(disk[pIdx].id, frameIdx, 'read');
+                
+                buffer[frameIdx] = JSON.parse(JSON.stringify(disk[pIdx]));
+                renderBuffer();
+
+                // Update
+                await wait(400);
+                let row = buffer[frameIdx].rows.find(r => r.id === ast.id);
+                if(row) row[ast.col.toLowerCase()] = ast.val; // Update Value
+                
+                markDirty(frameIdx);
+                log("Buffer updated. Dirty.", "process");
+                await wait(600);
+
+                await handleWriteStrategy(pIdx, frameIdx);
+                showResult("1 Row Updated");
+            }
+            else if(ast.command === "DELETE") {
+                let count = 0;
+                for(let i=0; i<disk.length; i++) {
+                    if(disk[i].table !== table) continue;
+                    if(ast.targetId && !disk[i].rows.find(r=>r.id===ast.targetId)) continue;
+
+                    // Read
+                    const frameIdx = 0;
+                    await animateIO(disk[i].id, frameIdx, 'read');
+                    buffer[frameIdx] = JSON.parse(JSON.stringify(disk[i]));
+                    renderBuffer();
+
+                    // Modify
+                    const before = buffer[frameIdx].rows.length;
+                    if(ast.targetId) buffer[frameIdx].rows = buffer[frameIdx].rows.filter(r=>r.id !== ast.targetId);
+                    else buffer[frameIdx].rows = [];
+                    
+                    if(buffer[frameIdx].rows.length < before) {
+                        count++;
+                        markDirty(frameIdx);
+                        await wait(500);
+                        await handleWriteStrategy(i, frameIdx);
+                    }
+                }
+                showResult(`${count} Row(s) Deleted`);
+            }
+            else if(ast.command === "CREATE") {
+                CATALOG.push(ast.table.toLowerCase());
+                // Add empty page
+                disk.push({id: Math.floor(Math.random()*1000), table: ast.table.toLowerCase(), rows: []});
+                renderDisk();
+                showResult(`Table '${ast.table}' created.`);
+            }
+            else if(ast.command === "DROP") {
+                const idx = CATALOG.indexOf(ast.table.toLowerCase());
+                if(idx > -1) CATALOG.splice(idx, 1);
+                // Remove pages
+                disk = disk.filter(p => p.table !== ast.table.toLowerCase());
+                renderDisk();
+                showResult(`Table '${ast.table}' dropped.`);
+            }
+        }
+
+        // --- TCL HANDLERS ---
+        async function startTxn() {
+            isTxnActive = true;
+            document.getElementById('txn-badge').classList.remove('hidden');
+            log("Transaction Started (Autocommit OFF).", "process");
+            highlight('node-engine', false);
+        }
+
+        async function handleWriteStrategy(diskIdx, bufIdx) {
+            if(isTxnActive) {
+                pendingWrites = true;
+                log("Txn Active: Write deferred in Buffer.", "process");
+                // Visually show it stays in buffer
+            } else {
+                // Auto-commit: Flush immediately
+                log("Auto-Commit: Flushing to disk...", "detail");
+                await animateIO(disk[diskIdx].id, bufIdx, 'write');
+                disk[diskIdx] = JSON.parse(JSON.stringify(buffer[bufIdx]));
+                buffer[bufIdx].isDirty = false;
+                renderBuffer();
+                renderDisk();
+            }
+        }
+
+        async function performCommit() {
+            if(!isTxnActive) return log("No active transaction.", "error");
+            
+            log("Committing Transaction...", "process");
+            
+            // Find all dirty buffers and flush them
+            for(let i=0; i<4; i++) {
+                if(buffer[i] && buffer[i].isDirty) {
+                    // Find corresponding disk page index
+                    const dIdx = disk.findIndex(p => p.id === buffer[i].id);
+                    if(dIdx > -1) {
+                        await animateIO(disk[dIdx].id, i, 'write');
+                        disk[dIdx] = JSON.parse(JSON.stringify(buffer[i]));
+                        buffer[i].isDirty = false;
+                    }
+                }
+            }
+            renderBuffer();
+            renderDisk();
+            
+            isTxnActive = false;
+            pendingWrites = false;
+            document.getElementById('txn-badge').classList.add('hidden');
+            log("COMMIT Successful.", "success");
+            highlight('node-engine', false);
+        }
+
+        async function performRollback() {
+            if(!isTxnActive) return log("No active transaction.", "error");
+            log("Rolling Back...", "error");
+
+            // Discard dirty buffers
+            for(let i=0; i<4; i++) {
+                if(buffer[i] && buffer[i].isDirty) {
+                    // Simply mark clean, implies reverting to what is on disk (since we didn't write)
+                    // Or reload visual to match disk
+                    const dIdx = disk.findIndex(p => p.id === buffer[i].id);
+                    if(dIdx > -1) {
+                        buffer[i] = JSON.parse(JSON.stringify(disk[dIdx])); // Revert
+                    }
+                    buffer[i].isDirty = false;
+                }
+            }
+            renderBuffer();
+            
+            isTxnActive = false;
+            pendingWrites = false;
+            document.getElementById('txn-badge').classList.add('hidden');
+            log("ROLLBACK Complete.", "process");
+            highlight('node-engine', false);
+        }
+
+        function markDirty(idx) {
+            buffer[idx].isDirty = true;
+            document.getElementById(`frame-${idx}`).classList.add('dirty');
+            highlightPill('lbl-dirty', true);
+        }
+
+        // --- VISUALS ---
+        async function animateIO(pId, fIdx, type) {
+            const pEl = document.getElementById(`disk-p-${pId}`);
+            const fEl = document.getElementById(`frame-${fIdx}`);
+            if(!pEl || !fEl) return;
+
+            const r1 = pEl.getBoundingClientRect();
+            const r2 = fEl.getBoundingClientRect();
+            
+            const flyer = document.createElement('div');
+            flyer.className = "flying-page";
+            flyer.innerHTML = `PG ${pId}`;
+            flyer.style.width = "60px"; flyer.style.height = "40px";
+            
+            const start = type==='read' ? r1 : r2;
+            const end = type==='read' ? r2 : r1;
+
+            flyer.style.top = start.top + "px";
+            flyer.style.left = start.left + "px";
+            if(type==='write') flyer.style.borderColor = "#f59e0b";
+
+            document.body.appendChild(flyer);
+            await wait(20);
+            flyer.style.top = end.top + "px";
+            flyer.style.left = end.left + "px";
+            await wait(1000);
+            flyer.remove();
+        }
+
+        function renderBuffer() {
+            const el = document.getElementById('buffer-grid');
+            el.innerHTML = '';
+            buffer.forEach((b, i) => {
+                let html = `<div class="text-[9px] text-slate-600">Empty</div>`;
+                if(b) {
+                    let borderClass = `table-${b.table}`;
+                    html = `
+                        <div class="text-[10px] font-bold text-slate-300">Pg ${b.id}</div>
+                        <div class="text-[8px] text-slate-500">${b.rows.length} Rows</div>
+                    `;
+                }
+                const dirtyClass = (b && b.isDirty) ? 'dirty border-amber-500' : 'border-slate-700';
+                el.innerHTML += `<div id="frame-${i}" class="buffer-frame h-16 bg-slate-900/50 border ${dirtyClass} border-dashed rounded flex flex-col items-center justify-center ${b?'occupied':''}"><div class="text-[7px] absolute top-1 left-1 text-slate-600">#${i}</div>${html}</div>`;
+            });
+        }
+
+        function renderDisk() {
+            const el = document.getElementById('disk-grid');
+            el.innerHTML = '';
+            disk.forEach(p => {
+                let colorClass = `table-${p.table}`; // css class for border color
+                let rHtml = p.rows.map(r=>`[${r.id}]`).join(' ');
+                el.innerHTML += `
+                    <div id="disk-p-${p.id}" class="bg-slate-950 border ${colorClass} p-2 rounded h-20 relative hover:bg-slate-900 transition">
+                        <div class="absolute top-0 right-0 px-1 bg-slate-900 text-[8px] text-slate-400 rounded-bl border-l border-b border-slate-800">Pg ${p.id}</div>
+                        <div class="absolute top-0 left-0 px-1 text-[8px] font-bold text-slate-500 uppercase">${p.table}</div>
+                        <div class="mt-5 text-[9px] font-mono text-slate-400 break-all leading-tight">${rHtml || 'Empty'}</div>
+                    </div>`;
+            });
+        }
+
+        // --- UI UTILS ---
+        function switchView(v) {
+            document.getElementById('view-learn').style.display = v==='learn'?'flex':'none';
+            document.getElementById('view-playground').style.display = v==='playground'?'flex':'none';
+            document.getElementById('btn-learn').className = v==='learn' ? "px-3 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white shadow" : "px-3 py-1.5 text-xs font-bold rounded-md text-slate-400";
+            document.getElementById('btn-play').className = v==='playground' ? "px-3 py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white shadow" : "px-3 py-1.5 text-xs font-bold rounded-md text-slate-400";
+            if(v==='playground') { renderBuffer(); renderDisk(); }
+        }
+        
+        // (Scenario logic retained from previous versions for completeness, simplified for this file size)
+        function switchScenario(n) {
+            document.getElementById('scenario-1').classList.toggle('hidden', n!==1);
+            document.getElementById('scenario-1').classList.toggle('grid', n===1);
+            document.getElementById('scenario-2').classList.toggle('hidden', n!==2);
+            document.getElementById('scenario-2').classList.toggle('grid', n===2);
+        }
+
+        function fill(type) {
+            const map = {
+                'SELECT': "SELECT * FROM employees",
+                'INSERT': "INSERT INTO employees VALUES (99, 'NewGuy', 'Intern')",
+                'UPDATE': "UPDATE employees SET role='Lead' WHERE id=1",
+                'DELETE': "DELETE FROM events WHERE id=200",
+                'CREATE': "CREATE TABLE projects",
+                'DROP': "DROP TABLE tasks"
+            };
+            document.getElementById('sqlInput').value = map[type];
+        }
+
+        function toggleTxn() { if(!isTxnActive) startTxn(); }
+        function commitTxn() { if(isTxnActive) runEngine().then(() => performCommit()); } // Hacky alias for button
+        function rollbackTxn() { if(isTxnActive) performRollback(); }
+
+        function log(msg, type) {
+            const div = document.createElement('div');
+            div.className = type==='error'?'text-red-400':(type==='process'?'text-blue-300':(type==='detail'?'text-slate-500 italic ml-2':'text-slate-400'));
+            div.innerText = "> " + msg;
+            document.getElementById('logs').appendChild(div);
+            document.getElementById('logs').scrollTop = 9999;
+        }
+
+        function highlight(id, active, err) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.toggle('active', active && !err);
+                el.classList.toggle('error', active && err);
+            }
+        }
+        function highlightPill(id, active) {
+            const el = document.getElementById(id);
+            if(el) el.classList.toggle('step-active', active);
+        }
+
+        function resetUI() {
+            ['node-parser', 'node-engine', 'node-disk'].forEach(id => highlight(id, false));
+            ['step-parse', 'step-bind', 'lbl-dirty'].forEach(id => highlightPill(id, false));
+        }
+
+        function showResult(txt) {
+            document.getElementById('result-text').innerText = txt;
+            document.getElementById('result-box').classList.remove('translate-y-full', 'opacity-0');
+        }
+        function hideResult() {
+            document.getElementById('result-box').classList.add('translate-y-full', 'opacity-0');
+        }
+
+        const wait = ms => new Promise(r=>setTimeout(r, ms));
+    </script>
+</body>
+</html>

@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBMS Interactive Visualizer V2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        /* Base styles */
+        body {
+            background-color: #0f172a; /* Slate 900 */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+
+        /* Component Box Styling with Transition for Zoom */
+        .component-box {
+            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform-origin: center center;
+            position: relative;
+        }
+
+        /* Focus Mode Classes */
+        .component-box.focused {
+            transform: scale(1.15);
+            z-index: 50;
+            border-color: #60a5fa; /* Blue-400 */
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+            background-color: rgba(30, 41, 59, 0.95); /* Solid slate-800 */
+        }
+        
+        .component-box.dimmed {
+            opacity: 0.3;
+            transform: scale(0.95);
+            filter: blur(1px);
+        }
+
+        .component-box.error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.5) !important;
+        }
+
+        /* Connection Lines */
+        .connection-line {
+            width: 4px;
+            background-color: #334155; /* Slate 700 */
+            margin: 0 auto;
+            position: relative;
+            overflow: visible;
+            transition: height 0.3s;
+        }
+
+        /* Data Packet Animation */
+        .packet {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #fbbf24; /* Amber-400 */
+            border-radius: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px #fbbf24;
+            opacity: 0;
+            z-index: 40;
+        }
+
+        @keyframes packet-down {
+            0% { top: 0; opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        
+        @keyframes packet-up {
+            0% { top: 100%; opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 0; opacity: 0; }
+        }
+
+        .packet-animate-down {
+            animation: packet-down 1s linear forwards;
+        }
+        .packet-animate-up {
+            animation: packet-up 1s linear forwards;
+        }
+
+        /* Internal Steps Styling */
+        .step-pill {
+            opacity: 0.4;
+            transition: all 0.4s ease;
+            font-size: 0.7rem;
+            border: 1px solid transparent;
+        }
+        .step-pill.step-active {
+            opacity: 1;
+            transform: scale(1.1);
+            background-color: #2563eb; /* Blue-600 */
+            border-color: #60a5fa;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+        }
+
+        /* Terminal blinking cursor */
+        .cursor {
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Smooth Container Scroll */
+        #visualizer-container {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 font-sans h-screen overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 p-3 md:p-4 flex justify-between items-center shadow-lg z-20 shrink-0">
+        <h1 class="text-xl md:text-2xl font-bold text-blue-400 tracking-tight flex items-center">
+            <i class="fas fa-database mr-3"></i>
+            <div>
+                DBMS <span class="text-white font-light">Visualizer</span>
+                <span class="text-[10px] block font-mono text-slate-500 font-normal">v2.0 (Pan/Zoom Enabled)</span>
+            </div>
+        </h1>
+        <div class="flex space-x-2">
+            <button onclick="switchView('learn')" class="text-xs md:text-sm px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition" id="btn-learn">
+                <i class="fas fa-book mr-1"></i> Concept
+            </button>
+            <button onclick="switchView('playground')" class="text-xs md:text-sm px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded transition shadow-lg shadow-blue-500/30 flex items-center" id="btn-play">
+                <i class="fas fa-terminal mr-2"></i> SQL Lab
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow relative overflow-hidden w-full flex">
+        
+        <!-- VIEW 1: Concepts (File vs DBMS) -->
+        <div id="view-learn" class="w-full hidden h-full flex flex-col items-center justify-start overflow-y-auto p-8">
+            <h2 class="text-3xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">Why do we need a DBMS?</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 w-full max-w-6xl mb-12">
+                <!-- File System -->
+                <div class="bg-slate-800/50 p-8 rounded-2xl border border-red-900/30 hover:border-red-500/50 transition group relative overflow-hidden backdrop-blur-sm">
+                    <div class="absolute top-0 right-0 px-4 py-1 bg-red-600/80 text-white text-xs font-bold uppercase rounded-bl-lg backdrop-blur">File System</div>
+                    <div class="text-center mb-6 mt-2">
+                        <div class="w-20 h-20 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-red-900/20 transition">
+                            <i class="fas fa-file-alt text-4xl text-slate-400 group-hover:text-red-400 transition"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-red-400">Flat Files</h3>
+                    </div>
+                    <ul class="text-sm space-y-3 text-slate-300">
+                        <li class="flex items-start"><i class="fas fa-times-circle text-red-500 mt-1 mr-2"></i><span><b>Redundancy:</b> Same data stored multiple times.</span></li>
+                        <li class="flex items-start"><i class="fas fa-times-circle text-red-500 mt-1 mr-2"></i><span><b>Inconsistency:</b> Update one file, others remain old.</span></li>
+                        <li class="flex items-start"><i class="fas fa-times-circle text-red-500 mt-1 mr-2"></i><span><b>Poor Security:</b> Hard to control user access.</span></li>
+                    </ul>
+                    <div class="mt-6 bg-black/40 p-3 rounded border border-slate-700 text-xs font-mono text-slate-400">
+                        student_data.txt<br>
+                        101, John, CSE<br>
+                        101, John, CSE  <-- Duplicate!<br>
+                        102, Bob,  ECE
+                    </div>
+                </div>
+
+                <!-- DBMS -->
+                <div class="bg-slate-800/50 p-8 rounded-2xl border border-green-900/30 hover:border-green-500/50 transition group relative overflow-hidden backdrop-blur-sm">
+                    <div class="absolute top-0 right-0 px-4 py-1 bg-green-600/80 text-white text-xs font-bold uppercase rounded-bl-lg backdrop-blur">DBMS</div>
+                    <div class="text-center mb-6 mt-2">
+                         <div class="w-20 h-20 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-900/20 transition">
+                            <i class="fas fa-database text-4xl text-slate-400 group-hover:text-green-400 transition"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-green-400">Database System</h3>
+                    </div>
+                    <ul class="text-sm space-y-3 text-slate-300">
+                        <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i><span><b>Normalization:</b> Eliminates redundancy.</span></li>
+                        <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i><span><b>Integrity:</b> Constraints ensure data validity.</span></li>
+                        <li class="flex items-start"><i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i><span><b>ACID Properties:</b> Safe transactions.</span></li>
+                    </ul>
+                    <div class="mt-6 bg-black/40 p-3 rounded border border-slate-700 text-xs font-mono text-green-400">
+                        Table: Students (PK: ID)<br>
+                        +-----+------+-----+<br>
+                        | ID  | Name | Dept|<br>
+                        +-----+------+-----+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: Interactive Playground -->
+        <div id="view-playground" class="w-full h-full flex flex-col md:flex-row overflow-hidden relative">
+            
+            <!-- Left Panel: SQL Interface -->
+            <div class="w-full md:w-[350px] lg:w-[400px] bg-slate-800 border-r border-slate-700 flex flex-col shadow-2xl z-30 shrink-0 md:h-full h-1/2">
+                
+                <!-- Query Input Section -->
+                <div class="p-4 flex-grow flex flex-col min-h-0">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-semibold text-blue-300 uppercase tracking-wider"><i class="fas fa-code mr-2"></i>Query Editor</h3>
+                        <span class="text-[10px] bg-slate-700 text-slate-300 px-2 py-0.5 rounded">SQL-92</span>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button onclick="fillQuery('SELECT')" class="px-2 py-1.5 bg-slate-700 hover:bg-slate-600 text-[10px] text-left rounded border border-slate-600 transition flex items-center"><i class="fas fa-search mr-2 text-blue-400"></i> SELECT *</button>
+                        <button onclick="fillQuery('INSERT')" class="px-2 py-1.5 bg-slate-700 hover:bg-slate-600 text-[10px] text-left rounded border border-slate-600 transition flex items-center"><i class="fas fa-plus mr-2 text-green-400"></i> INSERT</button>
+                        <button onclick="fillQuery('DELETE')" class="px-2 py-1.5 bg-slate-700 hover:bg-slate-600 text-[10px] text-left rounded border border-slate-600 transition flex items-center"><i class="fas fa-trash mr-2 text-red-400"></i> DELETE</button>
+                        <button onclick="fillQuery('CREATE')" class="px-2 py-1.5 bg-slate-700 hover:bg-slate-600 text-[10px] text-left rounded border border-slate-600 transition flex items-center"><i class="fas fa-table mr-2 text-purple-400"></i> CREATE</button>
+                    </div>
+
+                    <!-- AI Helper -->
+                    <div id="ai-suggestion" class="hidden bg-amber-900/40 border border-amber-600/50 text-amber-200 text-xs p-2 rounded mb-2 flex justify-between items-center animate-pulse">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-magic"></i>
+                            <span id="ai-text">Did you mean...?</span>
+                        </div>
+                        <button onclick="applyFix()" class="bg-amber-700 hover:bg-amber-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Fix</button>
+                    </div>
+
+                    <div class="relative flex-grow min-h-[100px]">
+                        <textarea id="sqlInput" class="w-full h-full bg-[#0d1117] text-green-400 font-mono text-sm p-3 rounded-lg border border-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none leading-relaxed" spellcheck="false" placeholder="Type SQL query here..."></textarea>
+                    </div>
+                    
+                    <button id="runBtn" onclick="runQuery()" class="group w-full mt-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-blue-900/50 transform active:scale-95 transition flex items-center justify-center overflow-hidden relative">
+                        <div class="absolute inset-0 w-full h-full bg-white/10 group-hover:translate-x-full transition-transform duration-500 skew-x-12 -translate-x-full"></div>
+                        <span id="btnText" class="flex items-center"><i class="fas fa-play mr-2 text-xs"></i> Execute Query</span>
+                    </button>
+                </div>
+
+                <!-- Logs / Output -->
+                <div class="h-1/3 bg-[#0d1117] p-3 overflow-hidden font-mono text-xs border-t border-slate-700 flex flex-col">
+                    <div class="text-slate-500 border-b border-slate-800 pb-1 mb-2 flex justify-between items-center shrink-0">
+                        <span class="font-bold uppercase text-[10px] tracking-wider">System Logs</span>
+                        <button onclick="clearLogs()" class="text-[10px] hover:text-white"><i class="fas fa-ban"></i> Clear</button>
+                    </div>
+                    <div id="console-logs" class="space-y-1 overflow-y-auto flex-grow custom-scrollbar">
+                        <div class="text-slate-500 italic">> DBMS Interactive v2.0 Ready</div>
+                        <div class="text-slate-500 italic">> Waiting for input...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Visualizer (The Stage) -->
+            <div id="visualizer-container" class="w-full flex-grow bg-slate-900 relative p-8 overflow-y-auto flex flex-col items-center">
+                
+                <div class="w-full max-w-3xl flex flex-col items-center py-10 relative">
+                    
+                    <!-- Connection Line 1 -->
+                    <div class="absolute left-1/2 top-[160px] h-[80px] w-1 bg-slate-700 -translate-x-1/2 -z-0">
+                        <!-- Packet Container -->
+                        <div id="packet-1" class="packet hidden"></div>
+                    </div>
+                    
+                    <!-- Connection Line 2 -->
+                    <div class="absolute left-1/2 top-[340px] h-[80px] w-1 bg-slate-700 -translate-x-1/2 -z-0">
+                        <!-- Packet Container -->
+                         <div id="packet-2" class="packet hidden"></div>
+                    </div>
+
+                    <!-- Step 1: Query Parser -->
+                    <div id="node-parser" class="component-box w-full max-w-md bg-slate-800 rounded-xl border border-slate-600 mb-20 p-1">
+                        <div class="bg-slate-900/50 p-4 rounded-lg flex flex-col items-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 opacity-50"></div>
+                            
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="bg-purple-900/50 p-2 rounded-lg"><i class="fas fa-code-branch text-purple-400 text-xl"></i></div>
+                                <h4 class="font-bold text-lg text-slate-100">Query Processor</h4>
+                            </div>
+                            
+                            <!-- Internal Steps -->
+                            <div class="w-full flex justify-between gap-1 bg-black/30 p-2 rounded-lg border border-slate-700/50">
+                                <div id="step-syntax" class="step-pill flex-1 text-center py-1 bg-slate-700 rounded text-slate-300">Parser</div>
+                                <div id="step-opt" class="step-pill flex-1 text-center py-1 bg-slate-700 rounded text-slate-300">Optimizer</div>
+                                <div id="step-plan" class="step-pill flex-1 text-center py-1 bg-slate-700 rounded text-slate-300">Plan</div>
+                            </div>
+                            
+                            <div id="status-parser" class="text-xs mt-3 text-slate-500 font-mono min-h-[1.5em]">Idle</div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Storage Engine -->
+                    <div id="node-engine" class="component-box w-full max-w-md bg-slate-800 rounded-xl border border-slate-600 mb-20 p-1">
+                        <div class="bg-slate-900/50 p-4 rounded-lg flex flex-col items-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-yellow-500 opacity-50"></div>
+                            
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="bg-orange-900/50 p-2 rounded-lg"><i class="fas fa-cogs text-orange-400 text-xl"></i></div>
+                                <h4 class="font-bold text-lg text-slate-100">Storage Engine</h4>
+                            </div>
+                            
+                            <!-- Internal Steps -->
+                            <div class="w-full flex justify-between gap-1 bg-black/30 p-2 rounded-lg border border-slate-700/50">
+                                <div id="step-trans" class="step-pill flex-1 text-center py-1 bg-slate-700 rounded text-slate-300">Lock Mgr</div>
+                                <div id="step-buffer" class="step-pill flex-1 text-center py-1 bg-slate-700 rounded text-slate-300">Buffer</div>
+                                <div id="step-file" class="step-pill flex-1 text-center py-1 bg-slate-700 rounded text-slate-300">Access</div>
+                            </div>
+
+                            <div id="status-engine" class="text-xs mt-3 text-slate-500 font-mono min-h-[1.5em]">Idle</div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Physical Disk -->
+                    <div id="node-disk" class="component-box w-full max-w-2xl bg-slate-800 rounded-xl border border-slate-600 p-1">
+                        <div class="bg-slate-900/50 p-4 rounded-lg relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-50"></div>
+                            
+                            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-700">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-blue-900/50 p-2 rounded-lg"><i class="fas fa-hdd text-blue-400 text-xl"></i></div>
+                                    <div>
+                                        <h4 class="font-bold text-lg text-slate-100">Physical Storage</h4>
+                                        <div class="text-[10px] text-slate-400 font-mono">/var/lib/mysql/data/student.ibd</div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                    <div class="w-2 h-2 rounded-full bg-slate-600"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- The Table Visualization -->
+                            <div class="relative rounded-lg overflow-hidden border border-slate-700 bg-[#0f172a]">
+                                <table class="w-full text-left text-sm text-slate-300" id="db-table">
+                                    <thead class="bg-slate-800 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                                        <tr>
+                                            <th class="px-4 py-3">ID (PK)</th>
+                                            <th class="px-4 py-3">Name</th>
+                                            <th class="px-4 py-3">Age</th>
+                                            <th class="px-4 py-3">Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-body" class="divide-y divide-slate-700/50 font-mono text-xs">
+                                        <!-- Rows generated by JS -->
+                                    </tbody>
+                                </table>
+                                <!-- Overlay for IO operation -->
+                                <div id="disk-overlay" class="absolute inset-0 bg-blue-500/10 hidden flex items-center justify-center backdrop-blur-[1px]">
+                                    <span class="bg-black/80 text-blue-400 px-3 py-1 rounded text-xs border border-blue-500/50 animate-pulse">
+                                        <i class="fas fa-microchip mr-2"></i>READING PAGES...
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Spacing for auto-scroll bottom -->
+                    <div class="h-20"></div>
+
+                </div>
+
+                <!-- Floating Result Toast -->
+                <div id="result-area" class="fixed bottom-6 right-6 max-w-md w-full bg-slate-800 border-l-4 border-green-500 rounded-lg shadow-2xl p-4 hidden transform translate-y-20 opacity-0 transition-all duration-500 z-50">
+                    <div class="flex justify-between items-start mb-2">
+                        <h5 id="result-title" class="font-bold text-green-400 flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i> Success
+                        </h5>
+                        <button onclick="closeResult()" class="text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="bg-black/50 p-3 rounded font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap max-h-40 custom-scrollbar" id="query-output"></div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Mock Database State ---
+        let dbData = [
+            { id: 1, name: 'Alice', age: 24, role: 'Dev' },
+            { id: 2, name: 'Bob', age: 29, role: 'Manager' },
+            { id: 3, name: 'Charlie', age: 22, role: 'Intern' }
+        ];
+
+        let suggestionFix = "";
+        let isRunning = false;
+        
+        // --- Initialization ---
+        window.onload = () => {
+            renderTable();
+            log("System Initialized. Visualizer ready.");
+        };
+
+        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // --- View Switching ---
+        function switchView(viewName) {
+            const learnView = document.getElementById('view-learn');
+            const playView = document.getElementById('view-playground');
+            const btnLearn = document.getElementById('btn-learn');
+            const btnPlay = document.getElementById('btn-play');
+
+            if(viewName === 'learn') {
+                learnView.classList.remove('hidden');
+                learnView.classList.add('flex');
+                playView.classList.add('hidden');
+                
+                // Styles
+                btnLearn.className = "text-xs md:text-sm px-3 py-2 bg-blue-600 text-white rounded transition shadow-lg flex items-center";
+                btnPlay.className = "text-xs md:text-sm px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition";
+            } else {
+                learnView.classList.add('hidden');
+                learnView.classList.remove('flex');
+                playView.classList.remove('hidden');
+
+                // Styles
+                btnPlay.className = "text-xs md:text-sm px-3 py-2 bg-blue-600 text-white rounded transition shadow-lg flex items-center";
+                btnLearn.className = "text-xs md:text-sm px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition";
+            }
+        }
+
+        // --- Visualizer Focus Logic (Pan/Zoom) ---
+        function focusNode(nodeId) {
+            // 1. Reset all nodes
+            ['node-parser', 'node-engine', 'node-disk'].forEach(id => {
+                const el = document.getElementById(id);
+                if(id === nodeId) {
+                    el.classList.add('focused');
+                    el.classList.remove('dimmed');
+                } else {
+                    el.classList.remove('focused');
+                    el.classList.add('dimmed');
+                }
+            });
+
+            // 2. Scroll to center the active node
+            const element = document.getElementById(nodeId);
+            const container = document.getElementById('visualizer-container');
+            
+            // Calculate position to center smoothly
+            // Native scrollIntoView is easiest and robust
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function resetFocus() {
+            ['node-parser', 'node-engine', 'node-disk'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('focused', 'dimmed', 'error');
+            });
+            // Scroll back to top lightly
+             document.getElementById('visualizer-container').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function animatePacket(packetId, direction = 'down') {
+            const packet = document.getElementById(packetId);
+            packet.classList.remove('hidden');
+            packet.style.display = 'block';
+            
+            // Reset animation
+            packet.classList.remove('packet-animate-down', 'packet-animate-up');
+            void packet.offsetWidth; // Trigger reflow
+            
+            if(direction === 'down') packet.classList.add('packet-animate-down');
+            else packet.classList.add('packet-animate-up');
+
+            await wait(1000); // Wait for animation duration
+            packet.classList.add('hidden');
+        }
+
+        // --- Query Execution Logic ---
+        async function runQuery() {
+            if(isRunning) return; 
+            
+            const rawSql = document.getElementById('sqlInput').value.trim();
+            if (!rawSql) {
+                log("Error: Query is empty.", "error");
+                shakeInput();
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById('runBtn').classList.add('opacity-50', 'cursor-not-allowed');
+            document.getElementById('btnText').innerHTML = '<i class="fas fa-cog fa-spin mr-2"></i> Processing...';
+            closeResult();
+            
+            try {
+                // --- PHASE 1: PARSER ---
+                focusNode('node-parser');
+                log("Started: " + rawSql.substring(0,30) + "...", "process");
+                
+                const parserStatus = document.getElementById('status-parser');
+                parserStatus.innerHTML = '<span class="text-purple-400">Tokenizing...</span>';
+                
+                await wait(600);
+                highlightPill('step-syntax', true);
+                log("Parser: Validating Syntax...", "detail");
+                await wait(800);
+
+                // Syntax Validation Logic
+                const validation = validateSyntax(rawSql);
+                if(!validation.valid) {
+                    throw new Error(validation.error);
+                }
+
+                highlightPill('step-syntax', false);
+                highlightPill('step-opt', true);
+                parserStatus.innerHTML = '<span class="text-purple-400">Optimizing...</span>';
+                log("Optimizer: Computing costs...", "detail");
+                await wait(800);
+
+                highlightPill('step-opt', false);
+                highlightPill('step-plan', true);
+                parserStatus.innerHTML = '<span class="text-green-400">Plan Ready.</span>';
+                log("Planner: Tree generated.", "detail");
+                await wait(600);
+                highlightPill('step-plan', false);
+
+                // Packet Animation: Parser -> Engine
+                await animatePacket('packet-1', 'down');
+
+
+                // --- PHASE 2: ENGINE ---
+                focusNode('node-engine');
+                const engineStatus = document.getElementById('status-engine');
+                engineStatus.innerHTML = '<span class="text-orange-400">Processing...</span>';
+                
+                highlightPill('step-trans', true);
+                log("Engine: Acquiring locks...", "detail");
+                await wait(800);
+                highlightPill('step-trans', false);
+
+                highlightPill('step-buffer', true);
+                log("Buffer Pool: Checking cache...", "detail");
+                await wait(600);
+                log("Buffer: Page fault. Requesting I/O.", "detail");
+                engineStatus.innerHTML = '<span class="text-orange-400">I/O Request</span>';
+                highlightPill('step-buffer', false);
+                
+                // Packet Animation: Engine -> Disk
+                await animatePacket('packet-2', 'down');
+
+
+                // --- PHASE 3: DISK ---
+                focusNode('node-disk');
+                log("Storage: Reading pages...", "detail");
+                
+                const overlay = document.getElementById('disk-overlay');
+                overlay.classList.remove('hidden');
+                await wait(1500); // Simulate read time
+                overlay.classList.add('hidden');
+
+                // Perform Actual Data Logic
+                const result = executeLogic(rawSql);
+                
+                // Packet Animation: Disk -> Engine (Up)
+                await animatePacket('packet-2', 'up');
+                
+                // Packet Animation: Engine -> Parser (Up)
+                // Quickly move back up to imply data return
+                await animatePacket('packet-1', 'up');
+
+                // Show Result
+                resetFocus();
+                showResult(result.msg, true);
+                if(result.type === 'data') log(`Success: ${result.count} rows affected.`, "success");
+
+            } catch (e) {
+                // Error Handling Visuals
+                const parser = document.getElementById('node-parser');
+                if(parser.classList.contains('focused')) {
+                    parser.classList.add('error');
+                    highlightPill('step-syntax', true, true);
+                }
+                document.getElementById('status-parser').innerHTML = '<span class="text-red-500 font-bold">Failed</span>';
+                log(e.message, "error");
+                showResult(e.message, false);
+                resetFocus(); // Optional: stay focused on error? better to reset for visibility
+            } finally {
+                isRunning = false;
+                document.getElementById('runBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('btnText').innerHTML = '<i class="fas fa-play mr-2 text-xs"></i> Execute Query';
+                
+                // Clear pills
+                document.querySelectorAll('.step-pill').forEach(p => p.classList.remove('step-active', 'step-error'));
+            }
+        }
+
+        // --- Logic Helpers ---
+        function validateSyntax(sql) {
+            const s = sql.trim().toUpperCase();
+            if(!s) return {valid:false, error: "Empty Query"};
+            
+            const firstWord = s.split(' ')[0];
+            const validCmds = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE'];
+            
+            if(!validCmds.includes(firstWord)) return {valid:false, error: "Unknown Command"};
+            
+            if(firstWord === 'SELECT' && !s.includes('FROM')) return {valid:false, error: "Missing 'FROM' clause"};
+            if(firstWord === 'INSERT' && !s.includes('VALUES')) return {valid:false, error: "Missing 'VALUES'"};
+            
+            return {valid:true};
+        }
+
+        function executeLogic(sql) {
+            const s = sql.trim();
+            const upper = s.toUpperCase();
+            
+            if(upper.startsWith('SELECT')) {
+                return { type: 'data', msg: JSON.stringify(dbData, null, 2), count: dbData.length };
+            }
+            
+            if(upper.startsWith('INSERT')) {
+                // Quick hack parsing: INSERT INTO students VALUES (id, 'name', age, 'role')
+                try {
+                    const valPart = s.match(/VALUES\s*\((.+)\)/i);
+                    if(!valPart) throw new Error("Invalid Format");
+                    
+                    const args = valPart[1].split(',').map(item => item.trim().replace(/['"]/g, ''));
+                    const newRow = {
+                        id: parseInt(args[0]) || dbData.length + 1,
+                        name: args[1] || 'Unknown',
+                        age: parseInt(args[2]) || 20,
+                        role: args[3] || 'User'
+                    };
+                    dbData.push(newRow);
+                    renderTable();
+                    return { type: 'data', msg: "1 Row Inserted successfully.", count: 1 };
+                } catch(e) {
+                    throw new Error("Insert Parsing Failed. Use: VALUES (id, name, age, role)");
+                }
+            }
+
+            if(upper.startsWith('DELETE')) {
+                const old = dbData.length;
+                if(upper.includes('WHERE')) {
+                    // Simple hack: if id=X
+                    const idMatch = s.match(/id\s*=\s*(\d+)/i);
+                    if(idMatch) {
+                        dbData = dbData.filter(r => r.id != idMatch[1]);
+                    } else {
+                         dbData.pop(); // Demo logic for unknown where
+                    }
+                } else {
+                    dbData = []; // Delete all
+                }
+                renderTable();
+                return { type: 'data', msg: `${old - dbData.length} Rows Deleted.`, count: old - dbData.length };
+            }
+
+            if(upper.startsWith('CREATE')) {
+                return { type: 'data', msg: "Table 'students' already exists.", count: 0 };
+            }
+
+            return { type: 'data', msg: "Command Executed.", count: 0 };
+        }
+
+        // --- UI Rendering Helpers ---
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            if(dbData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500 italic">Disk Empty (0 bytes)</td></tr>';
+                return;
+            }
+
+            dbData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-700/50 transition duration-150";
+                tr.innerHTML = `
+                    <td class="px-4 py-2 border-b border-slate-700 text-blue-300">${row.id}</td>
+                    <td class="px-4 py-2 border-b border-slate-700 text-slate-200">${row.name}</td>
+                    <td class="px-4 py-2 border-b border-slate-700 text-slate-400">${row.age}</td>
+                    <td class="px-4 py-2 border-b border-slate-700 text-purple-300">${row.role}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function fillQuery(type) {
+            const input = document.getElementById('sqlInput');
+            let txt = "";
+            switch(type) {
+                case 'CREATE': txt = "CREATE TABLE students (id INT, name VARCHAR, age INT, role VARCHAR);"; break;
+                case 'INSERT': txt = "INSERT INTO students VALUES (4, 'David', 30, 'Analyst');"; break;
+                case 'SELECT': txt = "SELECT * FROM students;"; break;
+                case 'DELETE': txt = "DELETE FROM students WHERE id = 1;"; break;
+            }
+            input.value = txt;
+            input.focus();
+        }
+
+        function showResult(msg, success) {
+            const box = document.getElementById('result-area');
+            const title = document.getElementById('result-title');
+            const output = document.getElementById('query-output');
+            
+            box.classList.remove('hidden');
+            // Trigger reflow for transition
+            void box.offsetWidth; 
+            box.classList.remove('translate-y-20', 'opacity-0');
+            
+            if(success) {
+                box.classList.replace('border-red-500', 'border-green-500');
+                title.className = "font-bold text-green-400 flex items-center";
+                title.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Query Success';
+            } else {
+                box.classList.replace('border-green-500', 'border-red-500');
+                title.className = "font-bold text-red-400 flex items-center";
+                title.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Execution Error';
+            }
+            output.innerText = msg;
+        }
+
+        function closeResult() {
+            const box = document.getElementById('result-area');
+            box.classList.add('translate-y-20', 'opacity-0');
+            setTimeout(() => box.classList.add('hidden'), 500);
+        }
+
+        function log(msg, type='info') {
+            const logs = document.getElementById('console-logs');
+            const div = document.createElement('div');
+            const time = new Date().toLocaleTimeString().split(' ')[0];
+            
+            let color = 'text-slate-400';
+            if(type === 'success') color = 'text-green-400';
+            if(type === 'error') color = 'text-red-400';
+            if(type === 'process') color = 'text-yellow-400 font-bold';
+            if(type === 'detail') color = 'text-blue-300 italic pl-4 text-[10px]';
+
+            div.className = `${color} py-0.5`;
+            div.innerHTML = `<span class="opacity-30 text-[9px] mr-1">${time}</span> ${msg}`;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function highlightPill(id, active, error=false) {
+            const el = document.getElementById(id);
+            if(active) {
+                el.classList.add('step-active');
+                if(error) {
+                    el.classList.add('bg-red-600', 'border-red-400');
+                    el.classList.remove('bg-blue-600', 'border-blue-400');
+                } else {
+                    el.classList.add('bg-blue-600', 'border-blue-400');
+                    el.classList.remove('bg-red-600', 'border-red-400');
+                }
+            } else {
+                el.classList.remove('step-active', 'bg-red-600', 'border-red-400', 'bg-blue-600', 'border-blue-400');
+            }
+        }
+        
+        function clearLogs() {
+            document.getElementById('console-logs').innerHTML = '<div class="text-slate-500 italic">> Logs cleared.</div>';
+        }
+
+        function shakeInput() {
+            const el = document.getElementById('sqlInput');
+            el.classList.add('ring-2', 'ring-red-500');
+            setTimeout(() => el.classList.remove('ring-2', 'ring-red-500'), 500);
+        }
+
+        // --- AI Helper (Typo Detection) ---
+        document.getElementById('sqlInput').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const aiBox = document.getElementById('ai-suggestion');
+            let fix = null;
+
+            if(val.includes('selct')) fix = "SELECT";
+            if(val.includes('form')) fix = "FROM";
+            if(val.includes('insrt')) fix = "INSERT";
+            
+            if(fix) {
+                suggestionFix = fix;
+                aiBox.classList.remove('hidden');
+                aiBox.classList.add('flex');
+                document.getElementById('ai-text').innerText = `Typo? "${fix}"`;
+            } else {
+                aiBox.classList.add('hidden');
+                aiBox.classList.remove('flex');
+            }
+        });
+        
+        function applyFix() {
+            const input = document.getElementById('sqlInput');
+            if(suggestionFix === "SELECT") input.value = input.value.replace(/selct/i, "SELECT");
+            if(suggestionFix === "FROM") input.value = input.value.replace(/form/i, "FROM");
+            if(suggestionFix === "INSERT") input.value = input.value.replace(/insrt/i, "INSERT");
+            document.getElementById('ai-suggestion').classList.add('hidden');
+            document.getElementById('ai-suggestion').classList.remove('flex');
+            input.focus();
+        }
+
+    </script>
+</body>
+</html>
