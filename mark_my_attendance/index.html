@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smart Pro Attends</title>
+    <title>Smart Pro Attendance</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,80 +19,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            overscroll-behavior-y: none;
-        }
-        
-        .glass-panel {
-            background: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            border: 1px solid #e2e8f0;
-        }
-
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overscroll-behavior-y: none; }
+        .glass-panel { background: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); border: 1px solid #e2e8f0; }
         .hidden-section { display: none; }
-        .active-section {
-            display: block;
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Attendance Cards */
+        .active-section { display: block; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .attendance-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         .attendance-card:active { transform: scale(0.95); }
         .attendance-card.present { border-top: 4px solid #10b981; background-color: #f0fdf4; }
         .attendance-card.absent { border-top: 4px solid #ef4444; background-color: #fef2f2; }
-        
-        /* Lab/Score Cards */
         .lab-card { border-top: 4px solid #cbd5e1; }
         .lab-card.graded { border-top: 4px solid #3b82f6; background-color: #eff6ff; }
-
-        /* Scorer Buttons */
-        .score-btn {
-            width: 32px; height: 32px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 12px;
-            border: 1px solid #e2e8f0; background: white; color: #64748b;
-            transition: all 0.1s;
-        }
-        .score-btn.active {
-            background: #3b82f6; color: white; border-color: #3b82f6; transform: scale(1.1);
-        }
-
-        .loader {
-            border: 3px solid #e2e8f0; border-radius: 50%; border-top: 3px solid #3b82f6;
-            width: 24px; height: 24px; animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* PIN Input */
-        .pin-input {
-            letter-spacing: 0.5em; text-align: center; font-size: 1.5rem;
-        }
         
-        /* Filter Capsules */
-        .filter-capsule {
-            transition: all 0.2s;
-            cursor: pointer;
-            border: 1px solid transparent;
-        }
+        .score-btn { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; border: 1px solid #e2e8f0; background: white; color: #64748b; transition: all 0.1s; }
+        .score-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; transform: scale(1.1); }
+        
+        .loader { border: 3px solid #e2e8f0; border-radius: 50%; border-top: 3px solid #3b82f6; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .pin-input { letter-spacing: 0.5em; text-align: center; font-size: 1.5rem; }
+        .filter-capsule { transition: all 0.2s; cursor: pointer; border: 1px solid transparent; }
         .filter-capsule.active { transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         
-        /* Modal Backdrop */
-        #lab-modal-backdrop, #pin-modal-backdrop, #delete-modal-backdrop {
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
-        }
+        #lab-modal-backdrop, #pin-modal-backdrop, #delete-modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
         #lab-modal-content { transition: transform 0.3s cubic-bezier(0,0,0.2,1); }
-
-        /* Grid Item truncate */
-        .truncate-text {
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .truncate-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     </style>
 </head>
 <body class="text-slate-800 h-screen flex flex-col overflow-hidden select-none">
@@ -103,7 +55,7 @@
             <div class="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-blue-200 shadow-lg">
                 <i class="fa-solid fa-clipboard-user text-sm"></i>
             </div>
-            <h1 class="font-bold text-lg tracking-tight text-slate-900">Smart<span class="text-blue-600">Pro</span></h1>
+            <h1 class="font-bold text-lg tracking-tight text-slate-900">Smart<span class="text-blue-600">Pro Attendance</span></h1>
         </div>
         <div id="user-header-info" class="flex items-center gap-3 hidden">
             <span id="header-username" class="text-xs font-bold px-2 py-1 bg-slate-100 rounded text-slate-600 hidden sm:block">User</span>
@@ -126,8 +78,8 @@
         <div id="view-auth" class="hidden-section p-6 pt-10">
             <div class="glass-panel p-6 rounded-2xl max-w-md mx-auto">
                 <div class="text-center mb-6">
-                    <h2 class="text-2xl font-bold text-slate-900">Registration</h2>
-                    <p class="text-slate-500 text-sm">First time setup for this device</p>
+                    <h2 class="text-2xl font-bold text-slate-900">Sign In</h2>
+                    <p class="text-slate-500 text-sm">Secure Access Portal</p>
                 </div>
                 
                 <div class="mb-6">
@@ -161,7 +113,6 @@
                         <p class="text-[10px] text-slate-400 mt-2">Enter the ID provided by your Faculty.</p>
                     </div>
 
-                    <!-- Confirmation Box (Hidden initially) -->
                     <div id="student-confirm-box" class="hidden mb-6 bg-blue-50 border border-blue-100 p-4 rounded-xl text-center">
                         <p class="text-xs text-blue-500 uppercase font-bold mb-1">Found Profile</p>
                         <h3 class="text-lg font-bold text-slate-800 mb-1" id="confirm-name">--</h3>
@@ -176,30 +127,48 @@
                     </button>
                 </form>
 
-                <!-- FACULTY REGISTRATION FORM (Secured) -->
-                <form id="form-faculty" class="hidden" onsubmit="app.handleFacultySignup(event)">
-                    <div class="mb-5">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Full Name</label>
-                        <input type="text" id="auth-fac-name" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="Faculty Name">
-                    </div>
-                    
-                    <div class="mb-5">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                            <i class="fa-solid fa-key text-yellow-500"></i> Department Master Key
-                        </label>
-                        <input type="password" id="auth-fac-secret" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 transition font-mono tracking-widest text-sm" placeholder="SECRET CODE">
-                        <p class="text-[10px] text-slate-500 mt-1">Contact Admin if you don't have this key.</p>
+                <!-- FACULTY AUTH CONTAINER -->
+                <div id="form-faculty" class="hidden">
+                    <!-- Toggle Login/Register -->
+                    <div class="flex gap-4 mb-6 border-b border-slate-200 pb-2">
+                        <button onclick="app.toggleFacMode('login')" id="tab-fac-login" class="text-sm font-bold text-blue-600 pb-2 border-b-2 border-blue-600 transition">Existing User</button>
+                        <button onclick="app.toggleFacMode('register')" id="tab-fac-reg" class="text-sm font-bold text-slate-400 pb-2 transition">New Registration</button>
                     </div>
 
-                    <div class="mb-6">
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Set Your Security PIN</label>
-                        <input type="password" inputmode="numeric" maxlength="4" id="auth-fac-pin" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-center tracking-[1em]" placeholder="0000">
-                        <p class="text-[10px] text-slate-400 mt-1">You will use this PIN to login next time.</p>
-                    </div>
-                    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-black active:scale-[0.99] transition shadow-xl shadow-slate-200">
-                        Authenticate & Register
-                    </button>
-                </form>
+                    <!-- Faculty Login -->
+                    <form id="fac-login-form" onsubmit="app.handleFacultyLogin(event)">
+                        <div class="mb-5">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Registered Name</label>
+                            <input type="text" id="login-fac-name" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="e.g. Dr. Smith">
+                        </div>
+                        <button type="submit" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-black transition shadow-xl shadow-slate-200">
+                            Login with PIN
+                        </button>
+                    </form>
+
+                    <!-- Faculty Register -->
+                    <form id="fac-reg-form" class="hidden" onsubmit="app.handleFacultySignup(event)">
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
+                            <input type="text" id="auth-fac-name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Faculty Name">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                <i class="fa-solid fa-key text-yellow-500"></i> Master Key
+                            </label>
+                            <input type="password" id="auth-fac-secret" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-mono tracking-widest" placeholder="ADMIN2025">
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Create PIN</label>
+                            <input type="password" inputmode="numeric" maxlength="4" id="auth-fac-pin" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-center tracking-[1em]" placeholder="0000">
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-xl">
+                            Register & Login
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -569,107 +538,60 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // --- Constants ---
         const SUBJECTS = [
-            "Optimization Techniques",
-            "Probability & Statistics",
-            "Machine Learning",
-            "Database Management Systems",
-            "Digital Logic & Computer Org",
-            "Machine Learning Lab",
-            "DBMS Lab",
-            "Full Stack Development",
-            "Design Thinking & Innovation"
+            "Optimization Techniques", "Probability & Statistics", "Machine Learning", "Database Management Systems", "Digital Logic & Computer Org", "ML Lab", "DBMS Lab", "Full Stack Development", "Design Thinking & Innovation"
         ];
-        
-        // --- SECURITY ---
-        // Hash for "ADMIN2025" (SHA-256)
         const FACULTY_MASTER_HASH = "cf45e85c43ebe0960b354cfad32050ea705cbbd334268187bbb42b8ad386ddda";
 
-        // --- Config ---
-        const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-		apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+        const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
   authDomain: "stuattnd.firebaseapp.com",
   projectId: "stuattnd",
   storageBucket: "stuattnd.firebasestorage.app",
   messagingSenderId: "511533506488",
   appId: "1:511533506488:web:aca4de3d513915d012f94d",
-  measurementId: "G-9PZZM5LFKX"
-		};
+  measurementId: "G-9PZZM5LFKX"};
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'fclty_mng';
-        
         const firebaseApp = initializeApp(config);
         const auth = getAuth(firebaseApp);
         const db = getFirestore(firebaseApp);
 
-        // --- Core App ---
         window.app = {
-            user: null,
-            profile: null,
-            currentStudents: [],
-            attendanceChanges: {}, 
-            labScores: {},
-            currentLabStudent: null,
-            currentReportData: null,
-            reportMode: 'summary', 
-            sessionReportData: null,
-            tempStudentData: null, 
+            user: null, profile: null, currentStudents: [], attendanceChanges: {}, labScores: {}, currentLabStudent: null, currentReportData: null, reportMode: 'summary', sessionReportData: null, tempStudentData: null, tempFacData: null,
 
             init: async function() {
                 this.populateSubjects();
                 this.renderScoreButtons();
-
                 try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                    else await signInAnonymously(auth);
                 } catch (e) { this.showToast("Connection failed."); }
 
                 onAuthStateChanged(auth, async (u) => {
-                    if (u) {
-                        this.user = u;
-                        await this.checkProfile(u.uid);
-                    }
+                    if (u) { this.user = u; await this.checkProfile(u.uid); }
                 });
-
+                
                 const today = new Date().toISOString().split('T')[0];
-                if(document.getElementById('mark-date')) document.getElementById('mark-date').value = today;
-                if(document.getElementById('lab-date')) document.getElementById('lab-date').value = today;
-                if(document.getElementById('report-session-date')) document.getElementById('report-session-date').value = today;
+                document.querySelectorAll('input[type="date"]').forEach(i => i.value = today);
             },
 
             populateSubjects: function() {
-                const selects = document.querySelectorAll('.subject-select');
-                selects.forEach(sel => {
-                    const keepAll = sel.querySelector('option[value="ALL"]');
-                    sel.innerHTML = '';
-                    if(keepAll) sel.appendChild(keepAll);
-                    SUBJECTS.forEach(sub => {
-                        const opt = document.createElement('option');
-                        opt.value = sub;
-                        opt.textContent = sub;
-                        sel.appendChild(opt);
-                    });
+                document.querySelectorAll('.subject-select').forEach(sel => {
+                    const keepAll = sel.querySelector('option[value="ALL"]'); sel.innerHTML = ''; if(keepAll) sel.appendChild(keepAll);
+                    SUBJECTS.forEach(sub => { const opt = document.createElement('option'); opt.value = sub; opt.textContent = sub; sel.appendChild(opt); });
                 });
             },
 
-            // --- Security Util ---
             hashPin: async function(pin) {
-                const enc = new TextEncoder();
-                const hashBuffer = await crypto.subtle.digest('SHA-256', enc.encode(pin));
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
+                return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
             },
 
-            // --- NEW: Smart Profile Check ---
+            // --- Profile Check ---
             checkProfile: async function(uid) {
                 try {
-                    // 1. Check if Linked Student Account (Device Locked)
+                    // Check Student Lock
                     const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'), where('deviceUid', '==', uid));
                     const qSnap = await getDocs(q);
-                    
                     if (!qSnap.empty) {
                         const docSnap = qSnap.docs[0];
                         this.profile = { ...docSnap.data(), uid: docSnap.id };
@@ -677,30 +599,23 @@
                         document.getElementById('view-loading').classList.add('hidden');
                         return;
                     }
-
-                    // 2. Check if Faculty or Direct User
+                    // Check Direct User
                     const ref = doc(db, 'artifacts', appId, 'public', 'data', 'users', uid);
                     const snap = await getDoc(ref);
-                    
                     if (snap.exists()) {
                         const data = snap.data();
                         this.profile = { ...data, uid };
                         if (data.role === 'faculty') {
-                            // HIDE AUTH SCREEN, SHOW PIN MODAL DIRECTLY
                             document.getElementById('view-auth').classList.remove('active-section');
                             document.getElementById('view-auth').classList.add('hidden-section');
                             document.getElementById('view-loading').classList.add('hidden');
                             document.getElementById('pin-modal-backdrop').classList.remove('hidden');
-                        } else {
-                            this.routeUser();
-                        }
+                        } else { this.routeUser(); }
                     } else {
+                        // Ensure we are showing the Auth Screen if no profile found
                         this.switchView('view-auth');
                     }
-                } catch (e) { 
-                    console.error(e);
-                    this.showToast("Error loading profile"); 
-                }
+                } catch (e) { this.showToast("Error loading profile"); }
                 document.getElementById('view-loading').classList.add('hidden');
             },
 
@@ -709,7 +624,11 @@
                 const err = document.getElementById('pin-error');
                 if(input.length !== 4) { err.textContent = "Enter 4 digits"; err.classList.remove('hidden'); return; }
                 const hashed = await this.hashPin(input);
-                if (hashed === this.profile.pinHash) {
+                // Compare with current profile OR tempFacData (if logging in via Existing User tab)
+                const targetHash = this.profile ? this.profile.pinHash : (this.tempFacData ? this.tempFacData.pinHash : null);
+                
+                if (hashed === targetHash) {
+                    if(this.tempFacData) this.profile = this.tempFacData;
                     document.getElementById('pin-modal-backdrop').classList.add('hidden');
                     this.updateHeader();
                     this.routeUser();
@@ -730,12 +649,31 @@
                 }
             },
 
+            toggleFacMode: function(mode) {
+                const btnLogin = document.getElementById('tab-fac-login');
+                const btnReg = document.getElementById('tab-fac-reg');
+                const formLogin = document.getElementById('fac-login-form');
+                const formReg = document.getElementById('fac-reg-form');
+
+                if(mode === 'login') {
+                    btnLogin.className = "text-sm font-bold text-blue-600 pb-2 border-b-2 border-blue-600 transition";
+                    btnReg.className = "text-sm font-bold text-slate-400 pb-2 transition";
+                    formLogin.classList.remove('hidden');
+                    formReg.classList.add('hidden');
+                } else {
+                    btnReg.className = "text-sm font-bold text-blue-600 pb-2 border-b-2 border-blue-600 transition";
+                    btnLogin.className = "text-sm font-bold text-slate-400 pb-2 transition";
+                    formReg.classList.remove('hidden');
+                    formLogin.classList.add('hidden');
+                }
+            },
+
+            // --- Student Logic ---
             handleStudentLogin: async function(e) {
                 e.preventDefault();
                 const rollNo = document.getElementById('auth-roll-no').value.toUpperCase().trim();
                 const confirmBox = document.getElementById('student-confirm-box');
                 const btn = document.getElementById('btn-student-action');
-
                 if(!rollNo) return this.showToast("Enter Roll No");
 
                 if(btn.innerText === "Verify Identity") {
@@ -747,8 +685,7 @@
                             const data = snap.data();
                             if(data.deviceUid && data.deviceUid !== this.user.uid) {
                                 this.showToast("Access Denied: Locked to another device.");
-                                btn.disabled = false; btn.innerText = "Verify Identity";
-                                return;
+                                btn.disabled = false; btn.innerText = "Verify Identity"; return;
                             }
                             this.tempStudentData = { id: rollNo, ...data };
                             document.getElementById('confirm-name').textContent = data.name;
@@ -757,46 +694,36 @@
                             btn.innerText = "Lock to Device & Login";
                             btn.disabled = false;
                             btn.classList.replace('bg-blue-600', 'bg-emerald-600');
-                            btn.classList.replace('hover:bg-blue-700', 'hover:bg-emerald-700');
                         } else {
                             this.showToast("Roll No Not Found. Contact Faculty.");
                             btn.disabled = false; btn.innerText = "Verify Identity";
                         }
-                    } catch(e) { console.error(e); this.showToast("Error verifying ID"); btn.disabled = false; btn.innerText = "Verify Identity"; }
+                    } catch(e) { this.showToast("Error verifying ID"); btn.disabled = false; btn.innerText = "Verify Identity"; }
                 } else {
                     if(!this.tempStudentData) return;
                     btn.disabled = true; btn.innerText = "Locking...";
                     try {
-                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', this.tempStudentData.id), {
-                            deviceUid: this.user.uid,
-                            lastLogin: new Date().toISOString()
-                        });
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', this.tempStudentData.id), { deviceUid: this.user.uid, lastLogin: new Date().toISOString() });
                         this.profile = { ...this.tempStudentData, uid: this.tempStudentData.id };
                         this.updateHeader();
                         this.routeUser();
-                    } catch(e) {
-                        this.showToast("Error locking device");
-                        btn.disabled = false; btn.innerText = "Lock to Device & Login";
-                    }
+                    } catch(e) { this.showToast("Error locking device"); btn.disabled = false; btn.innerText = "Lock to Device & Login"; }
                 }
             },
 
+            // --- Faculty Logic ---
             handleFacultySignup: async function(e) {
                 e.preventDefault();
                 const name = document.getElementById('auth-fac-name').value.trim();
                 const pin = document.getElementById('auth-fac-pin').value;
                 const secret = document.getElementById('auth-fac-secret').value;
-                
                 if (!name || pin.length !== 4) return this.showToast("Enter Name and 4-digit PIN");
                 if (!secret) return this.showToast("Enter Master Key");
-
-                // HASH CHECK
                 const secretHash = await this.hashPin(secret);
-                if (secretHash !== FACULTY_MASTER_HASH) return this.showToast("Invalid Master Key. Access Denied.");
+                if (secretHash !== FACULTY_MASTER_HASH) return this.showToast("Invalid Master Key.");
                 
                 const pinHash = await this.hashPin(pin);
                 const userData = { name, role: 'faculty', pinHash, joinedAt: new Date().toISOString() };
-                
                 try {
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', this.user.uid), userData);
                     this.profile = { ...userData, uid: this.user.uid };
@@ -805,410 +732,36 @@
                 } catch(e) { this.showToast("Signup Failed"); }
             },
 
-            // ... (Rest of the functions remain exactly as they were in the previous version) ...
+            handleFacultyLogin: async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('login-fac-name').value.trim();
+                if(!name) return this.showToast("Enter Name");
+                
+                // Find user by Name & Role
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'), where('role','==','faculty'), where('name','==',name));
+                const snap = await getDocs(q);
+                
+                if(!snap.empty) {
+                    this.tempFacData = { ...snap.docs[0].data(), uid: snap.docs[0].id };
+                    document.getElementById('pin-modal-backdrop').classList.remove('hidden');
+                } else {
+                    this.showToast("Faculty not found.");
+                }
+            },
+
             routeUser: function() {
                 if (this.profile.role === 'faculty') this.switchView('view-faculty');
-                else {
-                    this.switchView('view-student');
-                    this.loadStudentData();
-                }
-            },
-            // ... (Includes all Attendance, Lab, Report, Delete logic from previous code) ...
-            
-            // --- Copying key logic for completeness ---
-            loadAttendanceSheet: async function() {
-                const classInput = document.getElementById('mark-class-input').value.toUpperCase().trim();
-                const date = document.getElementById('mark-date').value;
-                const session = document.getElementById('mark-session').value;
-                const subject = document.getElementById('mark-subject').value;
-                const grid = document.getElementById('student-grid-container');
-                const controls = document.getElementById('att-controls');
-                if (!classInput) return this.showToast("Enter Section");
-                grid.innerHTML = '<div class="col-span-full text-center py-8"><div class="loader mx-auto"></div></div>';
-                document.getElementById('save-fab-container').classList.add('translate-y-24');
-                controls.classList.add('hidden'); 
-                document.getElementById('search-attendance').value = '';
-                const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
-                const students = [];
-                snap.forEach(d => { if(d.data().classId === classInput && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
-                if(students.length === 0) {
-                    grid.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No students found.</p></div>';
-                    return;
-                }
-                this.currentStudents = students.sort((a,b) => a.id.localeCompare(b.id));
-                const attSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', `${date}_${classInput}_${session}_${subject}`));
-                const presentIds = attSnap.exists() ? attSnap.data().presentIds : [];
-                this.attendanceChanges = {};
-                this.currentStudents.forEach(s => {
-                    this.attendanceChanges[s.id] = presentIds.includes(s.id);
-                });
-                controls.classList.remove('hidden');
-                this.renderAttendanceGrid(this.currentStudents);
-                document.getElementById('save-fab-container').classList.remove('translate-y-24');
+                else { this.switchView('view-student'); this.loadStudentData(); }
             },
 
-            renderAttendanceGrid: function(studentList) {
-                const grid = document.getElementById('student-grid-container');
-                grid.innerHTML = '';
-                if(studentList.length === 0) {
-                     grid.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No matches found.</p></div>';
-                     return;
-                }
-                studentList.forEach(s => {
-                    const isPresent = this.attendanceChanges[s.id];
-                    const card = document.createElement('div');
-                    card.id = `att-card-${s.id}`;
-                    card.className = `attendance-card p-3 rounded-xl cursor-pointer border shadow-sm flex flex-col justify-between h-20 ${isPresent ? 'present' : 'absent'}`;
-                    card.onclick = () => this.toggleAttendance(s.id, card);
-                    card.innerHTML = `<div class="flex justify-between items-start"><div class="font-bold text-xs truncate-text w-full pr-1">${s.name}</div></div><div class="flex justify-between items-end mt-1"><span class="text-[10px] font-mono text-slate-400 bg-slate-100 px-1 rounded">${s.id}</span><div class="icon-status text-lg">${isPresent ? '<i class="fa-solid fa-circle-check text-emerald-500"></i>' : '<i class="fa-solid fa-circle-xmark text-red-400"></i>'}</div></div>`;
-                    grid.appendChild(card);
-                });
-            },
-
-            filterAttendance: function() {
-                const q = document.getElementById('search-attendance').value.toLowerCase();
-                const filtered = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
-                this.renderAttendanceGrid(filtered);
-            },
-
-            markAll: function(status) {
-                if(!this.currentStudents.length) return;
-                const q = document.getElementById('search-attendance').value.toLowerCase();
-                const targetStudents = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
-                targetStudents.forEach(s => { this.attendanceChanges[s.id] = status; });
-                this.renderAttendanceGrid(targetStudents);
-                this.showToast(status ? "Marked Visible Present" : "Marked Visible Absent");
-            },
-
-            toggleAttendance: function(uid, card) {
-                const next = !this.attendanceChanges[uid];
-                this.attendanceChanges[uid] = next;
-                if(next) { card.classList.replace('absent','present'); card.querySelector('.icon-status').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>'; } else { card.classList.replace('present','absent'); card.querySelector('.icon-status').innerHTML = '<i class="fa-solid fa-circle-xmark text-red-400"></i>'; }
-            },
-
-            saveAttendance: async function() {
-                const date = document.getElementById('mark-date').value;
-                const session = document.getElementById('mark-session').value;
-                const subject = document.getElementById('mark-subject').value;
-                const classId = document.getElementById('mark-class-input').value.toUpperCase().trim();
-                const btn = document.getElementById('save-btn');
-                btn.disabled = true; btn.innerHTML = 'Saving...';
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', `${date}_${classId}_${session}_${subject}`), {
-                    date, session, subject, classId, presentIds: Object.keys(this.attendanceChanges).filter(k => this.attendanceChanges[k]), type: 'theory'
-                });
-                this.showToast("Attendance Saved!");
-                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span>Save Attendance</span>';
-            },
-
-            loadLabStudents: async function() {
-                const classId = document.getElementById('lab-class-input').value.toUpperCase().trim();
-                const list = document.getElementById('lab-student-list');
-                const controls = document.getElementById('lab-controls');
-                if(!classId) return this.showToast("Enter Section");
-                list.innerHTML = '<div class="col-span-full text-center py-8"><div class="loader mx-auto"></div></div>';
-                document.getElementById('lab-save-fab').classList.add('translate-y-32');
-                controls.classList.add('hidden');
-                document.getElementById('search-lab').value = '';
-                const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
-                const students = [];
-                snap.forEach(d => { if(d.data().classId === classId && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
-                this.currentStudents = students.sort((a,b) => a.id.localeCompare(b.id));
-                this.labScores = {};
-                if(students.length === 0) { list.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No students found.</p></div>'; return; }
-                controls.classList.remove('hidden');
-                this.renderLabGrid(this.currentStudents);
-                document.getElementById('lab-save-fab').classList.remove('translate-y-32');
-            },
-
-            renderLabGrid: function(studentList) {
-                const list = document.getElementById('lab-student-list');
-                list.innerHTML = '';
-                if(studentList.length === 0) { list.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No matches found.</p></div>'; return; }
-                studentList.forEach(s => {
-                    const isGraded = this.labScores[s.id] && this.labScores[s.id].total > 0;
-                    const div = document.createElement('div');
-                    div.id = `lab-card-${s.id}`;
-                    div.className = `lab-card bg-white p-3 rounded-xl shadow-sm border cursor-pointer flex flex-col justify-between h-20 active:scale-[0.98] transition ${isGraded ? 'graded' : ''}`;
-                    div.onclick = () => this.openLabModal(s);
-                    const scoreText = isGraded ? `<span class="text-blue-600 font-bold">${this.labScores[s.id].total}/20</span>` : '<span class="text-slate-300">--</span>';
-                    div.innerHTML = `<div class="flex justify-between items-start"><div class="font-bold text-xs truncate-text w-full pr-1">${s.name}</div></div><div class="flex justify-between items-end mt-1"><span class="text-[10px] font-mono text-slate-400 bg-slate-100 px-1 rounded">${s.id}</span><div class="score-summary text-xs">${scoreText}</div></div>`;
-                    list.appendChild(div);
-                });
-            },
-
-            filterLab: function() {
-                const q = document.getElementById('search-lab').value.toLowerCase();
-                const filtered = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
-                this.renderLabGrid(filtered);
-            },
-
-            renderScoreButtons: function() {
-                ['obs', 'rec', 'pun', 'per'].forEach(metric => {
-                    const container = document.getElementById(`btns-${metric}`);
-                    if(!container) return;
-                    container.innerHTML = '';
-                    [1,2,3,4,5].forEach(num => {
-                        const btn = document.createElement('div');
-                        btn.className = 'score-btn cursor-pointer';
-                        btn.textContent = num;
-                        btn.onclick = () => this.setModalScore(metric, num);
-                        container.appendChild(btn);
-                    });
-                });
-            },
-
-            openLabModal: function(student) {
-                this.currentLabStudent = student;
-                document.getElementById('lab-modal-name').textContent = student.name;
-                document.getElementById('lab-modal-id').textContent = `ID: ${student.id}`;
-                const scores = this.labScores[student.id] || { obs: 0, rec: 0, pun: 0, per: 0, total: 0 };
-                ['obs', 'rec', 'pun', 'per'].forEach(k => this.setModalScore(k, scores[k], false));
-                this.updateTotalScore();
-                const bd = document.getElementById('lab-modal-backdrop');
-                const ct = document.getElementById('lab-modal-content');
-                bd.classList.remove('hidden');
-                setTimeout(() => { ct.classList.remove('translate-y-full'); }, 10);
-            },
-
-            closeLabModal: function() {
-                const bd = document.getElementById('lab-modal-backdrop');
-                const ct = document.getElementById('lab-modal-content');
-                ct.classList.add('translate-y-full');
-                setTimeout(() => { bd.classList.add('hidden'); }, 300);
-            },
-
-            setModalScore: function(metric, val, update = true) {
-                const container = document.getElementById(`btns-${metric}`);
-                Array.from(container.children).forEach(btn => {
-                    if(parseInt(btn.textContent) === val) btn.classList.add('active');
-                    else btn.classList.remove('active');
-                });
-                document.getElementById(`score-val-${metric}`).textContent = val;
-                if(update) this.updateTotalScore();
-            },
-
-            updateTotalScore: function() {
-                const getVal = (id) => parseInt(document.getElementById(`score-val-${id}`).textContent) || 0;
-                const total = getVal('obs') + getVal('rec') + getVal('pun') + getVal('per');
-                document.getElementById('lab-modal-total').textContent = total;
-            },
-
-            saveStudentLabScore: function() {
-                if(!this.currentLabStudent) return;
-                const getVal = (id) => parseInt(document.getElementById(`score-val-${id}`).textContent) || 0;
-                const scores = { obs: getVal('obs'), rec: getVal('rec'), pun: getVal('pun'), per: getVal('per') };
-                scores.total = scores.obs + scores.rec + scores.pun + scores.per;
-                this.labScores[this.currentLabStudent.id] = scores;
-                const q = document.getElementById('search-lab').value.toLowerCase();
-                const filtered = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
-                this.renderLabGrid(filtered);
-                this.closeLabModal();
-            },
-
-            submitLabSession: async function() {
-                const date = document.getElementById('lab-date').value;
-                const subject = document.getElementById('lab-subject').value;
-                const title = document.getElementById('lab-exp-title').value.trim() || 'Assessment';
-                const classId = document.getElementById('lab-class-input').value.toUpperCase().trim();
-                if(!classId) return this.showToast("Class ID missing");
-                if(Object.keys(this.labScores).length === 0) return this.showToast("Grade at least one student");
-                const btn = document.getElementById('lab-submit-btn');
-                btn.disabled = true; btn.innerHTML = 'Submitting...';
-                const safeTitle = title.replace(/[^a-zA-Z0-9]/g, '');
-                const sessionId = `LAB_${date}_${classId}_${subject}_${safeTitle}`;
-                try {
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lab_sessions', sessionId), {
-                        date, subject, title, classId, scores: this.labScores, timestamp: new Date().toISOString()
-                    });
-                    this.showToast("Saved Successfully!");
-                } catch(e) { this.showToast("Error saving data."); }
-                finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check-double"></i> <span>Submit Scores</span>'; }
-            },
-
-            setReportMode: function(mode) {
-                this.reportMode = mode;
-                const btnSum = document.getElementById('btn-mode-summary');
-                const btnSes = document.getElementById('btn-mode-session');
-                const inpSum = document.getElementById('report-inputs-summary');
-                const inpSes = document.getElementById('report-inputs-session');
-                if(mode === 'summary') {
-                    btnSum.className = "flex-1 py-2 rounded-lg text-xs font-bold shadow-sm bg-white text-slate-800 transition";
-                    btnSes.className = "flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition";
-                    inpSum.classList.remove('hidden');
-                    inpSes.classList.add('hidden');
-                } else {
-                    btnSes.className = "flex-1 py-2 rounded-lg text-xs font-bold shadow-sm bg-white text-slate-800 transition";
-                    btnSum.className = "flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition";
-                    inpSes.classList.remove('hidden');
-                    inpSum.classList.add('hidden');
-                }
-                document.getElementById('report-results').innerHTML = '';
-                document.getElementById('report-actions').classList.add('hidden');
-            },
-
-            handleReportGeneration: function() {
-                if(this.reportMode === 'summary') {
-                    this.generateReport();
-                } else {
-                    this.generateSessionReport();
-                }
-            },
-
-            generateSessionReport: async function() {
-                const date = document.getElementById('report-session-date').value;
-                const session = document.getElementById('report-session-slot').value;
-                const subject = document.getElementById('report-session-subject').value;
-                const classId = document.getElementById('report-session-class').value.toUpperCase().trim();
-                const container = document.getElementById('report-results');
-                const actions = document.getElementById('report-actions');
-                if(!classId) return this.showToast("Enter Section");
-                container.innerHTML = '<div class="loader mx-auto"></div>';
-                actions.classList.add('hidden');
-                const sessionId = `${date}_${classId}_${session}_${subject}`;
-                const attRef = doc(db, 'artifacts', appId, 'public', 'data', 'attendance', sessionId);
-                const attSnap = await getDoc(attRef);
-                if(!attSnap.exists()) { container.innerHTML = '<div class="text-center py-8 opacity-50"><i class="fa-solid fa-ghost text-2xl mb-2"></i><p>No session data found.</p></div>'; return; }
-                const data = attSnap.data();
-                const presentIds = data.presentIds || [];
-                const userSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
-                const students = [];
-                userSnap.forEach(d => { if(d.data().classId === classId && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
-                if(students.length === 0) { container.innerHTML = '<p class="text-center text-slate-400">No students found.</p>'; return; }
-                students.sort((a,b) => a.id.localeCompare(b.id));
-                const presentList = students.filter(s => presentIds.includes(s.id));
-                const absentList = students.filter(s => !presentIds.includes(s.id));
-                this.sessionReportData = { date, session, subject, classId, total: students.length, present: presentList, absent: absentList, all: students.map(s => ({...s, status: presentIds.includes(s.id) ? 'Present' : 'Absent'})) };
-                actions.classList.remove('hidden');
-                let html = `<div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-center"><div class="text-xl font-bold text-emerald-600">${presentList.length}</div><div class="text-[10px] font-bold text-emerald-400 uppercase">Present</div></div><div class="bg-red-50 border border-red-100 p-3 rounded-xl text-center"><div class="text-xl font-bold text-red-600">${absentList.length}</div><div class="text-[10px] font-bold text-red-400 uppercase">Absent</div></div></div><div class="flex gap-2 mb-4 overflow-x-auto pb-1"><div onclick="app.renderSessionList('all')" id="cap-all" class="filter-capsule active bg-slate-800 text-white px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">All (${students.length})</div><div onclick="app.renderSessionList('present')" id="cap-present" class="filter-capsule bg-white border border-slate-200 text-emerald-600 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Present (${presentList.length})</div><div onclick="app.renderSessionList('absent')" id="cap-absent" class="filter-capsule bg-white border border-slate-200 text-red-600 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Absent (${absentList.length})</div></div><div id="session-list-container" class="space-y-2"></div>`;
-                container.innerHTML = html;
-                this.renderSessionList('all');
-            },
-
-            renderSessionList: function(filter) {
-                const container = document.getElementById('session-list-container');
-                ['all', 'present', 'absent'].forEach(f => {
-                    const cap = document.getElementById(`cap-${f}`);
-                    if(f === filter) { cap.className = `filter-capsule active px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border ${f==='all' ? 'bg-slate-800 text-white border-transparent' : (f==='present'?'bg-emerald-100 border-emerald-200 text-emerald-700':'bg-red-100 border-red-200 text-red-700')}`; }
-                    else { cap.className = `filter-capsule bg-white border border-slate-200 text-slate-500 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap`; }
-                });
-                let list = [];
-                if(filter === 'all') list = this.sessionReportData.all; else if(filter === 'present') list = this.sessionReportData.present; else list = this.sessionReportData.absent;
-                if(list.length === 0) { container.innerHTML = '<p class="text-center text-slate-400 py-4 text-xs">List is empty.</p>'; return; }
-                container.innerHTML = list.map(s => {
-                    const status = s.status || (filter === 'present' ? 'Present' : 'Absent');
-                    const color = status === 'Present' ? 'text-emerald-500' : 'text-red-500';
-                    const icon = status === 'Present' ? '<i class="fa-solid fa-circle-check"></i>' : '<i class="fa-solid fa-circle-xmark"></i>';
-                    return `<div class="bg-white p-3 rounded-lg border border-slate-100 flex justify-between items-center shadow-sm"><div class="flex items-center gap-3"><span class="text-xs font-mono text-slate-400 bg-slate-50 px-1 rounded">${s.id}</span><span class="text-sm font-semibold text-slate-700">${s.name}</span></div><div class="${color} text-lg">${icon}</div></div>`;
-                }).join('');
-            },
-
-            generateReport: async function() {
-                const classId = document.getElementById('report-class-input').value.toUpperCase().trim();
-                const subject = document.getElementById('report-subject').value;
-                const container = document.getElementById('report-results');
-                const actions = document.getElementById('report-actions');
-                if(!classId) return;
-                container.innerHTML = '<div class="loader mx-auto"></div>';
-                actions.classList.add('hidden');
-                const userSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
-                const students = [];
-                userSnap.forEach(d => { if(d.data().classId === classId && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
-                const attSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'attendance'));
-                const labSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'lab_sessions'));
-                const stats = {};
-                students.forEach(s => stats[s.id] = { name: s.name, attTotal: 0, attPresent: 0, labTotal: 0, labScore: 0 });
-                let totalAttSessions = 0;
-                let totalLabSessions = 0;
-                attSnap.forEach(d => {
-                    const data = d.data();
-                    if(data.classId === classId) {
-                        if(subject === 'ALL' || data.subject === subject) {
-                            totalAttSessions++;
-                            if(data.presentIds) data.presentIds.forEach(id => { if(stats[id]) stats[id].attPresent++; });
-                        }
-                    }
-                });
-                labSnap.forEach(d => {
-                    const data = d.data();
-                    if(data.classId === classId) {
-                        if(subject === 'ALL' || data.subject === subject) {
-                            totalLabSessions++;
-                            if(data.scores) Object.keys(data.scores).forEach(id => {
-                                if(stats[id]) { stats[id].labScore += data.scores[id].total; }
-                            });
-                        }
-                    }
-                });
-                if(totalAttSessions === 0 && totalLabSessions === 0) { container.innerHTML = '<p class="text-center text-slate-400">No data found.</p>'; return; }
-                actions.classList.remove('hidden');
-                students.sort((a,b) => a.id.localeCompare(b.id));
-                this.currentReportData = { classId, subject, students: [], totalAtt: totalAttSessions, totalLab: totalLabSessions };
-                let html = `<div class="bg-blue-50 text-blue-800 p-3 rounded-lg text-xs font-bold flex justify-between mb-2"><span>Theory Sessions: ${totalAttSessions}</span> <span>Assessments: ${totalLabSessions}</span></div>`;
-                html += `<div class="grid grid-cols-12 text-[10px] uppercase font-bold text-slate-400 px-2 mb-2"><div class="col-span-5">Student</div><div class="col-span-3 text-center">Att %</div><div class="col-span-4 text-right">Avg Score</div></div>`;
-                students.forEach(s => {
-                    const d = stats[s.id];
-                    const attPct = totalAttSessions ? Math.round((d.attPresent / totalAttSessions) * 100) : 0;
-                    const avgScore = totalLabSessions ? (d.labScore / totalLabSessions).toFixed(1) : 0;
-                    this.currentReportData.students.push({ id: s.id, name: s.name, att: d.attPresent, attPct, score: d.labScore, avgScore });
-                    let color = attPct >= 75 ? 'text-emerald-500' : (attPct >= 50 ? 'text-yellow-500' : 'text-red-500');
-                    html += `<div class="bg-white p-3 rounded-lg border border-slate-100 grid grid-cols-12 items-center shadow-sm mb-2"><div class="col-span-5"><div class="font-bold text-sm text-slate-700 truncate">${s.name}</div><div class="text-[10px] text-slate-400 font-mono">${s.id}</div></div><div class="col-span-3 text-center"><span class="text-xs font-bold ${color}">${attPct}%</span></div><div class="col-span-4 text-right"><span class="text-xs font-bold text-blue-600">${avgScore}</span><span class="text-[10px] text-slate-400">/20</span></div></div>`;
-                });
-                container.innerHTML = html;
-            },
-            
-            downloadCSV: function() {
-                if(!this.currentReportData && !this.sessionReportData) return;
-                if (this.reportMode === 'session' && this.sessionReportData) {
-                    const d = this.sessionReportData;
-                    let csv = `Session Report\nDate,${d.date}\nClass,${d.classId}\nSubject,${d.subject} - ${d.session}\n\nRoll No,Name,Status\n`;
-                    d.all.forEach(s => { csv += `${s.id},${s.name},${s.status}\n`; });
-                    const blob = new Blob([csv], {type: 'text/csv'});
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a'); a.href = url; a.download = `Session_Report_${d.date}.csv`; a.click();
-                } else {
-                    const d = this.currentReportData;
-                    let csv = `Roll No,Name,Present (Days),Total Days,Attendance %,Total Score,Avg Score (out of 20)\n`;
-                    d.students.forEach(s => csv += `${s.id},${s.name},${s.att},${d.totalAtt},${s.attPct}%,${s.score},${s.avgScore}\n`);
-                    const blob = new Blob([csv], {type: 'text/csv'});
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a'); a.href = url; a.download = 'report.csv'; a.click();
-                }
-            },
-
-            downloadPDF: function() {
-                if(!this.currentReportData && !this.sessionReportData) return;
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                if (this.reportMode === 'session' && this.sessionReportData) {
-                    const d = this.sessionReportData;
-                    doc.text(`Session Detail: ${d.date}`, 14, 20);
-                    doc.setFontSize(10);
-                    doc.text(`${d.classId} | ${d.subject} (${d.session})`, 14, 28);
-                    doc.text(`Present: ${d.present.length} | Absent: ${d.absent.length}`, 14, 34);
-                    doc.autoTable({ head: [['Roll No', 'Name', 'Status']], body: d.all.map(s => [s.id, s.name, s.status]), startY: 40, styles: { fontSize: 10 }, headStyles: { fillColor: [15, 23, 42] } });
-                    doc.save(`Session_${d.date}.pdf`);
-                } else {
-                    const d = this.currentReportData;
-                    doc.text(`Report: ${d.classId} - ${d.subject}`, 14, 20);
-                    doc.setFontSize(10);
-                    doc.text(`Total Theory: ${d.totalAtt} | Total Assessments: ${d.totalLab}`, 14, 28);
-                    doc.autoTable({ head: [['ID', 'Name', 'Attendance', 'Score (Avg)']], body: d.students.map(s => [s.id, s.name, `${s.attPct}% (${s.att}/${d.totalAtt})`, `${s.avgScore} / 20`]), startY: 35 });
-                    doc.save('report.pdf');
-                }
-            },
-
-            // --- Utils ---
+            // --- Rest of the Application Logic (Copied from previous versions) ---
             switchView: function(id) {
                 document.querySelectorAll('.hidden-section').forEach(el => el.classList.remove('active-section'));
                 const target = document.getElementById(id);
                 if(target) target.classList.add('active-section');
                 document.getElementById('view-loading').classList.add('hidden');
             },
-            toggleAuthFields: function() {
-                const role = document.querySelector('input[name="role"]:checked').value;
-                if(role === 'student') { document.getElementById('form-student').classList.remove('hidden'); document.getElementById('form-faculty').classList.add('hidden'); }
-                else { document.getElementById('form-student').classList.add('hidden'); document.getElementById('form-faculty').classList.remove('hidden'); }
-            },
+            
             setFacultyTab: function(tab) {
                 ['mark', 'lab', 'report', 'manage'].forEach(t => {
                     const btn = document.getElementById(`tab-btn-${t}`);
@@ -1217,17 +770,21 @@
                     else { btn.classList.add('bg-white','text-slate-500','border'); btn.classList.remove('bg-slate-900','text-white'); sec.classList.add('hidden'); }
                 });
             },
+            
             updateHeader: function() {
                 document.getElementById('user-header-info').classList.remove('hidden');
                 document.getElementById('header-username').textContent = this.profile.name;
             },
+            
             showToast: function(msg) {
                 const t = document.getElementById('toast');
                 document.getElementById('toast-msg').textContent = msg;
                 t.classList.remove('opacity-0', '-translate-y-4');
                 setTimeout(() => t.classList.add('opacity-0', '-translate-y-4'), 3000);
             },
+            
             logout: async function() { await signOut(auth); window.location.reload(); },
+            
             handleImport: async function() {
                 const txt = document.getElementById('import-text').value;
                 if(!txt.trim()) return;
@@ -1247,22 +804,17 @@
                 document.getElementById('import-text').value = '';
             },
             
-            // --- NEW: Reset Lock ---
             resetDeviceLock: async function() {
                 const id = document.getElementById('reset-lock-id').value.toUpperCase().trim();
                 if(!id) return this.showToast("Enter Roll No");
                 try {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), {
-                        deviceUid: null // Clear lock
-                    });
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id), { deviceUid: null });
                     this.showToast(`Reset lock for ${id}`);
                     document.getElementById('reset-lock-id').value = '';
-                } catch(e) {
-                    this.showToast("Error resetting lock. Check ID.");
-                }
+                } catch(e) { this.showToast("Error resetting lock."); }
             },
 
-            // --- NEW: Delete Student ---
+            // --- Delete Logic ---
             deleteStudent: async function() {
                 const input = document.getElementById('delete-student-input').value.trim();
                 if(!input) return this.showToast("Enter Roll No or Name");
@@ -1281,14 +833,10 @@
                     await deleteDoc(target.ref);
                     this.showToast(`Deleted student: ${target.data().name}`);
                     document.getElementById('delete-student-input').value = '';
-                } else {
-                    this.showToast("Student not found");
-                }
+                } else { this.showToast("Student not found"); }
             },
 
-            confirmDeleteAll: function() {
-                document.getElementById('delete-modal-backdrop').classList.remove('hidden');
-            },
+            confirmDeleteAll: function() { document.getElementById('delete-modal-backdrop').classList.remove('hidden'); },
 
             deleteAllStudents: async function() {
                 document.getElementById('delete-modal-backdrop').classList.add('hidden');
@@ -1296,48 +844,252 @@
                 const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'users'), where('role', '==', 'student'));
                 const snap = await getDocs(q);
                 let count = 0;
-                for(const d of snap.docs) {
-                    await deleteDoc(d.ref);
-                    count++;
-                }
+                for(const d of snap.docs) { await deleteDoc(d.ref); count++; }
                 this.showToast(`Deleted ${count} students.`);
             },
 
-            loadStudentData: async function() {
-                const uid = this.profile.uid; const classId = this.profile.classId;
-                document.getElementById('student-dash-name').textContent = this.profile.name;
-                document.getElementById('student-dash-class').textContent = classId;
-                const attSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'attendance'));
-                let totalAtt = 0, presentAtt = 0;
-                let history = [];
-                attSnap.forEach(d => {
-                    const data = d.data();
-                    if(data.classId === classId && data.presentIds) {
-                        totalAtt++;
-                        const present = data.presentIds.includes(uid);
-                        if(present) presentAtt++;
-                        history.push({ date: data.date, title: `${data.subject} (${data.session})`, type: 'ATT', val: present ? 'Present' : 'Absent' });
-                    }
+            // --- Attendance/Lab/Report/Student Functions (Same as previous stable versions) ---
+            loadAttendanceSheet: async function() {
+                const classInput = document.getElementById('mark-class-input').value.toUpperCase().trim();
+                const date = document.getElementById('mark-date').value;
+                const session = document.getElementById('mark-session').value;
+                const subject = document.getElementById('mark-subject').value;
+                const grid = document.getElementById('student-grid-container');
+                const controls = document.getElementById('att-controls');
+                if (!classInput) return this.showToast("Enter Section");
+                grid.innerHTML = '<div class="col-span-full text-center py-8"><div class="loader mx-auto"></div></div>';
+                document.getElementById('save-fab-container').classList.add('translate-y-24');
+                controls.classList.add('hidden'); 
+                document.getElementById('search-attendance').value = '';
+                const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+                const students = [];
+                snap.forEach(d => { if(d.data().classId === classInput && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
+                if(students.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No students found.</p></div>'; return; }
+                this.currentStudents = students.sort((a,b) => a.id.localeCompare(b.id));
+                const attSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', `${date}_${classInput}_${session}_${subject}`));
+                const presentIds = attSnap.exists() ? attSnap.data().presentIds : [];
+                this.attendanceChanges = {};
+                this.currentStudents.forEach(s => { this.attendanceChanges[s.id] = presentIds.includes(s.id); });
+                controls.classList.remove('hidden');
+                this.renderAttendanceGrid(this.currentStudents);
+                document.getElementById('save-fab-container').classList.remove('translate-y-24');
+            },
+            renderAttendanceGrid: function(studentList) {
+                const grid = document.getElementById('student-grid-container');
+                grid.innerHTML = '';
+                if(studentList.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No matches found.</p></div>'; return; }
+                studentList.forEach(s => {
+                    const isPresent = this.attendanceChanges[s.id];
+                    const card = document.createElement('div');
+                    card.id = `att-card-${s.id}`;
+                    card.className = `attendance-card p-3 rounded-xl cursor-pointer border shadow-sm flex flex-col justify-between h-20 ${isPresent ? 'present' : 'absent'}`;
+                    card.onclick = () => this.toggleAttendance(s.id, card);
+                    card.innerHTML = `<div class="flex justify-between items-start"><div class="font-bold text-xs truncate-text w-full pr-1">${s.name}</div></div><div class="flex justify-between items-end mt-1"><span class="text-[10px] font-mono text-slate-400 bg-slate-100 px-1 rounded">${s.id}</span><div class="icon-status text-lg">${isPresent ? '<i class="fa-solid fa-circle-check text-emerald-500"></i>' : '<i class="fa-solid fa-circle-xmark text-red-400"></i>'}</div></div>`;
+                    grid.appendChild(card);
                 });
-                document.getElementById('student-overall-percent').textContent = totalAtt ? Math.round((presentAtt/totalAtt)*100)+'%' : '0%';
-                const labSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'lab_sessions'));
-                let totalLabScore = 0, labCount = 0;
-                labSnap.forEach(d => {
-                    const data = d.data();
-                    if(data.classId === classId && data.scores && data.scores[uid]) {
-                        totalLabScore += data.scores[uid].total;
-                        labCount++;
-                        history.push({ date: data.date, title: `${data.subject} - ${data.title || 'Score'}`, type: 'LAB', val: data.scores[uid].total + '/20' });
-                    }
+            },
+            filterAttendance: function() {
+                const q = document.getElementById('search-attendance').value.toLowerCase();
+                const filtered = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
+                this.renderAttendanceGrid(filtered);
+            },
+            markAll: function(status) {
+                if(!this.currentStudents.length) return;
+                const q = document.getElementById('search-attendance').value.toLowerCase();
+                const targetStudents = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
+                targetStudents.forEach(s => { this.attendanceChanges[s.id] = status; });
+                this.renderAttendanceGrid(targetStudents);
+                this.showToast(status ? "Marked Visible Present" : "Marked Visible Absent");
+            },
+            toggleAttendance: function(uid, card) {
+                const next = !this.attendanceChanges[uid];
+                this.attendanceChanges[uid] = next;
+                if(next) { card.classList.replace('absent','present'); card.querySelector('.icon-status').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>'; } else { card.classList.replace('present','absent'); card.querySelector('.icon-status').innerHTML = '<i class="fa-solid fa-circle-xmark text-red-400"></i>'; }
+            },
+            saveAttendance: async function() {
+                const date = document.getElementById('mark-date').value;
+                const session = document.getElementById('mark-session').value;
+                const subject = document.getElementById('mark-subject').value;
+                const classId = document.getElementById('mark-class-input').value.toUpperCase().trim();
+                const btn = document.getElementById('save-btn');
+                btn.disabled = true; btn.innerHTML = 'Saving...';
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', `${date}_${classId}_${session}_${subject}`), {
+                    date, session, subject, classId, presentIds: Object.keys(this.attendanceChanges).filter(k => this.attendanceChanges[k]), type: 'theory'
                 });
-                document.getElementById('student-lab-avg').textContent = labCount ? (totalLabScore/labCount).toFixed(1) : '--';
-                const list = document.getElementById('student-history-list');
-                if (history.length === 0) { list.innerHTML = '<p class="text-center text-slate-400 text-sm p-4">No recent activity.</p>'; } else {
-                    list.innerHTML = history.sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 10).map(h => `<div class="bg-white border-l-4 ${h.type === 'LAB' ? 'border-blue-500' : (h.val === 'Present' ? 'border-emerald-500' : 'border-red-400')} p-3 rounded-xl shadow-sm flex justify-between items-center"><div><div class="font-bold text-slate-700 text-sm">${h.date}</div><div class="text-[10px] text-slate-400 uppercase font-bold truncate max-w-[150px]">${h.title}</div></div><span class="text-xs font-bold ${h.type === 'LAB' ? 'text-blue-600 bg-blue-50' : (h.val === 'Present' ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50')} px-2 py-1 rounded-md whitespace-nowrap">${h.val}</span></div>`).join('');
-                }
-            }
+                this.showToast("Attendance Saved!");
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span>Save Attendance</span>';
+            },
+            loadLabStudents: async function() {
+                const classId = document.getElementById('lab-class-input').value.toUpperCase().trim();
+                const list = document.getElementById('lab-student-list');
+                const controls = document.getElementById('lab-controls');
+                if(!classId) return this.showToast("Enter Section");
+                list.innerHTML = '<div class="col-span-full text-center py-8"><div class="loader mx-auto"></div></div>';
+                document.getElementById('lab-save-fab').classList.add('translate-y-32');
+                controls.classList.add('hidden');
+                document.getElementById('search-lab').value = '';
+                const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+                const students = [];
+                snap.forEach(d => { if(d.data().classId === classId && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
+                this.currentStudents = students.sort((a,b) => a.id.localeCompare(b.id));
+                this.labScores = {};
+                if(students.length === 0) { list.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No students found.</p></div>'; return; }
+                controls.classList.remove('hidden');
+                this.renderLabGrid(this.currentStudents);
+                document.getElementById('lab-save-fab').classList.remove('translate-y-32');
+            },
+            renderLabGrid: function(studentList) {
+                const list = document.getElementById('lab-student-list');
+                list.innerHTML = '';
+                if(studentList.length === 0) { list.innerHTML = '<div class="col-span-full text-center py-8 opacity-50"><p>No matches found.</p></div>'; return; }
+                studentList.forEach(s => {
+                    const isGraded = this.labScores[s.id] && this.labScores[s.id].total > 0;
+                    const div = document.createElement('div');
+                    div.id = `lab-card-${s.id}`;
+                    div.className = `lab-card bg-white p-3 rounded-xl shadow-sm border cursor-pointer flex flex-col justify-between h-20 active:scale-[0.98] transition ${isGraded ? 'graded' : ''}`;
+                    div.onclick = () => this.openLabModal(s);
+                    const scoreText = isGraded ? `<span class="text-blue-600 font-bold">${this.labScores[s.id].total}/20</span>` : '<span class="text-slate-300">--</span>';
+                    div.innerHTML = `<div class="flex justify-between items-start"><div class="font-bold text-xs truncate-text w-full pr-1">${s.name}</div></div><div class="flex justify-between items-end mt-1"><span class="text-[10px] font-mono text-slate-400 bg-slate-100 px-1 rounded">${s.id}</span><div class="score-summary text-xs">${scoreText}</div></div>`;
+                    list.appendChild(div);
+                });
+            },
+            filterLab: function() {
+                const q = document.getElementById('search-lab').value.toLowerCase();
+                const filtered = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
+                this.renderLabGrid(filtered);
+            },
+            renderScoreButtons: function() {
+                ['obs', 'rec', 'pun', 'per'].forEach(metric => {
+                    const container = document.getElementById(`btns-${metric}`);
+                    if(!container) return;
+                    container.innerHTML = '';
+                    [1,2,3,4,5].forEach(num => {
+                        const btn = document.createElement('div');
+                        btn.className = 'score-btn cursor-pointer';
+                        btn.textContent = num;
+                        btn.onclick = () => this.setModalScore(metric, num);
+                        container.appendChild(btn);
+                    });
+                });
+            },
+            openLabModal: function(student) {
+                this.currentLabStudent = student;
+                document.getElementById('lab-modal-name').textContent = student.name;
+                document.getElementById('lab-modal-id').textContent = `ID: ${student.id}`;
+                const scores = this.labScores[student.id] || { obs: 0, rec: 0, pun: 0, per: 0, total: 0 };
+                ['obs', 'rec', 'pun', 'per'].forEach(k => this.setModalScore(k, scores[k], false));
+                this.updateTotalScore();
+                const bd = document.getElementById('lab-modal-backdrop');
+                const ct = document.getElementById('lab-modal-content');
+                bd.classList.remove('hidden');
+                setTimeout(() => { ct.classList.remove('translate-y-full'); }, 10);
+            },
+            closeLabModal: function() {
+                const bd = document.getElementById('lab-modal-backdrop');
+                const ct = document.getElementById('lab-modal-content');
+                ct.classList.add('translate-y-full');
+                setTimeout(() => { bd.classList.add('hidden'); }, 300);
+            },
+            setModalScore: function(metric, val, update = true) {
+                const container = document.getElementById(`btns-${metric}`);
+                Array.from(container.children).forEach(btn => { if(parseInt(btn.textContent) === val) btn.classList.add('active'); else btn.classList.remove('active'); });
+                document.getElementById(`score-val-${metric}`).textContent = val;
+                if(update) this.updateTotalScore();
+            },
+            updateTotalScore: function() {
+                const getVal = (id) => parseInt(document.getElementById(`score-val-${id}`).textContent) || 0;
+                const total = getVal('obs') + getVal('rec') + getVal('pun') + getVal('per');
+                document.getElementById('lab-modal-total').textContent = total;
+            },
+            saveStudentLabScore: function() {
+                if(!this.currentLabStudent) return;
+                const getVal = (id) => parseInt(document.getElementById(`score-val-${id}`).textContent) || 0;
+                const scores = { obs: getVal('obs'), rec: getVal('rec'), pun: getVal('pun'), per: getVal('per') };
+                scores.total = scores.obs + scores.rec + scores.pun + scores.per;
+                this.labScores[this.currentLabStudent.id] = scores;
+                const q = document.getElementById('search-lab').value.toLowerCase();
+                const filtered = this.currentStudents.filter(s => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q));
+                this.renderLabGrid(filtered);
+                this.closeLabModal();
+            },
+            submitLabSession: async function() {
+                const date = document.getElementById('lab-date').value;
+                const subject = document.getElementById('lab-subject').value;
+                const title = document.getElementById('lab-exp-title').value.trim() || 'Assessment';
+                const classId = document.getElementById('lab-class-input').value.toUpperCase().trim();
+                if(!classId) return this.showToast("Class ID missing");
+                if(Object.keys(this.labScores).length === 0) return this.showToast("Grade at least one student");
+                const btn = document.getElementById('lab-submit-btn');
+                btn.disabled = true; btn.innerHTML = 'Submitting...';
+                const safeTitle = title.replace(/[^a-zA-Z0-9]/g, '');
+                const sessionId = `LAB_${date}_${classId}_${subject}_${safeTitle}`;
+                try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lab_sessions', sessionId), { date, subject, title, classId, scores: this.labScores, timestamp: new Date().toISOString() }); this.showToast("Saved Successfully!"); } catch(e) { this.showToast("Error saving data."); }
+                finally { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check-double"></i> <span>Submit Scores</span>'; }
+            },
+            setReportMode: function(mode) {
+                this.reportMode = mode;
+                const btnSum = document.getElementById('btn-mode-summary'); const btnSes = document.getElementById('btn-mode-session'); const inpSum = document.getElementById('report-inputs-summary'); const inpSes = document.getElementById('report-inputs-session');
+                if(mode === 'summary') { btnSum.className = "flex-1 py-2 rounded-lg text-xs font-bold shadow-sm bg-white text-slate-800 transition"; btnSes.className = "flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition"; inpSum.classList.remove('hidden'); inpSes.classList.add('hidden'); }
+                else { btnSes.className = "flex-1 py-2 rounded-lg text-xs font-bold shadow-sm bg-white text-slate-800 transition"; btnSum.className = "flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition"; inpSes.classList.remove('hidden'); inpSum.classList.add('hidden'); }
+                document.getElementById('report-results').innerHTML = ''; document.getElementById('report-actions').classList.add('hidden');
+            },
+            handleReportGeneration: function() { if(this.reportMode === 'summary') { this.generateReport(); } else { this.generateSessionReport(); } },
+            generateSessionReport: async function() {
+                const date = document.getElementById('report-session-date').value; const session = document.getElementById('report-session-slot').value; const subject = document.getElementById('report-session-subject').value; const classId = document.getElementById('report-session-class').value.toUpperCase().trim(); const container = document.getElementById('report-results'); const actions = document.getElementById('report-actions');
+                if(!classId) return this.showToast("Enter Section");
+                container.innerHTML = '<div class="loader mx-auto"></div>'; actions.classList.add('hidden');
+                const sessionId = `${date}_${classId}_${session}_${subject}`;
+                const attRef = doc(db, 'artifacts', appId, 'public', 'data', 'attendance', sessionId); const attSnap = await getDoc(attRef);
+                if(!attSnap.exists()) { container.innerHTML = '<div class="text-center py-8 opacity-50"><i class="fa-solid fa-ghost text-2xl mb-2"></i><p>No session data found.</p></div>'; return; }
+                const data = attSnap.data(); const presentIds = data.presentIds || [];
+                const userSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users')); const students = [];
+                userSnap.forEach(d => { if(d.data().classId === classId && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
+                if(students.length === 0) { container.innerHTML = '<p class="text-center text-slate-400">No students found.</p>'; return; }
+                students.sort((a,b) => a.id.localeCompare(b.id));
+                const presentList = students.filter(s => presentIds.includes(s.id)); const absentList = students.filter(s => !presentIds.includes(s.id));
+                this.sessionReportData = { date, session, subject, classId, total: students.length, present: presentList, absent: absentList, all: students.map(s => ({...s, status: presentIds.includes(s.id) ? 'Present' : 'Absent'})) };
+                actions.classList.remove('hidden');
+                let html = `<div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-center"><div class="text-xl font-bold text-emerald-600">${presentList.length}</div><div class="text-[10px] font-bold text-emerald-400 uppercase">Present</div></div><div class="bg-red-50 border border-red-100 p-3 rounded-xl text-center"><div class="text-xl font-bold text-red-600">${absentList.length}</div><div class="text-[10px] font-bold text-red-400 uppercase">Absent</div></div></div><div class="flex gap-2 mb-4 overflow-x-auto pb-1"><div onclick="app.renderSessionList('all')" id="cap-all" class="filter-capsule active bg-slate-800 text-white px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">All (${students.length})</div><div onclick="app.renderSessionList('present')" id="cap-present" class="filter-capsule bg-white border border-slate-200 text-emerald-600 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Present (${presentList.length})</div><div onclick="app.renderSessionList('absent')" id="cap-absent" class="filter-capsule bg-white border border-slate-200 text-red-600 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap">Absent (${absentList.length})</div></div><div id="session-list-container" class="space-y-2"></div>`;
+                container.innerHTML = html; this.renderSessionList('all');
+            },
+            renderSessionList: function(filter) {
+                const container = document.getElementById('session-list-container');
+                ['all', 'present', 'absent'].forEach(f => {
+                    const cap = document.getElementById(`cap-${f}`);
+                    if(f === filter) { cap.className = `filter-capsule active px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border ${f==='all' ? 'bg-slate-800 text-white border-transparent' : (f==='present'?'bg-emerald-100 border-emerald-200 text-emerald-700':'bg-red-100 border-red-200 text-red-700')}`; }
+                    else { cap.className = `filter-capsule bg-white border border-slate-200 text-slate-500 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap`; }
+                });
+                let list = []; if(filter === 'all') list = this.sessionReportData.all; else if(filter === 'present') list = this.sessionReportData.present; else list = this.sessionReportData.absent;
+                if(list.length === 0) { container.innerHTML = '<p class="text-center text-slate-400 py-4 text-xs">List is empty.</p>'; return; }
+                container.innerHTML = list.map(s => { const status = s.status || (filter === 'present' ? 'Present' : 'Absent'); const color = status === 'Present' ? 'text-emerald-500' : 'text-red-500'; const icon = status === 'Present' ? '<i class="fa-solid fa-circle-check"></i>' : '<i class="fa-solid fa-circle-xmark"></i>'; return `<div class="bg-white p-3 rounded-lg border border-slate-100 flex justify-between items-center shadow-sm"><div class="flex items-center gap-3"><span class="text-xs font-mono text-slate-400 bg-slate-50 px-1 rounded">${s.id}</span><span class="text-sm font-semibold text-slate-700">${s.name}</span></div><div class="${color} text-lg">${icon}</div></div>`; }).join('');
+            },
+            generateReport: async function() {
+                const classId = document.getElementById('report-class-input').value.toUpperCase().trim(); const subject = document.getElementById('report-subject').value; const container = document.getElementById('report-results'); const actions = document.getElementById('report-actions');
+                if(!classId) return; container.innerHTML = '<div class="loader mx-auto"></div>'; actions.classList.add('hidden');
+                const userSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users')); const students = [];
+                userSnap.forEach(d => { if(d.data().classId === classId && d.data().role === 'student') students.push({id: d.id, ...d.data()}); });
+                const attSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'attendance')); const labSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'lab_sessions'));
+                const stats = {}; students.forEach(s => stats[s.id] = { name: s.name, attTotal: 0, attPresent: 0, labTotal: 0, labScore: 0 });
+                let totalAttSessions = 0; let totalLabSessions = 0;
+                attSnap.forEach(d => { const data = d.data(); if(data.classId === classId) { if(subject === 'ALL' || data.subject === subject) { totalAttSessions++; if(data.presentIds) data.presentIds.forEach(id => { if(stats[id]) stats[id].attPresent++; }); } } });
+                labSnap.forEach(d => { const data = d.data(); if(data.classId === classId) { if(subject === 'ALL' || data.subject === subject) { totalLabSessions++; if(data.scores) Object.keys(data.scores).forEach(id => { if(stats[id]) { stats[id].labScore += data.scores[id].total; } }); } } });
+                if(totalAttSessions === 0 && totalLabSessions === 0) { container.innerHTML = '<p class="text-center text-slate-400">No data found.</p>'; return; }
+                actions.classList.remove('hidden'); students.sort((a,b) => a.id.localeCompare(b.id));
+                this.currentReportData = { classId, subject, students: [], totalAtt: totalAttSessions, totalLab: totalLabSessions };
+                let html = `<div class="bg-blue-50 text-blue-800 p-3 rounded-lg text-xs font-bold flex justify-between mb-2"><span>Theory Sessions: ${totalAttSessions}</span> <span>Assessments: ${totalLabSessions}</span></div>`;
+                html += `<div class="grid grid-cols-12 text-[10px] uppercase font-bold text-slate-400 px-2 mb-2"><div class="col-span-5">Student</div><div class="col-span-3 text-center">Att %</div><div class="col-span-4 text-right">Avg Score</div></div>`;
+                students.forEach(s => {
+                    const d = stats[s.id]; const attPct = totalAttSessions ? Math.round((d.attPresent / totalAttSessions) * 100) : 0; const avgScore = totalLabSessions ? (d.labScore / totalLabSessions).toFixed(1) : 0;
+                    this.currentReportData.students.push({ id: s.id, name: s.name, att: d.attPresent, attPct, score: d.labScore, avgScore });
+                    let color = attPct >= 75 ? 'text-emerald-500' : (attPct >= 50 ? 'text-yellow-500' : 'text-red-500');
+                    html += `<div class="bg-white p-3 rounded-lg border border-slate-100 grid grid-cols-12 items-center shadow-sm mb-2"><div class="col-span-5"><div class="font-bold text-sm text-slate-700 truncate">${s.name}</div><div class="text-[10px] text-slate-400 font-mono">${s.id}</div></div><div class="col-span-3 text-center"><span class="text-xs font-bold ${color}">${attPct}%</span></div><div class="col-span-4 text-right"><span class="text-xs font-bold text-blue-600">${avgScore}</span><span class="text-[10px] text-slate-400">/20</span></div></div>`;
+                });
+                container.innerHTML = html;
+            },
+            downloadCSV: function() { if(!this.currentReportData && !this.sessionReportData) return; if (this.reportMode === 'session' && this.sessionReportData) { const d = this.sessionReportData; let csv = `Session Report\nDate,${d.date}\nClass,${d.classId}\nSubject,${d.subject} - ${d.session}\n\nRoll No,Name,Status\n`; d.all.forEach(s => { csv += `${s.id},${s.name},${s.status}\n`; }); const blob = new Blob([csv], {type: 'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `Session_Report_${d.date}.csv`; a.click(); } else { const d = this.currentReportData; let csv = `Roll No,Name,Present (Days),Total Days,Attendance %,Total Score,Avg Score (out of 20)\n`; d.students.forEach(s => csv += `${s.id},${s.name},${s.att},${d.totalAtt},${s.attPct}%,${s.score},${s.avgScore}\n`); const blob = new Blob([csv], {type: 'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'report.csv'; a.click(); } },
+            downloadPDF: function() { if(!this.currentReportData && !this.sessionReportData) return; const { jsPDF } = window.jspdf; const doc = new jsPDF(); if (this.reportMode === 'session' && this.sessionReportData) { const d = this.sessionReportData; doc.text(`Session Detail: ${d.date}`, 14, 20); doc.setFontSize(10); doc.text(`${d.classId} | ${d.subject} (${d.session})`, 14, 28); doc.text(`Present: ${d.present.length} | Absent: ${d.absent.length}`, 14, 34); doc.autoTable({ head: [['Roll No', 'Name', 'Status']], body: d.all.map(s => [s.id, s.name, s.status]), startY: 40, styles: { fontSize: 10 }, headStyles: { fillColor: [15, 23, 42] } }); doc.save(`Session_${d.date}.pdf`); } else { const d = this.currentReportData; doc.text(`Report: ${d.classId} - ${d.subject}`, 14, 20); doc.setFontSize(10); doc.text(`Total Theory: ${d.totalAtt} | Total Assessments: ${d.totalLab}`, 14, 28); doc.autoTable({ head: [['ID', 'Name', 'Attendance', 'Score (Avg)']], body: d.students.map(s => [s.id, s.name, `${s.attPct}% (${s.att}/${d.totalAtt})`, `${s.avgScore} / 20`]), startY: 35 }); doc.save('report.pdf'); } },
+            loadStudentData: async function() { const uid = this.profile.uid; const classId = this.profile.classId; document.getElementById('student-dash-name').textContent = this.profile.name; document.getElementById('student-dash-class').textContent = classId; const attSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'attendance')); let totalAtt = 0, presentAtt = 0; let history = []; attSnap.forEach(d => { const data = d.data(); if(data.classId === classId && data.presentIds) { totalAtt++; const present = data.presentIds.includes(uid); if(present) presentAtt++; history.push({ date: data.date, title: `${data.subject} (${data.session})`, type: 'ATT', val: present ? 'Present' : 'Absent' }); } }); document.getElementById('student-overall-percent').textContent = totalAtt ? Math.round((presentAtt/totalAtt)*100)+'%' : '0%'; const labSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'lab_sessions')); let totalLabScore = 0, labCount = 0; labSnap.forEach(d => { const data = d.data(); if(data.classId === classId && data.scores && data.scores[uid]) { totalLabScore += data.scores[uid].total; labCount++; history.push({ date: data.date, title: `${data.subject} - ${data.title || 'Score'}`, type: 'LAB', val: data.scores[uid].total + '/20' }); } }); document.getElementById('student-lab-avg').textContent = labCount ? (totalLabScore/labCount).toFixed(1) : '--'; const list = document.getElementById('student-history-list'); if (history.length === 0) { list.innerHTML = '<p class="text-center text-slate-400 text-sm p-4">No recent activity.</p>'; } else { list.innerHTML = history.sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 10).map(h => `<div class="bg-white border-l-4 ${h.type === 'LAB' ? 'border-blue-500' : (h.val === 'Present' ? 'border-emerald-500' : 'border-red-400')} p-3 rounded-xl shadow-sm flex justify-between items-center"><div><div class="font-bold text-slate-700 text-sm">${h.date}</div><div class="text-[10px] text-slate-400 uppercase font-bold truncate max-w-[150px]">${h.title}</div></div><span class="text-xs font-bold ${h.type === 'LAB' ? 'text-blue-600 bg-blue-50' : (h.val === 'Present' ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50')} px-2 py-1 rounded-md whitespace-nowrap">${h.val}</span></div>`).join(''); } }
         };
-
         window.app.init();
     </script>
 </body>
