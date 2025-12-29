@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- FingerprintJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    
+    <!-- TensorFlow.js & BlazeFace (For Liveness Detection) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, writeBatch, arrayUnion, onSnapshot, collection, getDocs, query, where, orderBy } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        // --- FIREBASE CONFIGURATION ---
+        const fallbackConfig = {
+            apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+            authDomain: "stuattnd.firebaseapp.com",
+            projectId: "stuattnd",
+            storageBucket: "stuattnd.firebasestorage.app",
+            messagingSenderId: "511533506488",
+            appId: "1:511533506488:web:aca4de3d513915d012f94d",
+            measurementId: "G-9PZZM5LFKX"
+        };
+
+        const firebaseConfig = typeof window.__firebase_config !== 'undefined' ? JSON.parse(window.__firebase_config) : fallbackConfig;
+        const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'face-app-rs';
+
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) { console.error("Firebase Init Error:", e); }
+
+        window.smartAtt = {
+            db, auth, appId,
+            user: null, role: null,
+            rollingTimer: null, currentSessionId: null, 
+            historyStudents: [], historyFaculty: [], schedules: [],
+            fpPromise: null, currentDetail: null,
+            deviceToken: null, 
+            currentReportType: 'student',
+            
+            // Auth & Security
+            cloudAdminUser: null, 
+            stateUnsubscribe: null,
+            isRegisteringFaculty: false,
+        
+            MASTER_KEY_HASH: "cf45e85c43ebe0960b354cfad32050ea705cbbd334268187bbb42b8ad386ddda", 
+            
+            // Camera/AI State
+            videoStream: null,
+            aiModel: null,
+            isAiLoaded: false,
+            detectionLoop: null,
+            livenessScore: 0,
+            hasNodded: false,
+            lastNoseY: 0,
+
+            // Bulk Actions
+            cachedRequests: [],
+            selectedRequests: new Set(),
+
+            init: async function() {
+                try { this.fpPromise = FingerprintJS.load(); } catch(e) {}
+
+                this.deviceToken = localStorage.getItem('sa_device_token');
+                if (!this.deviceToken) {
+                    this.deviceToken = this.generateToken(16);
+                    localStorage.setItem('sa_device_token', this.deviceToken);
+                }
+
+                if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) {
+                    try { await signInWithCustomToken(auth, window.__initial_auth_token); } catch(e) { console.error("Token Auth Failed", e); }
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        this.user = user;
+                        document.getElementById('loading').classList.add('hidden');
+                        document.getElementById('main-menu').classList.remove('hidden');
+                        this.checkCloudConfig();
+                        this.cleanupOldData();
+                    } else {
+                        signInAnonymously(auth).catch(e => alert("Auth Failed. Check Internet."));
+                    }
+                });
+                this.loadSavedMasterList();
+                this.preloadAI(); 
+            },
+
+            // --- AI & CAMERA LOGIC ---
+            preloadAI: async function() {
+                try {
+                    console.log("Loading Face Model...");
+                    this.aiModel = await blazeface.load();
+                    this.isAiLoaded = true;
+                    console.log("Face Model Loaded");
+                } catch (e) {
+                    console.error("AI Load Failed (Offline?)", e);
+                    this.isAiLoaded = false;
+                }
+            },
+
+            startCamera: async function(videoElementId, buttonId, statusId, mode = 'auth') {
+                try {
+                    const video = document.getElementById(videoElementId);
+                    const constraints = { video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } };
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    video.srcObject = stream;
+                    this.videoStream = stream;
+                    
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        if (this.isAiLoaded) {
+                            this.startFaceDetection(video, buttonId, statusId);
+                        } else {
+                            // Fallback
+                            const statusEl = document.getElementById(statusId);
+                            const btn = document.getElementById(buttonId);
+                            if(statusEl) {
+                                statusEl.innerText = "⚠️ AI Unavailable. Manual Mode.";
+                                statusEl.className = "text-yellow-400 font-bold mb-2";
+                            }
+                            if(btn) {
+                                btn.disabled = false;
+                                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                            }
+                        }
+                    };
+                    return true;
+                } catch (err) {
+                    console.error("Camera Error:", err);
+                    alert("Camera access denied. Please enable permissions.");
+                    return false;
+                }
+            },
+
+            startFaceDetection: async function(video, buttonId, statusId) {
+                const statusEl = document.getElementById(statusId);
+                const btn = document.getElementById(buttonId);
+                const overlay = document.getElementById('face-overlay'); 
+                const ctx = overlay ? overlay.getContext('2d') : null;
+                
+                this.hasNodded = false;
+                this.lastNoseY = 0;
+                this.livenessScore = 0;
+                
+                if(btn) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    btn.innerText = "Nod to Verify...";
+                }
+
+                this.detectionLoop = setInterval(async () => {
+                    if (!this.videoStream || !this.videoStream.active) {
+                        this.stopCamera();
+                        return;
+                    }
+
+                    const predictions = await this.aiModel.estimateFaces(video, false);
+                    if (ctx && overlay) ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+                    if (predictions.length > 0) {
+                        const face = predictions[0];
+                        const start = face.topLeft;
+                        const end = face.bottomRight;
+                        const size = [end[0] - start[0], end[1] - start[1]];
+                        const faceWidth = size[0];
+
+                        if (ctx) {
+                            ctx.strokeStyle = '#00ff00'; ctx.lineWidth = 2; ctx.strokeRect(start[0], start[1], size[0], size[1]);
+                        }
+
+                        if (faceWidth < 80) {
+                            if(statusEl) { statusEl.innerText = "Move Closer 🔍"; statusEl.className = "text-yellow-400 font-bold text-xl mb-2 animate-pulse"; }
+                            return;
+                        }
+
+                        if (predictions.length > 1) {
+                            if(statusEl) { statusEl.innerText = "One Person Only! 🚫"; statusEl.className = "text-red-500 font-bold text-xl mb-2"; }
+                            return;
+                        }
+
+                        if (!this.hasNodded) {
+                            const nose = face.landmarks[2];
+                            const noseY = nose[1];
+                            if (this.lastNoseY !== 0) {
+                                const delta = Math.abs(noseY - this.lastNoseY);
+                                if (delta > 2) this.livenessScore++; 
+                            }
+                            this.lastNoseY = noseY;
+
+                            if (this.livenessScore > 8) {
+                                this.hasNodded = true;
+                                if(btn) {
+                                    btn.disabled = false;
+                                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                                    btn.innerText = "Capture Now";
+                                }
+                                if(statusEl) { statusEl.innerText = "Real Face Verified ✅"; statusEl.className = "text-green-400 font-bold text-xl mb-2"; }
+                            } else {
+                                if(statusEl) { statusEl.innerText = "Gently Nod Head ↕️"; statusEl.className = "text-blue-400 font-bold text-xl mb-2"; }
+                            }
+                        }
+                    } else {
+                        if(statusEl) { statusEl.innerText = "No Face Detected ❌"; statusEl.className = "text-red-500 font-bold text-xl mb-2"; }
+                        this.livenessScore = 0;
+                    }
+                }, 150);
+            },
+
+            stopCamera: function() {
+                if (this.detectionLoop) clearInterval(this.detectionLoop);
+                if (this.videoStream) {
+                    this.videoStream.getTracks().forEach(track => track.stop());
+                    this.videoStream = null;
+                }
+            },
+
+            captureAndCompress: function(videoElementId) {
+                const video = document.getElementById(videoElementId);
+                const canvas = document.createElement('canvas');
+                canvas.width = 320; canvas.height = 240;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                return canvas.toDataURL('image/jpeg', 0.5); 
+            },
+
+            // --- NAVIGATION HELPERS ---
+            goBackToMenu: function() {
+                this.showSection('main-menu');
+                this.stopCamera();
+                ['s-name', 's-roll', 's-pin'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('student-success').classList.add('hidden');
+                document.getElementById('student-input-area').classList.remove('hidden');
+                document.getElementById('camera-section').classList.add('hidden');
+                document.getElementById('registration-camera').classList.add('hidden');
+            },
+
+            minimizeLiveSession: function() {
+                this.showSection('faculty-dash');
+                document.getElementById('resume-session-banner').classList.remove('hidden');
+                this.switchDashTab('action');
+            },
+
+            returnToLiveSession: function() {
+                if(this.currentSessionId) this.showSection('live-session');
+                else document.getElementById('resume-session-banner').classList.add('hidden');
+            },
+
+            // --- CLOUD CONFIG CHECK ---
+            checkCloudConfig: async function() {
+                try {
+                    const configRef = doc(db, 'artifacts', appId, 'public', 'data', 'app_config', 'admin');
+                    const snap = await getDoc(configRef);
+                    if (snap.exists()) {
+                        this.adminConfigExists = true;
+                        this.cloudAdminUser = snap.data().username;
+                    } else { this.adminConfigExists = false; }
+                } catch (e) { console.error("Config check failed", e); }
+            },
+
+            // --- 5-DAY PHOTO WIPER ---
+            cleanupOldData: async function() {
+                const cutoff = Date.now() - (5 * 24 * 60 * 60 * 1000); 
+                try {
+                    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'sessions'), where("created_at", "<", cutoff));
+                    const snaps = await getDocs(q);
+                    if(snaps.empty) return;
+                    let cleanedCount = 0;
+                    const updates = [];
+                    snaps.forEach(docSnap => {
+                        const data = docSnap.data();
+                        if (data.photos_wiped) return; 
+                        const updatedAttendees = data.attendees.map(a => {
+                            const { faceImage, ...rest } = a; 
+                            return { ...rest, faceImage: null }; 
+                        });
+                        updates.push(updateDoc(docSnap.ref, { attendees: updatedAttendees, photos_wiped: true }));
+                        cleanedCount++;
+                    });
+                    if(updates.length > 0) { await Promise.all(updates); console.log(`Cleaned photos from ${cleanedCount} sessions.`); }
+                } catch(e) { console.error("Cleanup failed", e); }
+            },
+
+            // --- REAL-TIME STATE SYNC (MULTI-USER SUPPORTED) ---
+            startStateListener: function() {
+                if (!this.cloudAdminUser) return;
+                if (this.stateUnsubscribe) this.stateUnsubscribe(); 
+                // Listen to MY specific state document
+                const stateRef = doc(db, 'artifacts', appId, 'public', 'data', 'faculty_states', this.cloudAdminUser);
+                this.stateUnsubscribe = onSnapshot(stateRef, (doc) => {
+                    if (doc.exists()) {
+                        const data = doc.data();
+                        this.updateFacultyUI(data.status, data.name);
+                    }
+                });
+            },
+
+            updateFacultyUI: function(status, name) {
+                const btnIn = document.getElementById('btn-clock-in');
+                const btnOut = document.getElementById('btn-clock-out');
+                const statusEl = document.getElementById('fac-status');
+                if (name) document.getElementById('fac-name').value = name;
+                if (status === 'in') {
+                    statusEl.innerHTML = '<span class="text-green-600 font-bold">● On Duty</span>';
+                    btnIn.classList.add('hidden'); btnOut.classList.remove('hidden');
+                } else {
+                    statusEl.innerHTML = '<span class="text-gray-400">● Off Duty</span>';
+                    btnIn.classList.remove('hidden'); btnOut.classList.add('hidden');
+                }
+            },
+
+            // --- GPS HANDLER ---
+            getSmartLocation: function(onSuccess, onError) {
+                if (!navigator.geolocation) { onError("GPS not supported."); return; }
+                const handleSuccess = (pos) => { onSuccess(pos); };
+                const handleError = (err, attempt) => {
+                    let msg = "";
+                    switch(err.code) {
+                        case err.PERMISSION_DENIED: msg = "Location Denied. Enable GPS."; break;
+                        case err.POSITION_UNAVAILABLE: msg = "Signal Unavailable."; break;
+                        case err.TIMEOUT: msg = "GPS Timeout."; break;
+                        default: msg = err.message;
+                    }
+                    if (attempt === 1) {
+                        console.warn("High Accuracy failed. Retrying...");
+                        navigator.geolocation.getCurrentPosition(handleSuccess, (err2) => handleError(err2, 2), { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 });
+                    } else { onError(msg); }
+                };
+                navigator.geolocation.getCurrentPosition(handleSuccess, (err) => handleError(err, 1), { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+            },
+
+            // --- UTILS ---
+            generateToken: function(length) { const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; let result = ''; for (let i = 0; i < length; i++) result += chars.charAt(Math.floor(Math.random() * chars.length)); return result; },
+            getDist: function(lat1, lon1, lat2, lon2) { const R = 6371e3; const φ1 = lat1 * Math.PI/180, φ2 = lat2 * Math.PI/180; const Δφ = (lat2-lat1) * Math.PI/180, Δλ = (lon2-lon1) * Math.PI/180; const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2); return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); },
+            sha256: async function(msg) { const data = new TextEncoder().encode(msg); const buf = await crypto.subtle.digest('SHA-256', data); return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''); },
+            getHardwareSignature: function() { return `${screen.width}x${screen.height}_${screen.colorDepth}_${navigator.platform}`.replace(/\s/g, ''); },
+            getPublicIP: async function() { try { const req = await fetch('https://api.ipify.org?format=json'); const res = await req.json(); return res.ip; } catch(e) { return "unknown_ip"; } },
+            getBrowserName: function() { const ua = navigator.userAgent; if (ua.includes("Chrome")) return "Chrome"; if (ua.includes("Firefox")) return "Firefox"; if (ua.includes("Safari")) return "Safari"; return "Other"; },
+
+            // --- UI ---
+            showSection: function(id) { document.querySelectorAll('.app-section').forEach(el => el.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); },
+            switchDashTab: function(tabName) {
+                ['tab-action-view', 'tab-report-view', 'tab-device-view', 'tab-schedule-view'].forEach(id => document.getElementById(id).classList.add('hidden'));
+                document.getElementById('tab-' + tabName + '-view').classList.remove('hidden');
+                document.querySelectorAll('.tab-btn').forEach(el => { el.classList.remove('text-indigo-700', 'border-b-2', 'border-indigo-700', 'font-bold'); el.classList.add('text-gray-500'); });
+                const activeBtn = document.getElementById('btn-tab-' + tabName.split('-')[0]); 
+                if(activeBtn) { activeBtn.classList.add('text-indigo-700', 'border-b-2', 'border-indigo-700', 'font-bold'); activeBtn.classList.remove('text-gray-500'); }
+                if(tabName === 'report') this.loadAllReports(); if(tabName === 'device') this.loadDeviceRequests(); if(tabName === 'schedule') this.loadSchedules(); if(tabName === 'action') this.loadSchedules(true); 
+            },
+            switchDeviceSubTab: function(subTab) {
+                if(subTab === 'pending') { document.getElementById('dev-pending-list').classList.remove('hidden'); document.getElementById('dev-approved-list').classList.add('hidden'); document.getElementById('btn-sub-pending').classList.add('bg-indigo-100', 'text-indigo-700'); document.getElementById('btn-sub-approved').classList.remove('bg-indigo-100', 'text-indigo-700'); this.loadDeviceRequests(); } 
+                else { document.getElementById('dev-pending-list').classList.add('hidden'); document.getElementById('dev-approved-list').classList.remove('hidden'); document.getElementById('btn-sub-approved').classList.add('bg-indigo-100', 'text-indigo-700'); document.getElementById('btn-sub-pending').classList.remove('bg-indigo-100', 'text-indigo-700'); this.loadApprovedDevices(); }
+            },
+
+            // --- AUTH & MULTI-USER ---
+            showLoginModal: async function() {
+                const localToken = localStorage.getItem('sa_admin_token');
+                const localUser = localStorage.getItem('sa_admin_user');
+                if(localToken === 'valid' && localUser) { 
+                    this.cloudAdminUser = localUser;
+                    this.completeLogin(); 
+                    return; 
+                }
+                this.isRegisteringFaculty = false;
+                this.updateAuthModalUI();
+                document.getElementById('login-modal').classList.remove('hidden');
+            },
+            
+            toggleAuthMode: function() {
+                this.isRegisteringFaculty = !this.isRegisteringFaculty;
+                this.updateAuthModalUI();
+            },
+            
+            updateAuthModalUI: function() {
+                const title = document.getElementById('login-title');
+                const btn = document.getElementById('login-btn');
+                const toggle = document.getElementById('auth-toggle-text');
+                const masterKeyField = document.getElementById('master-key-field');
+                
+                if (this.isRegisteringFaculty) {
+                    title.innerText = "Register New Faculty";
+                    btn.innerText = "Create Account";
+                    toggle.innerHTML = 'Already have an account? <span class="text-indigo-600 font-bold cursor-pointer" onclick="smartAtt.toggleAuthMode()">Login</span>';
+                    masterKeyField.classList.remove('hidden'); // Show master key field
+                } else {
+                    title.innerText = "Faculty Login";
+                    btn.innerText = "Login";
+                    toggle.innerHTML = 'New Faculty? <span class="text-indigo-600 font-bold cursor-pointer" onclick="smartAtt.toggleAuthMode()">Register</span>';
+                    masterKeyField.classList.add('hidden'); // Hide master key field
+                }
+            },
+
+            closeLoginModal: function() { document.getElementById('login-modal').classList.add('hidden'); },
+            
+            handleAuthSubmit: async function() {
+                const user = document.getElementById('admin-user').value.trim();
+                const pwd = document.getElementById('admin-pass').value.trim();
+                if(!user || !pwd) { alert("Please enter Username and Password"); return; }
+                if (user.length < 3) { alert("Username too short"); return; }
+                const hash = await this.sha256(pwd);
+                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'faculty_creds', user);
+
+                if (this.isRegisteringFaculty) {
+                    // MASTER KEY CHECK
+                    const masterKey = document.getElementById('master-key-input').value.trim();
+                    if(!masterKey) { alert("Master Access Key required for registration."); return; }
+                    const masterHash = await this.sha256(masterKey);
+                    
+                    if (masterHash !== this.MASTER_KEY_HASH) {
+                        alert("Invalid Master Access Key. Registration Denied.");
+                        return;
+                    }
+
+                    const snap = await getDoc(userRef);
+                    if (snap.exists()) { alert("Username already exists."); return; }
+                    
+                    try {
+                        await setDoc(userRef, { username: user, passwordHash: hash, joinedAt: Date.now(), createdBy: this.deviceToken });
+                        alert("Account Created! Logging in...");
+                        this.finishAuth(user);
+                    } catch(e) { console.error(e); alert("Registration failed. Network error?"); }
+                } else {
+                    const snap = await getDoc(userRef);
+                    if (snap.exists() && snap.data().passwordHash === hash) { this.finishAuth(user); } 
+                    else { alert("Invalid Username or Password"); }
+                }
+            },
+            
+            finishAuth: function(user) {
+                this.cloudAdminUser = user;
+                localStorage.setItem('sa_admin_token', 'valid');
+                localStorage.setItem('sa_admin_user', user);
+                this.completeLogin();
+            },
+
+            completeLogin: function() { 
+                this.closeLoginModal(); 
+                this.role = 'faculty'; 
+                document.getElementById('faculty-username-display').innerText = this.cloudAdminUser;
+                this.showSection('faculty-dash'); 
+                this.startStateListener(); 
+                this.switchDashTab('action'); 
+            },
+            
+            logoutFaculty: function() { 
+                localStorage.removeItem('sa_admin_token'); 
+                localStorage.removeItem('sa_admin_user');
+                if(this.stateUnsubscribe) this.stateUnsubscribe(); 
+                location.reload(); 
+            },
+            
+            // --- FACULTY DEVICE MGMT (BULK) ---
+            loadDeviceRequests: async function() {
+                const list = document.getElementById('dev-pending-list');
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'device_requests'), orderBy("timestamp", "desc"));
+                const snaps = await getDocs(q);
+                
+                this.cachedRequests = []; // Store for bulk logic
+                this.selectedRequests.clear();
+                this.updateBulkActionUI();
+
+                if(snaps.empty) { list.innerHTML = '<p class="text-center text-gray-400">No requests.</p>'; return; }
+                
+                // Header with Select All
+                list.innerHTML = `
+                    <div class="flex justify-between items-center mb-2 px-2">
+                        <label class="flex items-center space-x-2 text-sm text-gray-600 font-bold">
+                            <input type="checkbox" onchange="smartAtt.toggleSelectAll(this)" class="form-checkbox h-4 w-4 text-indigo-600">
+                            <span>Select All</span>
+                        </label>
+                        <span class="text-xs text-gray-400">${snaps.size} pending</span>
+                    </div>
+                `;
+
+                snaps.forEach(d => {
+                    const r = d.data();
+                    this.cachedRequests.push(r);
+                    const el = document.createElement('div'); 
+                    el.className = "bg-white p-3 rounded border flex items-center mb-2 shadow-sm gap-3";
+                    el.innerHTML = `
+                        <input type="checkbox" onchange="smartAtt.toggleSelection('${r.roll}')" class="req-checkbox form-checkbox h-5 w-5 text-indigo-600 rounded">
+                        <img src="${r.masterFace}" class="w-10 h-10 rounded bg-gray-200 object-cover border">
+                        <div class="flex-1 min-w-0">
+                            <div class="font-bold truncate text-gray-800">${r.name}</div>
+                            <div class="text-xs text-gray-500">${r.roll} (${r.browserName})</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="text-red-500" onclick="smartAtt.rejectDevice('${r.roll}')"><i class="fa-solid fa-xmark"></i></button>
+                            <button class="text-green-600" onclick="smartAtt.approveDevice('${r.roll}', '${r.name}', '${r.deviceToken}', '${r.browserName}', '${r.masterFace}')"><i class="fa-solid fa-check"></i></button>
+                        </div>`;
+                    list.appendChild(el);
+                });
+            },
+
+            toggleSelection: function(roll) {
+                if (this.selectedRequests.has(roll)) this.selectedRequests.delete(roll);
+                else this.selectedRequests.add(roll);
+                this.updateBulkActionUI();
+            },
+
+            toggleSelectAll: function(checkbox) {
+                const boxes = document.querySelectorAll('.req-checkbox');
+                boxes.forEach(box => box.checked = checkbox.checked);
+                if (checkbox.checked) {
+                    this.cachedRequests.forEach(r => this.selectedRequests.add(r.roll));
+                } else {
+                    this.selectedRequests.clear();
+                }
+                this.updateBulkActionUI();
+            },
+
+            updateBulkActionUI: function() {
+                let fab = document.getElementById('bulk-approve-fab');
+                if (!fab) {
+                    fab = document.createElement('button');
+                    fab.id = 'bulk-approve-fab';
+                    fab.className = 'fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-full font-bold shadow-xl flex items-center gap-2 transform transition-all duration-200 translate-y-20';
+                    fab.onclick = () => this.approveSelected();
+                    document.body.appendChild(fab);
+                }
+                
+                const count = this.selectedRequests.size;
+                if (count > 0) {
+                    fab.innerHTML = `<i class="fa-solid fa-check-double"></i> Approve ${count}`;
+                    fab.classList.remove('translate-y-20');
+                } else {
+                    fab.classList.add('translate-y-20');
+                }
+            },
+
+            approveSelected: async function() {
+                if (!confirm(`Approve ${this.selectedRequests.size} students?`)) return;
+                
+                const btn = document.getElementById('bulk-approve-fab');
+                btn.disabled = true; btn.innerText = "Processing...";
+
+                const promises = [];
+                const batch = writeBatch(db); // Use batch for atomic writes if possible, but simpler via loops here due to logic
+                
+                // We'll iterate and do parallel promises for simplicity given the mixed logic in approveDevice
+                // Actually, let's just loop through cachedRequests that are selected
+                for (const req of this.cachedRequests) {
+                    if (this.selectedRequests.has(req.roll)) {
+                        promises.push(
+                            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registered_devices', req.roll), { 
+                                roll: req.roll, name: req.name, deviceToken: req.deviceToken, browserName: req.browserName, masterFace: req.masterFace, 
+                                approvedAt: Date.now(), approvedBy: this.cloudAdminUser 
+                            }).then(() => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'device_requests', req.roll)))
+                        );
+                    }
+                }
+
+                await Promise.all(promises);
+                alert("Bulk Approval Complete!");
+                this.selectedRequests.clear();
+                this.loadDeviceRequests();
+            },
+
+            // Original individual functions
+            approveDevice: async function(roll, name, token, browser, face) { if(confirm("Approve?")) { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registered_devices', roll), { roll, name, deviceToken: token, browserName: browser, masterFace: face, approvedAt: Date.now(), approvedBy: this.cloudAdminUser }); await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'device_requests', roll)); this.loadDeviceRequests(); } },
+            rejectDevice: async function(roll) { if(confirm("Reject?")) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'device_requests', roll)); this.loadDeviceRequests(); } },
+            
+            // ... (Rest of Approved Devices Logic is same) ...
+            loadApprovedDevices: async function() {
+                const list = document.getElementById('dev-approved-list');
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'registered_devices'));
+                const snaps = await getDocs(q);
+                list.innerHTML = snaps.empty ? '<p class="text-center text-gray-400">None.</p>' : '';
+                snaps.forEach(d => {
+                    const r = d.data();
+                    const el = document.createElement('div'); el.className = "bg-white p-3 rounded border flex justify-between items-center mb-2 shadow-sm";
+                    el.innerHTML = `<div class="flex items-center"><img src="${r.masterFace}" class="w-8 h-8 rounded bg-gray-200 object-cover mr-2"><div><div class="font-bold">${r.name}</div><div class="text-xs text-gray-500">${r.roll}</div></div></div><button class="text-red-600 text-xs" onclick="smartAtt.revokeDevice('${r.roll}')">Revoke</button>`;
+                    list.appendChild(el);
+                });
+            },
+            revokeDevice: async function(roll) { if(confirm("Revoke?")) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registered_devices', roll)); this.loadApprovedDevices(); } },
+
+            // --- CLASS MGMT ---
+            loadSavedMasterList: function() { const saved = localStorage.getItem('sa_master_list'); if(saved) document.getElementById('master-list').value = saved; },
+            startClass: async function() {
+                const subject = document.getElementById('c-subject').value; const section = document.getElementById('c-section').value; const hours = document.getElementById('c-hours').value;
+                if(!subject) { alert("Subject required"); return; }
+                const btn = document.querySelector('#btn-launch'); btn.disabled = true; btn.innerText = "Starting GPS...";
+                this.getSmartLocation(async (pos) => {
+                    const sessionId = Date.now().toString(); this.currentSessionId = sessionId;
+                    const initialCode = Math.floor(1000 + Math.random() * 9000);
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), {
+                        teacher_uid: this.cloudAdminUser, subject, section, hours, master_list: document.getElementById('master-list').value.split(',').map(s=>s.trim()).filter(s=>s),
+                        created_at: Date.now(), date: new Date().toLocaleDateString(), lat: pos.coords.latitude, lng: pos.coords.longitude,
+                        status: 'active', current_code: initialCode, attendees: []
+                    });
+                    this.showSection('live-session'); document.getElementById('live-subject').innerText = `${subject} (${section})`;
+                    this.updateRollingCode(initialCode);
+                    this.rollingTimer = setInterval(async () => { const newCode = Math.floor(1000 + Math.random() * 9000); this.updateRollingCode(newCode); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), { current_code: newCode }); }, 15000);
+                    onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), (snap) => { if(snap.exists()) this.renderLiveStats(snap.data().attendees || []); });
+                    btn.disabled = false; btn.innerText = "Launch";
+                }, (err) => { alert("Start Failed: " + err); btn.disabled=false; btn.innerText="Launch"; });
+            },
+            updateRollingCode: function(code) { document.getElementById('rolling-pin').innerText = code; const bar = document.getElementById('progress-bar'); bar.style.transition = 'none'; bar.style.width = '100%'; setTimeout(() => { bar.style.transition = 'width 15s linear'; bar.style.width = '0%'; }, 100); },
+            renderLiveStats: function(attendees) {
+                document.getElementById('live-count-present').innerText = attendees.length;
+                document.getElementById('live-list').innerHTML = attendees.reverse().map(s => `<div onclick="smartAtt.verifyLiveAttendee('${s.roll}', '${this.currentSessionId}')" class="flex justify-between p-2 border-b text-sm cursor-pointer hover:bg-gray-100"><div class="flex items-center gap-2">${s.faceImage ? '<i class="fa-solid fa-camera text-indigo-500"></i>' : ''}<span>${s.name} (${s.roll})</span></div><span class="text-xs text-gray-500">${s.time}</span></div>`).join('');
+            },
+            endClass: async function() { if(confirm("End Class?")) { clearInterval(this.rollingTimer); this.currentSessionId = null; document.getElementById('resume-session-banner').classList.add('hidden'); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', this.currentSessionId), { status: 'ended' }); this.showSection('faculty-dash'); this.switchDashTab('action'); } },
+
+            // --- VERIFICATION ---
+            verifyLiveAttendee: async function(roll, sessionId) {
+                const targetSessionId = sessionId || (this.currentDetail ? this.currentDetail.id : null);
+                if (!targetSessionId) { alert("Session context missing."); return; }
+                const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', targetSessionId));
+                if(!snap.exists()) return;
+                const student = snap.data().attendees.find(a => a.roll === roll);
+                if(!student) return;
+                const regSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registered_devices', roll));
+                document.getElementById('verify-modal').classList.remove('hidden');
+                document.getElementById('verify-name').innerText = student.name; 
+                document.getElementById('verify-roll').innerText = roll;
+                
+                const liveImg = document.getElementById('verify-live-img');
+                const masterImg = document.getElementById('verify-master-img');
+                
+                liveImg.src = student.faceImage || 'https://placehold.co/400x400?text=Wiped';
+                liveImg.classList.toggle('opacity-50', !student.faceImage);
+                masterImg.src = regSnap.exists() ? regSnap.data().masterFace : 'https://placehold.co/400x400?text=No+Master';
+            },
+            closeVerifyModal: function() { document.getElementById('verify-modal').classList.add('hidden'); },
+            adminManualMark: async function() {
+                const isLive = !document.getElementById('live-session').classList.contains('hidden');
+                const targetSessionId = isLive ? this.currentSessionId : (this.currentDetail ? this.currentDetail.id : null);
+                if(!targetSessionId) { alert("Session not active"); return; }
+                const roll = prompt("Roll No:"); if(!roll) return;
+                const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'registered_devices', roll));
+                const name = snap.exists() ? snap.data().name : prompt("Name:");
+                if(!name) return;
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', targetSessionId), { attendees: arrayUnion({ name, roll, uid: 'admin-manual', deviceToken: 'manual', time: 'Manual', faceImage: null }) });
+                alert("Marked!");
+            },
+
+            // --- STUDENT MARKING ---
+            prepareAttendance: async function() {
+                if(!document.getElementById('s-pin').value) { alert("Enter Code"); return; }
+                document.getElementById('student-input-area').classList.add('hidden');
+                document.getElementById('camera-section').classList.remove('hidden');
+                this.startCamera('attn-video', 'btn-snap-verify', 'ai-status-text', 'auth');
+            },
+            captureAndVerify: async function() {
+                const btn = document.getElementById('btn-snap-verify');
+                btn.disabled = true; btn.innerText = "Processing...";
+                try {
+                    const faceImage = this.captureAndCompress('attn-video');
+                    this.stopCamera();
+                    document.getElementById('camera-section').classList.add('hidden');
+                    document.getElementById('student-input-area').classList.remove('hidden');
+                    this.verifyAndMark(faceImage);
+                } catch(e) { alert("Error capturing"); this.goBackToMenu(); }
+            },
+            verifyAndMark: async function(faceImage) {
+                const pin = parseInt(document.getElementById('s-pin').value);
+                const roll = document.getElementById('s-roll').value;
+                const name = document.getElementById('s-name').value;
+                document.getElementById('student-input-area').innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-spinner fa-spin text-4xl text-indigo-600"></i><p>Verifying...</p></div>';
+                this.getSmartLocation(async (pos) => {
+                    try {
+                        const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'sessions'), where("status", "==", "active"));
+                        const snaps = await getDocs(q);
+                        let targetDoc = null; snaps.forEach(d => { if(d.data().current_code === pin) targetDoc = d; });
+                        if(!targetDoc) throw new Error("Invalid Code");
+                        const d = targetDoc.data();
+                        if (d.lat && this.getDist(d.lat, d.lng, pos.coords.latitude, pos.coords.longitude) > 50) throw new Error("Too far");
+                        if(d.attendees.some(a => a.roll === roll)) throw new Error("Already Marked");
+                        
+                        await updateDoc(targetDoc.ref, { attendees: arrayUnion({ uid: this.user.uid, deviceToken: this.deviceToken, ip: await this.getPublicIP(), hardwareSig: this.getHardwareSignature(), name, roll, time: new Date().toLocaleTimeString(), faceImage }) });
+                        document.getElementById('student-input-area').classList.add('hidden'); document.getElementById('student-success').classList.remove('hidden');
+                        setTimeout(() => location.reload(), 2000);
+                    } catch(e) { alert("Failed: " + e.message); location.reload(); }
+                }, (err) => { alert("GPS Error: " + err.message); location.reload(); });
+            },
+            
+            // --- REPORTS ---
+            loadAllReports: async function() {
+                document.getElementById('report-loading').classList.remove('hidden'); document.getElementById('report-content').classList.add('hidden');
+                const q1 = query(collection(db, 'artifacts', appId, 'public', 'data', 'sessions'), where("teacher_uid", "==", this.cloudAdminUser));
+                const snap1 = await getDocs(q1);
+                this.historyStudents = []; snap1.forEach(d => { let r = d.data(); r.id = d.id; this.historyStudents.push(r); });
+                this.historyStudents.sort((a,b) => b.created_at - a.created_at);
+                const q2 = query(collection(db, 'artifacts', appId, 'public', 'data', 'faculty_logs'), where("uid", "==", this.cloudAdminUser));
+                const snap2 = await getDocs(q2);
+                this.historyFaculty = []; snap2.forEach(d => { let r = d.data(); this.historyFaculty.push(r); });
+                this.historyFaculty.sort((a,b) => b.timestamp - a.timestamp);
+                this.generateAnalytics();
+                document.getElementById('report-loading').classList.add('hidden'); document.getElementById('report-content').classList.remove('hidden');
+                this.switchReportType('student'); 
+            },
+            exportBackup: async function() {
+                if(!this.historyStudents.length) { alert("No data"); return; }
+                const blob = new Blob([JSON.stringify(this.historyStudents, null, 2)], { type: "application/json" });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Backup_${new Date().toISOString().split('T')[0]}.json`; document.body.appendChild(a); a.click();
+            },
+            generateAnalytics: function() {
+                const studentStats = {};
+                let totalClasses = this.historyStudents.length;
+                this.historyStudents.forEach(session => { session.attendees.forEach(student => { const key = student.roll; if(!studentStats[key]) studentStats[key] = { name: student.name, present: 0 }; studentStats[key].present++; }); });
+                let html = '<div class="text-xs uppercase font-bold text-gray-400 mb-2">Student Performance</div>';
+                if(Object.keys(studentStats).length === 0) html += '<p class="text-gray-400 text-xs">No data.</p>';
+                else {
+                    html += `<div class="bg-white rounded border overflow-hidden text-sm max-h-40 overflow-y-auto"><div class="bg-gray-100 p-2 flex font-bold text-xs"><div class="flex-1">Student</div><div class="w-10 text-center">Pres</div><div class="w-10 text-center">Abs</div><div class="w-10 text-center">%</div></div>`;
+                    Object.keys(studentStats).forEach(roll => {
+                        const s = studentStats[roll];
+                        const absent = totalClasses - s.present;
+                        const pct = Math.round((s.present / totalClasses) * 100);
+                        let color = pct >= 75 ? 'text-green-600' : (pct >= 50 ? 'text-yellow-600' : 'text-red-600');
+                        html += `<div class="flex p-2 border-b last:border-0 items-center"><div class="flex-1 truncate"><div class="font-bold">${s.name}</div><div class="text-xs text-gray-500">${roll}</div></div><div class="w-10 text-center font-bold text-gray-700">${s.present}</div><div class="w-10 text-center text-red-400">${absent}</div><div class="w-10 text-center font-bold ${color}">${pct}%</div></div>`;
+                    });
+                    html += '</div>';
+                }
+                document.getElementById('report-analytics').innerHTML = html;
+                const uniqueDays = new Set(this.historyFaculty.map(f => f.date)).size;
+                document.getElementById('fac-total-days').innerText = uniqueDays;
+            },
+            switchReportType: function(type) {
+                this.currentReportType = type;
+                const btnStud = document.getElementById('rep-type-student'); const btnFac = document.getElementById('rep-type-faculty');
+                const analyticsPanel = document.getElementById('report-analytics'); const facPanel = document.getElementById('fac-analytics-panel'); const filters = document.getElementById('student-filters');
+                if(type === 'student') {
+                    btnStud.classList.add('bg-indigo-600', 'text-white'); btnStud.classList.remove('bg-gray-200', 'text-gray-700'); btnFac.classList.remove('bg-indigo-600', 'text-white'); btnFac.classList.add('bg-gray-200', 'text-gray-700'); analyticsPanel.classList.remove('hidden'); facPanel.classList.add('hidden'); filters.classList.remove('hidden');
+                } else {
+                    btnFac.classList.add('bg-indigo-600', 'text-white'); btnFac.classList.remove('bg-gray-200', 'text-gray-700'); btnStud.classList.remove('bg-indigo-600', 'text-white'); btnStud.classList.add('bg-gray-200', 'text-gray-700'); analyticsPanel.classList.add('hidden'); facPanel.classList.remove('hidden'); filters.classList.add('hidden');
+                }
+                this.renderReports();
+            },
+            clearFilters: function() { document.getElementById('rep-search').value = ''; document.getElementById('rep-filter-sec').value = ''; document.getElementById('rep-filter-date').value = ''; this.renderReports(); },
+            renderReports: function() {
+                const list = document.getElementById('report-list');
+                const searchTerm = document.getElementById('rep-search').value.toLowerCase();
+                if (this.currentReportType === 'student') {
+                    const secFilter = document.getElementById('rep-filter-sec').value.trim().toLowerCase();
+                    const monthFilter = document.getElementById('rep-filter-date').value; 
+                    const filtered = this.historyStudents.filter(h => {
+                        const matchesText = !searchTerm || h.subject.toLowerCase().includes(searchTerm) || h.attendees.some(s => s.name.toLowerCase().includes(searchTerm) || s.roll.toLowerCase().includes(searchTerm));
+                        const matchesSec = !secFilter || h.section.toLowerCase() === secFilter;
+                        let matchesDate = true;
+                        if (monthFilter) { const d = new Date(h.created_at); const yyyy = d.getFullYear(); const mm = String(d.getMonth() + 1).padStart(2, '0'); matchesDate = `${yyyy}-${mm}` === monthFilter; }
+                        return matchesText && matchesSec && matchesDate;
+                    });
+                    if(filtered.length === 0) list.innerHTML = '<p class="text-center text-gray-400 py-4">No matching sessions.</p>';
+                    else list.innerHTML = filtered.map((h, i) => `<div onclick="smartAtt.openDetailsByObj(this)" data-idx="${this.historyStudents.indexOf(h)}" class="bg-white p-3 rounded mb-2 border shadow-sm cursor-pointer hover:bg-gray-50 flex justify-between"><div><div class="font-bold text-indigo-700">${h.subject}</div><div class="text-xs text-gray-500">${h.section} | ${h.date}</div></div><div class="text-right"><span class="font-bold">${h.attendees.length}</span><div class="text-[10px]">Present</div></div></div>`).join('');
+                } else {
+                    const filtered = this.historyFaculty.filter(h => !searchTerm || h.name.toLowerCase().includes(searchTerm) || h.action.toLowerCase().includes(searchTerm));
+                    if(filtered.length === 0) list.innerHTML = '<p class="text-center text-gray-400 py-4">No matching logs.</p>';
+                    else list.innerHTML = filtered.map(h => `<div class="bg-white p-3 rounded mb-2 border border-l-4 ${h.action === 'Clock In' ? 'border-l-green-500' : 'border-l-red-500'} shadow-sm flex justify-between"><div><div class="font-bold text-gray-800">${h.action}</div><div class="text-xs text-gray-500">${h.date}</div></div><div class="text-right font-mono text-sm pt-1">${h.time}</div></div>`).join('');
+                }
+            },
+            openDetailsByObj: function(el) { const idx = el.getAttribute('data-idx'); this.openDetails(idx); },
+            exportData: function(type) {
+                if(type === 'student') { let csv = "Date,Subject,Section,Hours,Name,Roll,Time\n"; this.historyStudents.forEach(h => { h.attendees.forEach(s => { csv += `${h.date},${h.subject},${h.section},"${h.hours}",${s.name},${s.roll},${s.time}\n`; }); }); const link = document.createElement("a"); link.href = encodeURI("data:text/csv;charset=utf-8,"+csv); link.download = 'Student_Report.csv'; link.click(); }
+                else { let csv = "Date,Time,Action,Name,Latitude,Longitude\n"; this.historyFaculty.forEach(h => { csv += `${h.date},${h.time},${h.action},${h.name},${h.lat},${h.lng}\n`; }); const link = document.createElement("a"); link.href = encodeURI("data:text/csv;charset=utf-8,"+csv); link.download = 'Faculty_Log.csv'; link.click(); }
+            },
+            openDetails: function(idx) { 
+                this.currentDetail = this.historyStudents[idx]; 
+                document.getElementById('det-title').innerText = `${this.currentDetail.subject} (${this.currentDetail.section})`; 
+                this.switchDetailTab('present'); 
+                document.getElementById('detail-modal').classList.remove('hidden'); 
+            },
+            switchDetailTab: function(tab) {
+                const isPresent = tab === 'present';
+                document.getElementById('tab-p').className = isPresent ? 'flex-1 py-2 font-bold text-green-600 border-b-2 border-green-600' : 'flex-1 py-2 text-gray-400';
+                document.getElementById('tab-a').className = !isPresent ? 'flex-1 py-2 font-bold text-red-600 border-b-2 border-red-600' : 'flex-1 py-2 text-gray-400';
+                const list = document.getElementById('det-list');
+                const session = this.currentDetail;
+                
+                if(isPresent) {
+                    if (session.attendees.length === 0) {
+                        list.innerHTML = '<p class="text-center text-gray-400 p-4">No attendees.</p>';
+                    } else {
+                        list.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            ${session.attendees.map(s => {
+                                const liveImg = s.faceImage || 'https://placehold.co/100x100?text=Wiped';
+                                return `
+                                <div class="bg-white border rounded-lg p-2 shadow-sm flex flex-col gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <img src="${liveImg}" class="w-12 h-12 rounded object-cover border bg-gray-100">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="font-bold text-sm truncate">${s.name}</div>
+                                            <div class="text-xs text-gray-500">${s.roll}</div>
+                                            <div class="text-[10px] text-gray-400">${s.time}</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-1 mt-1">
+                                        <button onclick="smartAtt.verifyLiveAttendee('${s.roll}', '${session.id}')" class="flex-1 bg-indigo-50 text-indigo-700 text-xs font-bold py-1.5 rounded hover:bg-indigo-100 border border-indigo-200">
+                                            <i class="fa-solid fa-magnifying-glass"></i> Review
+                                        </button>
+                                        <button onclick="smartAtt.manualRemove('${s.roll}')" class="w-8 bg-red-50 text-red-600 rounded hover:bg-red-100 border border-red-200 flex items-center justify-center">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                        </div>`;
+                    }
+                } else {
+                    const master = session.master_list || [];
+                    const present = session.attendees.map(a => a.roll.toLowerCase().trim());
+                    const absent = master.filter(m => !present.includes(m.toLowerCase().trim()));
+                    list.innerHTML = master.length === 0 ? '<div class="text-center text-xs text-gray-400">No Master List</div>' : absent.map(roll => `<div class="flex justify-between p-2 border-b text-sm items-center text-red-600"><span>${roll}</span><button onclick="smartAtt.manualAdd('${roll}')" class="text-green-600 bg-green-50 px-2 rounded text-xs border">Mark Present</button></div>`).join('');
+                }
+            },
+            manualAdd: async function(roll) { const name = prompt("Name:"); if(!name) return; const entry = { name, roll, uid:'admin-manual', deviceToken:'manual', time:'Manual (Admin)', faceImage:null }; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', this.currentDetail.id), { attendees: arrayUnion(entry) }); this.currentDetail.attendees.push(entry); this.switchDetailTab('absent'); },
+            manualRemove: async function(roll) { if(!confirm("Remove/Reject attendee?")) return; const newAtt = this.currentDetail.attendees.filter(s => s.roll !== roll); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', this.currentDetail.id), { attendees: newAtt }); this.currentDetail.attendees = newAtt; this.switchDetailTab('present'); },
+            clearData: async function(type) {
+                if (!confirm(`WARNING: Delete ALL ${type === 'student' ? 'Student' : 'Faculty'} logs?`)) return;
+                const btnId = type === 'student' ? 'btn-clear-stu' : 'btn-clear-fac'; const btn = document.getElementById(btnId); const originalText = btn.innerText;
+                btn.disabled = true; btn.innerText = "Deleting...";
+                try {
+                    let collectionName = type === 'student' ? 'sessions' : 'faculty_logs';
+                    let uidField = type === 'student' ? 'teacher_uid' : 'uid';
+                    const q = query(collection(db, 'artifacts', appId, 'public', 'data', collectionName), where(uidField, "==", this.user.uid));
+                    const snapshot = await getDocs(q);
+                    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+                    await Promise.all(deletePromises);
+                    alert("Records Cleared."); if(!document.getElementById('tab-report-view').classList.contains('hidden')) { this.loadAllReports(); }
+                } catch(e) { console.error(e); alert("Error clearing data."); } 
+                finally { btn.disabled = false; btn.innerText = originalText; }
+            },
+            
+            // --- STUDENT UI ---
+            enterStudentMode: async function() {
+                this.role = 'student'; this.showSection('student-dash'); 
+                document.getElementById('my-device-id').innerText = this.deviceToken;
+                const savedRoll = localStorage.getItem('sa_student_roll');
+                if(savedRoll) { document.getElementById('s-roll').value = savedRoll; this.checkRegistrationStatus(savedRoll); this.loadStudentHistory(savedRoll); }
+                this.switchStudentTab('checkin');
+            },
+            switchStudentTab: function(tabName) {
+                if(tabName === 'checkin') {
+                    document.getElementById('stu-view-checkin').classList.remove('hidden'); document.getElementById('stu-view-history').classList.add('hidden');
+                    document.getElementById('btn-stu-checkin').classList.add('text-indigo-700', 'bg-indigo-50', 'border-indigo-200'); document.getElementById('btn-stu-history').classList.remove('text-indigo-700', 'bg-indigo-50', 'border-indigo-200');
+                } else {
+                    document.getElementById('stu-view-checkin').classList.add('hidden'); document.getElementById('stu-view-history').classList.remove('hidden');
+                    document.getElementById('btn-stu-history').classList.add('text-indigo-700', 'bg-indigo-50', 'border-indigo-200'); document.getElementById('btn-stu-checkin').classList.remove('text-indigo-700', 'bg-indigo-50', 'border-indigo-200');
+                    const roll = document.getElementById('s-roll').value; if(roll) this.loadStudentHistory(roll);
+                }
+            },
+            loadStudentHistory: async function(roll) {
+                const list = document.getElementById('stu-hist-list');
+                const stats = document.getElementById('stu-stats-area');
+                if(!roll) { list.innerHTML = '<div class="text-center text-gray-400 py-4">Enter Roll Number.</div>'; return; }
+                try {
+                    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'sessions'), orderBy('created_at', 'desc'));
+                    const snaps = await getDocs(q);
+                    const myAttendance = [];
+                    const subjectCounts = {};
+                    let totalAttended = 0;
+                    snaps.forEach(doc => {
+                        const data = doc.data();
+                        const match = data.attendees?.find(a => a.roll.toString().toLowerCase() === roll.toString().toLowerCase());
+                        if(match) {
+                            myAttendance.push({ subject: data.subject, section: data.section, date: data.date, time: match.time });
+                            totalAttended++;
+                            if(!subjectCounts[data.subject]) subjectCounts[data.subject] = 0;
+                            subjectCounts[data.subject]++;
+                        }
+                    });
+                    let statsHtml = `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-green-50 p-3 rounded border border-green-200 text-center"><div class="text-2xl font-bold text-green-700">${totalAttended}</div><div class="text-[10px] uppercase font-bold text-green-600">Total Classes</div></div><div class="bg-indigo-50 p-3 rounded border border-indigo-200 text-center"><div class="text-2xl font-bold text-indigo-700">${Object.keys(subjectCounts).length}</div><div class="text-[10px] uppercase font-bold text-indigo-600">Subjects</div></div></div>`;
+                    stats.innerHTML = statsHtml;
+                    list.innerHTML = myAttendance.map(a => `<div class="bg-white p-3 rounded border mb-2 shadow-sm flex justify-between items-center"><div><div class="font-bold text-gray-800">${a.subject}</div><div class="text-xs text-gray-500">${a.date} &bull; ${a.time}</div></div><span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded border border-green-200">PRESENT</span></div>`).join('');
+                } catch(e) { console.error("Error", e); }
+            }
+        };
+        window.smartAtt.init();
+    </script>
+    <style> .hidden { display: none !important; } .fade-in { animation: fadeIn 0.3s ease-in; } @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } } </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 font-sans text-slate-800">
+    <div id="loading" class="text-indigo-600 font-bold animate-pulse text-xl">Loading...</div>
+    <div id="app-container" class="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden min-h-[600px] flex flex-col relative">
+        <div class="bg-indigo-700 p-5 text-white shadow-md z-10">
+            <h1 class="text-xl font-bold tracking-wide"><i class="fa-solid fa-shield-halved mr-2"></i>Smart FaceID Attendance</h1>
+            <p class="text-indigo-200 text-xs mt-1">Rolling Code + Device Binding + Face ID</p>
+        </div>
+        
+        <!-- MENU -->
+        <div id="main-menu" class="app-section hidden flex-1 p-8 flex flex-col justify-center gap-4 fade-in">
+            <button onclick="smartAtt.showLoginModal()" class="bg-white border-2 border-indigo-600 text-indigo-700 p-5 rounded-xl font-bold hover:bg-indigo-50 shadow-sm flex items-center justify-center gap-3"><i class="fa-solid fa-chalkboard-user text-xl"></i> Faculty / Employee</button>
+            <button onclick="smartAtt.enterStudentMode()" class="bg-indigo-600 text-white p-5 rounded-xl font-bold hover:bg-indigo-800 shadow-lg flex items-center justify-center gap-3"><i class="fa-solid fa-user-check text-xl"></i> Student Check-In</button>
+        </div>
+
+        <!-- FACULTY LOGIN -->
+        <div id="login-modal" class="hidden absolute inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
+            <div class="bg-white p-6 rounded-xl w-72 shadow-2xl">
+                <h3 id="login-title" class="font-bold mb-4">Faculty Login</h3>
+                <input type="text" id="admin-user" placeholder="Username" class="w-full border p-2 rounded mb-2 text-sm">
+                <input type="password" id="admin-pass" placeholder="Password" class="w-full border p-2 rounded mb-4 text-sm">
+                
+                <!-- NEW MASTER KEY FIELD (Hidden by default) -->
+                <div id="master-key-field" class="hidden mb-4 animate-pulse">
+                    <label class="text-[10px] uppercase font-bold text-gray-500">Master Access Key</label>
+                    <input type="password" id="master-key-input" placeholder="Enter Registration Key" class="w-full border-2 border-indigo-200 p-2 rounded text-sm bg-indigo-50">
+                </div>
+
+                <div class="flex gap-2 mb-3">
+                    <button onclick="smartAtt.closeLoginModal()" class="flex-1 bg-gray-200 py-2 rounded text-sm font-bold">Cancel</button>
+                    <button id="login-btn" onclick="smartAtt.handleAuthSubmit()" class="flex-1 bg-indigo-600 text-white py-2 rounded text-sm font-bold shadow">Login</button>
+                </div>
+                
+                <div id="auth-toggle-text" class="text-xs text-center text-gray-500 mt-2">
+                    New Faculty? <span class="text-indigo-600 font-bold cursor-pointer hover:underline" onclick="smartAtt.toggleAuthMode()">Register</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FACULTY DASHBOARD -->
+        <div id="faculty-dash" class="app-section hidden flex-1 flex flex-col fade-in">
+            <div class="flex justify-between items-center px-4 py-3 bg-white border-b shadow-sm">
+                <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <i class="fa-solid fa-user-tie mr-1"></i> <span id="faculty-username-display">User</span>
+                </div>
+                <button onclick="smartAtt.logoutFaculty()" class="text-red-500 text-xs font-bold hover:bg-red-50 px-2 py-1 rounded border border-red-100">
+                    Logout
+                </button>
+            </div>
+
+            <div class="flex border-b text-sm font-semibold bg-gray-50">
+                <button id="btn-tab-action" onclick="smartAtt.switchDashTab('action')" class="tab-btn flex-1 py-3 text-indigo-700 border-b-2 border-indigo-700">Actions</button>
+                <button id="btn-tab-schedule" onclick="smartAtt.switchDashTab('schedule')" class="tab-btn flex-1 py-3 text-gray-500">Schedule</button>
+                <button id="btn-tab-device" onclick="smartAtt.switchDashTab('device')" class="tab-btn flex-1 py-3 text-gray-500">Devices</button>
+                <button id="btn-tab-report" onclick="smartAtt.switchDashTab('report')" class="tab-btn flex-1 py-3 text-gray-500">Reports</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 relative">
+                <!-- ACTIONS -->
+                <div id="tab-action-view">
+                    <!-- RESUME SESSION BANNER -->
+                    <div id="resume-session-banner" class="hidden mb-4 p-3 bg-indigo-600 rounded-lg text-white shadow-lg flex justify-between items-center cursor-pointer hover:bg-indigo-700" onclick="smartAtt.returnToLiveSession()">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
+                            <span class="font-bold text-sm">Live Class in Progress</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </div>
+
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 mb-6 relative">
+                        <div class="absolute top-2 right-2 text-xs" id="fac-status"><span class="text-gray-400">● Checking...</span></div>
+                        <h3 class="text-blue-800 font-bold mb-3"><i class="fa-solid fa-id-card-clip mr-2"></i>My Attendance</h3>
+                        <input type="text" id="fac-name" placeholder="Your Name" class="w-full p-2 border rounded text-sm mb-3 bg-white">
+                        <div class="flex gap-2">
+                            <button id="btn-clock-in" onclick="smartAtt.logFacultyAction('Clock In')" class="flex-1 bg-green-600 text-white py-2 rounded text-sm font-bold shadow hover:bg-green-700">Clock In</button>
+                            <button id="btn-clock-out" onclick="smartAtt.logFacultyAction('Clock Out')" class="flex-1 bg-red-500 text-white py-2 rounded text-sm font-bold shadow hover:bg-red-600 hidden">Clock Out</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Launch -->
+                    <div class="mb-6">
+                        <h3 class="font-bold text-gray-700 mb-2">🚀 Today's Classes</h3>
+                        <div id="quick-launch-list"></div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h3 class="font-bold text-gray-700 border-t pt-4">Manual Start</h3>
+                        <input type="text" id="c-subject" placeholder="Subject" class="w-full p-2 border rounded bg-gray-50">
+                        <div class="flex gap-2"><input type="text" id="c-section" placeholder="Section" class="w-1/2 p-2 border rounded bg-gray-50"><input type="text" id="c-hours" placeholder="Hrs" class="w-1/2 p-2 border rounded bg-gray-50"></div>
+                        <textarea id="master-list" placeholder="Paste Master List (comma sep)" class="w-full p-2 border rounded bg-gray-50 text-xs h-16"></textarea>
+                        <button id="btn-launch" onclick="smartAtt.startClass()" class="w-full bg-indigo-600 text-white py-3 rounded font-bold shadow-md">Launch Session</button>
+                    </div>
+                    <!-- Data Reset -->
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <h3 class="text-xs font-bold text-gray-400 uppercase mb-2">Danger Zone</h3>
+                        <div class="flex gap-2">
+                            <button id="btn-clear-stu" onclick="smartAtt.clearData('student')" class="flex-1 bg-red-100 text-red-600 py-2 rounded text-xs font-bold border border-red-200 hover:bg-red-200">Clear Class History</button>
+                            <button id="btn-clear-fac" onclick="smartAtt.clearData('faculty')" class="flex-1 bg-red-100 text-red-600 py-2 rounded text-xs font-bold border border-red-200 hover:bg-red-200">Clear Staff Logs</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- SCHEDULE -->
+                <div id="tab-schedule-view" class="hidden">
+                    <div class="bg-gray-50 p-3 rounded border mb-4">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Add New Class</h4>
+                        <div class="flex gap-2 mb-2">
+                            <select id="sched-day" class="w-1/3 p-2 border rounded text-xs">
+                                <option value="Monday">Mon</option><option value="Tuesday">Tue</option><option value="Wednesday">Wed</option><option value="Thursday">Thu</option><option value="Friday">Fri</option><option value="Saturday">Sat</option><option value="Sunday">Sun</option>
+                            </select>
+                            <input type="text" id="sched-subj" placeholder="Subject" class="flex-1 p-2 border rounded text-xs">
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="sched-sec" placeholder="Sec" class="w-1/3 p-2 border rounded text-xs">
+                            <input type="text" id="sched-hrs" placeholder="Hrs" class="w-1/3 p-2 border rounded text-xs">
+                            <button onclick="smartAtt.addSchedule()" class="w-1/3 bg-indigo-600 text-white rounded text-xs font-bold">Save</button>
+                        </div>
+                    </div>
+                    <div id="schedule-list" class="space-y-2"></div>
+                </div>
+                <!-- DEVICE APPROVALS -->
+                <div id="tab-device-view" class="hidden">
+                    <div class="flex gap-2 mb-3 bg-gray-100 p-1 rounded-lg">
+                        <button id="btn-sub-pending" onclick="smartAtt.switchDeviceSubTab('pending')" class="flex-1 py-1 rounded text-xs font-bold bg-indigo-100 text-indigo-700">Pending</button>
+                        <button id="btn-sub-approved" onclick="smartAtt.switchDeviceSubTab('approved')" class="flex-1 py-1 rounded text-xs font-bold text-gray-500 hover:bg-gray-200">Approved</button>
+                    </div>
+                    <div id="dev-pending-list" class="space-y-2"></div>
+                    <div id="dev-approved-list" class="space-y-2 hidden"></div>
+                </div>
+                <!-- REPORTS -->
+                <div id="tab-report-view" class="hidden">
+                    <div class="flex gap-2 mb-4 bg-gray-100 p-1 rounded-lg">
+                        <button id="rep-type-student" onclick="smartAtt.switchReportType('student')" class="flex-1 py-1 rounded text-xs font-bold bg-indigo-600 text-white">Students</button>
+                        <button id="rep-type-faculty" onclick="smartAtt.switchReportType('faculty')" class="flex-1 py-1 rounded text-xs font-bold text-gray-700">Faculty Log</button>
+                    </div>
+
+                    <!-- Search & Filters -->
+                    <div class="mb-4 space-y-2">
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-magnifying-glass"></i></span>
+                            <input type="text" id="rep-search" onkeyup="smartAtt.renderReports()" placeholder="Search Name, Roll, Subject..." class="w-full pl-9 p-2 border rounded text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div id="student-filters" class="flex gap-2">
+                            <input type="text" id="rep-filter-sec" onkeyup="smartAtt.renderReports()" placeholder="Sec" class="w-1/3 p-2 border rounded text-sm">
+                            <input type="month" id="rep-filter-date" onchange="smartAtt.renderReports()" class="flex-1 p-2 border rounded text-sm">
+                            <button onclick="smartAtt.clearFilters()" class="px-3 py-2 bg-gray-200 rounded text-gray-600 hover:bg-gray-300"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+                        </div>
+                    </div>
+
+                    <div id="report-loading" class="hidden text-center py-4"><i class="fa-solid fa-spinner fa-spin text-gray-400"></i></div>
+                    
+                    <!-- FACULTY ANALYTICS PANEL -->
+                    <div id="fac-analytics-panel" class="hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 class="text-xs font-bold text-blue-700 uppercase mb-2">My Performance</h4>
+                        <div class="flex justify-between items-end">
+                            <div><span class="text-3xl font-bold text-gray-800" id="fac-total-days">0</span><span class="text-xs text-gray-500 ml-1">Days on Duty</span></div>
+                            <i class="fa-solid fa-calendar-check text-blue-300 text-3xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- STUDENT ANALYTICS PANEL -->
+                    <div id="report-analytics" class="mb-4 space-y-2"></div>
+
+                    <div id="report-content">
+                        <div class="flex justify-between mb-2">
+                            <button onclick="smartAtt.exportBackup()" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded font-bold border border-gray-300">
+                                <i class="fa-solid fa-download mr-1"></i> Full Backup (JSON)
+                            </button>
+                            <button onclick="smartAtt.exportData(document.getElementById('rep-type-student').classList.contains('bg-indigo-600') ? 'student' : 'faculty')" class="text-xs text-indigo-600 font-bold underline">Download CSV</button>
+                        </div>
+                        <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase">Log History</h3>
+                        <div id="report-list" class="space-y-2"></div>
+                    </div>
+                </div>
+                <!-- DETAIL MODAL -->
+                <div id="detail-modal" class="hidden absolute inset-0 bg-white z-20 flex flex-col">
+                    <div class="p-3 bg-gray-100 flex justify-between items-center shadow-sm z-30">
+                        <div class="flex items-center gap-2">
+                            <button onclick="document.getElementById('detail-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-800 p-1">
+                                <i class="fa-solid fa-arrow-left text-lg"></i>
+                            </button>
+                            <h3 id="det-title" class="font-bold text-gray-800 text-sm"></h3>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="smartAtt.adminManualMark()" class="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full hover:bg-indigo-200 flex items-center justify-center"><i class="fa-solid fa-plus"></i></button>
+                            <button onclick="document.getElementById('detail-modal').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex border-b text-xs text-center"><div id="tab-p" onclick="smartAtt.switchDetailTab('present')" class="flex-1 py-2 font-bold text-green-600 border-b-2 border-green-600">Present</div><div id="tab-a" onclick="smartAtt.switchDetailTab('absent')" class="flex-1 py-2 text-gray-400">Absent</div></div>
+                    <div id="det-list" class="flex-1 overflow-y-auto p-2"></div>
+                </div>
+                
+                <!-- NEW: VERIFICATION MODAL -->
+                <div id="verify-modal" class="hidden absolute inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div class="bg-white rounded-xl w-full max-w-sm overflow-hidden shadow-2xl">
+                        <div class="bg-gray-50 p-3 border-b flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-gray-800">Identity Check</h3>
+                                <div class="text-xs text-gray-500"><span id="verify-name"></span> (<span id="verify-roll"></span>)</div>
+                            </div>
+                            <button onclick="smartAtt.closeVerifyModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                        </div>
+                        <div class="p-4 grid grid-cols-2 gap-4">
+                            <div class="text-center">
+                                <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Registered</div>
+                                <img id="verify-master-img" class="w-full aspect-square object-cover rounded-lg border-2 border-indigo-100 bg-gray-100" src="">
+                            </div>
+                            <div class="text-center">
+                                <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">Live Capture</div>
+                                <img id="verify-live-img" class="w-full aspect-square object-cover rounded-lg border-2 border-green-100 bg-gray-100" src="">
+                            </div>
+                        </div>
+                        <div class="p-3 bg-gray-50 border-t flex gap-2">
+                            <button onclick="smartAtt.manualRemove(document.getElementById('verify-roll').innerText); smartAtt.closeVerifyModal();" class="bg-red-100 text-red-600 w-1/3 py-2 rounded font-bold text-sm hover:bg-red-200">Reject</button>
+                            <button onclick="smartAtt.closeVerifyModal()" class="bg-indigo-600 text-white flex-1 py-2 rounded font-bold text-sm">Approve / Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIVE SESSION -->
+        <div id="live-session" class="app-section hidden flex-1 flex flex-col bg-slate-900 text-white fade-in relative">
+            <button onclick="smartAtt.minimizeLiveSession()" class="absolute top-4 right-4 text-white/50 hover:text-white p-2" title="Minimize">
+                <i class="fa-solid fa-compress"></i>
+            </button>
+            <div class="p-6 text-center">
+                <div class="text-sm text-gray-400 uppercase tracking-widest mb-1">Rolling Code</div>
+                <div id="rolling-pin" class="text-6xl font-mono font-bold text-green-400 transition-opacity duration-200">----</div>
+                <div class="w-48 h-1 bg-gray-700 rounded-full mx-auto mt-4 overflow-hidden"><div id="progress-bar" class="h-full bg-green-500 w-full"></div></div>
+                <h2 id="live-subject" class="text-xl font-bold mt-6 text-white"></h2>
+            </div>
+            <div class="flex-1 bg-white text-slate-800 rounded-t-3xl p-6 flex flex-col">
+                <div class="flex justify-between text-sm mb-2 font-bold text-gray-500">
+                    <span>Present: <span id="live-count-present" class="text-green-600">0</span></span>
+                    <span>Absent: <span id="live-count-absent" class="text-red-500">0</span></span>
+                </div>
+                
+                <div id="live-list" class="flex-1 overflow-y-auto border-t pt-2"></div>
+                
+                <div class="mt-4 flex gap-2">
+                     <button onclick="smartAtt.adminManualMark()" class="flex-1 bg-indigo-100 text-indigo-700 py-3 rounded-xl font-bold border border-indigo-200 shadow-sm hover:bg-indigo-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-user-plus"></i> Manual Entry
+                    </button>
+                    <button onclick="smartAtt.endClass()" class="flex-1 bg-red-100 text-red-600 py-3 rounded-xl font-bold shadow-sm hover:bg-red-200">End Class</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STUDENT DASH -->
+        <div id="student-dash" class="app-section hidden flex-1 p-6 flex flex-col fade-in">
+            <!-- Back Button Header -->
+            <div class="flex items-center w-full mb-4">
+                <button onclick="smartAtt.goBackToMenu()" class="p-2 mr-2 text-gray-400 hover:text-indigo-600 hover:bg-gray-100 rounded-full transition-colors">
+                    <i class="fa-solid fa-arrow-left text-xl"></i>
+                </button>
+                <div class="flex-1 text-center font-bold text-gray-700 mr-8">Student Zone</div>
+            </div>
+            
+            <div class="flex gap-2 mb-4 bg-gray-100 p-1 rounded-lg">
+                <button id="btn-stu-checkin" onclick="smartAtt.switchStudentTab('checkin')" class="flex-1 py-1 rounded text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200">Check-In</button>
+                <button id="btn-stu-history" onclick="smartAtt.switchStudentTab('history')" class="flex-1 py-1 rounded text-xs font-bold text-gray-500 hover:bg-gray-200">My History</button>
+            </div>
+
+            <!-- VIEW 1: CHECK IN -->
+            <div id="stu-view-checkin" class="flex-1 flex flex-col justify-center">
+                <div id="student-input-area" class="flex flex-col gap-4">
+                    <div class="text-center mb-2">
+                        <i class="fa-solid fa-mobile-screen-button text-3xl text-indigo-600 mb-2"></i>
+                        <h2 class="text-xl font-bold">Secure Check-In</h2>
+                        <p class="text-xs text-gray-400">Device ID: <span id="my-device-id" class="font-mono text-gray-600"></span></p>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <input type="text" id="s-name" placeholder="Name" class="w-full p-2 border rounded mb-2 text-sm">
+                        <input type="text" id="s-roll" placeholder="Roll Number" class="w-full p-2 border rounded mb-3 text-sm" onchange="smartAtt.checkRegistrationStatus(this.value)">
+                        
+                        <div id="reg-status" class="text-center text-xs mb-3 font-bold text-gray-500">Checking status...</div>
+                        
+                        <!-- Buttons swap based on status -->
+                        <button id="btn-register" onclick="smartAtt.initRegistration()" class="w-full bg-orange-500 text-white py-2 rounded font-bold shadow hover:bg-orange-600 hidden">Register Face ID</button>
+                        
+                        <div id="mark-area">
+                            <input type="number" id="s-pin" placeholder="Enter Rolling Code" class="w-full p-3 border-2 border-indigo-200 rounded text-center text-xl font-mono mb-2">
+                            <button id="btn-start-mark" onclick="smartAtt.prepareAttendance()" class="w-full bg-indigo-600 text-white py-3 rounded font-bold shadow-lg hidden">Mark Attendance</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CAMERA OVERLAY -->
+                <div id="camera-section" class="hidden absolute inset-0 bg-black z-50 flex flex-col items-center justify-center">
+                    <div class="relative w-full h-full flex flex-col">
+                        <video id="attn-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                        <canvas id="face-overlay" class="absolute inset-0 w-full h-full"></canvas>
+                        
+                        <div class="absolute top-10 w-full text-center z-20">
+                            <div id="ai-status-text" class="text-white font-bold text-xl drop-shadow-md">Loading AI...</div>
+                        </div>
+
+                        <div class="absolute bottom-10 w-full px-10 flex flex-col gap-2 z-20">
+                            <button id="btn-snap-verify" onclick="smartAtt.captureAndVerify()" disabled class="w-full bg-white text-black py-4 rounded-full font-bold text-lg shadow-lg opacity-50 cursor-not-allowed transition-all">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing...
+                            </button>
+                            <button onclick="smartAtt.goBackToMenu()" class="w-full bg-red-600 text-white py-2 rounded-full font-bold text-sm shadow">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REGISTRATION CAMERA OVERLAY -->
+                <div id="registration-camera" class="hidden absolute inset-0 bg-black z-50 flex flex-col items-center justify-center">
+                    <div class="relative w-full h-full flex flex-col">
+                        <video id="reg-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                        <!-- Canvas Reuse for AI Overlay -->
+                        <!-- Note: Reusing the same canvas ID might cause issues if DOM is shared, but visibility toggles handle it. -->
+                        
+                        <div class="absolute top-10 w-full text-center z-20">
+                            <div id="reg-status-text" class="text-white font-bold text-xl drop-shadow-md">Position Face...</div>
+                        </div>
+
+                        <div class="absolute bottom-10 w-full px-10 flex flex-col gap-2 z-20">
+                            <button id="btn-capture-reg" onclick="smartAtt.captureMasterFace()" disabled class="w-full bg-white text-black py-4 rounded-full font-bold text-lg shadow-lg opacity-50 cursor-not-allowed transition-all">
+                                Capture & Register
+                            </button>
+                            <button onclick="smartAtt.cancelRegistration()" class="w-full bg-red-600 text-white py-2 rounded-full font-bold text-sm shadow">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="student-success" class="hidden text-center"><i class="fa-solid fa-check text-4xl text-green-600 mb-4"></i><h3 class="text-xl font-bold">Marked!</h3></div>
+            </div>
+
+            <!-- VIEW 2: HISTORY -->
+            <div id="stu-view-history" class="hidden flex-1 flex flex-col">
+                <div id="stu-stats-area"></div>
+                <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase">Recent Activity</h3>
+                <div id="stu-hist-list" class="flex-1 overflow-y-auto"></div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
