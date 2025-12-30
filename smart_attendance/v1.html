@@ -352,7 +352,7 @@
                     }
                     if (attempt === 1) {
                         console.warn("High Accuracy failed. Retrying...");
-                        navigator.geolocation.getCurrentPosition(handleSuccess, (err2) => handleError(err2, 2), { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 });
+                        navigator.geolocation.getCurrentPosition(handleSuccess, (err2) => handleError(err2, 2), { enableHighAccuracy: false, timeout: 30000, maximumAge: 0 });
                     } else { onError(msg); }
                 };
                 navigator.geolocation.getCurrentPosition(handleSuccess, (err) => handleError(err, 1), { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
@@ -584,7 +584,7 @@
                     });
                     this.showSection('live-session'); document.getElementById('live-subject').innerText = `${subject} (${section})`;
                     this.updateRollingCode(initialCode);
-                    this.rollingTimer = setInterval(async () => { const newCode = Math.floor(1000 + Math.random() * 9000); this.updateRollingCode(newCode); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), { current_code: newCode }); }, 15000);
+                    this.rollingTimer = setInterval(async () => { const newCode = Math.floor(1000 + Math.random() * 9000); this.updateRollingCode(newCode); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), { current_code: newCode }); }, 30000);
                     onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), (snap) => { if(snap.exists()) this.renderLiveStats(snap.data().attendees || []); });
                     btn.disabled = false; btn.innerText = "Launch";
                 }, (err) => { alert("Start Failed: " + err); btn.disabled=false; btn.innerText="Launch"; });
