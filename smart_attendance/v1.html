@@ -31,7 +31,7 @@
         };
 
         const firebaseConfig = typeof window.__firebase_config !== 'undefined' ? JSON.parse(window.__firebase_config) : fallbackConfig;
-        const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'face-app-test';
+        const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app';
 
         let app, auth, db;
         try {
