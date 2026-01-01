@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Attendance v4 (Stable)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Face API JS -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        /* Camera UI */
+        .camera-container { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        .camera-feed { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); } 
+        
+        .face-guide {
+            position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
+            width: 260px; height: 340px;
+            border: 2px dashed rgba(255,255,255,0.6);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; /* More face-like shape */
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+            z-index: 10; pointer-events: none;
+        }
+        
+        .scan-line {
+            height: 2px; background: #3b82f6; width: 100%; position: absolute; top: 0;
+            animation: scan 1.8s infinite ease-in-out;
+            box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6; opacity: 0.8;
+        }
+        @keyframes scan { 0% { top: 5%; opacity: 0; } 50% { opacity: 1; } 100% { top: 95%; opacity: 0; } }
+        
+        /* Helpers */
+        .loader { border: 3px solid #f1f5f9; border-top: 3px solid #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .otp-input { letter-spacing: 0.8em; text-align: center; font-variant-numeric: tabular-nums; }
+        input { text-transform: uppercase; }
+        
+        .tab-active { color: #2563eb; transform: translateY(-2px); transition: all 0.2s; }
+        .tab-inactive { color: #94a3b8; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col relative">
+
+    <div id="toast-container" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-xs px-4 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- 1. HTTP Warning Overlay -->
+    <div id="https-alert" class="fixed inset-0 bg-red-900 z-[200] flex items-center justify-center p-6 text-white text-center hidden">
+        <div>
+            <i class="fa-solid fa-lock-open text-5xl mb-4 opacity-50"></i>
+            <h1 class="text-2xl font-bold">Insecure Connection</h1>
+            <p class="mt-2 text-red-200">Camera and GPS features require a secure <b>HTTPS</b> connection.</p>
+            <p class="mt-4 text-xs bg-black/20 p-2 rounded">Current Protocol: <span id="current-proto" class="font-mono"></span></p>
+        </div>
+    </div>
+
+    <!-- 2. Config Alert -->
+    <div id="config-alert" class="fixed inset-0 bg-slate-900 bg-opacity-95 z-[150] flex items-center justify-center hidden p-6">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl text-center">
+            <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-code text-xl"></i>
+            </div>
+            <h2 class="text-lg font-bold text-gray-800">Setup Required</h2>
+            <p class="text-xs text-gray-500 mt-2 mb-4">
+                Open the code file and paste your Firebase keys into the 
+                <code class="bg-gray-100 px-1 py-0.5 rounded text-red-500">FIREBASE_CONFIG</code> object (Line ~200).
+            </p>
+            <button onclick="location.reload()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold shadow-lg">I have updated the code</button>
+        </div>
+    </div>
+
+    <!-- 3. OTP Modal -->
+    <div id="otp-modal" class="fixed inset-0 bg-slate-900/90 z-[80] flex items-center justify-center hidden p-6 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-xs text-center shadow-2xl">
+            <h3 class="font-bold text-xl text-gray-800 mb-1">Enter OTP</h3>
+            <p class="text-xs text-gray-500 mb-6">Ask faculty for the 4-digit code</p>
+            <input type="tel" id="otp-input" maxlength="4" class="otp-input w-full text-4xl font-bold font-mono border-b-2 border-gray-200 focus:border-blue-500 focus:outline-none py-3 mb-8 bg-transparent" placeholder="0000" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="closeOtpModal()" class="py-3 rounded-xl font-semibold text-gray-500 bg-gray-100">Cancel</button>
+                <button onclick="submitOtp()" class="py-3 rounded-xl font-bold text-white bg-blue-600 shadow-lg">Verify</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Camera Modal -->
+    <div id="camera-modal" class="fixed inset-0 bg-black z-50 hidden flex flex-col">
+        <div class="camera-container">
+            <video id="video-feed" class="camera-feed" autoplay muted playsinline></video>
+            <canvas id="overlay-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+            
+            <div class="face-guide"></div>
+            
+            <!-- Instructions -->
+            <div id="liveness-challenge" class="absolute top-[15%] left-1/2 transform -translate-x-1/2 bg-black/60 backdrop-blur-md px-6 py-2 rounded-full text-white font-bold text-sm hidden border border-white/20 z-20 whitespace-nowrap">
+                <i class="fa-regular fa-eye mr-2"></i> <span id="challenge-text">Blink Eyes</span>
+            </div>
+
+            <!-- Scanner -->
+            <div class="absolute top-[20%] left-[15%] right-[15%] h-[60%] overflow-hidden pointer-events-none opacity-50">
+                <div class="scan-line"></div>
+            </div>
+            
+            <div id="camera-status" class="absolute bottom-24 w-full text-center text-white/80 text-sm font-medium drop-shadow-md">Starting Camera...</div>
+        </div>
+        
+        <div class="absolute bottom-0 w-full p-6 pb-8 bg-gradient-to-t from-black via-black/80 to-transparent flex justify-between items-center z-50">
+            <button onclick="closeCamera()" class="text-white hover:text-gray-300 font-medium px-4 py-2">Cancel</button>
+        </div>
+    </div>
+
+    <!-- MAIN VIEW -->
+    <main id="main-view" class="flex-1 overflow-y-auto pb-24 bg-slate-50">
+        <div id="loading-screen" class="flex flex-col items-center justify-center h-full space-y-4">
+            <div class="loader w-10 h-10 border-4 border-t-blue-600"></div>
+            <p class="text-slate-400 text-sm font-medium animate-pulse">Initializing System...</p>
+        </div>
+    </main>
+
+    <!-- TAB BAR -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex justify-around py-3 pb-safe z-40 shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
+        <button onclick="switchTab('student')" id="nav-student" class="flex flex-col items-center gap-1 group w-1/3">
+            <i class="fa-solid fa-user-graduate text-xl group-active:scale-90 transition-transform"></i>
+            <span class="text-[10px] font-bold">Student</span>
+        </button>
+        <button onclick="switchTab('faculty')" id="nav-faculty" class="flex flex-col items-center gap-1 group w-1/3 tab-inactive">
+            <i class="fa-solid fa-chalkboard-user text-xl group-active:scale-90 transition-transform"></i>
+            <span class="text-[10px] font-bold">Faculty</span>
+        </button>
+        <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center gap-1 group w-1/3 tab-inactive">
+            <i class="fa-solid fa-id-badge text-xl group-active:scale-90 transition-transform"></i>
+            <span class="text-[10px] font-bold">Profile</span>
+        </button>
+    </nav>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, doc, setDoc, getDoc, onSnapshot, serverTimestamp, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // =========================================================================
+        //  🔥🔥 CONFIGURATION AREA: PASTE KEYS HERE 🔥🔥
+        // =========================================================================
+        
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+  authDomain: "stuattnd.firebaseapp.com",
+  projectId: "stuattnd",
+  storageBucket: "stuattnd.firebasestorage.app",
+  messagingSenderId: "511533506488",
+  appId: "1:511533506488:web:aca4de3d513915d012f94d",
+  measurementId: "G-9PZZM5LFKX" 
+        };
+
+        // =========================================================================
+
+        const MASTER_KEY = "ADMIN123"; 
+        const GPS_RADIUS_METERS = 300; 
+        const FACE_MATCH_THRESHOLD = 0.5; // Slightly looser for better UX
+
+        window.appState = {
+            user: null, userId: null, role: 'student', 
+            modelsLoaded: false,
+            studentProfile: null, facultyProfile: null, isFacultyLoggedIn: false
+        };
+
+        let db, auth, appId = 'smart-attendance-v4';
+
+        // --- PROTOCOL CHECK ---
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            document.getElementById('https-alert').classList.remove('hidden');
+            document.getElementById('current-proto').innerText = location.protocol;
+            throw new Error("HTTPS Required");
+        }
+
+        // --- INIT ---
+        async function initApp() {
+            // Environment Key Injection Fallback (For Preview Environments)
+            const config = (typeof __firebase_config !== 'undefined' && __firebase_config) 
+                ? JSON.parse(__firebase_config) 
+                : FIREBASE_CONFIG;
+
+            if (!config.apiKey) {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('config-alert').classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const app = initializeApp(config);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, async (u) => {
+                    if (u) {
+                        window.appState.user = u;
+                        window.appState.userId = u.uid;
+                        await Promise.all([loadStudentProfile(), checkFacultyRegistration()]);
+                        loadAIModels();
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+                showToast("Connection Error. Check Console.", "error");
+            }
+        }
+
+        async function loadAIModels() {
+            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            try {
+                // Load parallel for speed
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
+                window.appState.modelsLoaded = true;
+                showToast("System Ready", "success");
+                renderView();
+            } catch (e) { 
+                showToast("AI Models Failed to Load", "error"); 
+                console.error(e);
+            }
+        }
+
+        // --- PATHS ---
+        const paths = {
+            sessions: () => collection(db, 'artifacts', appId, 'public', 'data', 'sessions'),
+            attendance: () => collection(db, 'artifacts', appId, 'public', 'data', 'attendance'),
+            students: () => collection(db, 'artifacts', appId, 'public', 'data', 'students'),
+            faculty: (uid) => doc(db, 'artifacts', appId, 'users', uid, 'faculty_data', 'creds'),
+            studentProfile: (uid) => doc(db, 'artifacts', appId, 'public', 'data', 'students', uid),
+            userBiometrics: (uid) => doc(db, 'artifacts', appId, 'users', uid, 'private', 'biometrics')
+        };
+
+        async function loadStudentProfile() {
+            if(!window.appState.userId) return;
+            try {
+                const snap = await getDoc(paths.studentProfile(window.appState.userId));
+                if(snap.exists()) window.appState.studentProfile = snap.data();
+            } catch(e) { console.log("New user"); }
+        }
+
+        async function checkFacultyRegistration() {
+            if(!window.appState.userId) return;
+            try {
+                const snap = await getDoc(paths.faculty(window.appState.userId));
+                if(snap.exists()) window.appState.facultyProfile = snap.data();
+            } catch(e) {}
+        }
+
+        // --- NAVIGATION ---
+        window.switchTab = (tab) => {
+            window.appState.role = tab;
+            document.querySelectorAll('nav button').forEach(b => {
+                const isActive = b.id === `nav-${tab}`;
+                b.className = `flex flex-col items-center gap-1 group w-1/3 ${isActive ? 'tab-active' : 'tab-inactive'}`;
+            });
+            renderView();
+        };
+
+        function renderView() {
+            const container = document.getElementById('main-view');
+            const { role, modelsLoaded } = window.appState;
+            
+            if (!modelsLoaded) return; 
+
+            if (role === 'student') renderStudentPanel(container);
+            else if (role === 'faculty') renderFacultyPanel(container);
+            else if (role === 'profile') renderProfilePanel(container);
+        }
+
+        // =================================================================
+        //  STUDENT LOGIC
+        // =================================================================
+        function renderStudentPanel(container) {
+            const p = window.appState.studentProfile;
+            
+            if (!p) {
+                container.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full p-8 text-center">
+                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-6">
+                        <i class="fa-solid fa-user-plus text-3xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Student Registration</h2>
+                    <p class="text-sm text-gray-500 mb-8">Register once. Your account will be locked to this device.</p>
+                    <div class="w-full space-y-4">
+                        <input type="text" id="reg-roll" placeholder="Roll Number (e.g. 21A123)" class="w-full p-4 rounded-xl border border-gray-200 text-center uppercase font-bold text-lg outline-none focus:border-blue-500">
+                        <input type="text" id="reg-name" placeholder="Full Name" class="w-full p-4 rounded-xl border border-gray-200 text-center outline-none focus:border-blue-500">
+                        <button onclick="registerStudent()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-blue-700">Submit Registration</button>
+                    </div>
+                </div>`;
+                return;
+            }
+
+            if (p.status === 'pending') {
+                container.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full p-8 text-center space-y-6">
+                    <i class="fa-solid fa-hourglass-half text-6xl text-amber-400 animate-pulse"></i>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">Approval Pending</h2>
+                        <p class="text-gray-500 mt-2 text-sm">Wait for faculty to approve roll number <b>${p.rollNo}</b>.</p>
+                    </div>
+                    <button onclick="location.reload()" class="px-6 py-2 bg-gray-100 text-gray-600 rounded-full text-sm font-bold">Check Status</button>
+                </div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="relative bg-blue-600 text-white p-6 pb-24 rounded-b-[2.5rem] shadow-xl">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h1 class="text-2xl font-bold">${p.name.split(' ')[0]}</h1>
+                            <p class="text-blue-200 text-sm font-mono tracking-wider">${p.rollNo}</p>
+                        </div>
+                        <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm"><i class="fa-solid fa-graduation-cap text-xl"></i></div>
+                    </div>
+                </div>
+
+                <div class="mt-8 px-6">
+                    <h3 class="font-bold text-gray-800 text-lg mb-4">Active Classes</h3>
+                    <div id="student-session-list" class="space-y-4">
+                        <div class="text-center py-8"><div class="loader mx-auto"></div></div>
+                    </div>
+                </div>
+            `;
+            listenForSessions();
+        }
+
+        async function registerStudent() {
+            const roll = document.getElementById('reg-roll').value.trim().toUpperCase();
+            const name = document.getElementById('reg-name').value.trim().toUpperCase();
+            if(!roll || !name) return showToast("Enter details", "error");
+
+            const q = query(paths.students(), where("rollNo", "==", roll));
+            if(!(await getDocs(q)).empty) return showToast("Roll number taken", "error");
+
+            try {
+                const data = { rollNo: roll, name: name, uid: window.appState.userId, status: 'pending', createdAt: serverTimestamp() };
+                await setDoc(paths.studentProfile(window.appState.userId), data);
+                window.appState.studentProfile = data;
+                renderView();
+            } catch(e) { showToast("Error saving", "error"); }
+        }
+
+        function listenForSessions() {
+            const q = query(paths.sessions(), where("active", "==", true));
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('student-session-list');
+                if(!list) return;
+                
+                if(snap.empty) {
+                    list.innerHTML = `<div class="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-300"><p class="text-gray-400 text-sm">No active classes.</p></div>`;
+                    return;
+                }
+
+                list.innerHTML = "";
+                snap.forEach(doc => {
+                    const s = doc.data();
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center";
+                    card.innerHTML = `
+                        <div>
+                            <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-md uppercase mb-1 inline-block">Slot ${s.slot}</span>
+                            <h4 class="font-bold text-gray-800 text-lg">${s.subject}</h4>
+                            <p class="text-xs text-gray-500"><i class="fa-regular fa-clock mr-1"></i> Started: ${s.timestamp?.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
+                        </div>
+                        <button onclick="startVerification('${doc.id}', ${s.lat}, ${s.lng}, '${s.otp}', this)" class="bg-slate-900 text-white px-5 py-3 rounded-xl text-sm font-bold shadow-lg active:scale-95 transition">Mark</button>
+                    `;
+                    list.appendChild(card);
+                });
+            });
+        }
+
+        // --- VERIFICATION FLOW ---
+        window.startVerification = async (sessionId, lat, lng, serverOtp, btnEl) => {
+            if(btnEl) btnEl.disabled = true; // Prevent double click
+            
+            // 0. Enrollment Check
+            const bioDoc = await getDoc(paths.userBiometrics(window.appState.userId));
+            if(!bioDoc.exists()) {
+                showToast("Register Face in Profile first!", "error");
+                switchTab('profile');
+                return;
+            }
+            const enrolledDescriptor = new Float32Array(Object.values(bioDoc.data().descriptor));
+
+            // 1. GPS Check with Timeout
+            showToast("Checking GPS...", "info");
+            try {
+                const pos = await getGeoLocation();
+                const dist = getDistInMeters(pos.coords.latitude, pos.coords.longitude, lat, lng);
+                
+                if(dist > GPS_RADIUS_METERS) {
+                    showToast(`Too far (${Math.round(dist)}m). Get closer.`, "error");
+                    if(btnEl) btnEl.disabled = false;
+                    return;
+                }
+            } catch(e) {
+                showToast("GPS Error: " + e.message, "error");
+                if(btnEl) btnEl.disabled = false;
+                return;
+            }
+
+            // 2. OTP Check
+            const userOtp = await openOtpModal(); 
+            if(!userOtp) {
+                if(btnEl) btnEl.disabled = false;
+                return;
+            }
+            if(userOtp !== serverOtp) {
+                showToast("Incorrect OTP.", "error");
+                if(btnEl) btnEl.disabled = false;
+                return;
+            }
+
+            // 3. Face Check
+            openCamera('verify', async (descriptor, score, image) => {
+                const distance = faceapi.euclideanDistance(descriptor, enrolledDescriptor);
+                // Lower distance = better match
+                if(distance < FACE_MATCH_THRESHOLD) {
+                    await markAttendance(sessionId, image);
+                } else {
+                    showToast("Face mismatch. Try again.", "error");
+                    if(btnEl) btnEl.disabled = false;
+                }
+            });
+        };
+
+        function getGeoLocation() {
+            return new Promise((resolve, reject) => {
+                if(!navigator.geolocation) reject(new Error("No Geo support"));
+                const id = setTimeout(() => reject(new Error("Timeout")), 10000);
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => { clearTimeout(id); resolve(pos); },
+                    (err) => { clearTimeout(id); reject(err); },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            });
+        }
+
+        // --- OTP LOGIC ---
+        let otpResolver = null;
+        window.openOtpModal = () => {
+            document.getElementById('otp-modal').classList.remove('hidden');
+            document.getElementById('otp-input').value = "";
+            setTimeout(() => document.getElementById('otp-input').focus(), 100);
+            return new Promise(resolve => { otpResolver = resolve; });
+        };
+        window.closeOtpModal = () => {
+            document.getElementById('otp-modal').classList.add('hidden');
+            if(otpResolver) otpResolver(null);
+        };
+        window.submitOtp = () => {
+            const val = document.getElementById('otp-input').value;
+            if(val.length === 4) {
+                document.getElementById('otp-modal').classList.add('hidden');
+                if(otpResolver) otpResolver(val);
+            }
+        };
+
+        async function markAttendance(sessionId, img) {
+            try {
+                // FIXED QUERY: Single where clause avoids index errors
+                const q = query(paths.attendance(), where("sessionId", "==", sessionId));
+                const snap = await getDocs(q);
+                // In-memory filter
+                const alreadyMarked = snap.docs.some(d => d.data().studentId === window.appState.userId);
+
+                if(alreadyMarked) { showToast("Already marked!", "success"); return; }
+
+                await addDoc(paths.attendance(), {
+                    sessionId, studentId: window.appState.userId,
+                    studentName: window.appState.studentProfile.name,
+                    studentRoll: window.appState.studentProfile.rollNo,
+                    timestamp: serverTimestamp(),
+                    status: 'present', verificationPhoto: img 
+                });
+                showToast("Success! Attendance Marked.", "success");
+            } catch(e) { 
+                console.error(e);
+                showToast("DB Save Failed", "error"); 
+            }
+        }
+
+        // =================================================================
+        //  FACULTY LOGIC
+        // =================================================================
+        function renderFacultyPanel(container) {
+            const p = window.appState.facultyProfile;
+            if(!p) {
+                container.innerHTML = `
+                <div class="p-8 h-full flex flex-col justify-center">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Faculty Setup</h2>
+                    <input type="password" id="f-master" placeholder="Master Key" class="w-full p-4 border rounded-xl mb-3">
+                    <input type="text" id="f-name" placeholder="Your Name" class="w-full p-4 border rounded-xl mb-3">
+                    <input type="password" id="f-pin" placeholder="Create 6-digit PIN" maxlength="6" class="w-full p-4 border rounded-xl mb-6">
+                    <button onclick="registerFaculty()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold">Create Account</button>
+                </div>`;
+                return;
+            }
+            if(!window.appState.isFacultyLoggedIn) {
+                container.innerHTML = `
+                <div class="p-8 h-full flex flex-col justify-center items-center">
+                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4"><i class="fa-solid fa-user-tie text-2xl text-slate-600"></i></div>
+                    <h2 class="text-xl font-bold mb-1">Welcome, ${p.name}</h2>
+                    <input type="password" id="f-login-pin" placeholder="••••••" maxlength="6" class="w-48 text-center text-2xl tracking-widest p-3 border-b-2 border-slate-300 focus:border-blue-600 outline-none bg-transparent mb-8">
+                    <button onclick="loginFaculty()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg">Login</button>
+                </div>`;
+                return;
+            }
+            
+            renderFacultyDashboard(container);
+        }
+
+        window.registerFaculty = async () => {
+            const master = document.getElementById('f-master').value;
+            const name = document.getElementById('f-name').value;
+            const pin = document.getElementById('f-pin').value;
+            if(master !== MASTER_KEY) return showToast("Invalid Master Key", "error");
+            if(pin.length < 6) return showToast("PIN too short", "error");
+
+            await setDoc(paths.faculty(window.appState.userId), { name, pin, createdAt: serverTimestamp() });
+            window.appState.facultyProfile = { name, pin };
+            window.appState.isFacultyLoggedIn = true;
+            renderView();
+        }
+
+        window.loginFaculty = () => {
+            const pin = document.getElementById('f-login-pin').value;
+            if(pin === window.appState.facultyProfile.pin) {
+                window.appState.isFacultyLoggedIn = true;
+                renderView();
+            } else showToast("Wrong PIN", "error");
+        }
+
+        function renderFacultyDashboard(container) {
+            container.innerHTML = `
+            <div class="p-5 pb-20">
+                <div class="flex justify-between items-center mb-6">
+                    <div><h1 class="text-2xl font-bold text-gray-800">Dashboard</h1><p class="text-xs text-gray-500">Manage Sessions</p></div>
+                    <button onclick="window.appState.isFacultyLoggedIn=false; renderView()" class="bg-gray-100 p-2 rounded-full text-gray-600"><i class="fa-solid fa-power-off"></i></button>
+                </div>
+                <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+                    <button onclick="showSection('create')" class="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold whitespace-nowrap">New Session</button>
+                    <button onclick="showSection('approvals')" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-xs font-bold whitespace-nowrap">Approvals</button>
+                </div>
+                <div id="faculty-content">${getCreateSessionHTML()}</div>
+            </div>`;
+            monitorActiveSession();
+        }
+
+        window.showSection = (sec) => {
+            const el = document.getElementById('faculty-content');
+            if(sec === 'create') el.innerHTML = getCreateSessionHTML();
+            else if(sec === 'approvals') renderApprovals(el);
+        }
+
+        function getCreateSessionHTML() {
+            return `
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <h3 class="font-bold text-gray-800 mb-4">Start Class Session</h3>
+                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Subject</label>
+                <select id="s-subject" class="w-full p-3 bg-gray-50 rounded-xl text-sm font-semibold mb-3 outline-none">
+                    <option>Mathematics</option><option>Physics</option><option>Computer Science</option><option>English</option>
+                </select>
+                <label class="text-xs font-bold text-gray-400 uppercase block mb-1">Slot</label>
+                <select id="s-slot" class="w-full p-3 bg-gray-50 rounded-xl text-sm font-semibold mb-4 outline-none">
+                    <option value="1-2">Period 1-2 (09:00)</option><option value="3-4">Period 3-4 (11:00)</option>
+                    <option value="5-6">Period 5-6 (01:40)</option><option value="6-7">Period 6-7 (03:20)</option>
+                </select>
+                <button onclick="createSession()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700">Start Session</button>
+            </div>
+            <div id="active-session-ui" class="mt-6 hidden">
+                <div class="bg-slate-900 text-white rounded-2xl p-6 relative overflow-hidden shadow-xl">
+                    <div class="relative z-10 flex justify-between items-start">
+                        <div><span class="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">LIVE</span><h2 class="text-3xl font-mono font-bold mt-2 tracking-widest" id="disp-otp">----</h2><p class="text-slate-400 text-xs mt-1">Share OTP with students</p></div>
+                        <button onclick="endSession()" class="bg-red-500 p-2 rounded-lg"><i class="fa-solid fa-stop"></i></button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        window.createSession = async () => {
+            const subject = document.getElementById('s-subject').value;
+            const slot = document.getElementById('s-slot').value;
+            const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+            showToast("Getting Location...", "info");
+            try {
+                const pos = await getGeoLocation();
+                
+                // Close existing
+                const q = query(paths.sessions(), where("active", "==", true));
+                const snaps = await getDocs(q);
+                const batch = writeBatch(db);
+                snaps.forEach(d => batch.update(d.ref, { active: false }));
+                await batch.commit();
+
+                // Create new
+                const ref = await addDoc(paths.sessions(), {
+                    subject, slot, otp, active: true, facultyId: window.appState.userId,
+                    lat: pos.coords.latitude, lng: pos.coords.longitude,
+                    timestamp: serverTimestamp(), dateStr: new Date().toISOString().split('T')[0]
+                });
+
+                showToast("Session Live!", "success");
+                monitorActiveSession(ref.id, otp);
+            } catch(e) { showToast("GPS Required: " + e.message, "error"); }
+        }
+
+        function monitorActiveSession(id, otp) {
+            if(!id) return;
+            const ui = document.getElementById('active-session-ui');
+            if(ui) {
+                ui.classList.remove('hidden');
+                document.getElementById('disp-otp').innerText = otp;
+            }
+        }
+
+        window.endSession = async () => {
+             const q = query(paths.sessions(), where("active", "==", true));
+             const snaps = await getDocs(q);
+             snaps.forEach(async (d) => await updateDoc(d.ref, { active: false }));
+             document.getElementById('active-session-ui').classList.add('hidden');
+             showToast("Session Ended", "info");
+        }
+
+        // --- APPROVALS ---
+        async function renderApprovals(container) {
+            container.innerHTML = '<div class="loader mx-auto"></div>';
+            const snaps = await getDocs(query(paths.students(), where("status", "==", "pending")));
+            if(snaps.empty) { container.innerHTML = `<div class="text-center text-gray-400 py-10">No pending approvals</div>`; return; }
+            let html = '<div class="space-y-3">';
+            snaps.forEach(d => {
+                const s = d.data();
+                html += `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm"><div><p class="font-bold text-gray-800">${s.rollNo}</p><p class="text-xs text-gray-500 capitalize">${s.name}</p></div><div class="flex gap-2"><button onclick="approveStudent('${d.id}')" class="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-xs font-bold">Approve</button><button onclick="rejectStudent('${d.id}')" class="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-bold">Reject</button></div></div>`;
+            });
+            html += '</div>'; container.innerHTML = html;
+        }
+
+        window.approveStudent = async (id) => { await updateDoc(paths.studentProfile(id), { status: 'approved' }); showSection('approvals'); }
+        window.rejectStudent = async (id) => { await deleteDoc(paths.studentProfile(id)); showSection('approvals'); }
+
+        // =================================================================
+        //  PROFILE & CAMERA ENGINE
+        // =================================================================
+        function renderProfilePanel(container) {
+            container.innerHTML = `
+            <div class="p-6 h-full flex flex-col items-center justify-center">
+                <div class="relative w-40 h-40 mb-6">
+                    <div id="profile-img-container" class="w-full h-full rounded-full border-4 border-gray-100 shadow-xl overflow-hidden bg-white flex items-center justify-center"><i class="fa-solid fa-user text-5xl text-gray-200"></i></div>
+                    <div id="secure-badge" class="absolute bottom-2 right-2 bg-green-500 text-white w-10 h-10 rounded-full flex items-center justify-center border-4 border-white hidden"><i class="fa-solid fa-check"></i></div>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-1">Face ID</h2>
+                <p id="enroll-status" class="text-sm text-gray-400 mb-8">Not enrolled</p>
+                <button onclick="startEnrollment()" class="w-full max-w-xs bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-lg flex items-center justify-center gap-3"><i class="fa-solid fa-face-viewfinder"></i> <span id="enroll-btn-text">Register Face</span></button>
+            </div>`;
+            checkEnrollmentStatus();
+        }
+
+        async function checkEnrollmentStatus() {
+            if(!window.appState.userId) return;
+            const docSnap = await getDoc(paths.userBiometrics(window.appState.userId));
+            if(docSnap.exists()) {
+                document.getElementById('secure-badge').classList.remove('hidden');
+                document.getElementById('enroll-status').innerText = "Enrolled";
+                document.getElementById('enroll-status').className = "text-sm text-green-600 font-bold mb-8";
+                document.getElementById('enroll-btn-text').innerText = "Update Face ID";
+                if(docSnap.data().photo) document.getElementById('profile-img-container').innerHTML = `<img src="${docSnap.data().photo}" class="w-full h-full object-cover">`;
+            }
+        }
+
+        window.startEnrollment = () => {
+            openCamera('enroll', async (descriptor, score, image) => {
+                const descriptorArray = Array.from(descriptor);
+                await setDoc(paths.userBiometrics(window.appState.userId), { descriptor: {...descriptorArray}, photo: image, updatedAt: serverTimestamp() });
+                showToast("Face ID Registered!", "success");
+                renderProfilePanel(document.getElementById('main-view'));
+            });
+        }
+
+        let videoStream, activeMode, onCaptureCallback;
+        
+        window.openCamera = async (mode, callback) => {
+            activeMode = mode; onCaptureCallback = callback;
+            const modal = document.getElementById('camera-modal');
+            const video = document.getElementById('video-feed');
+            const status = document.getElementById('camera-status');
+            modal.classList.remove('hidden');
+            
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 480, height: 640 } });
+                video.srcObject = videoStream;
+                video.onloadedmetadata = () => { video.play(); runLivenessLoop(video); };
+            } catch(e) {
+                showToast("Camera Error: " + e.message, "error");
+                closeCamera();
+            }
+        }
+
+        window.closeCamera = () => {
+            document.getElementById('camera-modal').classList.add('hidden');
+            if(videoStream) videoStream.getTracks().forEach(t => t.stop());
+            activeMode = null;
+        }
+
+        async function runLivenessLoop(video) {
+            const canvas = document.getElementById('overlay-canvas');
+            const status = document.getElementById('camera-status');
+            const challengeBox = document.getElementById('liveness-challenge');
+            const displaySize = { width: video.videoWidth, height: video.videoHeight };
+            faceapi.matchDimensions(canvas, displaySize);
+
+            let state = 'DETECT';
+            const challengeType = 'BLINK'; 
+            
+            challengeBox.classList.add('hidden');
+            
+            const interval = setInterval(async () => {
+                if(!activeMode) { clearInterval(interval); return; }
+
+                const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(true).withFaceDescriptor();
+                const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if(detections) {
+                    const resized = faceapi.resizeResults(detections, displaySize);
+                    const box = resized.detection.box;
+                    const centerX = box.x + box.width/2;
+                    const isCentered = centerX > displaySize.width*0.3 && centerX < displaySize.width*0.7;
+
+                    if(state === 'DETECT') {
+                        status.innerText = isCentered ? "Face Detected. Hold still." : "Center your face";
+                        if(isCentered && detections.detection.score > 0.85) {
+                            state = 'CHALLENGE';
+                            challengeBox.classList.remove('hidden');
+                            status.innerText = "Processing...";
+                        }
+                    } 
+                    else if (state === 'CHALLENGE') {
+                        const landmarks = detections.landmarks;
+                        const leftEye = landmarks.getLeftEye();
+                        const v1 = Math.sqrt(Math.pow(leftEye[1].x - leftEye[5].x, 2) + Math.pow(leftEye[1].y - leftEye[5].y, 2));
+                        const h1 = Math.sqrt(Math.pow(leftEye[0].x - leftEye[3].x, 2) + Math.pow(leftEye[0].y - leftEye[3].y, 2));
+                        const ratio = v1/h1;
+
+                        if(ratio < 0.3) { // Blink detected
+                             clearInterval(interval);
+                             const capCanvas = document.createElement('canvas'); capCanvas.width = 300; capCanvas.height = 300;
+                             const ctx2 = capCanvas.getContext('2d'); ctx2.translate(300, 0); ctx2.scale(-1, 1);
+                             ctx2.drawImage(video, 0, 0, 300, 300);
+                             const imgData = capCanvas.toDataURL('image/jpeg', 0.8);
+                             closeCamera();
+                             if(onCaptureCallback) onCaptureCallback(detections.descriptor, detections.detection.score, imgData);
+                        }
+                    }
+                } else { status.innerText = "Looking for face..."; }
+            }, 200);
+        }
+
+        function showToast(msg, type='info') {
+            const box = document.createElement('div');
+            box.className = `px-4 py-3 rounded-xl shadow-lg text-xs font-bold flex items-center gap-2 transform transition-all translate-y-10 opacity-0 ${type==='error'?'bg-red-500 text-white':(type==='success'?'bg-green-500 text-white':'bg-slate-800 text-white')}`;
+            box.innerHTML = `<i class="fa-solid fa-${type==='error'?'triangle-exclamation':(type==='success'?'check':'circle-info')}"></i> ${msg}`;
+            document.getElementById('toast-container').appendChild(box);
+            requestAnimationFrame(() => box.classList.remove('translate-y-10', 'opacity-0'));
+            setTimeout(() => { box.classList.add('opacity-0', '-translate-y-4'); setTimeout(() => box.remove(), 300); }, 3000);
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
+
