@@ -875,19 +875,50 @@
 
                 if (sessions.length === 0) return showToast("No sessions found.", "error");
 
-                // 2. Fetch Master List for Rows
+                // 2. Fetch Students (Merge Master List + Enrolled Students)
+                const studentMap = new Map();
+
+                // 2a. Fetch Master List (Uploaded CSV data)
                 const masterSnap = await getDocs(getMasterPath());
-                let students = [];
-                masterSnap.forEach(doc => students.push(doc.data()));
+                masterSnap.forEach(doc => {
+                    const d = doc.data();
+                    if (d.rollNo) {
+                        studentMap.set(d.rollNo.toUpperCase(), { 
+                            rollNo: d.rollNo.toUpperCase(), 
+                            name: d.name 
+                        });
+                    }
+                });
+
+                // 2b. Fetch Enrolled Students (App registrations)
+                // This ensures students who registered via app but aren't in CSV still appear
+                const enrolledSnap = await getDocs(getStudentsPath());
+                enrolledSnap.forEach(doc => {
+                    const d = doc.data();
+                    // If student exists in Master List, keep Master List name (usually more formal)
+                    // If not, add them from Enrolled List
+                    if (d.rollNo && !studentMap.has(d.rollNo.toUpperCase())) {
+                        studentMap.set(d.rollNo.toUpperCase(), { 
+                            rollNo: d.rollNo.toUpperCase(), 
+                            name: d.name 
+                        });
+                    }
+                });
+
+                let students = Array.from(studentMap.values());
                 // Sort students by Roll No
                 students.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
+
+                if (students.length === 0) return showToast("No students found.", "error");
 
                 // 3. Fetch All Attendance
                 const attSnap = await getDocs(getAttPath());
                 const attendanceMap = {}; // Key: sessionId_rollNo -> status
                 attSnap.forEach(doc => {
                     const d = doc.data();
-                    attendanceMap[`${d.sessionId}_${d.studentRoll}`] = d;
+                    // Ensure case-insensitive matching by uppercasing roll
+                    const rollKey = d.studentRoll ? d.studentRoll.toUpperCase() : "UNKNOWN";
+                    attendanceMap[`${d.sessionId}_${rollKey}`] = d;
                 });
 
                 // 4. Build CSV
@@ -904,7 +935,9 @@
 
                 // Rows
                 students.forEach((stud, index) => {
-                    let row = [index + 1, stud.rollNo, stud.name];
+                    // Escape commas in names to prevent CSV breakage
+                    const safeName = stud.name ? `"${stud.name}"` : "Unknown";
+                    let row = [index + 1, stud.rollNo, safeName];
                     let totalScore = 0;
                     let presentCount = 0;
 
