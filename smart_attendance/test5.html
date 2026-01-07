@@ -1194,7 +1194,7 @@
         
         async function updateOTP(sessionId) { const newOtp = Math.floor(1000 + Math.random() * 9000).toString(); document.getElementById('display-otp').innerText = newOtp; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), { otp: newOtp }); }
         
-        window.endSession = async () => {  
+        window.endSession = async () => { 
             if(confirm("End class?")) { clearInterval(otpInterval); if(currentSessionId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', currentSessionId), { active: false }); location.reload(); } 
         }
 
@@ -1373,6 +1373,7 @@
             const btn = document.getElementById('capture-btn'), status = document.getElementById('camera-status'), challengeBox = document.getElementById('liveness-challenge');
             let state = 'WAIT', challengeType = Math.floor(Math.random() * 3); 
             const challengeNames = ["Blink Eyes", "Turn Head", "Nod (Up/Down)"];
+            let stabilizationCounter = 0; // NEW: Counter for stable alignment
 
             // RECURSIVE LOOP for better control than setInterval
             const loop = async () => {
@@ -1415,8 +1416,70 @@
                             challengeBox.classList.add('challenge-success');
                             document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-check"></i>';
                             document.getElementById('challenge-text').innerText = "Verified";
-                            setTimeout(() => state = 'CAPTURE', 400); // Shorter delay
+                            setTimeout(() => {
+                                state = 'ALIGN';
+                                challengeBox.classList.remove('challenge-success'); 
+                                challengeBox.classList.remove('hidden');
+                                document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-camera"></i>';
+                                document.getElementById('challenge-text').innerText = "Look Straight";
+                                stabilizationCounter = 0;
+                            }, 500); 
                         }
+                    } else if (state === 'ALIGN') {
+                        // Strict Pose Check Logic
+                        const lm = detections.landmarks;
+                        const nose = lm.positions[30]; // Tip of nose
+                        const jaw = lm.getJawOutline();
+                        const jawLeft = jaw[0];
+                        const jawRight = jaw[16];
+                        const leftEye = lm.getLeftEye();
+                        const rightEye = lm.getRightEye();
+
+                        // 1. YAW: Symmetry Check (Nose centered horizontally on face)
+                        const distToLeft = Math.abs(nose.x - jawLeft.x);
+                        const distToRight = Math.abs(nose.x - jawRight.x);
+                        const ratio = distToLeft / (distToRight || 1);
+                        const isFacingFront = ratio > 0.8 && ratio < 1.25;
+
+                        // 2. ROLL: Tilt Check (Eyes horizontal)
+                        const leftEyeCenter = { x: (leftEye[0].x + leftEye[3].x)/2, y: (leftEye[0].y + leftEye[3].y)/2 };
+                        const rightEyeCenter = { x: (rightEye[0].x + rightEye[3].x)/2, y: (rightEye[0].y + rightEye[3].y)/2 };
+                        const dY = rightEyeCenter.y - leftEyeCenter.y;
+                        const dX = rightEyeCenter.x - leftEyeCenter.x;
+                        const angle = Math.atan2(dY, dX) * (180 / Math.PI);
+                        const isLevel = Math.abs(angle) < 10; // Max 10 degree tilt
+
+                        // 3. CENTERING: Face centered in camera frame
+                        const box = detections.detection.box;
+                        const boxCenter = box.x + box.width / 2;
+                        const frameCenter = displaySize.width / 2;
+                        const isCentered = Math.abs(boxCenter - frameCenter) < (displaySize.width * 0.15); // Within 15% center
+
+                        // 4. NOD CHECK (Heuristic via score): High confidence usually means frontal face
+                        const isHighQuality = detections.detection.score > 0.85;
+
+                        if (isFacingFront && isLevel && isCentered && isHighQuality) {
+                            stabilizationCounter++;
+                            document.getElementById('challenge-text').innerText = "Hold Still...";
+                            document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-camera"></i>';
+                            status.innerText = "Perfect. Hold it.";
+                            
+                            // Require 5 consecutive stable frames (~500ms)
+                            if (stabilizationCounter > 5) { 
+                                state = 'CAPTURE';
+                            }
+                        } else {
+                            stabilizationCounter = 0; // Reset if user moves
+                            document.getElementById('challenge-text').innerText = "Look Straight";
+                            document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-user"></i>';
+                            
+                            // Specific feedback
+                            if(!isFacingFront) status.innerText = "Turn Face Forward";
+                            else if(!isLevel) status.innerText = "Keep Head Straight";
+                            else if(!isCentered) status.innerText = "Center Your Face";
+                            else if(!isHighQuality) status.innerText = "Look Straight (No Nod)";
+                        }
+
                     } else if (state === 'CAPTURE') {
                         status.innerText = "Processing..."; 
                         // Capture Logic
