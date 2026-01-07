@@ -29,11 +29,13 @@
 
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); } }
+        
+        /* Updated Pulse Ring to Red for better recording visibility */
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         
         .modal-enter { animation: slideUp 0.3s ease-out forwards; }
         .fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        .mic-active { animation: pulse-ring 1.5s infinite; color: #2563eb !important; background: #eff6ff !important; }
+        .mic-active { animation: pulse-ring 1.5s infinite; }
 
         .filter-chip.active { background-color: #111827; color: white; border-color: #111827; }
 
@@ -213,7 +215,7 @@
 
             <!-- Input Bar -->
             <div id="command-bar" class="bg-white rounded-full shadow-xl border border-gray-200 flex items-center p-1.5 gap-2 ring-1 ring-gray-100">
-                <button onclick="toggleVoice()" id="mic-btn" class="w-10 h-10 rounded-full bg-gray-50 text-gray-500 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition-all shrink-0">
+                <button onclick="toggleVoice()" id="mic-btn" class="w-10 h-10 rounded-full bg-gray-50 text-gray-500 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-all shrink-0">
                     <i class="ph ph-microphone text-xl"></i>
                 </button>
                 <input type="text" id="command-input" class="flex-1 bg-transparent border-none text-sm font-medium focus:ring-0 outline-none placeholder-gray-400" placeholder="Type or say 'Spent 100 on food'...">
@@ -401,26 +403,67 @@
         const safeAdd = (a, b) => parseFloat((a + b).toFixed(2));
         const safeSub = (a, b) => parseFloat((a - b).toFixed(2));
         
-        /* --- AI COMMAND PARSER --- */
+        /* --- AI COMMAND PARSER (RELIABILITY FIX) --- */
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
+        let isListening = false;
+
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
-            recognition.continuous = false;
+            recognition.continuous = false; // Stop after one sentence
             recognition.lang = 'en-IN';
             recognition.interimResults = false;
-            recognition.onstart = () => { document.getElementById('mic-btn').classList.add('mic-active'); document.getElementById('command-input').placeholder = "Listening..."; };
-            recognition.onend = () => { document.getElementById('mic-btn').classList.remove('mic-active'); document.getElementById('command-input').placeholder = "Type or say 'Spent 100 on food'..."; };
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => { 
+                isListening = true;
+                const btn = document.getElementById('mic-btn');
+                btn.classList.add('mic-active', 'bg-red-50', 'text-red-600');
+                btn.classList.remove('bg-gray-50', 'text-gray-500');
+                btn.innerHTML = '<i class="ph ph-stop text-xl"></i>';
+                document.getElementById('command-input').placeholder = "Listening... Speak now";
+            };
+
+            recognition.onend = () => { 
+                isListening = false;
+                const btn = document.getElementById('mic-btn');
+                btn.classList.remove('mic-active', 'bg-red-50', 'text-red-600');
+                btn.classList.add('bg-gray-50', 'text-gray-500');
+                btn.innerHTML = '<i class="ph ph-microphone text-xl"></i>';
+                document.getElementById('command-input').placeholder = "Type or say 'Spent 100 on food'..."; 
+            };
+
             recognition.onresult = (e) => { 
                 const transcript = e.results[0][0].transcript; 
                 document.getElementById('command-input').value = transcript;
-                processCommand();
+                setTimeout(processCommand, 500); // Small delay to let user see text
+            };
+
+            recognition.onerror = (event) => {
+                isListening = false;
+                console.error("Speech Error:", event.error);
+                let msg = "Voice error";
+                if(event.error === 'no-speech') msg = "No speech detected";
+                if(event.error === 'not-allowed') msg = "Mic permission denied";
+                if(event.error === 'network') msg = "Network error";
+                showToast(msg, true);
+                recognition.stop();
             };
         }
 
         function toggleVoice() {
-            if(!recognition) return showToast("Voice not supported in this browser", true);
-            recognition.start();
+            if(!recognition) return showToast("Voice not supported", true);
+            
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error("Mic start error", e);
+                    recognition.stop(); // Reset
+                }
+            }
         }
 
         function processCommand() {
