@@ -1301,7 +1301,7 @@
             if (!roll || !name) return showToast("Invalid Input", "error");
             try {
                 const q = query(getStudentsPath(), where("rollNo", "==", roll));
-                if(!(await getDocs(q)).empty) return showToast("Roll Number taken", "error");
+                if(!(await getDocs(q)).empty) return showToast("Roll Number Already Registered", "error");
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', window.appState.userId), { rollNo: roll, name: name, uid: window.appState.userId, status: 'pending', createdAt: serverTimestamp(), deviceLocked: true });
                 window.appState.studentProfile = { rollNo: roll, name: name, status: 'pending' }; renderView();
             } catch(e) { showToast("Error", "error"); }
@@ -1869,4 +1869,5 @@
         initFirebase();
     </script>
 </body>
+
 </html>
