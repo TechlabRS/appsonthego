@@ -46,6 +46,14 @@
         .tab-content { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* New Animation for Bubbles */
+        @keyframes popIn { 
+            0% { transform: scale(0.5); opacity: 0; } 
+            80% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; } 
+        }
+        .animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
         input { text-transform: uppercase; }
         
         #liveness-challenge { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -111,7 +119,7 @@
                 </div>
                 
                 <div class="mt-4 flex flex-col gap-2">
-                    <div class="bg-green-50 text-green-700 px-3 py-2 rounded-lg text-xs font-bold w-full text-center border border-green-200">
+                    <div id="review-badge" class="bg-green-50 text-green-700 px-3 py-2 rounded-lg text-xs font-bold w-full text-center border border-green-200">
                         <i class="fa-solid fa-check-circle mr-1"></i> Biometric Verified
                     </div>
                     <button id="reject-btn" class="w-full bg-red-50 text-red-600 border border-red-100 py-3 rounded-xl font-bold text-xs hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
@@ -283,9 +291,10 @@
 
         // --- STATE ---
         window.appState = {
-            user: null, userId: null, role: 'student',
+            user: null, userId: null, role: 'student', // Default fallback
             faceDescriptor: null, enrolledPhoto: null, modelsLoaded: false,
-            studentProfile: null, facultyProfile: null, isFacultyLoggedIn: false
+            studentProfile: null, facultyProfile: null, isFacultyLoggedIn: false,
+            verifiedSessionId: null, verifiedOTP: null // NEW: OTP Cache
         };
         
         window.currentSessionAttendees = [];
@@ -369,6 +378,15 @@
                     if (u) {
                         window.appState.user = u; window.appState.userId = u.uid;
                         await Promise.all([loadStudentProfile(), loadFaceData(), checkFacultyRegistration()]);
+                        
+                        // --- SMART ROLE SWITCHING ---
+                        if (window.appState.studentProfile) window.appState.role = 'student';
+                        else if (window.appState.facultyProfile) window.appState.role = 'faculty';
+                        else window.appState.role = localStorage.getItem('sa_last_role') || 'student';
+                        
+                        // Force tab UI update
+                        switchTab(window.appState.role, false); // false = don't double render
+
                         renderView();
                         setTimeout(loadAIModels, 500); 
                     }
@@ -438,8 +456,10 @@
         }
 
         // --- NAVIGATION ---
-        window.switchTab = (tab) => {
+        window.switchTab = (tab, shouldRender = true) => {
             window.appState.role = tab;
+            localStorage.setItem('sa_last_role', tab); // SAVE ROLE PREFERENCE
+            
             document.querySelectorAll('.nav-btn').forEach(b => {
                 const icon = b.querySelector('i');
                 const text = b.querySelector('span');
@@ -451,14 +471,13 @@
                     icon.classList.remove('mb-1');
                 }
             });
-            renderView();
+            if(shouldRender) renderView();
         };
 
         function renderView() {
             const main = document.getElementById('main-view');
             if (window.appState.role === 'student') renderStudentFlow(main);
             else if (window.appState.role === 'faculty') renderFacultyDashboard(main);
-            // else if (window.appState.role === 'profile') renderProfile(main); // REMOVED PROFILE TAB
         }
 
         // --- FACULTY DASHBOARD ---
@@ -470,9 +489,25 @@
         }
 
         function renderFacultyMain(container) {
+            const facPhoto = window.appState.facultyProfile.photoUrl || null;
+            const avatarHtml = facPhoto 
+                ? `<img src="${facPhoto}" class="w-10 h-10 rounded-full object-cover border-2 border-slate-100 shadow-sm">` 
+                : `<div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm border-2 border-white shadow-sm">${window.appState.facultyProfile.name.charAt(0)}</div>`;
+
             container.innerHTML = `
                 <header class="bg-white sticky top-0 z-30 px-6 py-4 shadow-sm flex justify-between items-center">
-                    <div><h1 class="text-xl font-extrabold text-slate-800 tracking-tight">Dashboard</h1><p class="text-xs text-slate-500 font-medium">Welcome, ${window.appState.facultyProfile.name}</p></div>
+                    <div class="flex items-center gap-3">
+                        <div class="relative cursor-pointer group" onclick="updateFacultyPhoto()">
+                            ${avatarHtml}
+                            <div class="absolute bottom-0 right-0 w-3 h-3 bg-blue-500 rounded-full border border-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-camera text-[6px] text-white"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-extrabold text-slate-800 tracking-tight">Dashboard</h1>
+                            <p class="text-xs text-slate-500 font-medium">Welcome, ${window.appState.facultyProfile.name.split(' ')[0]}</p>
+                        </div>
+                    </div>
                     <div class="flex gap-2">
                         <button onclick="openBackupModal()" class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors"><i class="fa-solid fa-database text-xs"></i></button>
                         <button onclick="logoutFaculty()" class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"><i class="fa-solid fa-power-off text-xs"></i></button>
@@ -492,6 +527,19 @@
             `;
             switchFacTab('session');
         }
+        
+        // --- NEW: Faculty Photo Update ---
+        window.updateFacultyPhoto = () => {
+             openCamera('enroll', async (desc, score, img) => {
+                try {
+                    // Update Faculty Profile
+                    await updateDoc(getFacultyProfileDoc(window.appState.userId), { photoUrl: img });
+                    window.appState.facultyProfile.photoUrl = img;
+                    showToast("Profile Photo Updated", "success");
+                    renderView(); // Refresh header
+                } catch(e) { showToast("Update Failed", "error"); }
+            });
+        };
 
         window.switchFacTab = (tab) => {
             ['session','students','reports'].forEach(t => {
@@ -550,7 +598,7 @@
                     
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                         <h3 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> Live Attendees</h3>
-                        <ul id="attendee-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></ul>
+                        <div id="attendee-list" class="flex flex-wrap content-start gap-2 max-h-64 overflow-y-auto pr-1"></div>
                     </div>
                 </div>
             `;
@@ -626,14 +674,15 @@
                 const s = d.data();
                 const photoSrc = s.enrolledPhoto ? s.enrolledPhoto : null;
                 const safePhoto = s.enrolledPhoto ? s.enrolledPhoto.replace(/'/g, "\\'") : '';
-                const avatar = photoSrc ? `<img src="${photoSrc}" class="w-10 h-10 rounded-full object-cover border border-slate-200">` : `<div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center font-bold text-xs">${s.rollNo.slice(0,2)}</div>`;
+                const avatar = photoSrc ? `<img onclick="event.stopPropagation(); viewEnrolledImage('${safePhoto}', '${s.name}')" src="${photoSrc}" class="w-10 h-10 rounded-full object-cover border border-slate-200 cursor-pointer hover:scale-110 transition-transform">` : `<div onclick="event.stopPropagation()" class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center font-bold text-xs">${s.rollNo.slice(0,2)}</div>`;
                 
                 // Determine Lock Icon status
                 const isLocked = s.profileLocked === true;
                 const lockIcon = isLocked ? 'fa-lock text-red-400' : 'fa-lock-open text-slate-300';
                 
+                // UPDATED: Removed outer click event, moved it to the image only
                 sList.innerHTML += `
-                <div onclick="viewEnrolledImage('${safePhoto}', '${s.name}')" class="flex justify-between items-center p-2 hover:bg-slate-50 rounded-lg transition-colors group cursor-pointer active:scale-95">
+                <div class="flex justify-between items-center p-2 hover:bg-slate-50 rounded-lg transition-colors group">
                     <div class="flex items-center gap-3">
                         ${avatar}
                         <div><p class="font-bold text-xs text-slate-800">${s.rollNo}</p><p class="text-[10px] text-slate-500 font-medium">${s.name}</p></div>
@@ -688,9 +737,22 @@
             modal.classList.remove('hidden');
         }
 
-        // 3. Reports
+        // 3. Reports (Enhanced with Analytics)
         async function renderReports(container) {
-            container.innerHTML = `<div class="tab-content space-y-4"><div class="flex gap-2 overflow-x-auto no-scrollbar pb-1"><button onclick="filterReports('week')" class="rep-filter active px-4 py-1.5 rounded-full text-[10px] font-bold bg-blue-600 text-white shadow-md shadow-blue-200 transition-all whitespace-nowrap">This Week</button><button onclick="filterReports('month')" class="rep-filter px-4 py-1.5 rounded-full text-[10px] font-bold bg-white text-slate-500 border border-slate-200 hover:bg-slate-50 transition-all whitespace-nowrap">This Month</button><button onclick="filterReports('all')" class="rep-filter px-4 py-1.5 rounded-full text-[10px] font-bold bg-white text-slate-500 border border-slate-200 hover:bg-slate-50 transition-all whitespace-nowrap">All Time</button></div><div class="bg-white rounded-xl p-1 border border-slate-200 flex"><button onclick="toggleRepView('subject')" id="rv-subject" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 shadow-sm transition-all">By Subject</button><button onclick="toggleRepView('session')" id="rv-session" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-600 transition-all">By Session</button></div><div id="report-body" class="min-h-[300px]"></div></div>`;
+            container.innerHTML = `
+            <div class="tab-content space-y-4">
+                <div id="analytics-dash" class="space-y-4 flex-1 min-h-[200px]"></div>
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 pt-2 border-t border-slate-100">
+                    <button onclick="filterReports('week')" class="rep-filter active px-4 py-1.5 rounded-full text-[10px] font-bold bg-blue-600 text-white shadow-md shadow-blue-200 transition-all whitespace-nowrap">This Week</button>
+                    <button onclick="filterReports('month')" class="rep-filter px-4 py-1.5 rounded-full text-[10px] font-bold bg-white text-slate-500 border border-slate-200 hover:bg-slate-50 transition-all whitespace-nowrap">This Month</button>
+                    <button onclick="filterReports('all')" class="rep-filter px-4 py-1.5 rounded-full text-[10px] font-bold bg-white text-slate-500 border border-slate-200 hover:bg-slate-50 transition-all whitespace-nowrap">All Time</button>
+                </div>
+                <div class="bg-white rounded-xl p-1 border border-slate-200 flex">
+                    <button onclick="toggleRepView('subject')" id="rv-subject" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 shadow-sm transition-all">By Subject</button>
+                    <button onclick="toggleRepView('session')" id="rv-session" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-slate-600 transition-all">By Session</button>
+                </div>
+                <div id="report-body" class="min-h-[300px]"></div>
+            </div>`;
             window.currentReportFilter = 'week';
             window.currentReportView = 'subject';
             loadReportData();
@@ -716,6 +778,8 @@
 
         async function loadReportData() {
             const container = document.getElementById('report-body');
+            const analyticsContainer = document.getElementById('analytics-dash');
+            
             container.innerHTML = '<div class="flex justify-center py-8"><div class="loader"></div></div>';
 
             try {
@@ -734,7 +798,7 @@
                     if (data.timestamp.toDate() >= limit) sessions.push({id: d.id, ...data});
                 });
 
-                if (sessions.length === 0) { container.innerHTML = '<div class="text-center py-10 text-slate-400 text-xs">No records found for this period.</div>'; return; }
+                if (sessions.length === 0) { container.innerHTML = '<div class="text-center py-10 text-slate-400 text-xs">No records found for this period.</div>'; analyticsContainer.innerHTML = ''; return; }
 
                 const masterSnap = await getDocs(getMasterPath());
                 const totalStudents = masterSnap.size;
@@ -742,6 +806,110 @@
                 const attendance = [];
                 snapAtt.forEach(d => attendance.push({id: d.id, ...d.data()}));
 
+                // --- NEW: ANALYTICS DASHBOARD LOGIC (Running on All Data for accuracy) ---
+                if (window.currentReportView === 'subject') {
+                    const subjectStats = {};
+                    const studentStats = {}; // Map<Roll, {name, totalClasses, present}>
+                    
+                    // Organize sessions by subject
+                    sessions.forEach(s => {
+                        if(!subjectStats[s.subject]) subjectStats[s.subject] = { sessions: [], attendance: [] };
+                        subjectStats[s.subject].sessions.push(s);
+                    });
+                    
+                    // Populate stats
+                    sessions.forEach(s => {
+                        const sessAtt = attendance.filter(a => a.sessionId === s.id);
+                        if(subjectStats[s.subject]) subjectStats[s.subject].attendance.push(...sessAtt);
+                    });
+                    
+                    // Populate Student Stats (Across all selected sessions)
+                    masterSnap.forEach(d => {
+                         const s = d.data();
+                         studentStats[s.rollNo] = { name: s.name, total: sessions.length, present: 0 };
+                    });
+                    attendance.forEach(a => {
+                         // Only count attendance for sessions in the current filter
+                         if(sessions.find(s => s.id === a.sessionId) && studentStats[a.studentRoll]) {
+                             studentStats[a.studentRoll].present++;
+                         }
+                    });
+
+                    // 1. Subject Graph Data
+                    const labels = Object.keys(subjectStats);
+                    const avgData = labels.map(sub => {
+                        const data = subjectStats[sub];
+                        const totalPossible = data.sessions.length * totalStudents;
+                        const actual = data.attendance.length;
+                        return totalPossible > 0 ? Math.round((actual / totalPossible) * 100) : 0;
+                    });
+                    
+                    // 2. Irregular Students List (< 75%)
+                    const irregulars = Object.values(studentStats).filter(s => {
+                         const pct = s.total > 0 ? (s.present / s.total) * 100 : 0;
+                         return pct < 75 && s.total > 0;
+                    }).sort((a,b) => (a.present/a.total) - (b.present/b.total)); // Sort by lowest attendance
+
+                    // Render Analytics Dashboard
+                    analyticsContainer.innerHTML = `
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex flex-col h-64">
+                             <h3 class="font-bold text-slate-800 text-sm mb-3">Performance Analytics</h3>
+                             <div class="flex-1 relative min-h-0">
+                                <canvas id="chartCanvas"></canvas>
+                             </div>
+                        </div>
+                        
+                        ${irregulars.length > 0 ? `
+                        <div class="bg-red-50 rounded-xl p-4 border border-red-100">
+                            <h3 class="font-bold text-red-800 text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> Irregular Students <span class="bg-red-200 text-red-700 px-1.5 py-0.5 rounded text-[9px]">${irregulars.length}</span></h3>
+                            <div class="max-h-40 overflow-y-auto pr-1 space-y-2">
+                                ${irregulars.map(s => {
+                                    const pct = Math.round((s.present/s.total)*100);
+                                    let remark = "Low Attendance";
+                                    if(pct < 50) remark = "Critical Shortage";
+                                    else if(pct < 60) remark = "Warning";
+                                    
+                                    return `
+                                    <div class="bg-white p-2 rounded-lg border border-red-100 flex justify-between items-center">
+                                        <div><p class="font-bold text-xs text-slate-700">${s.name}</p><p class="text-[9px] text-slate-400">${s.present}/${s.total} Classes</p></div>
+                                        <div class="text-right"><p class="font-bold text-xs text-red-600">${pct}%</p><p class="text-[8px] font-bold text-red-400 uppercase tracking-wide">${remark}</p></div>
+                                    </div>`;
+                                }).join('')}
+                            </div>
+                        </div>` : ''}
+                    `;
+                    
+                    // Initialize Chart
+                    setTimeout(() => {
+                        if (typeof Chart !== 'undefined' && document.getElementById('chartCanvas')) {
+                            new Chart(document.getElementById('chartCanvas'), { 
+                                type: 'bar', 
+                                data: { 
+                                    labels: labels.map(l => l.substring(0, 10) + '..'), 
+                                    datasets: [{ 
+                                        label: 'Avg Attendance %', 
+                                        data: avgData, 
+                                        backgroundColor: '#3b82f6', 
+                                        borderRadius: 4 
+                                    }] 
+                                }, 
+                                options: { 
+                                    responsive: true, 
+                                    maintainAspectRatio: false, 
+                                    scales: { 
+                                        y: { beginAtZero: true, max: 100, ticks: {font: {size: 9}} }, 
+                                        x: {ticks: {font: {size: 9}}} 
+                                    }, 
+                                    plugins: { legend: { display: false } } 
+                                } 
+                            });
+                        }
+                    }, 100);
+                } else {
+                    analyticsContainer.innerHTML = ''; // Clear dash in Session view
+                }
+
+                // Render Original Views
                 if (window.currentReportView === 'session') {
                     // SESSION VIEW (EXISTING)
                     let html = '<div class="space-y-3">';
@@ -771,20 +939,6 @@
                             subjectStats[sess.subject].attendance.push(a);
                         }
                     });
-
-                    // Render Overall Chart
-                    const labels = Object.keys(subjectStats);
-                    const avgData = labels.map(sub => {
-                        const data = subjectStats[sub];
-                        const totalPossible = data.sessions.length * totalStudents;
-                        const actual = data.attendance.length;
-                        return totalPossible > 0 ? Math.round((actual / totalPossible) * 100) : 0;
-                    });
-
-                    container.innerHTML = '<canvas id="chartCanvas" class="mb-4 bg-white rounded-xl p-2 border border-slate-100"></canvas>';
-                    if (typeof Chart !== 'undefined') {
-                        new Chart(document.getElementById('chartCanvas'), { type: 'bar', data: { labels: labels.map(l => l.substring(0, 10) + '..'), datasets: [{ label: 'Avg Attendance %', data: avgData, backgroundColor: '#3b82f6', borderRadius: 6 }] }, options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } } });
-                    }
 
                     // Render Detailed Tables per Subject
                     let html = '<div class="space-y-6">';
@@ -1016,14 +1170,76 @@
             
             onSnapshot(query(getAttPath(), where("sessionId", "==", sessionId)), (snap) => {
                 const list = document.getElementById('attendee-list');
-                list.innerHTML = '';
-                snap.forEach(d => {
-                    const r = d.data();
+                list.innerHTML = ''; // Rebuild list
+                
+                let attendees = [];
+                snap.forEach(d => attendees.push(d.data()));
+                
+                // Sort by timestamp descending (newest first) for better UX
+                attendees.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+                attendees.forEach(r => {
                     const timeStr = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Just now';
-                    list.innerHTML += `<li class="flex justify-between items-center py-2 border-b border-slate-50 last:border-0"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-green-400"></div><div><p class="font-bold text-xs text-slate-700">${r.studentRoll}</p><p class="text-[10px] text-slate-400">${r.studentName}</p></div></div><span class="text-[10px] font-mono text-slate-400">${timeStr}</span></li>`;
+                    
+                    // --- NEW: Visual Cue for Not Verified ---
+                    const borderClass = r.verified === false ? 'border-orange-300 bg-orange-50' : 'border-green-100 bg-white';
+                    const icon = r.verified === false ? '<i class="fa-solid fa-triangle-exclamation text-[8px] text-orange-500 absolute -top-1 -right-1"></i>' : '';
+
+                    // Bubble Design
+                    list.innerHTML += `
+                    <div onclick="reviewAttendanceFromBubble('${r.id}')" class="inline-flex items-center gap-2 ${borderClass} border rounded-full pl-1 pr-3 py-1 shadow-sm animate-pop transition-transform hover:scale-105 cursor-pointer select-none relative">
+                        <img src="${r.capturedPhoto || 'https://ui-avatars.com/api/?name=' + r.studentName}" class="w-8 h-8 rounded-full object-cover border border-slate-200 bg-slate-100">
+                        ${icon}
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-700 leading-tight">${r.studentRoll}</p>
+                            <p class="text-[8px] text-slate-400 leading-tight tracking-wide">${timeStr}</p>
+                        </div>
+                    </div>`;
                 });
             });
         }
+        
+        // --- NEW: Open review from bubble ---
+        window.reviewAttendanceFromBubble = async (attId) => {
+             // Find record in cached attendees
+             try {
+                 const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', attId));
+                 if(!snap.exists()) return;
+                 const record = snap.data();
+                 record.id = snap.id;
+                 
+                 // Reuse review modal logic (simplified manual setup)
+                 document.getElementById('review-modal').classList.remove('hidden');
+                 document.getElementById('review-enrolled-loader').classList.remove('hidden');
+                 document.getElementById('review-name').innerText = record.studentName;
+                 document.getElementById('review-roll').innerText = record.studentRoll;
+                 document.getElementById('review-time').innerText = record.timestamp ? new Date(record.timestamp.seconds*1000).toLocaleString() : 'N/A';
+                 document.getElementById('review-live-img').src = record.capturedPhoto || '';
+                 
+                 // Update badge based on status
+                 const badge = document.getElementById('review-badge');
+                 if(record.verified === false) {
+                     badge.className = "bg-orange-50 text-orange-700 px-3 py-2 rounded-lg text-xs font-bold w-full text-center border border-orange-200";
+                     badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Manual Request';
+                 } else {
+                     badge.className = "bg-green-50 text-green-700 px-3 py-2 rounded-lg text-xs font-bold w-full text-center border border-green-200";
+                     badge.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i> Biometric Verified';
+                 }
+
+                 const rejectBtn = document.getElementById('reject-btn');
+                 rejectBtn.onclick = () => rejectAttendance(record.id, record.sessionId);
+
+                 // Fetch Enrolled
+                 const sSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', record.studentId));
+                 if(sSnap.exists() && sSnap.data().enrolledPhoto) {
+                    document.getElementById('review-enrolled-img').src = sSnap.data().enrolledPhoto;
+                 } else {
+                    document.getElementById('review-enrolled-img').src = ''; 
+                 }
+                 document.getElementById('review-enrolled-loader').classList.add('hidden');
+
+             } catch(e) { console.error(e); }
+        };
         
         async function updateOTP(sessionId) { const newOtp = Math.floor(1000 + Math.random() * 9000).toString(); document.getElementById('display-otp').innerText = newOtp; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), { otp: newOtp }); }
         
@@ -1033,18 +1249,30 @@
 
         // --- LOGIN/REG ---
         function renderFacultyRegistration(container) { container.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-8"><div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6"><i class="fa-solid fa-user-shield text-2xl text-blue-600"></i></div><h2 class="text-2xl font-bold text-slate-800 mb-6">Faculty Setup</h2><div class="w-full space-y-4"><input type="text" id="reg-name" placeholder="Full Name" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-blue-500"><input type="password" id="reg-pin" placeholder="Set 6-digit PIN" maxlength="6" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-blue-500"><input type="password" id="reg-master" placeholder="Master Key" class="w-full p-4 bg-white border border-red-100 rounded-xl text-sm font-medium outline-none focus:border-red-500"><button onclick="registerFaculty()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-black transition-transform active:scale-95">Complete Setup</button></div></div>`; }
-        function renderFacultyLogin(container) { container.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-8"><h2 class="text-2xl font-bold text-slate-800 mb-2">Welcome Back</h2><p class="text-slate-500 text-sm mb-8">Enter your PIN to access dashboard</p><input type="password" id="login-pin" class="w-48 text-center text-3xl font-bold tracking-widest border-b-2 border-slate-200 focus:border-blue-600 outline-none pb-2 mb-8 bg-transparent text-slate-800" maxlength="6" placeholder="••••••">            
-        <div class="flex justify-center pt-4">
-                <button onclick="loginFaculty()" 
-                        class="w-14 h-14 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition duration-200 shadow-lg active:scale-90"
-                        aria-label="Proceed">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                </button>
-            </div>
-            </div>
-        `; }
+        function renderFacultyLogin(container) { 
+            // Get Faculty Photo
+            const facPhoto = window.appState.facultyProfile.photoUrl || null;
+            const avatarHtml = facPhoto 
+                ? `<img src="${facPhoto}" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg mb-6">` 
+                : `<div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6 shadow-inner"><i class="fa-solid fa-user-tie text-3xl text-indigo-500"></i></div>`;
+
+            container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full p-8 bg-slate-50">
+                ${avatarHtml}
+                <h2 class="text-2xl font-extrabold text-slate-800 mb-1">Welcome Back</h2>
+                <p class="text-slate-500 text-xs font-medium mb-8 uppercase tracking-widest">${window.appState.facultyProfile.name}</p>
+                
+                <input type="password" id="login-pin" class="w-48 text-center text-3xl font-bold tracking-widest border-b-2 border-slate-200 focus:border-indigo-600 outline-none pb-2 mb-8 bg-transparent text-slate-800 transition-colors" maxlength="6" placeholder="••••••">            
+                
+                <div class="flex justify-center pt-4">
+                    <button onclick="loginFaculty()" 
+                            class="w-14 h-14 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition duration-200 shadow-lg shadow-indigo-200 active:scale-90"
+                            aria-label="Proceed">
+                        <i class="fa-solid fa-arrow-right text-lg"></i>
+                    </button>
+                </div>
+            </div>`; 
+        }
         //<button onclick="loginFaculty()" class="w-full max-w-xs bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-transform active:scale-95">Access Dashboard</button>
         // SECURED REGISTRATION WITH HASH
         window.registerFaculty = async () => {
@@ -1194,6 +1422,7 @@
             const btn = document.getElementById('capture-btn'), status = document.getElementById('camera-status'), challengeBox = document.getElementById('liveness-challenge');
             let state = 'WAIT', challengeType = Math.floor(Math.random() * 3); 
             const challengeNames = ["Blink Eyes", "Turn Head", "Nod (Up/Down)"];
+            let stabilizationCounter = 0; // NEW: Counter for stable alignment
 
             // RECURSIVE LOOP for better control than setInterval
             const loop = async () => {
@@ -1236,8 +1465,70 @@
                             challengeBox.classList.add('challenge-success');
                             document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-check"></i>';
                             document.getElementById('challenge-text').innerText = "Verified";
-                            setTimeout(() => state = 'CAPTURE', 400); // Shorter delay
+                            setTimeout(() => {
+                                state = 'ALIGN';
+                                challengeBox.classList.remove('challenge-success'); 
+                                challengeBox.classList.remove('hidden');
+                                document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-camera"></i>';
+                                document.getElementById('challenge-text').innerText = "Look Straight";
+                                stabilizationCounter = 0;
+                            }, 500); 
                         }
+                    } else if (state === 'ALIGN') {
+                        // Strict Pose Check Logic
+                        const lm = detections.landmarks;
+                        const nose = lm.positions[30]; // Tip of nose
+                        const jaw = lm.getJawOutline();
+                        const jawLeft = jaw[0];
+                        const jawRight = jaw[16];
+                        const leftEye = lm.getLeftEye();
+                        const rightEye = lm.getRightEye();
+
+                        // 1. YAW: Symmetry Check (Nose centered horizontally on face)
+                        const distToLeft = Math.abs(nose.x - jawLeft.x);
+                        const distToRight = Math.abs(nose.x - jawRight.x);
+                        const ratio = distToLeft / (distToRight || 1);
+                        const isFacingFront = ratio > 0.8 && ratio < 1.25;
+
+                        // 2. ROLL: Tilt Check (Eyes horizontal)
+                        const leftEyeCenter = { x: (leftEye[0].x + leftEye[3].x)/2, y: (leftEye[0].y + leftEye[3].y)/2 };
+                        const rightEyeCenter = { x: (rightEye[0].x + rightEye[3].x)/2, y: (rightEye[0].y + rightEye[3].y)/2 };
+                        const dY = rightEyeCenter.y - leftEyeCenter.y;
+                        const dX = rightEyeCenter.x - leftEyeCenter.x;
+                        const angle = Math.atan2(dY, dX) * (180 / Math.PI);
+                        const isLevel = Math.abs(angle) < 10; // Max 10 degree tilt
+
+                        // 3. CENTERING: Face centered in camera frame
+                        const box = detections.detection.box;
+                        const boxCenter = box.x + box.width / 2;
+                        const frameCenter = displaySize.width / 2;
+                        const isCentered = Math.abs(boxCenter - frameCenter) < (displaySize.width * 0.15); // Within 15% center
+
+                        // 4. NOD CHECK (Heuristic via score): High confidence usually means frontal face
+                        const isHighQuality = detections.detection.score > 0.85;
+
+                        if (isFacingFront && isLevel && isCentered && isHighQuality) {
+                            stabilizationCounter++;
+                            document.getElementById('challenge-text').innerText = "Hold Still...";
+                            document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-camera"></i>';
+                            status.innerText = "Perfect. Hold it.";
+                            
+                            // Require 5 consecutive stable frames (~500ms)
+                            if (stabilizationCounter > 5) { 
+                                state = 'CAPTURE';
+                            }
+                        } else {
+                            stabilizationCounter = 0; // Reset if user moves
+                            document.getElementById('challenge-text').innerText = "Look Straight";
+                            document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-user"></i>';
+                            
+                            // Specific feedback
+                            if(!isFacingFront) status.innerText = "Turn Face Forward";
+                            else if(!isLevel) status.innerText = "Keep Head Straight";
+                            else if(!isCentered) status.innerText = "Center Your Face";
+                            else if(!isHighQuality) status.innerText = "Look Straight (No Nod)";
+                        }
+
                     } else if (state === 'CAPTURE') {
                         status.innerText = "Processing..."; 
                         // Capture Logic
@@ -1352,7 +1643,7 @@
             });
         };
 
-        // Attendance Flow
+        // Attendance Flow (UPDATED)
         window.startAttendanceFlow = async (sessionId, lat, lng) => {
             if(!window.appState.faceDescriptor) return showToast("Enroll Face First", "error");
             showToast("Checking GPS...", "info");
@@ -1370,27 +1661,66 @@
                 if (dist > ATTENDANCE_RADIUS_METERS) return showToast(`Too far (${Math.round(dist)}m)`, "error");
             } catch (e) { return showToast("GPS Error", "error"); }
 
-            const otp = await openOtpModal(); if (!otp) return;
-
-            const sessRef = doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId);
-            const sessSnap = await getDoc(sessRef);
-            if (!sessSnap.exists() || !sessSnap.data().active) { 
-                showToast("Session Closed", "error"); 
-                const list = document.getElementById('active-sessions-list'); if(list) list.innerHTML = ''; 
-                return; 
+            // --- OTP LOGIC (PERSISTENT) ---
+            let otp = window.appState.verifiedOTP;
+            
+            // Only ask for OTP if we haven't verified for THIS specific session
+            if (window.appState.verifiedSessionId !== sessionId) {
+                otp = await openOtpModal(); if (!otp) return;
+                
+                const sessRef = doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId);
+                const sessSnap = await getDoc(sessRef);
+                if (!sessSnap.exists() || !sessSnap.data().active) { 
+                    showToast("Session Closed", "error"); 
+                    const list = document.getElementById('active-sessions-list'); if(list) list.innerHTML = ''; 
+                    return; 
+                }
+                if (sessSnap.data().otp !== otp) return showToast("Invalid OTP", "error");
+                
+                // Cache Success
+                window.appState.verifiedSessionId = sessionId;
+                window.appState.verifiedOTP = otp;
             }
-            if (sessSnap.data().otp !== otp) return showToast("Invalid OTP", "error");
 
-            openCamera('verify', async (desc, score, img) => {
-                const dist = faceapi.euclideanDistance(desc, window.appState.faceDescriptor);
-                if (dist < FACE_MATCH_THRESHOLD) {
-                    try {
-                        const attData = { sessionId, studentId: window.appState.userId, studentName: window.appState.studentProfile.name, studentRoll: window.appState.studentProfile.rollNo, timestamp: serverTimestamp(), status: 'present', verified: true, capturedPhoto: img };
-                        await addDoc(getAttPath(), attData);
-                        showToast("Marked Present!", "success"); switchTab('student');
-                    } catch(e) { showToast("Save Failed", "error"); }
-                } else showToast("Face Mismatch", "error");
-            });
+            // --- FACE VERIFICATION WITH RETRIES ---
+            let attempts = 0;
+            const MAX_ATTEMPTS = 3;
+
+            const runVerification = () => {
+                openCamera('verify', async (desc, score, img) => {
+                    const dist = faceapi.euclideanDistance(desc, window.appState.faceDescriptor);
+                    
+                    if (dist < FACE_MATCH_THRESHOLD) {
+                        // SUCCESS
+                        try {
+                            const attData = { sessionId, studentId: window.appState.userId, studentName: window.appState.studentProfile.name, studentRoll: window.appState.studentProfile.rollNo, timestamp: serverTimestamp(), status: 'present', verified: true, capturedPhoto: img };
+                            await addDoc(getAttPath(), attData);
+                            showToast("Marked Present!", "success"); switchTab('student');
+                        } catch(e) { showToast("Save Failed", "error"); }
+                    } else {
+                        // FAIL
+                        attempts++;
+                        if (attempts < MAX_ATTEMPTS) {
+                            showToast(`Mismatch (${attempts}/${MAX_ATTEMPTS}). Try again.`, "error");
+                            setTimeout(runVerification, 1000); // Auto retry after 1s
+                        } else {
+                            // MAX ATTEMPTS REACHED -> MANUAL REQUEST
+                            if (confirm("Face verification failed 3 times. Request manual attendance with this photo?")) {
+                                 try {
+                                    const attData = { sessionId, studentId: window.appState.userId, studentName: window.appState.studentProfile.name, studentRoll: window.appState.studentProfile.rollNo, timestamp: serverTimestamp(), status: 'present', verified: false, capturedPhoto: img }; // verified: false
+                                    await addDoc(getAttPath(), attData);
+                                    showToast("Request Sent (Pending Approval)", "info"); 
+                                    switchTab('student');
+                                } catch(e) { showToast("Request Failed", "error"); }
+                            } else {
+                                showToast("Verification Cancelled", "info");
+                            }
+                        }
+                    }
+                });
+            };
+
+            runVerification(); // Start flow
         };
 
         // Faculty Helpers (Global)
