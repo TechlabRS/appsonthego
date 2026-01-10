@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Classroom Pulse | Slide UI</title>
+    <title>Classroom Pulse | v10 Strict</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -63,21 +63,6 @@
         .custom-input:focus { border-color: #ec4899; outline: none; }
         .custom-input:disabled { opacity: 0.6; cursor: not-allowed; background: rgba(255,255,255,0.05); }
 
-        /* Privacy Blur Class */
-        .privacy-mask {
-            filter: blur(6px);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            color: transparent;
-        }
-        .privacy-mask.revealed {
-            filter: blur(0);
-            background: transparent;
-            color: #22d3ee; 
-        }
-
         /* Slider */
         input[type=range] { -webkit-appearance: none; background: transparent; width: 100%; }
         input[type=range]::-webkit-slider-thumb {
@@ -122,7 +107,7 @@
             align-items: center;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
-            touch-action: none; /* Critical for dragging */
+            touch-action: none;
         }
         .swipe-text {
             position: absolute;
@@ -226,9 +211,12 @@
                 <!-- Dynamic Qs -->
                 <div id="dynamicQuestionsArea" class="space-y-6 mb-6"></div>
 
-                <!-- AI Warning -->
+                <!-- Warnings -->
                 <div id="aiWarning" class="hidden fixed top-4 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[10px] py-2 px-4 rounded-full shadow-xl z-50 font-bold border border-rose-400">
                     🚫 Keep it constructive!
+                </div>
+                <div id="incompleteWarning" class="hidden fixed top-4 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[10px] py-2 px-4 rounded-full shadow-xl z-50 font-bold border border-yellow-400">
+                    ⚠️ Please answer all questions!
                 </div>
 
                 <!-- SLIDE TO SUBMIT UI -->
@@ -263,7 +251,7 @@
                         Admin Console <i id="lockIcon" class="fa-solid fa-lock text-xs ml-1 text-gray-500"></i>
                     </h2>
                     <p class="text-[10px] text-gray-400" id="viewModeText">Anonymous Mode</p>
-                    <div id="longPressLoader" class="hidden absolute -left-3 top-1 h-full w-1 bg-cyan-400 rounded-full transition-all duration-[3000ms] h-0"></div>
+                    <div id="longPressLoader" class="hidden absolute -left-3 top-1 h-full w-1 bg-cyan-400 rounded-full transition-all duration-[2000ms] h-0"></div>
                 </div>
                 <button onclick="closeTeacherMode()" class="w-8 h-8 flex items-center justify-center bg-white/5 rounded-full hover:bg-white/10 transition">
                     <i class="fa-solid fa-times text-gray-400 text-sm"></i>
@@ -301,15 +289,7 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
-  authDomain: "stuattnd.firebaseapp.com",
-  projectId: "stuattnd",
-  storageBucket: "stuattnd.firebasestorage.app",
-  messagingSenderId: "511533506488",
-  appId: "1:511533506488:web:aca4de3d513915d012f94d",
-  measurementId: "G-9PZZM5LFKX"};
-//JSON.parse(__firebase_config);
+        const firebaseConfig = JSON.parse(__firebase_config);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -324,7 +304,7 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
         let adminViewMode = 'anonymous'; 
         let currentAdminData = []; 
         let longPressTimer;
-        const LONG_PRESS_DURATION = 3000; 
+        const LONG_PRESS_DURATION = 2000; 
 
         signInAnonymously(auth).catch(console.error);
         onAuthStateChanged(auth, (user) => { if(user) currentUser = user; });
@@ -342,7 +322,7 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
                 rollInp.disabled = true;
                 document.getElementById('resetLink').classList.remove('hidden');
             }
-            initSwipeSlider(); // Init swipe logic
+            initSwipeSlider(); 
         });
 
         window.resetIdentity = function() {
@@ -369,8 +349,7 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
             { id: 'q12', type: 'options', text: "Should we use more visuals?", options: ['No', 'Yes'] },
             { id: 'q13', type: 'options', text: "Overall Energy?", options: ['Low', 'High'] },
             { id: 'q14', type: 'text', text: "Any doubts remaining?", placeholder: "Ask here..." },
-            { id: 'q15', type: 'options', text: "Ready for next class?", options: ['Need Break', 'Ready'] },
-            { id: 'q16', type: 'options', text: "Was the session interesting?", options: ['Yes', 'No'] }
+            { id: 'q15', type: 'options', text: "Ready for next class?", options: ['Need Break', 'Ready'] }
         ];
 
         function generateRandomQuestions() {
@@ -431,30 +410,22 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
             let currentX = 0;
             
             const onDragStart = (e) => {
-                if(handle.classList.contains('submitted')) return; // Locked
+                if(handle.classList.contains('submitted')) return; 
                 isDragging = true;
                 startX = (e.touches ? e.touches[0].clientX : e.clientX);
-                handle.style.transition = 'none'; // No lag while dragging
+                handle.style.transition = 'none'; 
             };
             
             const onDragMove = (e) => {
                 if (!isDragging) return;
                 const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
                 let diff = clientX - startX;
-                
-                // Constraints
-                const maxMove = track.clientWidth - handle.clientWidth - 8; // 8px buffer
+                const maxMove = track.clientWidth - handle.clientWidth - 8; 
                 if (diff < 0) diff = 0;
                 if (diff > maxMove) diff = maxMove;
-                
                 currentX = diff;
                 handle.style.transform = `translateX(${diff}px)`;
-                
-                // Opacity of text
-                const opacity = 1 - (diff / maxMove);
-                text.style.opacity = opacity;
-                
-                // Icon Rotation
+                text.style.opacity = 1 - (diff / maxMove);
                 icon.style.transform = `rotate(${diff * 0.5}deg)`;
             };
             
@@ -462,35 +433,47 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
                 if (!isDragging) return;
                 isDragging = false;
                 handle.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-                
                 const maxMove = track.clientWidth - handle.clientWidth - 8;
                 
-                // Threshold to trigger submit (90%)
+                // VALIDATION CHECK BEFORE SUBMITTING
+                // 1. Check if all questions are answered
+                let allAnswered = true;
+                activeQuestions.forEach(q => {
+                    const resp = userResponses[q.id];
+                    if(!resp || !resp.answer || resp.answer.trim() === '') {
+                        allAnswered = false;
+                    }
+                });
+
                 if (currentX > maxMove * 0.9) {
-                    // Snap to end
+                    if (!allAnswered) {
+                        // Snap back and warn
+                        handle.style.transform = `translateX(0px)`;
+                        text.style.opacity = 1;
+                        icon.style.transform = "rotate(0deg)";
+                        const warning = document.getElementById('incompleteWarning');
+                        warning.classList.remove('hidden');
+                        setTimeout(() => warning.classList.add('hidden'), 3000);
+                        return;
+                    }
+
+                    // Success Snap
                     handle.style.transform = `translateX(${maxMove}px)`;
                     text.style.opacity = 0;
-                    
-                    // Trigger Submit
                     submitData();
-                    
-                    // Visual feedback
                     handle.classList.add('submitted');
                     icon.className = "fa-solid fa-check text-white";
                     icon.style.transform = "rotate(0deg)";
                 } else {
-                    // Snap back
                     handle.style.transform = `translateX(0px)`;
                     text.style.opacity = 1;
                     icon.style.transform = "rotate(0deg)";
                 }
             };
             
-            // Events
             handle.addEventListener('mousedown', onDragStart);
             document.addEventListener('mousemove', onDragMove);
             document.addEventListener('mouseup', onDragEnd);
-            
             handle.addEventListener('touchstart', onDragStart);
             document.addEventListener('touchmove', onDragMove);
             document.addEventListener('touchend', onDragEnd);
@@ -501,7 +484,6 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
         window.submitData = async function() {
             if(!currentUser) return;
             
-            // Toxicity check
             let isToxic = false;
             Object.values(userResponses).forEach(resp => {
                 if (toxicWords.some(w => resp.answer.toLowerCase().includes(w))) isToxic = true;
@@ -512,7 +494,6 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
                 warning.classList.remove('hidden');
                 setTimeout(() => warning.classList.add('hidden'), 3000);
                 
-                // Reset slider
                 const handle = document.getElementById('swipeHandle');
                 handle.style.transform = `translateX(0px)`;
                 handle.classList.remove('submitted');
@@ -529,7 +510,6 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
                     timestamp: serverTimestamp(), uid: currentUser.uid, responses: Object.values(userResponses) 
                 });
                 
-                // Success Transition (delay slightly for visual effect)
                 setTimeout(() => {
                     document.getElementById('step-feedback').classList.add('hidden-screen');
                     document.getElementById('step-success').classList.remove('hidden-screen');
@@ -538,7 +518,6 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
                 
             } catch (e) {
                 alert("Error connecting.");
-                // Reset slider
                 const handle = document.getElementById('swipeHandle');
                 handle.style.transform = `translateX(0px)`;
                 handle.classList.remove('submitted');
@@ -566,7 +545,6 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
             document.getElementById('step-feedback').classList.remove('hidden-screen');
             document.getElementById('step-feedback').classList.add('slide-up');
             
-            // Re-calc slider width in case of layout shifts
             initSwipeSlider();
         }
 
@@ -587,18 +565,6 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
         window.deleteFeedback = async function(id) {
             if(!confirm("Delete this?")) return;
             try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'feedback', id)); } catch (e) {}
-        }
-
-        window.toggleReveal = function(element) {
-            element.classList.toggle('revealed');
-            const icon = element.nextElementSibling.querySelector('i');
-            if (element.classList.contains('revealed')) {
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
         }
 
         window.startLongPress = function() {
@@ -629,7 +595,7 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
             clickCount++;
             clearTimeout(clickTimer);
             clickTimer = setTimeout(() => { clickCount = 0; }, 800);
-            if (clickCount === 5) {
+            if (clickCount === 3) {
                 document.getElementById('studentView').classList.add('hidden-screen');
                 document.getElementById('teacherView').classList.remove('hidden-screen');
                 document.getElementById('teacherView').classList.add('slide-up');
@@ -655,24 +621,39 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
                     const d = doc.data();
                     if(d.timestamp) rawData.push({ ...d, dateObj: d.timestamp.toDate(), id: doc.id });
                 });
+                
+                // DATA PROCESSING FOR CHART (Oldest First)
+                const sessionMap = {};
+                rawData.forEach(item => {
+                    // Create a sortable key (YYYY-MM-DD) for ordering
+                    const sortKey = item.dateObj.toISOString().split('T')[0];
+                    // Display key (Short Date)
+                    const dispKey = item.dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    
+                    if(!sessionMap[sortKey]) sessionMap[sortKey] = { sum: 0, count: 0, label: dispKey };
+                    sessionMap[sortKey].sum += item.rating;
+                    sessionMap[sortKey].count += 1;
+                });
+
+                // Convert map to array and sort by Date Key (Oldest -> Newest)
+                const sortedKeys = Object.keys(sessionMap).sort(); 
+                const labels = sortedKeys.map(k => sessionMap[k].label);
+                const values = sortedKeys.map(k => (sessionMap[k].sum / sessionMap[k].count).toFixed(1));
+                
+                // Data for List (Newest First)
                 rawData.sort((a, b) => b.dateObj - a.dateObj);
                 currentAdminData = rawData; 
 
-                const sessionMap = {};
-                rawData.forEach(item => {
-                    const key = item.dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    if(!sessionMap[key]) sessionMap[key] = { sum: 0, count: 0 };
-                    sessionMap[key].sum += item.rating;
-                    sessionMap[key].count += 1;
-                });
-                const labels = Object.keys(sessionMap).reverse();
-                const values = labels.map(k => (sessionMap[k].sum / sessionMap[k].count).toFixed(1));
-                
-                const todayKey = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                if(sessionMap[todayKey]) {
-                    document.getElementById('statTodayAvg').innerText = (sessionMap[todayKey].sum / sessionMap[todayKey].count).toFixed(1);
-                    document.getElementById('statTodayCount').innerText = sessionMap[todayKey].count;
+                // Today's Stats
+                const todaySortKey = new Date().toISOString().split('T')[0];
+                if(sessionMap[todaySortKey]) {
+                    document.getElementById('statTodayAvg').innerText = (sessionMap[todaySortKey].sum / sessionMap[todaySortKey].count).toFixed(1);
+                    document.getElementById('statTodayCount').innerText = sessionMap[todaySortKey].count;
+                } else {
+                    document.getElementById('statTodayAvg').innerText = "--";
+                    document.getElementById('statTodayCount').innerText = "0";
                 }
+                
                 renderChart(labels, values);
                 renderComments(rawData);
             });
@@ -685,11 +666,25 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{ data: dataPoints, borderColor: '#ec4899', borderWidth: 2, pointRadius: 3, tension: 0.4 }]
+                    datasets: [{ 
+                        label: 'Avg Rating',
+                        data: dataPoints, 
+                        borderColor: '#ec4899', 
+                        borderWidth: 2, 
+                        pointBackgroundColor: '#ec4899',
+                        pointRadius: 5, // Dot Chart Style
+                        pointHoverRadius: 7,
+                        tension: 0.2 
+                    }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { y: { display: false, min: 1, max: 5 }, x: { display: false } }
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { display: true, min: 0, max: 5.5, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }, 
+                        x: { display: true, grid: { display: false }, ticks: { color: '#94a3b8' } } 
+                    }
                 }
             });
         }
@@ -697,9 +692,11 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
         function renderComments(data) {
             const list = document.getElementById('commentsList');
             list.innerHTML = '';
+            
             data.slice(0, 40).forEach(item => {
                 const isAlert = item.rating <= 2;
                 const borderClass = isAlert ? 'border-l-4 border-red-500 bg-red-900/10' : 'border border-white/5 bg-white/5';
+                
                 let responsesHTML = '';
                 if(item.responses) {
                     item.responses.forEach(r => {
@@ -711,14 +708,13 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
                         `;
                     });
                 }
+                
                 let headerContent = '';
                 if(adminViewMode === 'detailed') {
+                    // FULL VISIBILITY (No Blur, No Toggles)
                     headerContent = `
                         <div class="flex justify-between items-center mb-1">
-                            <div class="flex items-center gap-2 overflow-hidden">
-                                <span class="text-[10px] text-cyan-400 font-mono font-bold privacy-mask" onclick="toggleReveal(this)">${item.name} (${item.roll})</span>
-                                <button onclick="toggleReveal(this.previousElementSibling)" class="text-gray-500 hover:text-cyan-400 px-1"><i class="fa-solid fa-eye text-xs"></i></button>
-                            </div>
+                            <span class="text-[10px] text-cyan-400 font-mono font-bold">${item.name} <span class="text-gray-500 font-normal">(${item.roll})</span></span>
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] text-yellow-400">★${item.rating}</span>
                                 <button onclick="deleteFeedback('${item.id}')" class="text-gray-500 hover:text-red-500 px-1"><i class="fa-solid fa-trash text-xs"></i></button>
@@ -726,6 +722,7 @@ apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
                         </div>
                     `;
                 } else {
+                    // ANONYMOUS
                     headerContent = `
                         <div class="flex justify-between items-center mb-1">
                             <span class="text-[10px] text-gray-500 font-mono italic">Student Feedback</span>
