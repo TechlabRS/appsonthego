@@ -1553,8 +1553,53 @@
         /* --- SUPPORT --- */
         function populateAccountSelect(id) { const s=document.getElementById(id); s.innerHTML=''; appData.accounts.forEach(a=>{ if(a.type!=='investment') s.innerHTML+=`<option value="${a.id}">${a.name}</option>` }); }
         function populateAccountFilter() { const s=document.getElementById('filter-account'); s.innerHTML='<option value="all">All Accounts</option>'; appData.accounts.forEach(a=>s.innerHTML+=`<option value="${a.id}">${a.name}</option>`); }
-        function handleFileSelect(e) { const r=new FileReader(); r.onload=ev=>{ try{appData=JSON.parse(ev.target.result);saveData();location.reload();}catch(x){showToast("Error importing file", true);} }; r.readAsText(e.target.files[0]); }
-        function triggerImport(){document.getElementById('import-file').click()} 
+        function handleFileSelect(e) {
+            const r = new FileReader();
+            r.onload = ev => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    const hasData = appData.transactions.length > 0 || appData.accounts.length > DEFAULT_ACCOUNTS.length;
+                    
+                    let doMerge = true;
+                    if (hasData) {
+                        doMerge = confirm("Existing data found.\n\nOK = MERGE imported data (Safe)\nCancel = OVERWRITE with imported data (Risk)");
+                    }
+
+                    if (doMerge) {
+                        // MERGE: Keep local if ID conflicts
+                        const txIds = new Set(appData.transactions.map(t => t.id));
+                        (imported.transactions || []).forEach(t => { if (!txIds.has(t.id)) appData.transactions.push(t); });
+
+                        const accIds = new Set(appData.accounts.map(a => a.id));
+                        (imported.accounts || []).forEach(a => { if (!accIds.has(a.id)) appData.accounts.push(a); });
+
+                        const pIds = new Set(appData.portfolio.map(p => p.id));
+                        (imported.portfolio || []).forEach(p => { if (!pIds.has(p.id)) appData.portfolio.push(p); });
+
+                        // Merge categories
+                        ['expense', 'income', 'investment'].forEach(k => {
+                            const existing = new Set(appData.categories[k] || []);
+                            (imported.categories[k] || []).forEach(c => existing.add(c));
+                            appData.categories[k] = Array.from(existing);
+                        });
+                        
+                        if(imported.reminders) appData.reminders = [...appData.reminders, ...imported.reminders];
+
+                        showToast("Data Merged Successfully");
+                    } else {
+                        // Overwrite
+                        appData = imported;
+                        showToast("Data Restored Successfully");
+                    }
+                    saveData();
+                    setTimeout(() => location.reload(), 500);
+                } catch (x) {
+                    showToast("Invalid File", true);
+                }
+            };
+            r.readAsText(e.target.files[0]);
+		}
+		function triggerImport(){document.getElementById('import-file').click()} 
         function exportData(){ const now = new Date();
             const dateStr = now.toISOString().split('T')[0];
             const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
@@ -1609,4 +1654,5 @@
         window.onclick = e => { if(e.target.classList.contains('fixed')) e.target.classList.add('hidden'); }
     </script>
 </body>
+
 </html>
