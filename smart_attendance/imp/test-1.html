@@ -352,7 +352,7 @@
         const ATTENDANCE_RADIUS_METERS = 10; 
         const FACE_MATCH_THRESHOLD = 0.38; // STRICTER THRESHOLD (Lower is stricter)
         const OTP_REFRESH_RATE = 30; 
-        const PHOTO_RETENTION_DAYS = 7;
+        const PHOTO_RETENTION_DAYS = 3;
 
         // --- STATE ---
         window.appState = {
@@ -1457,17 +1457,36 @@
             
             // Normal Close
             if(confirm("End class?")) { 
-                clearInterval(otpInterval); 
-                if(currentSessionId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', currentSessionId), { active: false }); 
-                location.reload(); 
+                // 1. Stop the Timer
+                if(otpInterval) clearInterval(otpInterval); 
+                
+                // 2. Mark session as inactive in DB
+                if(currentSessionId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', currentSessionId), { active: false }); 
+                }
+
+                // 3. FIX: Reset UI instead of Reloading Page
+                currentSessionId = null;
+                switchFacTab('session'); // This re-renders the Session Panel
+                showToast("Session Ended", "success");
             } 
         }
         
         window.forceCloseSession = async () => {
              if(confirm("Close without resolving pending requests?")) {
-                clearInterval(otpInterval); 
-                if(currentSessionId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', currentSessionId), { active: false }); 
-                location.reload();
+                // 1. Stop the Timer
+                if(otpInterval) clearInterval(otpInterval); 
+                
+                // 2. Mark session as inactive in DB
+                if(currentSessionId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', currentSessionId), { active: false }); 
+                }
+
+                // 3. FIX: Reset UI instead of Reloading Page
+                document.getElementById('pending-review-modal').classList.add('hidden');
+                currentSessionId = null;
+                switchFacTab('session'); // Re-renders the Session Panel
+                showToast("Session Closed (Pending Ignored)", "orange");
              }
         }
 
@@ -1913,39 +1932,72 @@
 
         // Attendance Flow (UPDATED)
         window.startAttendanceFlow = async (sessionId, lat, lng, subjectName) => {
+            // 0. Pre-checks
             if(!window.appState.faceDescriptor) return showToast("Enroll Face First", "error");
-            showToast("Checking GPS...", "info");
+            showToast("Verifying...", "info");
             
-            // 1. DUPLICATE CHECK
+            // 1. DUPLICATE CHECK (First, save resources)
             try {
                 const qDup = query(getAttPath(), where("sessionId", "==", sessionId), where("studentId", "==", window.appState.userId));
                 const dupSnap = await getDocs(qDup);
                 if (!dupSnap.empty) return showToast("Attendance already marked.", "error");
             } catch(e) { console.error("Dup check error", e); }
+
+            // 2. OTP CHECK (CRITICAL: Must happen BEFORE GPS to prevent bypass)
+            let otp = window.appState.verifiedOTP;
             
-            // 2. GPS CHECK
+            // If we haven't verified OTP for *this* session yet, ask for it now
+            if (window.appState.verifiedSessionId !== sessionId) {
+                otp = await openOtpModal(); 
+                if (!otp) return; // User cancelled OTP
+                
+                // Verify against DB
+                const sessRef = doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId);
+                const sessSnap = await getDoc(sessRef);
+                
+                if (!sessSnap.exists() || !sessSnap.data().active) { 
+                    showToast("Session Closed", "error"); 
+                    return; 
+                }
+                
+                if (sessSnap.data().otp !== otp) {
+                    return showToast("Invalid OTP", "error");
+                }
+                
+                // Success: Cache it so we don't ask again if GPS fails/retries
+                window.appState.verifiedSessionId = sessionId;
+                window.appState.verifiedOTP = otp;
+            }
+            
+            // 3. GPS CHECK (Now safe to run, as OTP is confirmed)
             try {
+                showToast("Checking GPS...", "info");
                 const pos = await getCurrentLocation();
                 const dist = getDistanceFromLatLonInM(pos.lat, pos.lng, lat, lng);
-                showToast(`Your Distance is ${Math.round(dist)} m`);
                 
-                // --- GPS FAILED / TOO FAR ---
+                // --- CASE A: GPS TOO FAR ---
                 if (dist > ATTENDANCE_RADIUS_METERS) {
                     if (confirm(`You are too far (${Math.round(dist)}m). Request manual attendance with photo evidence?`)) {
-                        // OPEN CAMERA to capture evidence
+                        
+                        // Open Camera to capture proof AND verify face
                         openCamera('manual', async (desc, score, img) => {
                             try {
+                                // Verify Face Matches (Even if GPS failed)
+                                const faceDist = faceapi.euclideanDistance(desc, window.appState.faceDescriptor);
+                                const isFaceVerified = faceDist < FACE_MATCH_THRESHOLD;
+
                                 const attData = { 
                                     sessionId, 
                                     studentId: window.appState.userId, 
                                     studentName: window.appState.studentProfile.name, 
                                     studentRoll: window.appState.studentProfile.rollNo, 
                                     timestamp: serverTimestamp(), 
-                                    status: 'pending', // Pending Approval
-                                    verified: false,   // Not Verified by System
+                                    status: 'pending',        // PENDING (Needs Faculty Approval)
+                                    verified: isFaceVerified, // TRUE if face matches (Helpful for faculty)
                                     capturedPhoto: img,
-                                    gpsDistance: Math.round(dist) // Optional: Save distance for faculty to see
+                                    gpsDistance: Math.round(dist) // Log the distance
                                 }; 
+                                
                                 await addDoc(getAttPath(), attData);
                                 showToast("Request Sent (Pending Approval)", "info"); 
                                 switchTab('student');
@@ -1953,44 +2005,33 @@
                                 showToast("Request Failed", "error"); 
                             }
                         });
-                        return; // Stop execution here
+                        return; // Stop here, don't run standard flow
                     } else {
                         return showToast(`Too far (${Math.round(dist)}m)`, "error");
                     }
                 }
-            } catch (e) { return showToast("GPS Error", "error"); }
-
-            // 3. OTP CHECK (Only if GPS Passed)
-            let otp = window.appState.verifiedOTP;
-            if (window.appState.verifiedSessionId !== sessionId) {
-                otp = await openOtpModal(); if (!otp) return;
-                
-                const sessRef = doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId);
-                const sessSnap = await getDoc(sessRef);
-                if (!sessSnap.exists() || !sessSnap.data().active) { 
-                    showToast("Session Closed", "error"); 
-                    return; 
+            } catch (e) { 
+                // Handle GPS Errors (Timeout/Permission)
+                if(confirm("GPS Signal Failed. Request manual attendance?")) {
+                     // ... Reuse manual flow logic here if desired ...
                 }
-                if (sessSnap.data().otp !== otp) return showToast("Invalid OTP", "error");
-                
-                window.appState.verifiedSessionId = sessionId;
-                window.appState.verifiedOTP = otp;
+                return showToast("GPS Error", "error"); 
             }
 
-            // 4. STANDARD FACE VERIFICATION (GPS & OTP Passed)
+            // 4. STANDARD FLOW (GPS & OTP Passed)
             const runVerification = () => {
                 openCamera('verify', async (desc, score, img) => {
                     const dist = faceapi.euclideanDistance(desc, window.appState.faceDescriptor);
                     
                     if (dist < FACE_MATCH_THRESHOLD) {
-                        // SUCCESS
+                        // SUCCESS: Face + GPS + OTP all good
                         try {
                             const attData = { sessionId, studentId: window.appState.userId, studentName: window.appState.studentProfile.name, studentRoll: window.appState.studentProfile.rollNo, timestamp: serverTimestamp(), status: 'present', verified: true, capturedPhoto: img };
                             await addDoc(getAttPath(), attData);
                             showSuccessModal(img, window.appState.studentProfile.name, subjectName || 'this class', new Date().toLocaleString());
                         } catch(e) { showToast("Save Failed", "error"); }
                     } else {
-                        // FAIL (Face Mismatch)
+                        // FAIL: Face Mismatch
                         if (confirm("Face verification failed. Request manual attendance?")) {
                              try {
                                 const attData = { sessionId, studentId: window.appState.userId, studentName: window.appState.studentProfile.name, studentRoll: window.appState.studentProfile.rollNo, timestamp: serverTimestamp(), status: 'pending', verified: false, capturedPhoto: img }; 
