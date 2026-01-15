@@ -1492,7 +1492,41 @@
              } catch(e) { console.error(e); }
         };
         
-        async function updateOTP(sessionId) { const newOtp = Math.floor(1000 + Math.random() * 9000).toString(); document.getElementById('display-otp').innerText = newOtp; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), { otp: newOtp }); }
+        //async function updateOTP(sessionId) { const newOtp = Math.floor(1000 + Math.random() * 9000).toString(); document.getElementById('display-otp').innerText = newOtp; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), { otp: newOtp }); }
+
+        // new otp logic
+        window.updateOTP = async (sessionId) => {
+            // 1. SAFETY CHECK: Is the OTP element actually on the screen?
+            const otpDisplay = document.getElementById('display-otp');
+            
+            // If the element is missing (user switched tabs), STOP here.
+            if (!otpDisplay) {
+                console.log("User left session screen. Skipping OTP update.");
+                return; 
+            }
+
+            // 2. Generate New OTP
+            const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
+            
+            // 3. Update UI (Safe now because we checked existence above)
+            otpDisplay.innerText = newOtp;
+            
+            // 4. Update Database
+            try {
+                // Only update if session is still valid/active
+                if(window.appState.verifiedSessionId === sessionId) {
+                    window.appState.verifiedOTP = newOtp;
+                }
+                
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionId), { 
+                    otp: newOtp,
+                    lastUpdated: serverTimestamp() 
+                });
+                
+            } catch(e) {
+                console.error("Failed to sync OTP to DB", e);
+            }
+        };
         
         window.endSession = async () => {
             // Check for pending requests first
