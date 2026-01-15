@@ -1916,23 +1916,52 @@
             if(!window.appState.faceDescriptor) return showToast("Enroll Face First", "error");
             showToast("Checking GPS...", "info");
             
-            // --- DUPLICATE CHECK ---
+            // 1. DUPLICATE CHECK
             try {
                 const qDup = query(getAttPath(), where("sessionId", "==", sessionId), where("studentId", "==", window.appState.userId));
                 const dupSnap = await getDocs(qDup);
                 if (!dupSnap.empty) return showToast("Attendance already marked.", "error");
             } catch(e) { console.error("Dup check error", e); }
             
+            // 2. GPS CHECK
             try {
                 const pos = await getCurrentLocation();
                 const dist = getDistanceFromLatLonInM(pos.lat, pos.lng, lat, lng);
-                if (dist > ATTENDANCE_RADIUS_METERS) return showToast(`Too far (${Math.round(dist)}m)`, "error");
+                showToast(`Your Distance is ${Math.round(dist)} m`);
+                
+                // --- GPS FAILED / TOO FAR ---
+                if (dist > ATTENDANCE_RADIUS_METERS) {
+                    if (confirm(`You are too far (${Math.round(dist)}m). Request manual attendance with photo evidence?`)) {
+                        // OPEN CAMERA to capture evidence
+                        openCamera('manual', async (desc, score, img) => {
+                            try {
+                                const attData = { 
+                                    sessionId, 
+                                    studentId: window.appState.userId, 
+                                    studentName: window.appState.studentProfile.name, 
+                                    studentRoll: window.appState.studentProfile.rollNo, 
+                                    timestamp: serverTimestamp(), 
+                                    status: 'pending', // Pending Approval
+                                    verified: false,   // Not Verified by System
+                                    capturedPhoto: img,
+                                    gpsDistance: Math.round(dist) // Optional: Save distance for faculty to see
+                                }; 
+                                await addDoc(getAttPath(), attData);
+                                showToast("Request Sent (Pending Approval)", "info"); 
+                                switchTab('student');
+                            } catch(e) { 
+                                showToast("Request Failed", "error"); 
+                            }
+                        });
+                        return; // Stop execution here
+                    } else {
+                        return showToast(`Too far (${Math.round(dist)}m)`, "error");
+                    }
+                }
             } catch (e) { return showToast("GPS Error", "error"); }
 
-            // --- OTP LOGIC (PERSISTENT) ---
+            // 3. OTP CHECK (Only if GPS Passed)
             let otp = window.appState.verifiedOTP;
-            
-            // Only ask for OTP if we haven't verified for THIS specific session
             if (window.appState.verifiedSessionId !== sessionId) {
                 otp = await openOtpModal(); if (!otp) return;
                 
@@ -1940,20 +1969,15 @@
                 const sessSnap = await getDoc(sessRef);
                 if (!sessSnap.exists() || !sessSnap.data().active) { 
                     showToast("Session Closed", "error"); 
-                    const list = document.getElementById('active-sessions-list'); if(list) list.innerHTML = ''; 
                     return; 
                 }
                 if (sessSnap.data().otp !== otp) return showToast("Invalid OTP", "error");
                 
-                // Cache Success
                 window.appState.verifiedSessionId = sessionId;
                 window.appState.verifiedOTP = otp;
             }
 
-            // --- FACE VERIFICATION WITH RETRIES ---
-            let attempts = 0;
-            const MAX_ATTEMPTS = 2;
-
+            // 4. STANDARD FACE VERIFICATION (GPS & OTP Passed)
             const runVerification = () => {
                 openCamera('verify', async (desc, score, img) => {
                     const dist = faceapi.euclideanDistance(desc, window.appState.faceDescriptor);
@@ -1963,41 +1987,23 @@
                         try {
                             const attData = { sessionId, studentId: window.appState.userId, studentName: window.appState.studentProfile.name, studentRoll: window.appState.studentProfile.rollNo, timestamp: serverTimestamp(), status: 'present', verified: true, capturedPhoto: img };
                             await addDoc(getAttPath(), attData);
-                            
-                            // UPDATED: Show Success Modal instead of Toast/Redirect
-                            showSuccessModal(
-                                img, 
-                                window.appState.studentProfile.name, 
-                                subjectName || 'this class', 
-                                new Date().toLocaleString()
-                            );
-                            
+                            showSuccessModal(img, window.appState.studentProfile.name, subjectName || 'this class', new Date().toLocaleString());
                         } catch(e) { showToast("Save Failed", "error"); }
                     } else {
-                        // FAIL
-                        attempts++;
-                        if (attempts < MAX_ATTEMPTS) {
-                            showToast(`Mismatch (${attempts}/${MAX_ATTEMPTS}). Try again.`, "error");
-                            setTimeout(runVerification, 1000); // Auto retry after 1s
-                        } else {
-                            // MAX ATTEMPTS REACHED -> MANUAL REQUEST
-                            if (confirm("Face verification failed 3 times. Request manual attendance with this photo?")) {
-                                 try {
-                                    // CHANGE STATUS TO PENDING (Previously was 'present')
-                                    const attData = { sessionId, studentId: window.appState.userId, studentName: window.appState.studentProfile.name, studentRoll: window.appState.studentProfile.rollNo, timestamp: serverTimestamp(), status: 'pending', verified: false, capturedPhoto: img }; 
-                                    await addDoc(getAttPath(), attData);
-                                    showToast("Request Sent (Pending Approval)", "info"); 
-                                    switchTab('student');
-                                } catch(e) { showToast("Request Failed", "error"); }
-                            } else {
-                                showToast("Verification Cancelled", "info");
-                            }
+                        // FAIL (Face Mismatch)
+                        if (confirm("Face verification failed. Request manual attendance?")) {
+                             try {
+                                const attData = { sessionId, studentId: window.appState.userId, studentName: window.appState.studentProfile.name, studentRoll: window.appState.studentProfile.rollNo, timestamp: serverTimestamp(), status: 'pending', verified: false, capturedPhoto: img }; 
+                                await addDoc(getAttPath(), attData);
+                                showToast("Request Sent", "info"); 
+                                switchTab('student');
+                            } catch(e) { showToast("Request Failed", "error"); }
                         }
                     }
                 });
             };
 
-            runVerification(); // Start flow
+            runVerification(); 
         };
 
         // NEW: Success Modal Helper Functions
