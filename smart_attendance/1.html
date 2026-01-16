@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Medha Presence | Enterprise</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['Fira Code', 'monospace'] },
+                    colors: {
+                        brand: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488', 900: '#134e4a' }
+                    },
+                    animation: { 'scan': 'scan 2s linear infinite', 'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)' },
+                    keyframes: {
+                        scan: { '0%, 100%': { top: '0%' }, '50%': { top: '100%' } },
+                        pop: { '0%': { transform: 'scale(0.9)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Face API & Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Icons & Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@500&display=swap" rel="stylesheet">
+
+    <style>
+        body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .video-feed { transform: scaleX(-1); object-fit: cover; }
+        
+        /* Skeleton Loading Animation */
+        .skeleton { background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col text-slate-800 selection:bg-brand-100">
+
+    <!-- Global Toast Container -->
+    <div id="toast-mount" class="fixed top-4 left-1/2 -translate-x-1/2 z-[150] flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4"></div>
+
+    <!-- Modals Mount Point -->
+    <div id="modal-mount" class="relative z-[100]"></div>
+
+    <!-- Main App Container -->
+    <main id="app-view" class="flex-1 overflow-y-auto relative scroll-smooth bg-slate-50/50 pb-20">
+        <!-- Views injected here -->
+        <div class="flex flex-col items-center justify-center h-full space-y-4">
+            <div class="w-8 h-8 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
+            <p class="text-xs font-semibold text-slate-400 tracking-widest animate-pulse">SYSTEM INITIALIZING...</p>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (Context Aware) -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200 grid grid-cols-2 py-2 pb-safe z-40 hidden transition-transform translate-y-full">
+        <button data-target="student" class="nav-btn group flex flex-col items-center gap-1 p-2">
+            <div class="w-10 h-8 rounded-xl flex items-center justify-center group-[.active]:bg-brand-50 transition-colors">
+                <i class="fa-solid fa-user-graduate text-xl text-slate-400 group-[.active]:text-brand-600 transition-colors"></i>
+            </div>
+            <span class="text-[10px] font-semibold text-slate-400 group-[.active]:text-brand-900">Student</span>
+        </button>
+        <button data-target="faculty" class="nav-btn group flex flex-col items-center gap-1 p-2">
+            <div class="w-10 h-8 rounded-xl flex items-center justify-center group-[.active]:bg-brand-50 transition-colors">
+                <i class="fa-solid fa-chalkboard-user text-xl text-slate-400 group-[.active]:text-brand-600 transition-colors"></i>
+            </div>
+            <span class="text-[10px] font-semibold text-slate-400 group-[.active]:text-brand-900">Faculty</span>
+        </button>
+    </nav>
+
+    <!-- MODULE SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, doc, setDoc, getDoc, onSnapshot, serverTimestamp, updateDoc, deleteField, writeBatch, deleteDoc, Timestamp, orderBy, limit, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        /**
+         * ------------------------------------------------------------------
+         * CONFIGURATION & CONSTANTS
+         * ------------------------------------------------------------------
+         */
+        
+        // --- HARDCODED FIREBASE CONFIG ---
+        const FIREBASE_CONFIG = {
+          apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+  authDomain: "stuattnd.firebaseapp.com",
+  projectId: "stuattnd",
+  storageBucket: "stuattnd.firebasestorage.app",
+  messagingSenderId: "511533506488",
+  appId: "1:511533506488:web:aca4de3d513915d012f94d",
+  measurementId: "G-9PZZM5LFKX"
+        };
+        // ---------------------------------
+
+        const CONFIG = {
+            APP_ID: typeof __app_id !== 'undefined' ? __app_id : 'medha-prod-01',
+            MAX_CACHE_AGE: 1000 * 60 * 60 * 24 * 7, // 7 Days
+            FACE_MATCH_THRESHOLD: 0.4, // Lower is stricter
+            GPS_RADIUS: 5000, // Meters (Relaxed for demo)
+            PAGINATION_LIMIT: 20
+        };
+
+        const COLLECTIONS = {
+            STUDENTS: 'students',
+            MASTER: 'master_students',
+            SESSIONS: 'sessions',
+            ATTENDANCE: 'attendance',
+            FACULTY: 'faculty_data'
+        };
+
+        /**
+         * ------------------------------------------------------------------
+         * SERVICE: SECURITY & UTILS
+         * ------------------------------------------------------------------
+         */
+        class SecurityService {
+            static sanitize(input) {
+                if (!input) return '';
+                const div = document.createElement('div');
+                div.textContent = input;
+                return div.innerHTML.replace(/[^\w\s@.-]/gi, ''); // Allow basic chars
+            }
+
+            static async hash(str) {
+                const msgBuffer = new TextEncoder().encode(str);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            // In production, move this check to Cloud Functions
+            static async verifyMasterKey(inputKey) {
+                // Hash of "ADMIN123"
+                const VALID_HASH = "b257d4499962eb197c6f57ca98113d9dd244aa007a5cb27ae067567135ba8fb9";
+                return (await this.hash(inputKey)) === VALID_HASH;
+            }
+        }
+
+        class ErrorHandler {
+            static handle(error, userMessage = "An unexpected error occurred.") {
+                console.error(" [System Error] ", error);
+                
+                // Parse Firebase Errors for user friendliness
+                if (error.code === 'permission-denied') userMessage = "Access Denied.";
+                if (error.code === 'unavailable') userMessage = "Network Error. Check connection.";
+                
+                UI.toast(userMessage, 'error');
+            }
+        }
+
+        /**
+         * ------------------------------------------------------------------
+         * SERVICE: STATE MANAGEMENT (Store + PubSub)
+         * ------------------------------------------------------------------
+         */
+        class Store {
+            constructor() {
+                this.state = {
+                    user: null,
+                    profile: null,
+                    role: 'student', // 'student' | 'faculty'
+                    modelsLoaded: false,
+                    isFacultyAuth: false,
+                    currentSession: null
+                };
+                this.listeners = new Map();
+            }
+
+            get(key) { return this.state[key]; }
+
+            set(key, value) {
+                this.state[key] = value;
+                this.notify(key, value);
+            }
+
+            subscribe(key, callback) {
+                if (!this.listeners.has(key)) this.listeners.set(key, new Set());
+                this.listeners.get(key).add(callback);
+                // Return unsubscribe function
+                return () => this.listeners.get(key).delete(callback);
+            }
+
+            notify(key, value) {
+                if (this.listeners.has(key)) {
+                    this.listeners.get(key).forEach(cb => cb(value));
+                }
+            }
+        }
+        const appStore = new Store();
+
+        /**
+         * ------------------------------------------------------------------
+         * SERVICE: FACE AI (Memory Safe)
+         * ------------------------------------------------------------------
+         */
+        class FaceService {
+            static async loadModels() {
+                if (appStore.get('modelsLoaded')) return;
+                const URL = 'https://cdn.jsdelivr.net/gh/cgarciagl/face-api.js@0.22.2/weights/';
+                try {
+                    await Promise.all([
+                        faceapi.nets.tinyFaceDetector.loadFromUri(URL),
+                        faceapi.nets.faceLandmark68TinyNet.loadFromUri(URL),
+                        faceapi.nets.faceRecognitionNet.loadFromUri(URL)
+                    ]);
+                    appStore.set('modelsLoaded', true);
+                    console.log("AI Models Loaded");
+                } catch (e) { ErrorHandler.handle(e, "Failed to load AI models."); }
+            }
+
+            static startDetection(videoEl, onFaceDetected) {
+                // Ensure models are loaded
+                if(!appStore.get('modelsLoaded')) return;
+
+                const canvas = document.createElement('canvas');
+                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+                let isRunning = true;
+
+                const detectLoop = async () => {
+                    if (!isRunning || videoEl.paused || videoEl.ended) return;
+
+                    // TENSOR CLEANUP: Critical for WebGL memory safety
+                    // We wrap the detection in a logic block, but face-api creates tensors internally
+                    // We rely on face-api's internal dispose, but manually ensure we don't pile up promises
+                    
+                    try {
+                        const result = await faceapi.detectSingleFace(videoEl, options)
+                            .withFaceLandmarks(true)
+                            .withFaceDescriptor();
+
+                        if (result) {
+                            // Basic Liveness Check (Distance of nose to center)
+                            const nose = result.landmarks.getNose()[3];
+                            const box = result.detection.box;
+                            const centerX = box.x + box.width / 2;
+                            const deviation = Math.abs(nose.x - centerX) / box.width;
+                            
+                            // Only trigger if face is centered (< 20% deviation) and high score
+                            if (result.detection.score > 0.8 && deviation < 0.2) {
+                                onFaceDetected(result);
+                            }
+                        }
+                    } catch (e) { console.warn("Detection skipped frame"); }
+
+                    if (isRunning) requestAnimationFrame(detectLoop);
+                };
+
+                detectLoop();
+
+                return () => { isRunning = false; }; // Stop function
+            }
+        }
+
+        /**
+         * ------------------------------------------------------------------
+         * SERVICE: DATA & FIRESTORE
+         * ------------------------------------------------------------------
+         */
+        class DataService {
+            constructor() {
+                this.db = null;
+                this.auth = null;
+            }
+
+            init() {
+                // Use the hardcoded config
+                // Fallback to __firebase_config only if defined in environment
+                const configToUse = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG;
+
+                const app = initializeApp(configToUse);
+                this.auth = getAuth(app);
+                this.db = getFirestore(app);
+                
+                // Auth Flow
+                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                const authPromise = token ? signInWithCustomToken(this.auth, token) : signInAnonymously(this.auth);
+                
+                authPromise.then((creds) => {
+                    appStore.set('user', creds.user);
+                    this.loadProfile(creds.user.uid);
+                }).catch(e => ErrorHandler.handle(e, "Auth Failed"));
+            }
+
+            getPath(col) {
+                const uid = appStore.get('user')?.uid;
+                if(col === COLLECTIONS.FACULTY) return `artifacts/${CONFIG.APP_ID}/users/${uid}/${col}`; // Private
+                return `artifacts/${CONFIG.APP_ID}/public/data/${col}`; // Public data
+            }
+
+            async loadProfile(uid) {
+                // Try Student
+                const studentRef = doc(this.db, this.getPath(COLLECTIONS.STUDENTS), uid);
+                const studentSnap = await getDoc(studentRef);
+                
+                if(studentSnap.exists()) {
+                    appStore.set('profile', { type: 'student', ...studentSnap.data() });
+                    appStore.set('role', 'student');
+                    UI.initNav();
+                    return;
+                }
+
+                // Try Faculty (Check private doc)
+                const facultyRef = doc(this.db, `artifacts/${CONFIG.APP_ID}/users/${uid}/faculty_data`, 'creds');
+                const facultySnap = await getDoc(facultyRef);
+                
+                if(facultySnap.exists()) {
+                    appStore.set('profile', { type: 'faculty', ...facultySnap.data() });
+                    appStore.set('role', 'faculty'); // Force role
+                } else {
+                    appStore.set('profile', null); // New User
+                }
+                UI.initNav();
+            }
+
+            // Optimized Query with Pagination
+            async getPaginatedDocs(collectionName, constraints = [], lastDoc = null) {
+                let q = query(
+                    collection(this.db, this.getPath(collectionName)),
+                    ...constraints,
+                    limit(CONFIG.PAGINATION_LIMIT)
+                );
+                if (lastDoc) q = query(q, startAfter(lastDoc));
+                return await getDocs(q);
+            }
+        }
+        const dataService = new DataService();
+
+        /**
+         * ------------------------------------------------------------------
+         * VIEW MANAGER (Router & Cleanup)
+         * ------------------------------------------------------------------
+         */
+        class ViewManager {
+            constructor() {
+                this.mountPoint = document.getElementById('app-view');
+                this.activeCleanups = []; // Array of functions to run on view switch
+            }
+
+            clear() {
+                // Run all cleanup functions (stop listeners, intervals)
+                this.activeCleanups.forEach(fn => fn && fn());
+                this.activeCleanups = [];
+                this.mountPoint.innerHTML = '';
+            }
+
+            registerCleanup(fn) {
+                this.activeCleanups.push(fn);
+            }
+
+            render(htmlContent) {
+                this.clear();
+                this.mountPoint.innerHTML = htmlContent;
+                window.scrollTo(0,0);
+            }
+        }
+        const router = new ViewManager();
+
+        /**
+         * ------------------------------------------------------------------
+         * UI COMPONENTS & LOGIC
+         * ------------------------------------------------------------------
+         */
+        const UI = {
+            toast(msg, type = 'info') {
+                const mount = document.getElementById('toast-mount');
+                const el = document.createElement('div');
+                const colors = { error: 'bg-red-500', success: 'bg-emerald-600', info: 'bg-slate-800' };
+                
+                el.className = `${colors[type]} text-white px-4 py-3 rounded-lg shadow-xl text-xs font-bold transform transition-all duration-300 translate-y-4 opacity-0 flex items-center gap-3`;
+                el.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> <span>${msg}</span>`;
+                
+                mount.appendChild(el);
+                requestAnimationFrame(() => el.classList.remove('translate-y-4', 'opacity-0'));
+                setTimeout(() => {
+                    el.classList.add('opacity-0', '-translate-y-2');
+                    setTimeout(() => el.remove(), 300);
+                }, 4000);
+            },
+
+            initNav() {
+                const nav = document.getElementById('bottom-nav');
+                const role = appStore.get('role');
+                
+                // Only show nav if profile exists
+                if (!appStore.get('profile')) return;
+
+                nav.classList.remove('hidden', 'translate-y-full');
+                
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.target === role);
+                    btn.onclick = () => {
+                        appStore.set('role', btn.dataset.target);
+                        UI.initNav();
+                        Views.route();
+                    };
+                });
+                Views.route();
+            },
+
+            modal(content) {
+                const mount = document.getElementById('modal-mount');
+                mount.innerHTML = `
+                    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-[pop_0.2s_ease-out]">
+                        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                            ${content}
+                            <button onclick="document.getElementById('modal-mount').innerHTML=''" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            skeleton(h = "h-12") {
+                return `<div class="skeleton w-full ${h} rounded-xl"></div>`;
+            }
+        };
+
+        /**
+         * ------------------------------------------------------------------
+         * VIEWS (Logic & Renderers)
+         * ------------------------------------------------------------------
+         */
+        const Views = {
+            route() {
+                const role = appStore.get('role');
+                const profile = appStore.get('profile');
+
+                if (!profile) {
+                    // Decide registration flow
+                    if (role === 'faculty') this.renderFacultyAuth();
+                    else this.renderStudentRegister();
+                    return;
+                }
+
+                if (role === 'student') this.renderStudentDashboard();
+                else if (role === 'faculty') {
+                    if (appStore.get('isFacultyAuth')) this.renderFacultyDashboard();
+                    else this.renderFacultyLogin();
+                }
+            },
+
+            // --- STUDENT VIEWS ---
+
+            renderStudentRegister() {
+                router.render(`
+                    <div class="min-h-full flex flex-col justify-center p-8 max-w-md mx-auto">
+                        <div class="mb-8">
+                            <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Student<br><span class="text-brand-600">Enrollment</span></h1>
+                            <p class="text-slate-500 text-sm">Link this device to your Roll Number.</p>
+                        </div>
+                        <div class="space-y-4">
+                            <input type="text" id="s-roll" class="w-full p-4 bg-white border border-slate-200 rounded-xl font-mono uppercase focus:border-brand-500 focus:ring-0 outline-none transition-colors" placeholder="Roll No (e.g. 21A51A0501)">
+                            <input type="text" id="s-name" class="w-full p-4 bg-white border border-slate-200 rounded-xl uppercase focus:border-brand-500 focus:ring-0 outline-none transition-colors" placeholder="Full Name">
+                            <button id="s-submit" class="w-full py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-200 hover:bg-brand-700 active:scale-95 transition-all">Complete Registration</button>
+                        </div>
+                    </div>
+                `);
+
+                document.getElementById('s-submit').onclick = async () => {
+                    const roll = SecurityService.sanitize(document.getElementById('s-roll').value).toUpperCase();
+                    const name = SecurityService.sanitize(document.getElementById('s-name').value).toUpperCase();
+                    if(!roll || !name) return UI.toast("All fields required", "error");
+
+                    try {
+                        // Check if Roll exists
+                        const q = query(collection(dataService.db, dataService.getPath(COLLECTIONS.STUDENTS)), where("rollNo", "==", roll));
+                        if(!(await getDocs(q)).empty) return UI.toast("Roll Number already registered", "error");
+
+                        // Try to get section from Master
+                        let section = 'A'; // Default
+                        const masterSnap = await getDoc(doc(dataService.db, dataService.getPath(COLLECTIONS.MASTER), roll));
+                        if(masterSnap.exists()) section = masterSnap.data().section || 'A';
+
+                        // Create Profile
+                        const uid = appStore.get('user').uid;
+                        await setDoc(doc(dataService.db, dataService.getPath(COLLECTIONS.STUDENTS), uid), {
+                            rollNo: roll, name, section, uid, status: 'approved', // Auto-approve for demo
+                            createdAt: serverTimestamp()
+                        });
+                        
+                        // Update State
+                        dataService.loadProfile(uid);
+
+                    } catch(e) { ErrorHandler.handle(e); }
+                };
+            },
+
+            renderStudentDashboard() {
+                const p = appStore.get('profile');
+                
+                router.render(`
+                    <div class="p-6 max-w-xl mx-auto space-y-6">
+                        <header class="flex justify-between items-center">
+                            <div>
+                                <h2 class="text-2xl font-bold text-slate-800">Hi, ${p.name.split(' ')[0]}</h2>
+                                <p class="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md inline-block mt-1">${p.rollNo}</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center font-bold border border-brand-100">${p.section}</div>
+                        </header>
+
+                        <!-- Face ID Status -->
+                        <div id="face-card" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer active:scale-95 transition-transform">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full ${p.faceDescriptor ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'} flex items-center justify-center">
+                                    <i class="fa-solid ${p.faceDescriptor ? 'fa-face-smile' : 'fa-face-frown'} text-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-700">${p.faceDescriptor ? 'Face ID Active' : 'Setup Face ID'}</p>
+                                    <p class="text-[10px] text-slate-400">${p.faceDescriptor ? 'Ready for attendance' : 'Required to mark attendance'}</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-slate-300"></i>
+                        </div>
+
+                        <!-- Active Sessions -->
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2"><div class="w-2 h-2 bg-brand-500 rounded-full animate-pulse"></div> Live Classes</h3>
+                            <div id="live-list" class="space-y-3">
+                                ${UI.skeleton()}
+                            </div>
+                        </div>
+
+                        <!-- History -->
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 mb-3">Recent Activity</h3>
+                            <div id="history-list" class="space-y-3 max-h-60 overflow-y-auto">
+                                ${UI.skeleton('h-10')}
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                // Event Listeners
+                document.getElementById('face-card').onclick = () => this.startEnrollment();
+                
+                // Fetch Live Sessions
+                const qLive = query(
+                    collection(dataService.db, dataService.getPath(COLLECTIONS.SESSIONS)),
+                    where("active", "==", true),
+                    where("section", "==", p.section) // Filter by section
+                );
+                
+                const unsubLive = onSnapshot(qLive, (snap) => {
+                    const el = document.getElementById('live-list');
+                    if(!el) return;
+                    el.innerHTML = '';
+                    
+                    if(snap.empty) {
+                        el.innerHTML = `<div class="text-center p-6 bg-white rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">No active classes for Section ${p.section}</div>`;
+                        return;
+                    }
+
+                    snap.forEach(doc => {
+                        const s = doc.data();
+                        const card = document.createElement('div');
+                        card.className = "bg-white p-4 rounded-xl shadow-sm border border-brand-100 flex justify-between items-center";
+                        card.innerHTML = `
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">${s.subject}</h4>
+                                <p class="text-[10px] text-slate-500">${s.facultyName || 'Faculty'} • <i class="fa-solid fa-clock"></i> ${s.timeSlot}</p>
+                            </div>
+                            <button class="bg-brand-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg shadow-brand-100 active:scale-95 transition-transform mark-btn">Mark</button>
+                        `;
+                        card.querySelector('.mark-btn').onclick = () => this.handleMarkAttendance(doc.id, s);
+                        el.appendChild(card);
+                    });
+                });
+                router.registerCleanup(unsubLive);
+
+                // Fetch History
+                const qHist = query(
+                    collection(dataService.db, dataService.getPath(COLLECTIONS.ATTENDANCE)),
+                    where("studentId", "==", appStore.get('user').uid),
+                    orderBy("timestamp", "desc"),
+                    limit(10)
+                );
+                
+                getDocs(qHist).then(snap => {
+                    const el = document.getElementById('history-list');
+                    if(!el) return;
+                    el.innerHTML = '';
+                    snap.forEach(doc => {
+                        const a = doc.data();
+                        const time = a.timestamp ? a.timestamp.toDate().toLocaleDateString() : 'N/A';
+                        el.innerHTML += `
+                            <div class="bg-white p-3 rounded-xl border border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <p class="font-bold text-xs text-slate-700">${a.subjectName || 'Class'}</p>
+                                    <p class="text-[10px] text-slate-400">${time}</p>
+                                </div>
+                                <span class="text-[10px] font-bold ${a.status === 'present' ? 'text-green-600 bg-green-50' : 'text-orange-500 bg-orange-50'} px-2 py-1 rounded-md capitalize">${a.status}</span>
+                            </div>
+                        `;
+                    });
+                });
+            },
+
+            startEnrollment() {
+                // Camera Modal
+                UI.modal(`
+                    <div class="relative overflow-hidden rounded-2xl bg-black aspect-[3/4] mb-4">
+                        <video id="cam-feed" class="absolute inset-0 w-full h-full object-cover video-feed" autoplay playsinline muted></video>
+                        <div class="absolute inset-0 border-[3px] border-white/30 rounded-full m-12 scale-100 transition-transform" id="face-guide"></div>
+                    </div>
+                    <p id="cam-status" class="text-center text-sm font-bold text-slate-600 mb-4">Position face in circle...</p>
+                    <button id="cam-cancel" class="w-full py-3 bg-slate-100 text-slate-600 font-bold rounded-xl">Cancel</button>
+                `);
+
+                const video = document.getElementById('cam-feed');
+                
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(stream => {
+                    video.srcObject = stream;
+                    
+                    const stopDetection = FaceService.startDetection(video, async (result) => {
+                        if(result.detection.score > 0.85) {
+                            stopDetection(); // Stop Loop
+                            stream.getTracks().forEach(t => t.stop()); // Stop Camera
+                            
+                            // Capture Image
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 320; canvas.height = 320;
+                            const ctx = canvas.getContext('2d');
+                            ctx.translate(320, 0); ctx.scale(-1, 1);
+                            ctx.drawImage(video, 0, 0, 320, 320);
+                            const imgData = canvas.toDataURL('image/jpeg', 0.7);
+
+                            // Save to Firestore
+                            UI.toast("Saving Profile...", "info");
+                            try {
+                                const uid = appStore.get('user').uid;
+                                const descArr = Array.from(result.descriptor);
+                                
+                                await updateDoc(doc(dataService.db, dataService.getPath(COLLECTIONS.STUDENTS), uid), {
+                                    faceDescriptor: descArr,
+                                    photoUrl: imgData,
+                                    updatedAt: serverTimestamp()
+                                });
+                                
+                                // Update local state
+                                const p = appStore.get('profile');
+                                p.faceDescriptor = descArr;
+                                appStore.set('profile', p);
+                                
+                                document.getElementById('modal-mount').innerHTML = ''; // Close Modal
+                                UI.toast("Face ID Updated", "success");
+                                this.renderStudentDashboard(); // Re-render
+
+                            } catch(e) { ErrorHandler.handle(e); }
+                        }
+                    });
+
+                    // Cleanup on modal close
+                    const closer = () => { stopDetection(); stream.getTracks().forEach(t => t.stop()); };
+                    document.getElementById('cam-cancel').onclick = () => { closer(); document.getElementById('modal-mount').innerHTML = ''; };
+                }).catch(e => { ErrorHandler.handle(e, "Camera access denied"); document.getElementById('modal-mount').innerHTML = ''; });
+            },
+
+            handleMarkAttendance(sessionId, sessionData) {
+                const p = appStore.get('profile');
+                if(!p.faceDescriptor) return UI.toast("Setup Face ID first", "error");
+
+                // Check Geolocation First
+                if(navigator.geolocation) {
+                    UI.toast("Verifying Location...", "info");
+                    navigator.geolocation.getCurrentPosition(async (pos) => {
+                        const dist = this.getDistInMeters(pos.coords.latitude, pos.coords.longitude, sessionData.lat, sessionData.lng);
+                        
+                        // Check OTP via Prompt
+                        const userOtp = prompt("Enter 4-Digit PIN displayed on screen:");
+                        if(!userOtp) return;
+                        
+                        // Verify OTP against DB (Realtime fetch for security)
+                        const sRef = await getDoc(doc(dataService.db, dataService.getPath(COLLECTIONS.SESSIONS), sessionId));
+                        if(sRef.data().otp !== userOtp) return UI.toast("Invalid PIN", "error");
+                        
+                        // Check Distance
+                        const inRange = dist <= CONFIG.GPS_RADIUS;
+                        if (!inRange) {
+                            if(!confirm(`You are ${Math.round(dist)}m away. Request remote attendance?`)) return;
+                        }
+
+                        // Start Face Auth
+                        this.runFaceVerification(sessionId, sessionData, inRange);
+
+                    }, (err) => UI.toast("GPS Required", "error"), { enableHighAccuracy: true });
+                } else {
+                    UI.toast("GPS not supported", "error");
+                }
+            },
+
+            runFaceVerification(sessionId, sessionData, isGpsVerified) {
+                UI.modal(`
+                    <div class="relative overflow-hidden rounded-2xl bg-black aspect-[3/4]">
+                        <video id="ver-feed" class="absolute inset-0 w-full h-full object-cover video-feed" autoplay playsinline muted></video>
+                    </div>
+                    <p class="text-center mt-4 text-sm font-bold animate-pulse">Verifying Face...</p>
+                `);
+
+                const video = document.getElementById('ver-feed');
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(stream => {
+                    video.srcObject = stream;
+                    
+                    const stop = FaceService.startDetection(video, async (result) => {
+                        const dist = faceapi.euclideanDistance(result.descriptor, new Float32Array(appStore.get('profile').faceDescriptor));
+                        
+                        if (dist < CONFIG.FACE_MATCH_THRESHOLD) {
+                            stop(); stream.getTracks().forEach(t => t.stop());
+                            document.getElementById('modal-mount').innerHTML = '';
+                            
+                            // DENORMALIZATION: Save Snapshot of Name/Roll/Section
+                            const p = appStore.get('profile');
+                            const status = isGpsVerified ? 'present' : 'pending'; // Pending if GPS failed
+                            
+                            try {
+                                await addDoc(collection(dataService.db, dataService.getPath(COLLECTIONS.ATTENDANCE)), {
+                                    sessionId,
+                                    studentId: appStore.get('user').uid,
+                                    studentName: p.name,
+                                    studentRoll: p.rollNo,
+                                    studentSection: p.section, // Snapshot
+                                    subjectName: sessionData.subject,
+                                    timestamp: serverTimestamp(),
+                                    status,
+                                    verified: true,
+                                    gpsVerified: isGpsVerified
+                                });
+                                UI.toast(isGpsVerified ? "Attendance Marked!" : "Request Sent (Remote)", "success");
+                            } catch(e) { ErrorHandler.handle(e); }
+                        }
+                    });
+                });
+            },
+
+            getDistInMeters(lat1, lon1, lat2, lon2) {
+                var R = 6371e3; // metres
+                var φ1 = lat1 * Math.PI/180;
+                var φ2 = lat2 * Math.PI/180;
+                var Δφ = (lat2-lat1) * Math.PI/180;
+                var Δλ = (lon2-lon1) * Math.PI/180;
+                var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            },
+
+            // --- FACULTY VIEWS ---
+            
+            renderFacultyLogin() {
+                router.render(`
+                    <div class="min-h-full flex flex-col justify-center p-8 max-w-sm mx-auto">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-6 text-center">Faculty Access</h2>
+                        <div class="space-y-4">
+                            <input type="password" id="f-pin" class="w-full p-4 bg-white border border-slate-200 rounded-xl text-center text-2xl tracking-widest outline-none focus:border-brand-500" maxlength="6" placeholder="PIN">
+                            <button id="f-login-btn" class="w-full py-4 bg-brand-900 text-white font-bold rounded-xl shadow-xl hover:bg-black transition-all">Unlock</button>
+                        </div>
+                        <p class="text-center mt-8 text-xs text-slate-400 cursor-pointer" onclick="UI.toast('Contact Admin', 'info')">Forgot PIN?</p>
+                    </div>
+                `);
+
+                document.getElementById('f-login-btn').onclick = () => {
+                    const pin = document.getElementById('f-pin').value;
+                    const p = appStore.get('profile');
+                    if (p.pin === pin) {
+                        appStore.set('isFacultyAuth', true);
+                        Views.renderFacultyDashboard();
+                    } else {
+                        UI.toast("Invalid PIN", "error");
+                    }
+                };
+            },
+
+            renderFacultyAuth() {
+                // Initial Setup for Faculty
+                router.render(`
+                    <div class="min-h-full flex flex-col justify-center p-8 max-w-md mx-auto">
+                        <h1 class="text-2xl font-bold text-slate-800 mb-2">Faculty Setup</h1>
+                        <p class="text-slate-500 text-sm mb-6">Secure your dashboard.</p>
+                        <div class="space-y-4">
+                            <input type="text" id="reg-name" placeholder="Full Name" class="w-full p-3 border rounded-lg">
+                            <input type="password" id="reg-pin" placeholder="Set 6-digit PIN" maxlength="6" class="w-full p-3 border rounded-lg">
+                            <input type="password" id="reg-key" placeholder="Master Key" class="w-full p-3 border border-red-100 rounded-lg">
+                            <button id="reg-btn" class="w-full bg-slate-900 text-white py-3 rounded-lg font-bold">Register</button>
+                        </div>
+                    </div>
+                `);
+                
+                document.getElementById('reg-btn').onclick = async () => {
+                    const key = document.getElementById('reg-key').value;
+                    if (await SecurityService.verifyMasterKey(key)) {
+                        const uid = appStore.get('user').uid;
+                        await setDoc(doc(dataService.db, `artifacts/${CONFIG.APP_ID}/users/${uid}/faculty_data`, 'creds'), {
+                            name: document.getElementById('reg-name').value,
+                            pin: document.getElementById('reg-pin').value
+                        });
+                        dataService.loadProfile(uid); // Reload
+                    } else {
+                        UI.toast("Invalid Master Key", "error");
+                    }
+                };
+            },
+
+            renderFacultyDashboard() {
+                router.render(`
+                    <div class="p-6 max-w-4xl mx-auto">
+                        <header class="flex justify-between items-center mb-6">
+                            <h1 class="text-2xl font-bold text-slate-800">Dashboard</h1>
+                            <button id="logout-btn" class="text-xs font-bold text-red-500 bg-red-50 px-3 py-2 rounded-lg">Lock</button>
+                        </header>
+                        
+                        <!-- Actions -->
+                        <div class="grid grid-cols-2 gap-4 mb-8">
+                            <button id="new-sess-btn" class="p-6 bg-brand-600 rounded-2xl text-white shadow-lg shadow-brand-200 text-left hover:scale-[1.02] transition-transform">
+                                <i class="fa-solid fa-plus text-2xl mb-2 block"></i>
+                                <span class="font-bold">New Session</span>
+                            </button>
+                            <button onclick="UI.toast('Feature coming soon', 'info')" class="p-6 bg-white rounded-2xl border border-slate-200 text-slate-600 text-left hover:bg-slate-50 transition-colors">
+                                <i class="fa-solid fa-file-csv text-2xl mb-2 block text-slate-400"></i>
+                                <span class="font-bold text-sm">Reports</span>
+                            </button>
+                        </div>
+
+                        <!-- Active Session Card -->
+                        <div id="active-session-container" class="mb-8 hidden"></div>
+
+                        <!-- Recent Sessions List -->
+                        <h3 class="font-bold text-slate-800 mb-4">Recent Sessions</h3>
+                        <div id="sess-list" class="space-y-3">
+                            ${UI.skeleton()}
+                        </div>
+                    </div>
+                `);
+
+                document.getElementById('logout-btn').onclick = () => { appStore.set('isFacultyAuth', false); this.route(); };
+                document.getElementById('new-sess-btn').onclick = () => this.renderSessionCreator();
+
+                this.loadFacultySessions();
+            },
+
+            loadFacultySessions() {
+                // 1. Check Active
+                const qActive = query(
+                    collection(dataService.db, dataService.getPath(COLLECTIONS.SESSIONS)),
+                    where("facultyId", "==", appStore.get('user').uid),
+                    where("active", "==", true),
+                    limit(1)
+                );
+
+                onSnapshot(qActive, (snap) => {
+                    const con = document.getElementById('active-session-container');
+                    if(!con) return;
+                    if(snap.empty) { con.classList.add('hidden'); return; }
+                    
+                    const s = snap.docs[0].data();
+                    const sid = snap.docs[0].id;
+                    con.classList.remove('hidden');
+                    con.innerHTML = `
+                        <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
+                            <div class="relative z-10">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="font-bold text-lg">${s.subject}</h3>
+                                        <p class="text-slate-400 text-xs">Section ${s.section} • ${s.timeSlot}</p>
+                                    </div>
+                                    <div class="bg-white/10 px-3 py-1 rounded-lg backdrop-blur-md">
+                                        <p class="text-[10px] text-slate-300 uppercase font-bold">PIN Code</p>
+                                        <p class="text-2xl font-mono font-bold tracking-widest" id="live-otp">${s.otp}</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 mt-4">
+                                    <button id="stop-sess" class="bg-red-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-600">Stop Class</button>
+                                </div>
+                            </div>
+                            <!-- Background Decor -->
+                            <div class="absolute -right-4 -bottom-12 w-40 h-40 bg-brand-500 rounded-full blur-3xl opacity-20"></div>
+                        </div>
+                    `;
+                    
+                    // OTP Refresh Logic
+                    const otpInterval = setInterval(() => {
+                        const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
+                        updateDoc(doc(dataService.db, dataService.getPath(COLLECTIONS.SESSIONS), sid), { otp: newOtp });
+                    }, 30000);
+                    router.registerCleanup(() => clearInterval(otpInterval));
+
+                    // Stop Logic
+                    document.getElementById('stop-sess').onclick = async () => {
+                         if(confirm("End Session?")) {
+                             clearInterval(otpInterval);
+                             await updateDoc(doc(dataService.db, dataService.getPath(COLLECTIONS.SESSIONS), sid), { active: false });
+                         }
+                    };
+                });
+
+                // 2. Load History (Paginated)
+                const qHist = query(
+                    collection(dataService.db, dataService.getPath(COLLECTIONS.SESSIONS)),
+                    where("facultyId", "==", appStore.get('user').uid),
+                    orderBy("timestamp", "desc"),
+                    limit(10)
+                );
+                
+                getDocs(qHist).then(snap => {
+                    const el = document.getElementById('sess-list');
+                    if(!el) return;
+                    el.innerHTML = '';
+                    snap.forEach(d => {
+                        const s = d.data();
+                        el.innerHTML += `
+                            <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm opacity-70">
+                                <h4 class="font-bold text-sm text-slate-800">${s.subject}</h4>
+                                <p class="text-[10px] text-slate-400">${new Date(s.timestamp.toDate()).toDateString()}</p>
+                            </div>
+                        `;
+                    });
+                });
+            },
+
+            renderSessionCreator() {
+                router.render(`
+                    <div class="p-6 max-w-md mx-auto">
+                        <h2 class="font-bold text-xl mb-6">Start New Class</h2>
+                        <div class="space-y-4">
+                            <select id="fs-sub" class="w-full p-4 bg-white rounded-xl border border-slate-200 text-sm">
+                                <option>Probability & Statistics</option>
+                                <option>Machine Learning</option>
+                                <option>Web Technologies</option>
+                            </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <select id="fs-sec" class="p-4 bg-white rounded-xl border border-slate-200 text-sm"><option>A</option><option>B</option><option>C</option></select>
+                                <select id="fs-slot" class="p-4 bg-white rounded-xl border border-slate-200 text-sm"><option>09:00 AM</option><option>11:00 AM</option><option>02:00 PM</option></select>
+                            </div>
+                            <button id="fs-create" class="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-lg mt-4">Launch Session</button>
+                            <button onclick="Views.renderFacultyDashboard()" class="w-full py-3 text-slate-500 font-bold text-xs">Cancel</button>
+                        </div>
+                    </div>
+                `);
+
+                document.getElementById('fs-create').onclick = async () => {
+                    if(!navigator.geolocation) return UI.toast("Location required", "error");
+                    navigator.geolocation.getCurrentPosition(async (pos) => {
+                        try {
+                            const sub = document.getElementById('fs-sub').value;
+                            const sec = document.getElementById('fs-sec').value;
+                            const slot = document.getElementById('fs-slot').value;
+                            const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+                            await addDoc(collection(dataService.db, dataService.getPath(COLLECTIONS.SESSIONS)), {
+                                subject: sub, section: sec, timeSlot: slot, otp,
+                                active: true,
+                                facultyId: appStore.get('user').uid,
+                                facultyName: appStore.get('profile').name,
+                                timestamp: serverTimestamp(),
+                                lat: pos.coords.latitude,
+                                lng: pos.coords.longitude
+                            });
+                            this.renderFacultyDashboard();
+                        } catch(e) { ErrorHandler.handle(e); }
+                    });
+                };
+            }
+        };
+
+        /**
+         * ------------------------------------------------------------------
+         * INITIALIZATION
+         * ------------------------------------------------------------------
+         */
+        (async function initApp() {
+            try {
+                // Initialize Data Service (now uses hardcoded config)
+                dataService.init();
+
+                // Load AI Models Background
+                FaceService.loadModels();
+
+            } catch (e) {
+                document.body.innerHTML = `<div class="p-8 text-red-500 font-bold">Critical Error: ${e.message}</div>`;
+            }
+        })();
+
+    </script>
+</body>
+</html>
+
