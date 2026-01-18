@@ -1008,16 +1008,14 @@
             container.innerHTML = '<div class="flex justify-center py-8"><div class="loader"></div></div>';
 
             try {
-                // 1. QUERY OPTIMIZATION: Date Filter at DB Level (Save Reads)
+                // 1. QUERY OPTIMIZATION: Date Filter
                 const now = new Date();
                 let limitDate = new Date();
                 
-                // Set Date Limit
                 if(window.currentReportFilter === 'week') limitDate.setDate(now.getDate() - 7);
                 else if(window.currentReportFilter === 'month') limitDate.setDate(now.getDate() - 30);
-                else limitDate.setFullYear(2000); // All time
+                else limitDate.setFullYear(2000); 
 
-                // Query Sessions with Date Filter
                 const qSess = query(getSessionPath(), where("timestamp", ">=", Timestamp.fromDate(limitDate)), orderBy("timestamp", "desc"));
                 const snapSess = await getDocs(qSess);
                 
@@ -1026,7 +1024,6 @@
 
                 snapSess.forEach(d => {
                     const data = d.data();
-                    // Local Section Filter (Firestore can't easily combine Range + Equality on different fields without composite index)
                     if (window.currentReportSection === 'all' || data.section === window.currentReportSection) {
                         sessions.push({id: d.id, ...data});
                         sessionIds.push(d.id);
@@ -1039,29 +1036,22 @@
                     return; 
                 }
 
-                // 2. DATA LEAK FIX: Fetch Attendance ONLY for these sessions
-                // Firestore 'in' query limit is 10. We batch requests or loop if dataset is small.
-                // For Scalability + Cost: We fetch by SessionID in parallel batches.
-                
+                // 2. DATA LEAK FIX: Batch Fetch Attendance
                 const attendance = [];
-                // Chunk sessionIds into batches of 10 for 'in' query
                 const chunks = [];
                 for (let i = 0; i < sessionIds.length; i += 10) chunks.push(sessionIds.slice(i, i + 10));
 
-                const attPromises = chunks.map(chunk => 
-                    getDocs(query(getAttPath(), where("sessionId", "in", chunk)))
-                );
-                
+                const attPromises = chunks.map(chunk => getDocs(query(getAttPath(), where("sessionId", "in", chunk))));
                 const attSnapshots = await Promise.all(attPromises);
                 attSnapshots.forEach(snap => {
                     snap.forEach(d => attendance.push({id: d.id, ...d.data()}));
                 });
 
-                // 3. CACHE USAGE: Use helper instead of new read
-                const masterList = await fetchMasterList();
+                // 3. CACHE USAGE
+                const masterList = await fetchMasterList(); // Returns an Array of data objects
                 const totalStudents = masterList.length;
 
-                // --- ANALYTICS DASHBOARD LOGIC (Unchanged Logic, just using optimized data) ---
+                // --- ANALYTICS DASHBOARD LOGIC ---
                 if (window.currentReportView === 'subject') {
                     const subjectStats = {};
                     const studentStats = {}; 
@@ -1088,24 +1078,21 @@
                          }
                     });
 
-                    // (Chart Rendering Logic - Kept minimal for brevity, same as original)
                     const labels = Object.keys(subjectStats);
                     const avgData = labels.map(sub => {
                         const data = subjectStats[sub];
                         const filteredMasterSize = Object.keys(studentStats).length; 
                         const baseSize = window.currentReportSection === 'all' ? totalStudents : filteredMasterSize;
                         const totalPossible = data.sessions.length * baseSize;
-                        const actual = data.attendance.filter(x => x.status === 'present').length; // Strict Check
+                        const actual = data.attendance.filter(x => x.status === 'present').length;
                         return totalPossible > 0 ? Math.round((actual / totalPossible) * 100) : 0;
                     });
                     
-                    // Irregular Students Logic
                     const irregulars = Object.values(studentStats).filter(s => {
                          const pct = s.total > 0 ? (s.present / s.total) * 100 : 0;
                          return pct < 75 && s.total > 0;
                     }).sort((a,b) => (a.present/a.total) - (b.present/b.total));
 
-                    // (Inject HTML for Chart/Irregulars - Same as original)
                     analyticsContainer.innerHTML = `
                         <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex flex-col h-64">
                              <h3 class="font-bold text-slate-800 text-sm mb-3">Analytics (${window.currentReportSection === 'all' ? 'All Sections' : 'Section ' + window.currentReportSection})</h3>
@@ -1117,7 +1104,7 @@
 
                 } else { analyticsContainer.innerHTML = ''; }
 
-                // (Render Session/Subject Tables - Simplified for snippet, utilizes `attendance` array filtered above)
+                // --- SESSION LIST VIEW ---
                 if (window.currentReportView === 'session') {
                     let html = '<div class="space-y-3">';
                     sessions.forEach(s => {
@@ -1127,9 +1114,57 @@
                     });
                     container.innerHTML = html + '</div>';
                 } else {
-                     // Subject View (Reuses previous logic but safely)
-                     // ... (Implementation remains similar to original, just iterating `sessions` and `attendance` arrays)
-                     container.innerHTML += '<div class="text-center text-xs text-slate-400">Subject view details loaded.</div>'; // Placeholder for brevity, use original table generation logic here
+                    // --- SUBJECT TABLE VIEW (FIXED) ---
+                    const subjectStats = {}; 
+                    sessions.forEach(s => {
+                        if(!subjectStats[s.subject]) subjectStats[s.subject] = { sessions: [], attendance: [] };
+                        subjectStats[s.subject].sessions.push(s);
+                    });
+                    attendance.forEach(a => {
+                        const sess = sessions.find(s => s.id === a.sessionId);
+                        if(sess && subjectStats[sess.subject]) subjectStats[sess.subject].attendance.push(a);
+                    });
+
+                    let html = '<div class="space-y-6">';
+                    for(const [sub, data] of Object.entries(subjectStats)) {
+                        const totalSessions = data.sessions.length;
+                        const maxScore = totalSessions * 2;
+                        
+                        // FIX: Use masterList (array) instead of masterSnap
+                        const studentMap = {};
+                        masterList.forEach(s => {
+                            // Filter students in table by section too
+                            if(window.currentReportSection === 'all' || s.section === window.currentReportSection) {
+                                studentMap[s.rollNo] = { name: s.name, count: 0 };
+                            }
+                        });
+                        
+                        data.attendance.forEach(a => {
+                            if(studentMap[a.studentRoll] && a.status === 'present') studentMap[a.studentRoll].count++;
+                        });
+
+                        html += `
+                          <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                             <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+                                 <div><h3 class="font-bold text-slate-800 text-sm">${sub}</h3><p class="text-[10px] text-slate-500 mt-1">Held: ${totalSessions}</p></div>
+                                 <button onclick="downloadSubjectReport('${sub}')" class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 shadow-sm"><i class="fa-solid fa-file-csv"></i></button>
+                             </div>
+                             <div class="max-h-64 overflow-y-auto">
+                                 <table class="w-full text-left border-collapse">
+                                     <thead class="bg-white text-[9px] text-slate-400 font-bold uppercase sticky top-0 z-10 shadow-sm"><tr><th class="p-3 bg-white">Roll No</th><th class="p-3 bg-white">Name</th><th class="p-3 bg-white text-center">Score</th><th class="p-3 bg-white text-right">%</th></tr></thead>
+                                     <tbody class="text-xs text-slate-700 divide-y divide-slate-50">
+                                         ${Object.entries(studentMap).map(([roll, s]) => {
+                                             const score = s.count * 2;
+                                             const pct = maxScore > 0 ? Math.round((score/maxScore)*100) : 0;
+                                             let color = pct >= 75 ? 'text-green-600' : (pct >= 60 ? 'text-orange-500' : 'text-red-500');
+                                             return `<tr class="hover:bg-slate-50"><td class="p-3 font-mono font-bold">${roll}</td><td class="p-3">${s.name}</td><td class="p-3 text-center font-bold">${score}</td><td class="p-3 text-right font-bold ${color}">${pct}%</td></tr>`;
+                                         }).join('')}
+                                     </tbody>
+                                 </table>
+                             </div>
+                          </div>`;
+                    }
+                    container.innerHTML += html + '</div>';
                 }
 
             } catch(e) { console.error(e); container.innerHTML = '<p class="text-red-500 text-xs text-center">Error loading data.</p>'; }
