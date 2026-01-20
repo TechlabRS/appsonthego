@@ -355,10 +355,10 @@
         // HASHED ADMIN KEY (SHA-256 for "ADMIN123")
         const MASTER_KEY_HASH = "b257d4499962eb197c6f57ca98113d9dd244aa007a5cb27ae067567135ba8fb9"; 
         
-        const ATTENDANCE_RADIUS_METERS = 10; 
+        const ATTENDANCE_RADIUS_METERS = 300; 
         const FACE_MATCH_THRESHOLD = 0.38; // STRICTER THRESHOLD (Lower is stricter)
         const OTP_REFRESH_RATE = 30; 
-        const PHOTO_RETENTION_DAYS = 3;
+        const PHOTO_RETENTION_DAYS = 2;
 
         // --- STATE ---
         window.appState = {
@@ -456,7 +456,7 @@
                 
                 if (!configStr) { document.getElementById('config-modal').classList.remove('hidden'); return; }
 
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'demo1001';
+                appId = typeof __app_id !== 'undefined' ? __app_id : 'demo2001';
                 const firebaseConfig = JSON.parse(configStr);
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
