@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Stock Predictor - Self Contained</title>
+    <title>AI Stock Predictor - Pro Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <style>
         .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .gradient-bg { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
@@ -15,8 +16,12 @@
             50% { opacity: 0.5; }
         }
         .training-pulse { animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        .custom-scrollbar::-webkit-scrollbar { height: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dropdown-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .dropdown-active .dropdown-content { max-height: 500px; }
+        .rotate-icon { transition: transform 0.3s; }
+        .dropdown-active .rotate-icon { transform: rotate(180deg); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen font-sans">
@@ -30,7 +35,10 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight">AI Stock Predictor</h1>
-                    <p class="text-sm text-slate-500 font-medium">TensorFlow.js Engine • Watchlist Manager</p>
+                    <div class="flex items-center gap-2">
+                        <span id="current-time-display" class="text-[10px] font-mono bg-slate-200 px-1.5 rounded tracking-tighter">25 Jan '26 13:30:00 IST</span>
+                        <p class="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Hybrid Neural Engine</p>
+                    </div>
                 </div>
             </div>
             
@@ -45,112 +53,97 @@
             
             <!-- Sidebar -->
             <div class="lg:col-span-1 space-y-6">
+                
+                <!-- Modern Interval Dropdown -->
+                <div id="interval-dropdown" class="glass-card relative">
+                    <button onclick="toggleIntervals()" class="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors rounded-t-2xl">
+                        <div class="text-left">
+                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Selected Horizon</p>
+                            <h2 id="active-interval-label" class="text-sm font-bold text-indigo-600">1 Day</h2>
+                        </div>
+                        <svg class="rotate-icon text-slate-400" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div class="dropdown-content border-t border-slate-100 bg-white rounded-b-2xl">
+                        <div id="interval-list" class="p-2 space-y-1">
+                            <!-- Injected Interval Cards -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Watchlist Manager -->
                 <div class="glass-card p-5">
                     <h2 class="text-xs font-bold uppercase text-slate-400 mb-4 tracking-widest">Manage Watchlist</h2>
                     <div class="space-y-3">
                         <div class="flex gap-2">
-                            <input id="new-stock-input" type="text" placeholder="Symbol (e.g. SBI)" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase">
-                            <button onclick="addStock()" class="bg-slate-900 text-white px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors">
+                            <input id="new-stock-input" type="text" placeholder="Add Symbol..." class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase font-bold">
+                            <button onclick="addStock()" class="bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                             </button>
                         </div>
-                        <div id="watchlist-items" class="max-h-40 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                        <div id="watchlist-items" class="max-h-48 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
                             <!-- List items with delete buttons -->
                         </div>
                     </div>
                 </div>
 
+                <!-- Model Controls -->
                 <div class="glass-card p-6">
-                    <h2 class="text-xs font-bold uppercase text-slate-400 mb-4 tracking-widest text-center">Time Dimension</h2>
-                    <div id="time-selector" class="flex gap-1 bg-slate-100 p-1 rounded-lg mb-6">
-                        <button onclick="setTimeframe('1D')" id="tf-1D" class="flex-1 py-1.5 text-xs font-bold rounded-md transition-all bg-white shadow-sm text-indigo-600">1D</button>
-                        <button onclick="setTimeframe('1W')" id="tf-1W" class="flex-1 py-1.5 text-xs font-bold rounded-md transition-all text-slate-500 hover:bg-white/50">1W</button>
-                        <button onclick="setTimeframe('1M')" id="tf-1M" class="flex-1 py-1.5 text-xs font-bold rounded-md transition-all text-slate-500 hover:bg-white/50">1M</button>
-                    </div>
-
-                    <h2 class="text-xs font-bold uppercase text-slate-400 mb-4 tracking-widest text-center">Model Control</h2>
                     <button id="train-btn" class="w-full gradient-bg text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-md">
-                        <span id="btn-text">Train AI Model</span>
+                        <span id="btn-text">Train & Predict</span>
                     </button>
 
                     <div id="progress-container" class="mt-4 hidden">
-                        <div class="flex justify-between text-xs font-bold mb-1">
-                            <span>Deep Learning...</span>
-                            <span id="progress-val">0%</span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2">
-                            <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div id="progress-bar" class="bg-indigo-600 h-full transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
 
-                    <div class="mt-6 space-y-4 pt-6 border-t border-slate-100">
+                    <div class="mt-6 space-y-4 pt-4 border-t border-slate-50">
                         <div class="flex justify-between items-center">
-                            <span class="text-sm text-slate-500">Asset:</span>
-                            <span id="display-symbol" class="font-bold">TCS</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-slate-500">Status:</span>
-                            <span id="status-badge" class="text-[10px] px-2 py-0.5 rounded-full font-black bg-green-100 text-green-700">READY</span>
+                            <span class="text-xs text-slate-400 font-bold uppercase">Status</span>
+                            <span id="status-badge" class="text-[10px] px-2 py-0.5 rounded-full font-black bg-green-100 text-green-700 uppercase">System Ready</span>
                         </div>
                     </div>
-                </div>
-
-                <div id="confidence-card" class="bg-indigo-600 p-6 rounded-2xl shadow-xl text-white hidden">
-                    <div class="flex items-center gap-2 mb-2 opacity-80">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Confidence Score</span>
-                    </div>
-                    <div id="confidence-val" class="text-4xl font-black">0%</div>
-                    <p class="text-[11px] mt-2 opacity-70 leading-relaxed">
-                        Correlation accuracy for the <span id="conf-tf">1D</span> horizon based on Mean Absolute Error.
-                    </p>
                 </div>
             </div>
 
             <!-- Chart Area -->
             <div class="lg:col-span-3 space-y-6">
                 <div class="glass-card p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 id="chart-title" class="font-bold text-lg">TCS Analysis</h3>
-                        <div class="flex gap-4 text-[10px] font-black uppercase tracking-tighter">
-                            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-indigo-600 rounded-full"></span> Actual</div>
-                            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span> AI Predicted</div>
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 id="chart-title" class="font-black text-xl">TCS</h3>
+                                <span id="current-price-tag" class="text-emerald-500 font-mono font-bold text-sm">₹3,162.50</span>
+                            </div>
+                            <p id="current-range-info" class="text-[10px] text-slate-400 font-bold uppercase">1 Day • 5 Minute Intervals</p>
+                        </div>
+                        <div class="flex gap-4 text-[9px] font-black uppercase tracking-tighter">
+                            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-indigo-600 rounded-full"></span> Market Data</div>
+                            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span> AI Forecast</div>
                         </div>
                     </div>
 
-                    <div class="relative h-[350px]">
+                    <div class="relative h-[400px]">
                         <canvas id="stockChart"></canvas>
                     </div>
                 </div>
 
-                <!-- AI Insight Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="glass-card p-4 flex items-center gap-3">
-                        <div class="bg-green-100 p-2 rounded-lg text-green-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                <!-- Analysis Summary -->
+                <div id="confidence-banner" class="hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div class="bg-indigo-600 rounded-2xl p-4 text-white flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-white/20 p-3 rounded-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-black uppercase tracking-widest opacity-80">Neural Confidence</h4>
+                                <p id="confidence-val" class="text-3xl font-black">--%</p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Horizon Trend</p>
-                            <p id="insight-trend" class="font-bold text-sm">Calculation Pending</p>
-                        </div>
-                    </div>
-                    <div class="glass-card p-4 flex items-center gap-3">
-                        <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                        </div>
-                        <div>
-                            <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">Volatility</p>
-                            <p id="insight-vol" class="font-bold text-sm">Low (Stable)</p>
-                        </div>
-                    </div>
-                    <div class="glass-card p-4 flex items-center gap-3">
-                        <div class="bg-purple-100 p-2 rounded-lg text-purple-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1 0-4.88 2.5 2.5 0 0 1 0-4.88A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 0-4.88 2.5 2.5 0 0 0 0-4.88A2.5 2.5 0 0 0 14.5 2Z"/></svg>
-                        </div>
-                        <div>
-                            <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">ML Complexity</p>
-                            <p id="insight-ml" class="font-bold text-sm">Regressive Fit</p>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold uppercase opacity-80">AI Sentiment</p>
+                            <p id="insight-trend" class="font-black text-xl">Neutral</p>
                         </div>
                     </div>
                 </div>
@@ -159,32 +152,73 @@
     </div>
 
     <script>
+        const TIME_CONFIGS = [
+            { id: '1d_5m', label: '1 Day', sub: '5 min intervals', points: 78, minutes: 5, epochs: 50 },
+            { id: '5d_1h', label: '5 Days', sub: '1 hour intervals', points: 120, minutes: 60, epochs: 70 },
+            { id: '1m_4h', label: '1 Month', sub: '4 hour intervals', points: 180, minutes: 240, epochs: 80 },
+            { id: '3m_1d', label: '3 Months', sub: '1 day intervals', points: 90, minutes: 1440, epochs: 90 },
+            { id: '6m_1d', label: '6 Months', sub: '1 day intervals', points: 180, minutes: 1440, epochs: 100 },
+            { id: '1y_1d', label: '1 Year', sub: '1 day intervals', points: 252, minutes: 1440, epochs: 120 },
+            { id: '5y_1w', label: '5 Years', sub: '1 week intervals', points: 260, minutes: 10080, epochs: 150 }
+        ];
+
         let STOCKS = [
-            { symbol: 'TCS', name: 'Tata Consultancy Services', base: 3800 },
-            { symbol: 'INFY', name: 'Infosys Ltd', base: 1600 },
-            { symbol: 'RELIANCE', name: 'Reliance Industries', base: 2900 },
-            { symbol: 'NIFTY50', name: 'Nifty 50 Index', base: 22000 }
+            { symbol: 'TCS', name: 'Tata Consultancy Services', base: 3162.50 },
+            { symbol: 'ASTERDM', name: 'Aster DM Healthcare', base: 555.25 },
+            { symbol: 'HINDZINC', name: 'Hindustan Zinc Ltd', base: 412.10 }
         ];
 
         let currentStock = STOCKS[0];
-        let timeframe = '1D'; 
+        let currentConfig = TIME_CONFIGS[0];
         let historicalData = [];
         let chart = null;
 
         function init() {
             renderStockSelectors();
             renderWatchlistManager();
+            renderIntervalList();
             generateData();
             renderChart();
         }
 
+        // --- INTERVAL DROPDOWN LOGIC ---
+        function toggleIntervals() {
+            document.getElementById('interval-dropdown').classList.toggle('dropdown-active');
+        }
+
+        function renderIntervalList() {
+            const list = document.getElementById('interval-list');
+            list.innerHTML = '';
+            TIME_CONFIGS.forEach(config => {
+                const isActive = config.id === currentConfig.id;
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-lg cursor-pointer transition-all ${isActive ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : 'hover:bg-slate-50 border-l-4 border-l-transparent'}`;
+                card.onclick = () => {
+                    currentConfig = config;
+                    document.getElementById('active-interval-label').innerText = config.label;
+                    document.getElementById('current-range-info').innerText = `${config.label} • ${config.sub}`;
+                    document.getElementById('confidence-banner').classList.add('hidden');
+                    toggleIntervals();
+                    renderIntervalList();
+                    generateData();
+                    renderChart();
+                };
+                card.innerHTML = `
+                    <p class="text-[11px] font-black ${isActive ? 'text-indigo-700' : 'text-slate-700'}">${config.label}</p>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">${config.sub}</p>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // --- STOCK MANAGEMENT LOGIC ---
         function renderStockSelectors() {
             const selector = document.getElementById('stock-selector');
             selector.innerHTML = '';
             STOCKS.forEach(stock => {
                 const btn = document.createElement('button');
                 btn.innerText = stock.symbol;
-                btn.className = `px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${stock.symbol === currentStock.symbol ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-slate-100 text-slate-500'}`;
+                btn.className = `px-4 py-2 rounded-lg text-[10px] font-black transition-all whitespace-nowrap border-2 ${stock.symbol === currentStock.symbol ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-400 border-slate-100 hover:border-indigo-200'}`;
                 btn.onclick = () => selectStock(stock);
                 selector.appendChild(btn);
             });
@@ -195,11 +229,14 @@
             list.innerHTML = '';
             STOCKS.forEach((stock, index) => {
                 const item = document.createElement('div');
-                item.className = "flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 text-sm border border-transparent hover:border-slate-100 group";
+                item.className = "flex justify-between items-center p-2.5 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 group transition-all";
                 item.innerHTML = `
-                    <span class="font-medium">${stock.symbol}</span>
-                    <button onclick="removeStock(${index})" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <div class="flex flex-col">
+                        <span class="text-xs font-black text-slate-700">${stock.symbol}</span>
+                        <span class="text-[9px] text-slate-400 font-bold">₹${stock.base.toLocaleString()}</span>
+                    </div>
+                    <button onclick="removeStock(${index})" class="text-slate-300 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                     </button>
                 `;
                 list.appendChild(item);
@@ -209,20 +246,15 @@
         function addStock() {
             const input = document.getElementById('new-stock-input');
             const symbol = input.value.trim().toUpperCase();
-            if (!symbol) return;
-            
-            // Check if exists
-            if (STOCKS.find(s => s.symbol === symbol)) {
+            if (!symbol || STOCKS.find(s => s.symbol === symbol)) {
                 input.value = '';
                 return;
             }
-
             const newStock = { 
-                symbol: symbol, 
+                symbol, 
                 name: `${symbol} Equity`, 
-                base: Math.floor(Math.random() * 2000) + 500 
+                base: Math.floor(Math.random() * 5000) + 100 
             };
-            
             STOCKS.push(newStock);
             input.value = '';
             renderStockSelectors();
@@ -231,8 +263,7 @@
         }
 
         function removeStock(index) {
-            if (STOCKS.length <= 1) return; // Keep at least one
-            
+            if (STOCKS.length <= 1) return;
             const removed = STOCKS.splice(index, 1)[0];
             if (currentStock.symbol === removed.symbol) {
                 selectStock(STOCKS[0]);
@@ -242,72 +273,52 @@
             }
         }
 
-        function setTimeframe(tf) {
-            timeframe = tf;
-            ['1D', '1W', '1M'].forEach(t => {
-                const el = document.getElementById(`tf-${t}`);
-                if (t === tf) {
-                    el.className = "flex-1 py-1.5 text-xs font-bold rounded-md transition-all bg-white shadow-sm text-indigo-600";
-                } else {
-                    el.className = "flex-1 py-1.5 text-xs font-bold rounded-md transition-all text-slate-500 hover:bg-white/50";
-                }
-            });
-            document.getElementById('conf-tf').innerText = tf;
-            document.getElementById('confidence-card').classList.add('hidden');
-            generateData();
-            renderChart();
-        }
-
         function selectStock(stock) {
             currentStock = stock;
             renderStockSelectors();
-            document.getElementById('display-symbol').innerText = stock.symbol;
-            document.getElementById('chart-title').innerText = `${stock.name} Analysis`;
-            document.getElementById('confidence-card').classList.add('hidden');
+            renderWatchlistManager();
+            document.getElementById('display-symbol')?.innerText && (document.getElementById('display-symbol').innerText = stock.symbol);
+            document.getElementById('chart-title').innerText = stock.symbol;
+            document.getElementById('current-price-tag').innerText = `₹${stock.base.toLocaleString()}`;
+            document.getElementById('confidence-banner').classList.add('hidden');
             generateData();
             renderChart();
         }
 
+        // --- DATA & AI LOGIC ---
         function generateData() {
             let price = currentStock.base;
             historicalData = [];
-            const points = timeframe === '1D' ? 40 : timeframe === '1W' ? 70 : 120;
-            const volatility = timeframe === '1D' ? 0.01 : timeframe === '1W' ? 0.025 : 0.05;
-            
-            for (let i = 0; i < points; i++) {
-                price += (Math.random() - 0.48) * (currentStock.base * volatility);
-                historicalData.push({ x: i, y: parseFloat(price.toFixed(2)) });
+            const volatility = 0.006 + (Math.random() * 0.012);
+            const now = new Date();
+            for (let i = currentConfig.points; i >= 0; i--) {
+                const timestamp = new Date(now.getTime() - (i * currentConfig.minutes * 60000));
+                price += (Math.random() - 0.495) * (currentStock.base * volatility);
+                historicalData.push({ x: timestamp, y: parseFloat(price.toFixed(2)) });
             }
-            
-            const first = historicalData[0].y;
-            const last = historicalData[historicalData.length - 1].y;
-            document.getElementById('insight-trend').innerText = last > first ? 'Bullish Horizon' : 'Bearish Correction';
-            document.getElementById('insight-vol').innerText = timeframe === '1M' ? 'High (Macro)' : 'Low (Stable)';
         }
 
         function renderChart(predictions = []) {
             const ctx = document.getElementById('stockChart').getContext('2d');
             if (chart) chart.destroy();
-
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: historicalData.map(d => d.x),
                     datasets: [
                         {
                             label: 'Actual',
-                            data: historicalData.map(d => d.y),
+                            data: historicalData,
                             borderColor: '#4f46e5',
-                            borderWidth: 3,
+                            borderWidth: 2,
                             pointRadius: 0,
-                            tension: 0.2
+                            tension: 0.1
                         },
                         {
                             label: 'AI Predicted',
-                            data: predictions,
+                            data: predictions.map((p, i) => ({ x: historicalData[i].x, y: p })),
                             borderColor: '#10b981',
                             borderWidth: 2,
-                            borderDash: [4, 4],
+                            borderDash: [6, 4],
                             pointRadius: 0,
                             tension: 0.4
                         }
@@ -316,17 +327,17 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: { duration: 800 },
                     plugins: { legend: { display: false } },
                     scales: {
                         x: { 
-                            display: true, 
-                            title: { display: true, text: `Time Units (${timeframe})`, font: { size: 10 } },
-                            grid: { display: false }
+                            type: 'time',
+                            grid: { display: false },
+                            ticks: { font: { size: 9 }, color: '#94a3b8', maxRotation: 0 }
                         },
                         y: { 
+                            position: 'right',
                             grid: { color: '#f1f5f9' },
-                            ticks: { font: { size: 10 }, callback: v => '₹' + v }
+                            ticks: { font: { size: 10, weight: 'bold' }, color: '#64748b' }
                         }
                     }
                 }
@@ -336,70 +347,62 @@
         async function trainAndPredict() {
             const btn = document.getElementById('train-btn');
             const status = document.getElementById('status-badge');
-            const progressContainer = document.getElementById('progress-container');
-            const progressBar = document.getElementById('progress-bar');
-            const progressVal = document.getElementById('progress-val');
+            const progress = document.getElementById('progress-container');
+            const bar = document.getElementById('progress-bar');
             
             btn.disabled = true;
-            status.innerText = 'TRAINING...';
-            status.className = 'text-[10px] px-2 py-0.5 rounded-full font-black bg-amber-100 text-amber-700 training-pulse';
-            progressContainer.classList.remove('hidden');
+            status.innerText = 'Training Neural Net...';
+            status.className = 'text-[10px] px-2 py-0.5 rounded-full font-black bg-amber-100 text-amber-700 training-pulse uppercase';
+            progress.classList.remove('hidden');
 
             const yValues = historicalData.map(d => d.y);
             const min = Math.min(...yValues);
             const max = Math.max(...yValues);
             const normalizedY = yValues.map(y => (y - min) / (max - min));
 
-            const xs = tf.tensor2d(historicalData.map(d => d.x), [historicalData.length, 1]);
+            const xs = tf.tensor2d(historicalData.map((_, i) => i), [historicalData.length, 1]);
             const ys = tf.tensor2d(normalizedY, [historicalData.length, 1]);
 
-            const complexity = timeframe === '1M' ? 64 : 32;
             const model = tf.sequential();
-            model.add(tf.layers.dense({ units: complexity, inputShape: [1], activation: 'relu' }));
-            model.add(tf.layers.dense({ units: complexity / 2, activation: 'relu' }));
+            model.add(tf.layers.dense({ units: 32, inputShape: [1], activation: 'relu' }));
+            model.add(tf.layers.dense({ units: 16, activation: 'relu' }));
             model.add(tf.layers.dense({ units: 1 }));
             model.compile({ optimizer: tf.train.adam(0.01), loss: 'meanSquaredError' });
 
-            const epochs = timeframe === '1D' ? 50 : 80;
             await model.fit(xs, ys, {
-                epochs: epochs,
+                epochs: currentConfig.epochs,
                 callbacks: {
                     onEpochEnd: (epoch) => {
-                        const p = Math.floor(((epoch + 1) / epochs) * 100);
-                        progressBar.style.width = p + '%';
-                        progressVal.innerText = p + '%';
+                        bar.style.width = Math.floor(((epoch + 1) / currentConfig.epochs) * 100) + '%';
                     }
                 }
             });
 
-            const preds = model.predict(xs);
-            const predArray = await preds.data();
+            const predArray = await model.predict(xs).data();
             const denormalizedPreds = Array.from(predArray).map(p => p * (max - min) + min);
 
             let totalPctError = 0;
-            denormalizedPreds.forEach((p, i) => {
-                totalPctError += Math.abs(p - yValues[i]) / yValues[i];
-            });
-            const mae = totalPctError / yValues.length;
-            const sensitivity = timeframe === '1M' ? 1000 : 1200;
-            const confidence = Math.max(0, 100 - (mae * sensitivity)).toFixed(2);
+            denormalizedPreds.forEach((p, i) => totalPctError += Math.abs(p - yValues[i]) / yValues[i]);
+            const confidence = Math.max(0, 100 - ( (totalPctError / yValues.length) * 1800)).toFixed(1);
 
             renderChart(denormalizedPreds);
             document.getElementById('confidence-val').innerText = confidence + '%';
-            document.getElementById('confidence-card').classList.remove('hidden');
-            document.getElementById('insight-ml').innerText = timeframe === '1M' ? 'Deep Sequential' : 'Regressive Fit';
+            document.getElementById('confidence-banner').classList.remove('hidden');
+            
+            const first = denormalizedPreds[0];
+            const last = denormalizedPreds[denormalizedPreds.length - 1];
+            document.getElementById('insight-trend').innerText = last > first ? 'BULLISH' : 'BEARISH';
+            document.getElementById('insight-trend').className = `font-black text-xl ${last > first ? 'text-emerald-300' : 'text-rose-300'}`;
             
             btn.disabled = false;
-            status.innerText = 'READY';
-            status.className = 'text-[10px] px-2 py-0.5 rounded-full font-black bg-green-100 text-green-700';
-            progressContainer.classList.add('hidden');
+            status.innerText = 'System Ready';
+            status.className = 'text-[10px] px-2 py-0.5 rounded-full font-black bg-green-100 text-green-700 uppercase';
+            progress.classList.add('hidden');
         }
 
-        // Add keyboard support for input
-        document.getElementById('new-stock-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') addStock();
-        });
-
+        // Keyboard support
+        document.getElementById('new-stock-input').addEventListener('keypress', e => e.key === 'Enter' && addStock());
+        
         document.getElementById('train-btn').onclick = trainAndPredict;
         window.onload = init;
     </script>
