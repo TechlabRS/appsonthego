@@ -19,9 +19,10 @@
         .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dropdown-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
-        .dropdown-active .dropdown-content { max-height: 500px; }
+        .dropdown-active .dropdown-content { max-height: 600px; }
         .rotate-icon { transition: transform 0.3s; }
         .dropdown-active .rotate-icon { transform: rotate(180deg); }
+        .future-glow { box-shadow: 0 0 15px rgba(249, 115, 22, 0.2); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen font-sans">
@@ -36,16 +37,14 @@
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight">AI Stock Predictor</h1>
                     <div class="flex items-center gap-2">
-                        <span id="current-time-display" class="text-[10px] font-mono bg-slate-200 px-1.5 rounded tracking-tighter">25 Jan '26 13:30:00 IST</span>
-                        <p class="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Hybrid Neural Engine</p>
+                        <span id="current-time-display" class="text-[10px] font-mono bg-slate-200 px-1.5 rounded tracking-tighter">25 Jan '26 13:45:00 IST</span>
+                        <p class="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Neural Forecast Engine</p>
                     </div>
                 </div>
             </div>
             
-            <div class="flex flex-col items-end gap-2 w-full md:w-auto">
-                <div id="stock-selector" class="flex gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full md:max-w-md custom-scrollbar">
-                    <!-- Stock buttons injected here -->
-                </div>
+            <div id="stock-selector" class="flex gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 overflow-x-auto w-full md:max-w-md custom-scrollbar">
+                <!-- Stock buttons injected here -->
             </div>
         </header>
 
@@ -54,18 +53,18 @@
             <!-- Sidebar -->
             <div class="lg:col-span-1 space-y-6">
                 
-                <!-- Modern Interval Dropdown -->
+                <!-- Expanded Modern Interval Dropdown -->
                 <div id="interval-dropdown" class="glass-card relative">
                     <button onclick="toggleIntervals()" class="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors rounded-t-2xl">
                         <div class="text-left">
-                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Selected Horizon</p>
-                            <h2 id="active-interval-label" class="text-sm font-bold text-indigo-600">1 Day</h2>
+                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Active Lookback</p>
+                            <h2 id="active-interval-label" class="text-sm font-bold text-indigo-600">1 Year</h2>
                         </div>
                         <svg class="rotate-icon text-slate-400" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                     </button>
-                    <div class="dropdown-content border-t border-slate-100 bg-white rounded-b-2xl">
+                    <div class="dropdown-content border-t border-slate-100 bg-white rounded-b-2xl overflow-y-auto custom-scrollbar">
                         <div id="interval-list" class="p-2 space-y-1">
-                            <!-- Injected Interval Cards -->
+                            <!-- Full range of Interval Cards injected here -->
                         </div>
                     </div>
                 </div>
@@ -80,29 +79,29 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                             </button>
                         </div>
-                        <div id="watchlist-items" class="max-h-48 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
-                            <!-- List items with delete buttons -->
+                        <div id="watchlist-items" class="max-h-32 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                            <!-- List items -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Model Controls -->
-                <div class="glass-card p-6">
-                    <button id="train-btn" class="w-full gradient-bg text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-md">
-                        <span id="btn-text">Train & Predict</span>
-                    </button>
+                <!-- AI Forecast Controls -->
+                <div class="glass-card p-6 space-y-4">
+                    <div class="space-y-2">
+                        <button id="train-btn" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-md text-sm">
+                            <span>1. Analyze Current</span>
+                        </button>
+                        <button id="forecast-btn" class="w-full gradient-bg text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                            <span>2. Future Forecast</span>
+                        </button>
+                    </div>
 
-                    <div id="progress-container" class="mt-4 hidden">
+                    <div id="progress-container" class="hidden">
                         <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                             <div id="progress-bar" class="bg-indigo-600 h-full transition-all duration-300" style="width: 0%"></div>
                         </div>
-                    </div>
-
-                    <div class="mt-6 space-y-4 pt-4 border-t border-slate-50">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs text-slate-400 font-bold uppercase">Status</span>
-                            <span id="status-badge" class="text-[10px] px-2 py-0.5 rounded-full font-black bg-green-100 text-green-700 uppercase">System Ready</span>
-                        </div>
+                        <p id="status-text" class="text-[9px] text-center mt-2 font-black uppercase text-indigo-600">Deep Learning Active</p>
                     </div>
                 </div>
             </div>
@@ -110,40 +109,43 @@
             <!-- Chart Area -->
             <div class="lg:col-span-3 space-y-6">
                 <div class="glass-card p-6">
-                    <div class="flex justify-between items-start mb-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 id="chart-title" class="font-black text-xl">TCS</h3>
-                                <span id="current-price-tag" class="text-emerald-500 font-mono font-bold text-sm">₹3,162.50</span>
+                                <h3 id="chart-title" class="font-black text-2xl tracking-tighter">TCS</h3>
+                                <span id="current-price-tag" class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-mono font-bold">₹3,162.50</span>
                             </div>
-                            <p id="current-range-info" class="text-[10px] text-slate-400 font-bold uppercase">1 Day • 5 Minute Intervals</p>
+                            <p id="current-range-info" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">1 Year Lookback • 1d Intervals</p>
                         </div>
-                        <div class="flex gap-4 text-[9px] font-black uppercase tracking-tighter">
-                            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-indigo-600 rounded-full"></span> Market Data</div>
-                            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span> AI Forecast</div>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[9px] font-black uppercase">
+                            <div class="flex items-center gap-1.5 text-indigo-600"><span class="w-2 h-2 bg-indigo-600 rounded-full"></span> Historical</div>
+                            <div class="flex items-center gap-1.5 text-emerald-500"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Backtest</div>
+                            <div class="flex items-center gap-1.5 text-orange-500 col-span-2"><span class="w-2 h-2 bg-orange-500 rounded-full"></span> Future Project</div>
                         </div>
                     </div>
 
-                    <div class="relative h-[400px]">
+                    <div class="relative h-[480px]">
                         <canvas id="stockChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Analysis Summary -->
-                <div id="confidence-banner" class="hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <div class="bg-indigo-600 rounded-2xl p-4 text-white flex flex-col md:flex-row justify-between items-center gap-4">
-                        <div class="flex items-center gap-4">
-                            <div class="bg-white/20 p-3 rounded-xl">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-black uppercase tracking-widest opacity-80">Neural Confidence</h4>
-                                <p id="confidence-val" class="text-3xl font-black">--%</p>
-                            </div>
+                <!-- Forecast Result Cards -->
+                <div id="forecast-results" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4">
+                    <div class="glass-card p-5 border-l-4 border-l-indigo-600">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Backtest Accuracy</p>
+                        <div class="flex items-end gap-2">
+                            <span id="confidence-val" class="text-3xl font-black">--%</span>
+                            <span class="text-[10px] font-bold text-slate-500 mb-1.5">Model Fit</span>
                         </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-bold uppercase opacity-80">AI Sentiment</p>
-                            <p id="insight-trend" class="font-black text-xl">Neutral</p>
+                    </div>
+                    <div class="glass-card p-5 border-l-4 border-l-orange-500 future-glow">
+                        <p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">AI Future Sentiment</p>
+                        <div class="flex items-center justify-between">
+                            <span id="future-sentiment" class="text-2xl font-black">Projecting...</span>
+                            <div class="text-right">
+                                <p class="text-[9px] text-slate-400 font-bold uppercase">Exp. Target</p>
+                                <p id="target-price" class="text-lg font-mono font-bold text-slate-700">₹0.00</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -153,13 +155,14 @@
 
     <script>
         const TIME_CONFIGS = [
-            { id: '1d_5m', label: '1 Day', sub: '5 min intervals', points: 78, minutes: 5, epochs: 50 },
-            { id: '5d_1h', label: '5 Days', sub: '1 hour intervals', points: 120, minutes: 60, epochs: 70 },
-            { id: '1m_4h', label: '1 Month', sub: '4 hour intervals', points: 180, minutes: 240, epochs: 80 },
-            { id: '3m_1d', label: '3 Months', sub: '1 day intervals', points: 90, minutes: 1440, epochs: 90 },
-            { id: '6m_1d', label: '6 Months', sub: '1 day intervals', points: 180, minutes: 1440, epochs: 100 },
-            { id: '1y_1d', label: '1 Year', sub: '1 day intervals', points: 252, minutes: 1440, epochs: 120 },
-            { id: '5y_1w', label: '5 Years', sub: '1 week intervals', points: 260, minutes: 10080, epochs: 150 }
+            { id: '1d', label: '1 Day', sub: '5 min intervals', points: 78, minutes: 5, epochs: 40, future_pts: 24 },
+            { id: '5d', label: '5 Days', sub: '1 hour intervals', points: 120, minutes: 60, epochs: 50, future_pts: 40 },
+            { id: '1m', label: '1 Month', sub: '4 hour intervals', points: 180, minutes: 240, epochs: 60, future_pts: 60 },
+            { id: '3m', label: '3 Months', sub: '1 day intervals', points: 90, minutes: 1440, epochs: 80, future_pts: 30 },
+            { id: '6m', label: '6 Months', sub: '1 day intervals', points: 180, minutes: 1440, epochs: 90, future_pts: 60 },
+            { id: '1y', label: '1 Year', sub: '1 day intervals', points: 252, minutes: 1440, epochs: 110, future_pts: 90 },
+            { id: '3y', label: '3 Years', sub: '1 week intervals', points: 156, minutes: 10080, epochs: 130, future_pts: 52 },
+            { id: '5y', label: '5 Years', sub: '1 week intervals', points: 260, minutes: 10080, epochs: 150, future_pts: 104 }
         ];
 
         let STOCKS = [
@@ -169,9 +172,10 @@
         ];
 
         let currentStock = STOCKS[0];
-        let currentConfig = TIME_CONFIGS[0];
+        let currentConfig = TIME_CONFIGS[5]; // Default 1 Year
         let historicalData = [];
         let chart = null;
+        let trainedModel = null;
 
         function init() {
             renderStockSelectors();
@@ -181,10 +185,7 @@
             renderChart();
         }
 
-        // --- INTERVAL DROPDOWN LOGIC ---
-        function toggleIntervals() {
-            document.getElementById('interval-dropdown').classList.toggle('dropdown-active');
-        }
+        function toggleIntervals() { document.getElementById('interval-dropdown').classList.toggle('dropdown-active'); }
 
         function renderIntervalList() {
             const list = document.getElementById('interval-list');
@@ -196,22 +197,19 @@
                 card.onclick = () => {
                     currentConfig = config;
                     document.getElementById('active-interval-label').innerText = config.label;
-                    document.getElementById('current-range-info').innerText = `${config.label} • ${config.sub}`;
-                    document.getElementById('confidence-banner').classList.add('hidden');
+                    document.getElementById('current-range-info').innerText = `${config.label} Lookback • ${config.sub}`;
+                    document.getElementById('forecast-results').classList.add('hidden');
+                    trainedModel = null;
                     toggleIntervals();
                     renderIntervalList();
                     generateData();
                     renderChart();
                 };
-                card.innerHTML = `
-                    <p class="text-[11px] font-black ${isActive ? 'text-indigo-700' : 'text-slate-700'}">${config.label}</p>
-                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">${config.sub}</p>
-                `;
+                card.innerHTML = `<p class="text-[11px] font-black ${isActive ? 'text-indigo-700' : 'text-slate-700'}">${config.label}</p><p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">${config.sub}</p>`;
                 list.appendChild(card);
             });
         }
 
-        // --- STOCK MANAGEMENT LOGIC ---
         function renderStockSelectors() {
             const selector = document.getElementById('stock-selector');
             selector.innerHTML = '';
@@ -229,16 +227,8 @@
             list.innerHTML = '';
             STOCKS.forEach((stock, index) => {
                 const item = document.createElement('div');
-                item.className = "flex justify-between items-center p-2.5 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 group transition-all";
-                item.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="text-xs font-black text-slate-700">${stock.symbol}</span>
-                        <span class="text-[9px] text-slate-400 font-bold">₹${stock.base.toLocaleString()}</span>
-                    </div>
-                    <button onclick="removeStock(${index})" class="text-slate-300 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                    </button>
-                `;
+                item.className = "flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 group transition-all";
+                item.innerHTML = `<span class="text-[10px] font-black text-slate-700">${stock.symbol}</span><button onclick="removeStock(${index})" class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>`;
                 list.appendChild(item);
             });
         }
@@ -246,50 +236,33 @@
         function addStock() {
             const input = document.getElementById('new-stock-input');
             const symbol = input.value.trim().toUpperCase();
-            if (!symbol || STOCKS.find(s => s.symbol === symbol)) {
-                input.value = '';
-                return;
-            }
-            const newStock = { 
-                symbol, 
-                name: `${symbol} Equity`, 
-                base: Math.floor(Math.random() * 5000) + 100 
-            };
+            if (!symbol || STOCKS.find(s => s.symbol === symbol)) return;
+            const newStock = { symbol, name: `${symbol} Equity`, base: Math.floor(Math.random() * 4000) + 200 };
             STOCKS.push(newStock);
             input.value = '';
-            renderStockSelectors();
-            renderWatchlistManager();
-            selectStock(newStock);
+            renderStockSelectors(); renderWatchlistManager(); selectStock(newStock);
         }
 
         function removeStock(index) {
             if (STOCKS.length <= 1) return;
             const removed = STOCKS.splice(index, 1)[0];
-            if (currentStock.symbol === removed.symbol) {
-                selectStock(STOCKS[0]);
-            } else {
-                renderStockSelectors();
-                renderWatchlistManager();
-            }
+            if (currentStock.symbol === removed.symbol) selectStock(STOCKS[0]);
+            else { renderStockSelectors(); renderWatchlistManager(); }
         }
 
         function selectStock(stock) {
-            currentStock = stock;
-            renderStockSelectors();
-            renderWatchlistManager();
-            document.getElementById('display-symbol')?.innerText && (document.getElementById('display-symbol').innerText = stock.symbol);
+            currentStock = stock; trainedModel = null;
+            renderStockSelectors(); renderWatchlistManager();
             document.getElementById('chart-title').innerText = stock.symbol;
             document.getElementById('current-price-tag').innerText = `₹${stock.base.toLocaleString()}`;
-            document.getElementById('confidence-banner').classList.add('hidden');
-            generateData();
-            renderChart();
+            document.getElementById('forecast-results').classList.add('hidden');
+            generateData(); renderChart();
         }
 
-        // --- DATA & AI LOGIC ---
         function generateData() {
             let price = currentStock.base;
             historicalData = [];
-            const volatility = 0.006 + (Math.random() * 0.012);
+            const volatility = 0.007 + (Math.random() * 0.01);
             const now = new Date();
             for (let i = currentConfig.points; i >= 0; i--) {
                 const timestamp = new Date(now.getTime() - (i * currentConfig.minutes * 60000));
@@ -298,112 +271,134 @@
             }
         }
 
-        function renderChart(predictions = []) {
+        function renderChart(backtest = [], future = []) {
             const ctx = document.getElementById('stockChart').getContext('2d');
             if (chart) chart.destroy();
+            
+            const datasets = [{
+                label: 'Historical',
+                data: historicalData,
+                borderColor: '#4f46e5',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.1
+            }];
+
+            if (backtest.length) {
+                datasets.push({
+                    label: 'Backtest',
+                    data: backtest.map((p, i) => ({ x: historicalData[i].x, y: p })),
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    tension: 0.4
+                });
+            }
+
+            if (future.length) {
+                datasets.push({
+                    label: 'Future Project',
+                    data: future,
+                    borderColor: '#f97316',
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: { target: 'origin', above: 'rgba(249, 115, 22, 0.05)' }
+                });
+            }
+
             chart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    datasets: [
-                        {
-                            label: 'Actual',
-                            data: historicalData,
-                            borderColor: '#4f46e5',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            tension: 0.1
-                        },
-                        {
-                            label: 'AI Predicted',
-                            data: predictions.map((p, i) => ({ x: historicalData[i].x, y: p })),
-                            borderColor: '#10b981',
-                            borderWidth: 2,
-                            borderDash: [6, 4],
-                            pointRadius: 0,
-                            tension: 0.4
-                        }
-                    ]
-                },
+                data: { datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: { 
-                            type: 'time',
-                            grid: { display: false },
-                            ticks: { font: { size: 9 }, color: '#94a3b8', maxRotation: 0 }
-                        },
-                        y: { 
-                            position: 'right',
-                            grid: { color: '#f1f5f9' },
-                            ticks: { font: { size: 10, weight: 'bold' }, color: '#64748b' }
-                        }
+                        x: { type: 'time', grid: { display: false }, ticks: { font: { size: 9 }, color: '#94a3b8' } },
+                        y: { position: 'right', grid: { color: '#f1f5f9' }, ticks: { font: { size: 10, weight: 'bold' }, color: '#64748b' } }
                     }
                 }
             });
         }
 
-        async function trainAndPredict() {
-            const btn = document.getElementById('train-btn');
-            const status = document.getElementById('status-badge');
+        async function trainAI(isFuture = false) {
+            const btn = isFuture ? document.getElementById('forecast-btn') : document.getElementById('train-btn');
             const progress = document.getElementById('progress-container');
             const bar = document.getElementById('progress-bar');
+            const status = document.getElementById('status-text');
             
             btn.disabled = true;
-            status.innerText = 'Training Neural Net...';
-            status.className = 'text-[10px] px-2 py-0.5 rounded-full font-black bg-amber-100 text-amber-700 training-pulse uppercase';
             progress.classList.remove('hidden');
+            status.innerText = isFuture ? 'Computing Future Probabilities...' : 'Mapping Local Trends...';
 
             const yValues = historicalData.map(d => d.y);
             const min = Math.min(...yValues);
             const max = Math.max(...yValues);
-            const normalizedY = yValues.map(y => (y - min) / (max - min));
+            const normY = yValues.map(y => (y - min) / (max - min));
 
             const xs = tf.tensor2d(historicalData.map((_, i) => i), [historicalData.length, 1]);
-            const ys = tf.tensor2d(normalizedY, [historicalData.length, 1]);
+            const ys = tf.tensor2d(normY, [historicalData.length, 1]);
 
-            const model = tf.sequential();
-            model.add(tf.layers.dense({ units: 32, inputShape: [1], activation: 'relu' }));
-            model.add(tf.layers.dense({ units: 16, activation: 'relu' }));
-            model.add(tf.layers.dense({ units: 1 }));
-            model.compile({ optimizer: tf.train.adam(0.01), loss: 'meanSquaredError' });
+            if (!trainedModel) {
+                trainedModel = tf.sequential();
+                trainedModel.add(tf.layers.dense({ units: 64, inputShape: [1], activation: 'relu' }));
+                trainedModel.add(tf.layers.dense({ units: 32, activation: 'relu' }));
+                trainedModel.add(tf.layers.dense({ units: 1 }));
+                trainedModel.compile({ optimizer: tf.train.adam(0.01), loss: 'meanSquaredError' });
+                
+                await trainedModel.fit(xs, ys, {
+                    epochs: currentConfig.epochs,
+                    callbacks: { onEpochEnd: (e) => bar.style.width = Math.floor(((e + 1) / currentConfig.epochs) * 100) + '%' }
+                });
+            }
 
-            await model.fit(xs, ys, {
-                epochs: currentConfig.epochs,
-                callbacks: {
-                    onEpochEnd: (epoch) => {
-                        bar.style.width = Math.floor(((epoch + 1) / currentConfig.epochs) * 100) + '%';
-                    }
-                }
-            });
+            const backtestArr = await trainedModel.predict(xs).data();
+            const denormBacktest = Array.from(backtestArr).map(p => p * (max - min) + min);
 
-            const predArray = await model.predict(xs).data();
-            const denormalizedPreds = Array.from(predArray).map(p => p * (max - min) + min);
+            let futurePoints = [];
+            if (isFuture) {
+                const lastIdx = historicalData.length - 1;
+                const futureXS = [];
+                for (let i = 1; i <= currentConfig.future_pts; i++) futureXS.push(lastIdx + i);
+                
+                const fTensor = tf.tensor2d(futureXS, [futureXS.length, 1]);
+                const futurePreds = await trainedModel.predict(fTensor).data();
+                
+                const lastDate = historicalData[lastIdx].x;
+                futurePoints = Array.from(futurePreds).map((p, i) => ({
+                    x: new Date(lastDate.getTime() + ((i + 1) * currentConfig.minutes * 60000)),
+                    y: p * (max - min) + min
+                }));
+                futurePoints.unshift({ x: lastDate, y: historicalData[lastIdx].y });
+            }
 
-            let totalPctError = 0;
-            denormalizedPreds.forEach((p, i) => totalPctError += Math.abs(p - yValues[i]) / yValues[i]);
-            const confidence = Math.max(0, 100 - ( (totalPctError / yValues.length) * 1800)).toFixed(1);
+            let err = 0;
+            denormBacktest.forEach((p, i) => err += Math.abs(p - yValues[i]) / yValues[i]);
+            const conf = Math.max(0, 100 - ( (err / yValues.length) * 1500)).toFixed(1);
 
-            renderChart(denormalizedPreds);
-            document.getElementById('confidence-val').innerText = confidence + '%';
-            document.getElementById('confidence-banner').classList.remove('hidden');
+            renderChart(denormBacktest, futurePoints);
             
-            const first = denormalizedPreds[0];
-            const last = denormalizedPreds[denormalizedPreds.length - 1];
-            document.getElementById('insight-trend').innerText = last > first ? 'BULLISH' : 'BEARISH';
-            document.getElementById('insight-trend').className = `font-black text-xl ${last > first ? 'text-emerald-300' : 'text-rose-300'}`;
-            
+            document.getElementById('confidence-val').innerText = conf + '%';
+            if (isFuture) {
+                const endPrice = futurePoints[futurePoints.length - 1].y;
+                const startPrice = futurePoints[0].y;
+                document.getElementById('future-sentiment').innerText = endPrice > startPrice ? 'BULLISH' : 'BEARISH';
+                document.getElementById('future-sentiment').className = `text-2xl font-black ${endPrice > startPrice ? 'text-emerald-500' : 'text-rose-500'}`;
+                document.getElementById('target-price').innerText = `₹${endPrice.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+            }
+
+            document.getElementById('forecast-results').classList.remove('hidden');
             btn.disabled = false;
-            status.innerText = 'System Ready';
-            status.className = 'text-[10px] px-2 py-0.5 rounded-full font-black bg-green-100 text-green-700 uppercase';
             progress.classList.add('hidden');
         }
 
-        // Keyboard support
-        document.getElementById('new-stock-input').addEventListener('keypress', e => e.key === 'Enter' && addStock());
+        document.getElementById('train-btn').onclick = () => trainAI(false);
+        document.getElementById('forecast-btn').onclick = () => trainAI(true);
+        document.getElementById('new-stock-input').onkeypress = e => e.key === 'Enter' && addStock();
         
-        document.getElementById('train-btn').onclick = trainAndPredict;
         window.onload = init;
     </script>
 </body>
