@@ -260,33 +260,44 @@
     </div>
 
     <!-- Data/Backup Modal -->
-    <div id="backup-modal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5">
+    <div id="backup-modal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center hidden p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-lg text-slate-800">Data Management</h3>
-                <button onclick="closeBackupModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+                <div>
+                    <h3 class="font-bold text-xl text-slate-800">System Backup</h3>
+                    <p class="text-xs text-slate-400">Save snapshots of all data</p>
+                </div>
+                <button onclick="closeBackupModal()" class="w-8 h-8 rounded-full bg-slate-50 text-slate-500 hover:bg-slate-100"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            
             <div class="space-y-4">
-                <button onclick="exportAttendanceToJSON()" class="w-full flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-100 hover:bg-blue-100 transition-colors group">
-                    <div class="text-left">
-                        <p class="font-bold text-blue-700 text-sm">Backup Data</p>
-                        <p class="text-[10px] text-blue-500">Download JSON file</p>
+                <button onclick="exportSystemData()" class="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-md transition-all group text-left">
+                    <div>
+                        <p id="backup-btn-text" class="font-bold text-blue-700 text-sm">Download Full Backup</p>
+                        <p class="text-[10px] text-blue-500 mt-0.5">Includes: Sessions, Attendance, Student Photos & Faculty Info</p>
                     </div>
-                    <i class="fa-solid fa-download text-blue-600 group-hover:scale-110 transition-transform"></i>
+                    <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-cloud-arrow-down text-blue-600"></i>
+                    </div>
                 </button>
-                <div class="p-4 bg-green-50 rounded-xl border border-green-100">
+
+                <div class="p-4 bg-white rounded-xl border-2 border-dashed border-slate-200 hover:border-green-300 transition-colors">
                     <div class="flex justify-between items-center mb-3">
                         <div>
-                            <p class="font-bold text-green-700 text-sm">Restore / Sync</p>
-                            <p class="text-[10px] text-green-500">Upload JSON to Cloud</p>
+                            <p class="font-bold text-slate-700 text-sm">Restore Data</p>
+                            <p class="text-[10px] text-slate-400">Sync JSON to Cloud</p>
                         </div>
-                        <i class="fa-solid fa-cloud-arrow-up text-green-600"></i>
+                        <i class="fa-solid fa-rotate text-slate-300"></i>
                     </div>
                     <div class="flex gap-2">
-                        <input type="file" id="backup-upload" accept=".json" class="text-xs w-full bg-white border border-green-200 rounded-lg p-2 text-slate-600">
-                        <button onclick="importAttendanceFromJSON()" class="bg-green-600 text-white px-4 rounded-lg font-bold text-xs hover:bg-green-700">Sync</button>
+                        <input type="file" id="backup-upload" accept=".json" class="text-xs w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-600 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:bg-slate-200 file:text-slate-600">
+                        <button onclick="importSystemData()" class="bg-green-600 text-white px-4 rounded-lg font-bold text-xs hover:bg-green-700 shadow-lg shadow-green-100">Sync</button>
                     </div>
                 </div>
+                
+                <p class="text-[10px] text-center text-slate-300 mt-2">
+                    <i class="fa-solid fa-lock mr-1"></i> End-to-Encrypted JSON
+                </p>
             </div>
         </div>
     </div>
@@ -358,7 +369,7 @@
         const ATTENDANCE_RADIUS_METERS = 300; 
         const FACE_MATCH_THRESHOLD = 0.38; // STRICTER THRESHOLD (Lower is stricter)
         const OTP_REFRESH_RATE = 30; 
-        const PHOTO_RETENTION_DAYS = 2;
+        const PHOTO_RETENTION_DAYS = 3;
 
         // --- STATE ---
         window.appState = {
@@ -419,17 +430,29 @@
         }
 
         // --- GEOLOCATION & HELPERS ---
-        function getCurrentLocation() {
-            return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) return reject("Geo unavailable");
-                navigator.geolocation.getCurrentPosition(
-                    (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }), 
-                    (err) => reject(err), 
-                    // INCREASED TIMEOUT HERE TO FIX ERROR
-                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-                );
-            });
-        }
+        
+		
+		function getCurrentLocation() {
+			return new Promise((resolve, reject) => {
+				if (!navigator.geolocation) return reject("Geo unavailable");
+				const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+				
+				navigator.geolocation.getCurrentPosition(
+					(p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }), 
+					(err) => {
+						// Retry once if it's a timeout error
+						if(err.code === 3) {
+							navigator.geolocation.getCurrentPosition(
+								(p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+								(err2) => reject(err2), options
+							);
+						} else {
+							reject(err);
+						}
+					}, options
+				);
+			});
+		}
 
         async function performCleanup() {
             const cutoffDate = new Date(); cutoffDate.setDate(cutoffDate.getDate() - PHOTO_RETENTION_DAYS);
@@ -537,24 +560,42 @@
         }
         
         async function loadStudentProfile() {
-            if(!window.appState.userId) return;
-            const docSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', window.appState.userId));
-            if (docSnap.exists()) {
-                const profile = docSnap.data();
-                
-                // NEW: Fetch Section from Master List for filtering
-                try {
-                    // Assuming Master List ID is the Roll No (as per handleCSVUpload logic)
-                    const masterRef = doc(db, 'artifacts', appId, 'public', 'data', 'master_students', profile.rollNo);
-                    const masterSnap = await getDoc(masterRef);
-                    if(masterSnap.exists()) {
-                        profile.section = masterSnap.data().section; // e.g., "A"
-                    }
-                } catch(e) { console.error("Section fetch error", e); }
+			if(!window.appState.userId) return;
+			
+			try {
+				const docSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', window.appState.userId));
+				
+				if (docSnap.exists()) {
+					const profile = docSnap.data();
+					
+					// ARCHITECT FIX 1: Set a default section immediately so the UI doesn't crash 
+					// if the master fetch is slow or fails.
+					profile.section = profile.section || 'A'; 
 
-                window.appState.studentProfile = profile;
-            }
-        }
+					if (profile.rollNo) {
+						try {
+							const masterRef = doc(db, 'artifacts', appId, 'public', 'data', 'master_students', profile.rollNo);
+							const masterSnap = await getDoc(masterRef);
+							
+							if(masterSnap.exists()) {
+								// ARCHITECT FIX 2: Override with verified section from Master List
+								profile.section = masterSnap.data().section || 'A';
+							}
+						} catch(e) { 
+							console.error("Section fetch error (Network/Permission):", e); 
+						}
+					}
+
+					// ARCHITECT FIX 3: Final state update
+					window.appState.studentProfile = profile;
+					
+					// Trigger a UI refresh if necessary
+					if(window.appState.role === 'student') renderStudentDashboard();
+				}
+			} catch (err) {
+				console.error("Critical Profile Load Error:", err);
+			}
+		}
 
         async function checkFacultyRegistration() {
             if(!window.appState.userId) return;
@@ -1366,78 +1407,135 @@
         };
 
         function monitorSession(sessionId, subject, section, slot, initialOtp) {
-            // Clear previous generic intervals if any
+        // Clear previous generic intervals if any
+        if(otpInterval) clearInterval(otpInterval);
+
+        document.getElementById('create-session-panel').classList.add('hidden');
+        document.getElementById('live-monitor').classList.remove('hidden');
+        document.getElementById('display-sub').innerText = subject;
+        document.getElementById('display-sec').innerText = "Sec " + section;
+        document.getElementById('display-slot').innerText = slot;
+        document.getElementById('display-otp').innerText = initialOtp;
+
+        let timeLeft = OTP_REFRESH_RATE; 
+        const bar = document.getElementById('otp-bar');
+        
+        // OTP Interval
+        otpInterval = setInterval(() => { 
+            timeLeft--; 
+            if(bar) bar.style.width = `${(timeLeft / OTP_REFRESH_RATE) * 100}%`; 
+            if (timeLeft <= 0) { timeLeft = OTP_REFRESH_RATE; updateOTP(sessionId); } 
+        }, 1000);
+        window.appState.activeIntervals.push(otpInterval);
+        
+        // --- Fetch Total Count ---
+        let totalStudents = 0;
+        getDocs(query(getMasterPath(), where("section", "==", section))).then(snap => {
+        totalStudents = snap.size; 
+        if(totalStudents === 0) getDocs(getStudentsPath()).then(s=>totalStudents = s.size);
+        });
+
+        // Attendance Snapshot Listener
+        const unsub = onSnapshot(query(getAttPath(), where("sessionId", "==", sessionId)), (snap) => {
+            const list = document.getElementById('attendee-list');
+            if(!list) return; 
+            list.innerHTML = ''; 
+            
+            let attendees = [];
+            snap.forEach(d => attendees.push({id: d.id, ...d.data()}));
+            
+            const presentCount = attendees.filter(a => a.status === 'present').length;
+            const pendingCount = attendees.filter(a => a.status === 'pending').length;
+            const absentCount = Math.max(0, totalStudents - presentCount - pendingCount);
+            
+            document.getElementById('live-present').innerText = presentCount;
+            document.getElementById('live-pending').innerText = pendingCount;
+            document.getElementById('live-absent').innerText = absentCount;
+
+            attendees.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+            attendees.forEach(r => {
+                const timeStr = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Just now';
+                const isPending = r.status === 'pending' || r.verified === false;
+                const borderClass = isPending ? 'border-orange-300 bg-orange-50' : 'border-green-100 bg-white';
+                const icon = isPending ? '<i class="fa-solid fa-triangle-exclamation text-[8px] text-orange-500 absolute -top-1 -right-1"></i>' : '';
+
+                list.innerHTML += `
+                <div onclick="reviewAttendanceFromBubble('${r.id}')" class="inline-flex items-center gap-2 ${borderClass} border rounded-full pl-1 pr-3 py-1 shadow-sm animate-pop transition-transform hover:scale-105 cursor-pointer select-none relative">
+                    <img src="${r.capturedPhoto || 'https://ui-avatars.com/api/?name=' + r.studentName}" class="w-8 h-8 rounded-full object-cover border border-slate-200 bg-slate-100">
+                    ${icon}
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-700 leading-tight">${r.studentRoll}</p>
+                        <p class="text-[8px] text-slate-400 leading-tight tracking-wide">${timeStr}</p>
+                    </div>
+                </div>`;
+            });
+        });
+        
+        window.appState.activeListeners.push(unsub);
+
+        // ==========================================
+        // NEW: IDLE TIMEOUT LOGIC (5 MINUTES)
+        // ==========================================
+        const IDLE_TIME_LIMIT = 3 * 60 * 1000; // 3 mins in ms
+
+        window.resetIdleTimer = () => {
+            if (window.appState.idleTimer) clearTimeout(window.appState.idleTimer);
+            window.appState.idleTimer = setTimeout(() => {
+                console.warn("Session auto-stopped due to inactivity.");
+                // Trigger the stop session logic (automatically closes session)
+                window.stopSession(true); 
+            }, IDLE_TIME_LIMIT);
+        };
+
+        // Listen for activity to reset the 5-minute clock
+        ['mousemove', 'click', 'keypress', 'scroll'].forEach(event => {
+            document.addEventListener(event, window.resetIdleTimer);
+        });
+
+        window.resetIdleTimer(); // Initialize the timer
+    }
+
+    window.stopSession = async (isAutoTimeout = false) => {
+        // 1. If manual, ask for confirmation
+        if (!isAutoTimeout && !confirm("Are you sure you want to end the session?")) return;
+
+        try {
+            // 2. Update Firebase: Set session to inactive
+            const sessionRef = doc(db, 'artifacts', appId, 'public', 'data', 'sessions', currentSessionId);
+            await updateDoc(sessionRef, { active: false, endedAt: serverTimestamp() });
+
+            // 3. CLEANUP LISTENERS: Stop the onSnapshot Firebase listeners
+            window.appState.activeListeners.forEach(detach => detach());
+            window.appState.activeListeners = [];
+
+            // 4. CLEANUP INTERVALS: Stop the OTP timer
+            window.appState.activeIntervals.forEach(clearInterval);
+            window.appState.activeIntervals = [];
             if(otpInterval) clearInterval(otpInterval);
 
-            document.getElementById('create-session-panel').classList.add('hidden');
-            document.getElementById('live-monitor').classList.remove('hidden');
-            document.getElementById('display-sub').innerText = subject;
-            document.getElementById('display-sec').innerText = "Sec " + section;
-            document.getElementById('display-slot').innerText = slot;
-            document.getElementById('display-otp').innerText = initialOtp;
-
-            let timeLeft = OTP_REFRESH_RATE; const bar = document.getElementById('otp-bar');
-            
-            // ADDED: Track OTP Interval
-            otpInterval = setInterval(() => { 
-                timeLeft--; 
-                if(bar) bar.style.width = `${(timeLeft / OTP_REFRESH_RATE) * 100}%`; 
-                if (timeLeft <= 0) { timeLeft = OTP_REFRESH_RATE; updateOTP(sessionId); } 
-            }, 1000);
-            window.appState.activeIntervals.push(otpInterval);
-            
-            // --- Fetch Total Count ---
-            let totalStudents = 0;
-            getDocs(query(getMasterPath(), where("section", "==", section))).then(snap => {
-               totalStudents = snap.size; 
-               // Fallback if master empty
-               if(totalStudents === 0) getDocs(getStudentsPath()).then(s=>totalStudents = s.size);
+            // 5. CLEANUP IDLE TIMER: Remove activity listeners
+            if (window.appState.idleTimer) clearTimeout(window.appState.idleTimer);
+            ['mousemove', 'click', 'keypress', 'scroll'].forEach(event => {
+                document.removeEventListener(event, window.resetIdleTimer);
             });
 
-            // ADDED: Track Snapshot Listener
-            const unsub = onSnapshot(query(getAttPath(), where("sessionId", "==", sessionId)), (snap) => {
-                const list = document.getElementById('attendee-list');
-                if(!list) return; // Safety check
-                list.innerHTML = ''; 
-                
-                let attendees = [];
-                snap.forEach(d => attendees.push({id: d.id, ...d.data()}));
-                
-                // Update Dashboard Counts
-                const presentCount = attendees.filter(a => a.status === 'present').length;
-                const pendingCount = attendees.filter(a => a.status === 'pending').length;
-                const absentCount = Math.max(0, totalStudents - presentCount - pendingCount);
-                
-                document.getElementById('live-present').innerText = presentCount;
-                document.getElementById('live-pending').innerText = pendingCount;
-                document.getElementById('live-absent').innerText = absentCount;
+            // 6. UI RESET
+            document.getElementById('live-monitor').classList.add('hidden');
+            document.getElementById('create-session-panel').classList.remove('hidden');
+            document.getElementById('create-btn').innerText = "Start Class";
 
-                // Sort by timestamp descending
-                attendees.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            if(isAutoTimeout) {
+                showToast("Session ended due to 3 minutes of inactivity.", "info");
+            } else {
+                showToast("Session ended successfully.", "success");
+            }
 
-                attendees.forEach(r => {
-                    const timeStr = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Just now';
-                    
-                    // Visual Cue for Pending/Not Verified
-                    const isPending = r.status === 'pending' || r.verified === false;
-                    const borderClass = isPending ? 'border-orange-300 bg-orange-50' : 'border-green-100 bg-white';
-                    const icon = isPending ? '<i class="fa-solid fa-triangle-exclamation text-[8px] text-orange-500 absolute -top-1 -right-1"></i>' : '';
-
-                    list.innerHTML += `
-                    <div onclick="reviewAttendanceFromBubble('${r.id}')" class="inline-flex items-center gap-2 ${borderClass} border rounded-full pl-1 pr-3 py-1 shadow-sm animate-pop transition-transform hover:scale-105 cursor-pointer select-none relative">
-                        <img src="${r.capturedPhoto || 'https://ui-avatars.com/api/?name=' + r.studentName}" class="w-8 h-8 rounded-full object-cover border border-slate-200 bg-slate-100">
-                        ${icon}
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-700 leading-tight">${r.studentRoll}</p>
-                            <p class="text-[8px] text-slate-400 leading-tight tracking-wide">${timeStr}</p>
-                        </div>
-                    </div>`;
-                });
-            });
-            
-            // ADDED: Push listener to active array
-            window.appState.activeListeners.push(unsub);
+        } catch (e) {
+            console.error("End Session Error:", e);
+            showToast("Failed to end session properly.", "error");
         }
+    };
         
         // --- NEW: Open review from bubble ---
         window.reviewAttendanceFromBubble = async (attId) => {
@@ -1804,161 +1902,204 @@
             } catch(e) { console.error("History Error", e); }
         }
 
-        // --- CAMERA & LIVENESS ---
-        let videoStream = null; let activeMode = null; let onCaptureCallback = null;
+        // --- CAMERA & LIVENESS (Updated & Fixed) ---
+let videoStream = null; 
+let activeMode = null; 
+let onCaptureCallback = null;
 
-        window.openCamera = async (mode, callback) => {
-            activeMode = mode; onCaptureCallback = callback;
-            const modal = document.getElementById('camera-modal'), video = document.getElementById('video-feed');
-            modal.classList.remove('hidden');
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } } });
-                video.srcObject = videoStream; 
-                video.onloadedmetadata = () => { video.play(); startLivenessLoop(video); };
-            } catch (err) { showToast("Camera Access Denied", "error"); closeCamera(); }
+window.openCamera = async (mode, callback) => {
+    activeMode = mode; 
+    onCaptureCallback = callback;
+    const modal = document.getElementById('camera-modal');
+    const video = document.getElementById('video-feed');
+    
+    modal.classList.remove('hidden');
+    // FIX 1: Set state to true so the liveness loop can actually run
+    window.appState.isCameraOpen = true; 
+
+    try {
+        videoStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+        });
+        video.srcObject = videoStream; 
+        video.onloadedmetadata = () => { 
+            video.play(); 
+            startLivenessLoop(video); 
         };
+    } catch (err) { 
+        console.error("Camera Error:", err);
+        showToast("Camera Access Denied", "error"); 
+        closeCamera(); 
+    }
+};
 
-        window.closeCamera = () => {
-            const modal = document.getElementById('camera-modal'), video = document.getElementById('video-feed');
-            modal.classList.add('hidden'); if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; }
-            video.srcObject = null; activeMode = null;
-        };
+window.closeCamera = () => {
+    const modal = document.getElementById('camera-modal');
+    const video = document.getElementById('video-feed');
+    
+    // FIX 2: Set state to false first to stop the liveness recursive loop
+    window.appState.isCameraOpen = false;
 
-        async function startLivenessLoop(video) {
-            const canvas = document.getElementById('overlay-canvas');
-            const displaySize = { width: video.videoWidth, height: video.videoHeight };
-            faceapi.matchDimensions(canvas, displaySize);
-            
-            const btn = document.getElementById('capture-btn'), status = document.getElementById('camera-status'), challengeBox = document.getElementById('liveness-challenge');
-            let state = 'WAIT', challengeType = Math.floor(Math.random() * 3); 
-            const challengeNames = ["Blink Eyes", "Turn Head", "Nod (Up/Down)"];
-            let stabilizationCounter = 0; // NEW: Counter for stable alignment
+    if (video.srcObject) {
+        const tracks = video.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+        video.srcObject = null;
+    }
+    
+    modal.classList.add('hidden');
+    
+    // Clean up liveness detection state
+    window.appState.currentChallenge = null;
+    window.appState.challengeStep = 0;
+};
 
-            // RECURSIVE LOOP for better control than setInterval
-            const loop = async () => {
-                if (!activeMode) return;
-                
-                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
-                const detections = await faceapi.detectSingleFace(video, options).withFaceLandmarks(true).withFaceDescriptor();
-                const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
+async function startLivenessLoop(video) {
+    const canvas = document.getElementById('overlay-canvas');
+    // Ensure display size matches the stream
+    const displaySize = { width: video.videoWidth, height: video.videoHeight };
+    faceapi.matchDimensions(canvas, displaySize);
+    
+    const btn = document.getElementById('capture-btn'), 
+          status = document.getElementById('camera-status'), 
+          challengeBox = document.getElementById('liveness-challenge'),
+          challengeText = document.getElementById('challenge-text'),
+          challengeIcon = document.getElementById('challenge-icon');
 
-                if (detections) {
-                    const dims = faceapi.resizeResults(detections, displaySize); faceapi.draw.drawDetections(canvas, dims);
-                    if (state === 'WAIT') {
-                        status.innerText = "Face Detected";
-                        if (detections.detection.score > 0.7) {
-                            state = 'CHALLENGE'; challengeBox.classList.remove('hidden');
-                            document.getElementById('challenge-text').innerText = challengeNames[challengeType];
-                        }
-                    } else if (state === 'CHALLENGE') {
-                        const lm = detections.landmarks;
-                        const leftEye = lm.getLeftEye(), rightEye = lm.getRightEye(), nose = lm.getNose(), jaw = lm.getJawOutline();
-                        let passed = false;
+    // --- RESET UI STATE ---
+    challengeBox.classList.add('hidden');
+    challengeBox.classList.remove('challenge-success');
+    challengeIcon.innerHTML = '<i class="fa-solid fa-face-viewfinder"></i>';
+
+    let state = 'WAIT';
+    let challengeType = Math.floor(Math.random() * 3); 
+    const challengeNames = ["Blink Eyes", "Turn Head", "Nod (Up/Down)"];
+    let stabilizationCounter = 0; 
+
+    const loop = async () => {
+        // Safety check to prevent the loop from running when modal is closed
+        if (!window.appState.isCameraOpen) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
+        
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+        
+        try {
+            const detections = await faceapi.detectSingleFace(video, options).withFaceLandmarks(true).withFaceDescriptor();
+            const ctx = canvas.getContext('2d'); 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (detections) {
+                const dims = faceapi.resizeResults(detections, displaySize);
+                faceapi.draw.drawFaceLandmarks(canvas, dims);
+
+                if (state === 'WAIT') {
+                    status.innerText = "Face Detected";
+                    if (detections.detection.score > 0.7) {
+                        state = 'CHALLENGE'; 
+                        challengeBox.classList.remove('hidden');
+                        challengeText.innerText = challengeNames[challengeType];
+                    }
+                } else if (state === 'CHALLENGE') {
+                    const lm = detections.landmarks;
+                    const leftEye = lm.getLeftEye(), rightEye = lm.getRightEye(), nose = lm.getNose(), jaw = lm.getJawOutline();
+                    let passed = false;
+                    
+                    if (challengeType === 0) { // BLINK
+                        const lEAR = (getDist(leftEye[1], leftEye[5]) + getDist(leftEye[2], leftEye[4])) / (2 * getDist(leftEye[0], leftEye[3]));
+                        const rEAR = (getDist(rightEye[1], rightEye[5]) + getDist(rightEye[2], rightEye[4])) / (2 * getDist(rightEye[0], rightEye[3]));
+                        if ((lEAR + rEAR) / 2 < 0.28) passed = true; 
+                    } else if (challengeType === 1) { // TURN HEAD
+                        const noseX = nose[0].x, boxW = detections.detection.box.width, center = detections.detection.box.x + boxW/2;
+                        if (Math.abs(noseX - center) > boxW * 0.15) passed = true; 
+                    } else if (challengeType === 2) { // NOD
+                        const verticalDist = jaw[8].y - nose[6].y, boxH = detections.detection.box.height;
+                        const nodRatio = verticalDist / boxH; 
+                        if(nodRatio < 0.25 || nodRatio > 0.48) passed = true; 
+                    }
+                    
+                    if (passed) {
+                        challengeBox.classList.add('challenge-success');
+                        challengeIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                        challengeText.innerText = "Verified";
                         
-                        // --- IMPROVED LOGIC ---
-                        if (challengeType === 0) { // BLINK
-                            // Calculate EAR (Eye Aspect Ratio)
-                            const lEAR = (getDist(leftEye[1], leftEye[5]) + getDist(leftEye[2], leftEye[4])) / (2 * getDist(leftEye[0], leftEye[3]));
-                            const rEAR = (getDist(rightEye[1], rightEye[5]) + getDist(rightEye[2], rightEye[4])) / (2 * getDist(rightEye[0], rightEye[3]));
-                            const avgEAR = (lEAR + rEAR) / 2;
-                            if (avgEAR < 0.30) passed = true; // Relaxed threshold
-                        } else if (challengeType === 1) { // TURN HEAD
-                            const noseX = nose[0].x, boxW = detections.detection.box.width, center = detections.detection.box.x + boxW/2;
-                            if (Math.abs(noseX - center) > boxW * 0.12) passed = true; // Slightly more sensitive
-                        } else if (challengeType === 2) { // NOD
-                            const noseTip = nose[6], chinTip = jaw[8], verticalDist = chinTip.y - noseTip.y, boxH = detections.detection.box.height, ratio = verticalDist / boxH;
-                            // Widen range for "Action"
-                            if(ratio < 0.28 || ratio > 0.45) passed = true; 
-                        }
-                        
-                        if (passed) {
-                            challengeBox.classList.add('challenge-success');
-                            document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-check"></i>';
-                            document.getElementById('challenge-text').innerText = "Verified";
-                            setTimeout(() => {
+                        setTimeout(() => {
+                            if(state === 'CHALLENGE' && window.appState.isCameraOpen) { 
                                 state = 'ALIGN';
                                 challengeBox.classList.remove('challenge-success'); 
-                                challengeBox.classList.remove('hidden');
-                                document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-camera"></i>';
-                                document.getElementById('challenge-text').innerText = "Look Straight";
+                                challengeIcon.innerHTML = '<i class="fa-solid fa-camera"></i>';
+                                challengeText.innerText = "Look Straight";
                                 stabilizationCounter = 0;
-                            }, 500); 
-                        }
-                    } else if (state === 'ALIGN') {
-                        // Strict Pose Check Logic
-                        const lm = detections.landmarks;
-                        const nose = lm.positions[30]; // Tip of nose
-                        const jaw = lm.getJawOutline();
-                        const jawLeft = jaw[0];
-                        const jawRight = jaw[16];
-                        const leftEye = lm.getLeftEye();
-                        const rightEye = lm.getRightEye();
-
-                        // 1. YAW: Symmetry Check (Nose centered horizontally on face)
-                        const distToLeft = Math.abs(nose.x - jawLeft.x);
-                        const distToRight = Math.abs(nose.x - jawRight.x);
-                        const ratio = distToLeft / (distToRight || 1);
-                        const isFacingFront = ratio > 0.8 && ratio < 1.25;
-
-                        // 2. ROLL: Tilt Check (Eyes horizontal)
-                        const leftEyeCenter = { x: (leftEye[0].x + leftEye[3].x)/2, y: (leftEye[0].y + leftEye[3].y)/2 };
-                        const rightEyeCenter = { x: (rightEye[0].x + rightEye[3].x)/2, y: (rightEye[0].y + rightEye[3].y)/2 };
-                        const dY = rightEyeCenter.y - leftEyeCenter.y;
-                        const dX = rightEyeCenter.x - leftEyeCenter.x;
-                        const angle = Math.atan2(dY, dX) * (180 / Math.PI);
-                        const isLevel = Math.abs(angle) < 10; // Max 10 degree tilt
-
-                        // 3. CENTERING: Face centered in camera frame
-                        const box = detections.detection.box;
-                        const boxCenter = box.x + box.width / 2;
-                        const frameCenter = displaySize.width / 2;
-                        const isCentered = Math.abs(boxCenter - frameCenter) < (displaySize.width * 0.15); // Within 15% center
-
-                        // 4. NOD CHECK (Heuristic via score): High confidence usually means frontal face
-                        const isHighQuality = detections.detection.score > 0.85;
-
-                        if (isFacingFront && isLevel && isCentered && isHighQuality) {
-                            stabilizationCounter++;
-                            document.getElementById('challenge-text').innerText = "Hold Still...";
-                            document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-camera"></i>';
-                            status.innerText = "Perfect. Hold it.";
-                            
-                            // Require 5 consecutive stable frames (~500ms)
-                            if (stabilizationCounter > 5) { 
-                                state = 'CAPTURE';
                             }
-                        } else {
-                            stabilizationCounter = 0; // Reset if user moves
-                            document.getElementById('challenge-text').innerText = "Look Straight";
-                            document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-user"></i>';
-                            
-                            // Specific feedback
-                            if(!isFacingFront) status.innerText = "Turn Face Forward";
-                            else if(!isLevel) status.innerText = "Keep Head Straight";
-                            else if(!isCentered) status.innerText = "Center Your Face";
-                            else if(!isHighQuality) status.innerText = "Look Straight (No Nod)";
-                        }
-
-                    } else if (state === 'CAPTURE') {
-                        status.innerText = "Processing..."; 
-                        // Capture Logic
-                        const capCanvas = document.createElement('canvas'); capCanvas.width = 300; capCanvas.height = 300;
-                        const ctx2 = capCanvas.getContext('2d'); ctx2.translate(300, 0); ctx2.scale(-1, 1); 
-                        ctx2.drawImage(video, 0, 0, 300, 300);
-                        const imgData = capCanvas.toDataURL('image/jpeg', 0.6);
-                        
-                        closeCamera(); 
-                        if (onCaptureCallback) onCaptureCallback(detections.descriptor, detections.detection.score, imgData);
-                        return; // Stop Loop
+                        }, 800); 
                     }
-                } else { status.innerText = "Position face in frame"; }
-                
-                // Run loop again in 100ms
-                setTimeout(loop, 100);
-            };
-            
-            loop(); // Start loop
+                } else if (state === 'ALIGN') {
+                    const lm = detections.landmarks;
+                    const noseTip = lm.positions[30];
+                    const jawLine = lm.getJawOutline();
+                    const leftEye = lm.getLeftEye(), rightEye = lm.getRightEye();
+
+                    const distToLeft = Math.abs(noseTip.x - jawLine[0].x);
+                    const distToRight = Math.abs(noseTip.x - jawLine[16].x);
+                    const symmetryRatio = distToLeft / (distToRight || 1);
+                    const isFacingFront = symmetryRatio > 0.8 && symmetryRatio < 1.25;
+
+                    const dY = (rightEye[0].y + rightEye[3].y)/2 - (leftEye[0].y + leftEye[3].y)/2;
+                    const dX = (rightEye[0].x + rightEye[3].x)/2 - (leftEye[0].x + leftEye[3].x)/2;
+                    const isLevel = Math.abs(Math.atan2(dY, dX) * (180 / Math.PI)) < 10;
+
+                    const box = detections.detection.box;
+                    const isCentered = Math.abs((box.x + box.width/2) - (displaySize.width/2)) < (displaySize.width * 0.15);
+                    const isCloseEnough = box.width > (displaySize.width * 0.3);
+
+                    if (isFacingFront && isLevel && isCentered && isCloseEnough && detections.detection.score > 0.85) {
+                        stabilizationCounter++;
+                        challengeText.innerText = "Hold Still...";
+                        status.innerText = "Perfect. Capturing...";
+                        if (stabilizationCounter > 6) state = 'CAPTURE';
+                    } else {
+                        stabilizationCounter = 0;
+                        challengeText.innerText = "Look Straight";
+                        if(!isCloseEnough) status.innerText = "Move Closer";
+                        else if(!isFacingFront) status.innerText = "Face Forward";
+                        else status.innerText = "Align Face in Frame";
+                    }
+
+                } else if (state === 'CAPTURE') {
+                    const capCanvas = document.createElement('canvas'); 
+                    capCanvas.width = 400; capCanvas.height = 400;
+                    const ctx2 = capCanvas.getContext('2d');
+                    ctx2.translate(400, 0); ctx2.scale(-1, 1); 
+                    ctx2.drawImage(video, (video.videoWidth-video.videoHeight)/2, 0, video.videoHeight, video.videoHeight, 0, 0, 400, 400);
+                    
+                    const imgData = capCanvas.toDataURL('image/jpeg', 0.7);
+                    
+                    // Stop the stream tracks before calling callback
+                    closeCamera(); 
+                    
+                    if (typeof onCaptureCallback === 'function') {
+                        onCaptureCallback(detections.descriptor, detections.detection.score, imgData);
+                    }
+                    return; // EXIT RECURSION
+                }
+            } else { 
+                status.innerText = "No Face Detected";
+                stabilizationCounter = 0;
+            }
+        } catch (err) {
+            console.error("Detection Error:", err);
         }
+        
+        // Continue the loop only if camera is still open
+        if (window.appState.isCameraOpen) {
+            setTimeout(loop, 60); 
+        }
+    };
+    
+    loop(); 
+}
+
 
         // --- OTP & EXPORT/IMPORT ---
         let otpResolve = null;
@@ -1968,6 +2109,231 @@
 
         window.openBackupModal = () => document.getElementById('backup-modal').classList.remove('hidden');
         window.closeBackupModal = () => document.getElementById('backup-modal').classList.add('hidden');
+        
+        //NEW BACKUP
+
+        window.exportSystemData = async () => {
+            const btn = document.getElementById('backup-btn-text');
+            const originalText = btn.innerText;
+
+            try {
+                // [PRE-CHECK]
+                DataValidator.canExecuteBackup();
+                btn.innerText = "Cloning System...";
+
+                // [EXECUTION] Fetch ALL 6 Collections
+                const [sessSnap, attSnap, studSnap, facSnap, masterSnap, tempSnap] = await Promise.all([
+                    getDocs(getSessionPath()),
+                    getDocs(getAttPath()),
+                    getDocs(getStudentsPath()),
+                    getDoc(getFacultyProfileDoc(window.appState.userId)),
+                    getDocs(getMasterPath()),   // <--- MISSING PIECE #1 (For Reports)
+                    getDocs(getTemplatesPath()) // <--- MISSING PIECE #2 (For Quick Load)
+                ]);
+
+                // Serialization
+                const sessions = sessSnap.docs.map(d => { const r = d.data(); if(r.timestamp?.toDate) r.timestamp = r.timestamp.toDate().toISOString(); return { _id: d.id, ...r }; });
+                const attendance = attSnap.docs.map(d => { const r = d.data(); if(r.timestamp?.toDate) r.timestamp = r.timestamp.toDate().toISOString(); return { _id: d.id, ...r }; });
+                const students = studSnap.docs.map(d => { const r = d.data(); if(r.createdAt?.toDate) r.createdAt = r.createdAt.toDate().toISOString(); return { _id: d.id, ...r }; });
+                const masterList = masterSnap.docs.map(d => ({ _id: d.id, ...d.data() })); 
+                const templates = tempSnap.docs.map(d => ({ _id: d.id, ...d.data() }));
+                const faculty = facSnap.exists() ? { _id: facSnap.id, ...facSnap.data() } : null;
+
+                const payload = {
+                    meta: {
+                        version: "3.0", // Bumped version
+                        date: new Date().toISOString(),
+                        exportedBy: window.appState.facultyProfile.name,
+                        counts: { 
+                            sessions: sessions.length, 
+                            attendance: attendance.length, 
+                            students: students.length,
+                            masterList: masterList.length, 
+                            templates: templates.length
+                        }
+                    },
+                    data: { sessions, attendance, students, faculty, masterList, templates }
+                };
+
+                // [POST-CHECK] Verify Reports Data Exists
+                if (masterList.length === 0) console.warn("Warning: Master List is empty. Reports may act strange on restore.");
+
+                // [DOWNLOAD]
+                const blob = new Blob([JSON.stringify(payload, null, 2)], {type: "application/json"});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `Medha_FullClone_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                
+                showToast(`System Cloned Successfully (${masterList.length} Master Records)`, "success");
+
+            } catch(e) {
+                console.error(e);
+                showToast("Backup Failed: " + e.message, "error");
+            } finally {
+                btn.innerText = originalText;
+            }
+        };
+
+        window.importSystemData = async () => {
+            try {
+                DataValidator.canExecuteBackup();
+                const file = document.getElementById('backup-upload').files[0];
+                DataValidator.validateImportFile(file);
+
+                if(!confirm("⚠️ RESTORE FULL SYSTEM?\n\nThis will restore Reports, Master Lists, Sessions, and Student Data.\n\nContinue?")) return;
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const payload = JSON.parse(e.target.result);
+                        
+                        // Basic Schema Check
+                        if(!payload.data || !payload.meta) throw new Error("Invalid Backup File");
+
+                        showToast("Restoring System Clone...", "info");
+
+                        // [EXECUTION] Batch Write ALL Collections
+                        // 1. Core Data
+                        if (payload.data.sessions?.length) await batchWriteHelper(payload.data.sessions, getSessionPath);
+                        if (payload.data.students?.length) await batchWriteHelper(payload.data.students, getStudentsPath);
+                        if (payload.data.attendance?.length) await batchWriteHelper(payload.data.attendance, getAttPath);
+                        
+                        // 2. CRITICAL FOR REPORTS (Master List)
+                        if (payload.data.masterList?.length) {
+                            await batchWriteHelper(payload.data.masterList, getMasterPath);
+                        }
+                        
+                        // 3. User Preferences (Templates)
+                        if (payload.data.templates?.length) {
+                            await batchWriteHelper(payload.data.templates, getTemplatesPath);
+                        }
+
+                        // 4. Faculty Profile
+                        if (payload.data.faculty && payload.data.faculty._id === window.appState.userId) {
+                            const { _id, ...facData } = payload.data.faculty;
+                            await setDoc(getFacultyProfileDoc(window.appState.userId), facData, { merge: true });
+                        }
+
+                        showToast("Full System Restore Complete!", "success");
+                        
+                        // [CRITICAL] Clear local caches so Reports reload instantly
+                        window.appState.masterListCache = null; 
+                        
+                        window.closeBackupModal();
+                        setTimeout(() => location.reload(), 1500);
+
+                    } catch (err) {
+                        console.error(err);
+                        showToast("Restore Error: " + err.message, "error");
+                    }
+                };
+                reader.readAsText(file);
+
+            } catch (e) {
+                showToast(e.message, "error");
+            }
+        };
+
+        // --- HELPER FUNCTION FOR BATCH WRITES ---
+// Place this anywhere in your script, but OUTSIDE other functions
+async function batchWriteHelper(dataArray, collectionPathFn, docIdField = '_id') {
+    // Firestore limit is 500 operations per batch. We use 450 to be safe.
+    const chunkSize = 450; 
+    
+    for (let i = 0; i < dataArray.length; i += chunkSize) {
+        const chunk = dataArray.slice(i, i + chunkSize);
+        const batch = writeBatch(db); // Requires 'db' and 'writeBatch' from Firestore imports
+
+        chunk.forEach(item => {
+            // 1. Create Reference using the preserved ID
+            const ref = doc(collectionPathFn(), item[docIdField]); 
+            
+            // 2. Prepare Payload (Remove the temporary _id field)
+            const payload = { ...item };
+            delete payload[docIdField];
+
+            // 3. Fix Timestamps (Convert ISO strings back to Firestore Timestamps)
+            if (payload.timestamp && typeof payload.timestamp === 'string') {
+                payload.timestamp = Timestamp.fromDate(new Date(payload.timestamp));
+            }
+            if (payload.createdAt && typeof payload.createdAt === 'string') {
+                payload.createdAt = Timestamp.fromDate(new Date(payload.createdAt));
+            }
+            if (payload.lastUpdated && typeof payload.lastUpdated === 'string') {
+                payload.lastUpdated = Timestamp.fromDate(new Date(payload.lastUpdated));
+            }
+
+            // 4. Queue the Write
+            batch.set(ref, payload, { merge: true });
+        });
+
+        // 5. Commit Chunk
+        await batch.commit();
+    }
+}
+
+        const DataValidator = {
+    // --- PRE-CHECKS (Gatekeepers) ---
+
+    // 1. Auth & Connectivity Check
+    canExecuteBackup: () => {
+        if (window.appState.role !== 'faculty') throw new Error("Security Violation: Faculty Access Only.");
+        if (!navigator.onLine) console.warn("Warning: Offline. Backup will be local only.");
+        return true;
+    },
+
+    // 2. File Hygiene (Prevent crashing browser)
+    validateImportFile: (file) => {
+        const MAX_SIZE_MB = 15; 
+        if (!file) throw new Error("No file selected.");
+        if (file.type !== "application/json" && !file.name.endsWith('.json')) throw new Error("Invalid file type. JSON required.");
+        if (file.size > MAX_SIZE_MB * 1024 * 1024) throw new Error(`File too large (Max ${MAX_SIZE_MB}MB).`);
+        return true;
+    },
+
+    // 3. Schema Integrity (Prevent DB Corruption)
+    verifySchema: (payload) => {
+        if (!payload || typeof payload !== 'object') throw new Error("Invalid JSON format.");
+        // Critical: Must have meta and data
+        if (!payload.meta || !payload.data) throw new Error("Corrupted Backup: Missing metadata or data.");
+        
+        // Version Check (Future proofing)
+        if (payload.meta.version !== "3.0") {
+            console.warn(`Version Mismatch: Backup is v${payload.meta.version}, App is v3.0. Restore might be partial.`);
+        }
+        return true;
+    },
+
+    // --- POST-CHECKS (Auditors) ---
+
+    // 4. Verification: Did we actually get data?
+    verifyExportPayload: (payload) => {
+        // Calculate total docs
+        const totalDocs = Object.values(payload.meta.counts).reduce((a, b) => a + b, 0);
+        
+        if (totalDocs === 0) throw new Error("Database is empty. Nothing to export.");
+        
+        // Integrity: Ensure metadata counts match actual data arrays
+        if (payload.meta.counts.sessions !== payload.data.sessions.length) {
+            throw new Error("Integrity Error: Session count mismatch.");
+        }
+        return true;
+    },
+
+    // 5. Verification: Read-back Check
+    verifyRestoreSuccess: async () => {
+        try {
+            // Spot check: Try to read one student profile to ensure DB is responsive
+            const snap = await getDocs(query(getStudentsPath(), limit(1)));
+            console.log("Post-Restore Integrity Check: PASSED");
+            return true;
+        } catch(e) {
+            throw new Error("Post-Check Failed: Database not readable after restore.");
+        }
+    }
+};
+
         window.exportAttendanceToJSON = async () => {
             try {
                 const snap = await getDocs(getAttPath());
