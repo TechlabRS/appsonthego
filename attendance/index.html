@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal | Attendance</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        :root { --primary: #2563eb; --success: #22c55e; --danger: #ef4444; --bg: #f8fafc; }
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg); color: #1e293b; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .search-card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); text-align: center; margin-bottom: 20px; }
+        input { padding: 12px; width: 200px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
+        button { padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+
+        .result-section { display: none; animation: fadeIn 0.5s ease-in; }
+        .student-header { background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 20px; border-left: 5px solid var(--primary); }
+        
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        th { background: #f1f5f9; padding: 15px; text-align: left; font-size: 0.875rem; text-transform: uppercase; color: #64748b; }
+        td { padding: 15px; border-top: 1px solid #f1f5f9; }
+        
+        .badge { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .p-badge { background: #dcfce7; color: #166534; }
+        .a-badge { background: #fee2e2; color: #991b1b; }
+
+        h3 { margin-top: 0; color: #0f172a; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="search-card">
+        <h3>Attendance Portal</h3>
+        <input type="text" id="studentId" placeholder="Enter Roll No.">
+        <button onclick="fetchAttendance()">View Report</button>
+    </div>
+
+    <div id="result" class="result-section">
+        <div class="student-header">
+            <h2 id="dispName" style="margin:0"></h2>
+            <p id="dispSub" style="margin:5px 0 0; color: #64748b; font-weight: 500;"></p>
+        </div>
+
+        <h4>Theory Classes</h4>
+        <table id="classTable">
+            <thead><tr><th>Date</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+        </table>
+
+        <h4>Lab Sessions</h4>
+        <table id="labTable">
+            <thead><tr><th>Date</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ09J-6CWdP4vxWACd4IsN8Bov0mTYQLkHTQZEEWSdTn9v0eoBv-Ri8TkbQyc9hCvvjEx6czqJTpTnQ/pub?gid=1294429618&single=true&output=csv';
+
+    function fetchAttendance() {
+        const id = document.getElementById('studentId').value.trim();
+        if (!id) return alert("Enter an ID");
+
+        Papa.parse(CSV_URL, {
+            download: true, header: true, skipEmptyLines: 'greedy',
+            complete: function(results) {
+                const student = results.data.find(row => {
+                    const key = Object.keys(row).find(k => k.toLowerCase().trim() === 'no');
+                    return row[key] == id;
+                });
+
+                if (student) renderTables(student);
+                else alert("Student not found!");
+            }
+        });
+    }
+
+    function renderTables(s) {
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('dispName').innerText = s[Object.keys(s).find(k => k.toLowerCase().includes('name'))];
+        document.getElementById('dispSub').innerText = "Subject: " + s[Object.keys(s).find(k => k.toLowerCase().includes('subject'))];
+
+        const classBody = document.querySelector('#classTable tbody');
+        const labBody = document.querySelector('#labTable tbody');
+        classBody.innerHTML = ""; labBody.innerHTML = "";
+
+        Object.keys(s).forEach(key => {
+            const k = key.toLowerCase();
+            if (['no','name','subject'].some(word => k.includes(word))) return;
+
+            const val = s[key].trim().toUpperCase();
+            const isPresent = val === 'P';
+            const rowHtml = `<tr>
+                <td>${key}</td>
+                <td><span class="badge ${isPresent ? 'p-badge' : 'a-badge'}">${isPresent ? 'PRESENT' : 'ABSENT'}</span></td>
+            </tr>`;
+
+            if (k.includes('lab')) labBody.insertAdjacentHTML('beforeend', rowHtml);
+            else classBody.insertAdjacentHTML('beforeend', rowHtml);
+        });
+    }
+</script>
+
+</body>
+</html>
