@@ -3,105 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Portal | Attendance</title>
+    <title>Student Attendance Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        :root { --primary: #2563eb; --success: #22c55e; --danger: #ef4444; --bg: #f8fafc; }
-        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg); color: #1e293b; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .search-card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); text-align: center; margin-bottom: 20px; }
-        input { padding: 12px; width: 200px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
-        button { padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
-        button:hover { opacity: 0.9; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-        .result-section { display: none; animation: fadeIn 0.5s ease-in; }
-        .student-header { background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 20px; border-left: 5px solid var(--primary); }
-        
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        th { background: #f1f5f9; padding: 15px; text-align: left; font-size: 0.875rem; text-transform: uppercase; color: #64748b; }
-        td { padding: 15px; border-top: 1px solid #f1f5f9; }
-        
-        .badge { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-        .p-badge { background: #dcfce7; color: #166534; }
-        .a-badge { background: #fee2e2; color: #991b1b; }
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
 
-        h3 { margin-top: 0; color: #0f172a; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* Search Section */
+        .search-container {
+            background: var(--card);
+            padding: 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            flex: 1;
+            min-width: 200px;
+            padding: 14px 18px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+
+        button {
+            padding: 14px 28px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:active { transform: scale(0.97); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Results Area */
+        #resultView { display: none; animation: fadeIn 0.4s ease-out; }
+
+        .profile-card {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            padding: 30px;
+            border-radius: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
+        }
+
+        .profile-info h2 { margin: 0; font-size: 1.5rem; }
+        .profile-info p { margin: 5px 0 0; opacity: 0.8; font-size: 0.9rem; }
+
+        .stat-circle {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .stat-circle span { font-weight: 800; font-size: 1.2rem; }
+        .stat-circle small { font-size: 0.6rem; font-weight: 600; }
+
+        /* Grid Layout */
+        .attendance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .data-card {
+            background: var(--card);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            background: #fcfcfd;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h4 { margin: 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 14px 20px; font-size: 0.9rem; border-bottom: 1px solid #f8fafc; }
+        tr:last-child td { border: none; }
+
+        .status-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        .p-dot { color: var(--success); }
+        .a-dot { color: var(--danger); }
+
+        /* Loader */
+        #loader { display: none; text-align: center; padding: 20px; font-weight: 600; color: var(--primary); }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 480px) {
+            .profile-card { flex-direction: column; text-align: center; gap: 20px; }
+            .attendance-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="search-card">
-        <h3>Attendance Portal</h3>
-        <input type="text" id="studentId" placeholder="Enter Roll No.">
-        <button onclick="fetchAttendance()">View Report</button>
+    <div class="search-container">
+        <input type="text" id="rollNo" placeholder="Enter Roll Number..." autocomplete="off">
+        <button id="btnSearch" onclick="handleSearch()">View Attendance</button>
     </div>
 
-    <div id="result" class="result-section">
-        <div class="student-header">
-            <h2 id="dispName" style="margin:0"></h2>
-            <p id="dispSub" style="margin:5px 0 0; color: #64748b; font-weight: 500;"></p>
+    <div id="loader">Fetching records...</div>
+
+    <div id="resultView">
+        <div class="profile-card">
+            <div class="profile-info">
+                <h2 id="studentName">Student Name</h2>
+                <p id="studentSubject">Subject Details</p>
+            </div>
+            <div class="stat-circle">
+                <span id="totalPerc">0%</span>
+                <small>TOTAL</small>
+            </div>
         </div>
 
-        <h4>Theory Classes</h4>
-        <table id="classTable">
-            <thead><tr><th>Date</th><th>Status</th></tr></thead>
-            <tbody></tbody>
-        </table>
+        <div class="attendance-grid">
+            <div class="data-card">
+                <div class="card-header">
+                    <h4>Theory Classes</h4>
+                    <span id="theoryCount" style="font-size: 0.75rem; font-weight: 700; color: var(--primary);"></span>
+                </div>
+                <table id="theoryTable"><tbody></tbody></table>
+            </div>
 
-        <h4>Lab Sessions</h4>
-        <table id="labTable">
-            <thead><tr><th>Date</th><th>Status</th></tr></thead>
-            <tbody></tbody>
-        </table>
+            <div class="data-card">
+                <div class="card-header">
+                    <h4>Lab Sessions</h4>
+                    <span id="labCount" style="font-size: 0.75rem; font-weight: 700; color: var(--primary);"></span>
+                </div>
+                <table id="labTable"><tbody></tbody></table>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
+    // Replace with your Google Sheets Published CSV URL
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ09J-6CWdP4vxWACd4IsN8Bov0mTYQLkHTQZEEWSdTn9v0eoBv-Ri8TkbQyc9hCvvjEx6czqJTpTnQ/pub?gid=1294429618&single=true&output=csv';
 
-    function fetchAttendance() {
-        const id = document.getElementById('studentId').value.trim();
-        if (!id) return alert("Enter an ID");
+    // Auto-fill previous ID if exists
+    window.onload = () => {
+        const savedId = localStorage.getItem('lastRollNo');
+        if (savedId) {
+            document.getElementById('rollNo').value = savedId;
+            handleSearch();
+        }
+    };
+
+    async function handleSearch() {
+        const id = document.getElementById('rollNo').value.trim();
+        if (!id) return;
+
+        // UI State
+        const btn = document.getElementById('btnSearch');
+        const loader = document.getElementById('loader');
+        const resultView = document.getElementById('resultView');
+        
+        btn.disabled = true;
+        loader.style.display = 'block';
+        resultView.style.display = 'none';
+
+        // Save for next time
+        localStorage.setItem('lastRollNo', id);
 
         Papa.parse(CSV_URL, {
-            download: true, header: true, skipEmptyLines: 'greedy',
-            complete: function(results) {
+            download: true,
+            header: true,
+            skipEmptyLines: 'greedy',
+            complete: (results) => {
                 const student = results.data.find(row => {
                     const key = Object.keys(row).find(k => k.toLowerCase().trim() === 'no');
-                    return row[key] == id;
+                    return row[key] && row[key].toString().trim() === id;
                 });
 
-                if (student) renderTables(student);
-                else alert("Student not found!");
+                if (student) {
+                    renderUI(student);
+                } else {
+                    alert("Roll number not found in current records.");
+                }
+                
+                btn.disabled = false;
+                loader.style.display = 'none';
+            },
+            error: () => {
+                alert("Error connecting to database. Please check your internet.");
+                btn.disabled = false;
+                loader.style.display = 'none';
             }
         });
     }
 
-    function renderTables(s) {
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('dispName').innerText = s[Object.keys(s).find(k => k.toLowerCase().includes('name'))];
-        document.getElementById('dispSub').innerText = "Subject: " + s[Object.keys(s).find(k => k.toLowerCase().includes('subject'))];
+    function renderUI(data) {
+        document.getElementById('resultView').style.display = 'block';
+        
+        // Dynamic Key Finding (Case Insensitive)
+        const findVal = (terms) => {
+            const key = Object.keys(data).find(k => terms.some(t => k.toLowerCase().includes(t)));
+            return data[key] || "N/A";
+        };
 
-        const classBody = document.querySelector('#classTable tbody');
+        document.getElementById('studentName').innerText = findVal(['name']);
+        document.getElementById('studentSubject').innerText = findVal(['subject']);
+
+        const theoryBody = document.querySelector('#theoryTable tbody');
         const labBody = document.querySelector('#labTable tbody');
-        classBody.innerHTML = ""; labBody.innerHTML = "";
+        theoryBody.innerHTML = "";
+        labBody.innerHTML = "";
 
-        Object.keys(s).forEach(key => {
-            const k = key.toLowerCase();
-            if (['no','name','subject'].some(word => k.includes(word))) return;
+        let p = 0, total = 0, tCount = 0, lCount = 0;
 
-            const val = s[key].trim().toUpperCase();
-            const isPresent = val === 'P';
-            const rowHtml = `<tr>
-                <td>${key}</td>
-                <td><span class="badge ${isPresent ? 'p-badge' : 'a-badge'}">${isPresent ? 'PRESENT' : 'ABSENT'}</span></td>
-            </tr>`;
+        // Reverse keys to show newest dates first
+        const columns = Object.keys(data).reverse();
 
-            if (k.includes('lab')) labBody.insertAdjacentHTML('beforeend', rowHtml);
-            else classBody.insertAdjacentHTML('beforeend', rowHtml);
+        columns.forEach(key => {
+            const k = key.toLowerCase().trim();
+            if (['no', 'name', 'subject'].some(word => k.includes(word))) return;
+
+            const val = data[key].trim().toUpperCase();
+            if (val !== 'P' && val !== 'A') return; // Skip columns that aren't attendance
+
+            const isP = val === 'P';
+            p += isP ? 1 : 0;
+            total++;
+
+            const row = `
+                <tr>
+                    <td style="color: var(--text-muted); font-weight: 500;">${key}</td>
+                    <td style="text-align: right;">
+                        <span class="status-dot ${isP ? 'p-dot' : 'a-dot'}">
+                            ${isP ? '● PRESENT' : '○ ABSENT'}
+                        </span>
+                    </td>
+                </tr>
+            `;
+
+            if (k.includes('lab')) {
+                labBody.insertAdjacentHTML('beforeend', row);
+                lCount++;
+            } else {
+                theoryBody.insertAdjacentHTML('beforeend', row);
+                tCount++;
+            }
         });
+
+        document.getElementById('totalPerc').innerText = total > 0 ? Math.round((p / total) * 100) + "%" : "0%";
+        document.getElementById('theoryCount').innerText = tCount + " Sessions";
+        document.getElementById('labCount').innerText = lCount + " Sessions";
     }
 </script>
 
