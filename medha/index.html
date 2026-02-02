@@ -1475,9 +1475,9 @@
         window.appState.activeListeners.push(unsub);
 
         // ==========================================
-        // NEW: IDLE TIMEOUT LOGIC (5 MINUTES)
+        // NEW: IDLE TIMEOUT LOGIC (10 MINUTES)
         // ==========================================
-        const IDLE_TIME_LIMIT = 3 * 60 * 1000; // 3 mins in ms
+        const IDLE_TIME_LIMIT = 10 * 60 * 1000; // 10 mins in ms
 
         window.resetIdleTimer = () => {
             if (window.appState.idleTimer) clearTimeout(window.appState.idleTimer);
