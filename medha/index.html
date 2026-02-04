@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -439,7 +440,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, doc, setDoc, getDoc, onSnapshot, serverTimestamp, updateDoc, deleteField, writeBatch, deleteDoc, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, limit, getDocs, doc, setDoc, getDoc, onSnapshot, serverTimestamp, updateDoc, deleteField, writeBatch, deleteDoc, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURATION ---
         const EMBEDDED_FIREBASE_CONFIG = {
@@ -458,7 +459,7 @@
         const ATTENDANCE_RADIUS_METERS = 300; 
         const FACE_MATCH_THRESHOLD = 0.38; // STRICTER THRESHOLD (Lower is stricter)
         const OTP_REFRESH_RATE = 30; 
-        const PHOTO_RETENTION_DAYS = 3;
+        const PHOTO_RETENTION_DAYS = 4;
 		
 		window.appState = { isCameraOpen: false, userLocation: null };
 
@@ -2973,98 +2974,134 @@ async function batchWriteHelper(dataArray, collectionPathFn, docIdField = '_id')
         window.bulkApprove = async () => { if(confirm("Approve All?")) { const q = query(getStudentsPath(), where("status","==","pending")); const s = await getDocs(q); const b = writeBatch(db); s.forEach(d => b.update(d.ref, {status:'approved'})); await b.commit(); renderStudentList(document.getElementById('fac-content')); }};
         window.revokeStudent = async (uid, roll) => { if(confirm(`Revoke ${roll}?`)) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', uid)); renderStudentList(document.getElementById('fac-content')); }};
         
-        // --- ADDED: Session Detail View & Audit ---
-        window.viewSessionDetails = async (id) => {
-            const modal = document.getElementById('session-details-modal');
-            modal.classList.remove('hidden');
-            
-            // Set Loading state
-            document.getElementById('sd-subject').innerText = "Loading...";
-            document.getElementById('sd-attendee-list').innerHTML = '<div class="flex justify-center p-4"><div class="loader"></div></div>';
-            
-            try {
-                // 1. Fetch Session
-                const sSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', id));
-                if (!sSnap.exists()) { showToast("Session not found", "error"); closeSessionModal(); return; }
-                const s = sSnap.data();
-                
-                document.getElementById('sd-subject').innerText = s.subject;
-                document.getElementById('sd-meta').innerText = `${s.date} | ${s.timeSlot} | Sec ${s.section}`;
-                
-                // 2. Fetch Attendees (UPDATED to include ID)
-                const aSnap = await getDocs(query(getAttPath(), where("sessionId", "==", id)));
-                window.currentSessionAttendees = [];
-                aSnap.forEach(d => window.currentSessionAttendees.push({id: d.id, ...d.data()}));
-                
-                // 3. Fetch Master List (for absentees)
-                let qMaster = query(getMasterPath());
-                if(s.section) qMaster = query(getMasterPath(), where("section", "==", s.section));
-                
-                const mSnap = await getDocs(qMaster);
-                const allStudents = [];
-                mSnap.forEach(d => allStudents.push(d.data()));
-                
-                // Calculate Stats
-                const attendees = window.currentSessionAttendees;
-                // FILTER: ONLY COUNT PRESENT
-                const presentList = attendees.filter(a => a.status === 'present');
-                const pendingList = attendees.filter(a => a.status === 'pending'); // NEW
-                const presentRolls = new Set(presentList.map(a => a.studentRoll));
-                
-                const presentCount = presentList.length;
-                const pendingCount = pendingList.length; // NEW
-                const totalCount = allStudents.length > 0 ? allStudents.length : attendees.length; 
-                // Updated Absent Count: Total - (Present + Pending)
-                const absentCount = Math.max(0, totalCount - presentCount - pendingCount);
-                
-                document.getElementById('sd-present-count').innerText = presentCount;
-                document.getElementById('sd-pending-count').innerText = pendingCount; // NEW
-                document.getElementById('sd-absent-count').innerText = absentCount;
-                document.getElementById('sd-total-count').innerText = totalCount;
-                
-                // Populate Lists
-                const attList = document.getElementById('sd-attendee-list');
-                attList.innerHTML = '';
-                if(attendees.length === 0) attList.innerHTML = '<p class="text-xs text-slate-400 italic">No attendees yet.</p>';
-                
-                attendees.sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
-                
-                attendees.forEach((a, index) => {
-                   const time = a.timestamp ? new Date(a.timestamp.seconds*1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
-                   // NEW: Indicator for Pending
-                   const isPending = a.status === 'pending';
-                   const statusColor = isPending ? 'text-orange-500' : 'text-green-600';
-                   const statusIcon = isPending ? '<i class="fa-solid fa-clock text-xs"></i>' : '<i class="fa-solid fa-camera"></i>';
-                   const bgClass = isPending ? 'bg-orange-50 border-orange-200' : 'bg-green-100 text-green-600';
+        // --- UPDATED: Session Detail View & Audit ---
+window.viewSessionDetails = async (id) => {
+    const modal = document.getElementById('session-details-modal');
+    modal.classList.remove('hidden');
+    
+    // UI Reset
+    document.getElementById('sd-subject').innerText = "Loading...";
+    const attList = document.getElementById('sd-attendee-list');
+    const absList = document.getElementById('sd-absentee-list');
+    attList.innerHTML = '<div class="flex justify-center p-4"><div class="loader"></div></div>';
+    absList.innerHTML = '';
+    
+    try {
+        // 1. Fetch Session Data
+        const sSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'sessions', id));
+        if (!sSnap.exists()) { showToast("Session not found", "error"); return; }
+        const s = sSnap.data();
+        
+        document.getElementById('sd-subject').innerText = s.subject;
+        document.getElementById('sd-meta').innerText = `${s.date} | ${s.timeSlot} | Sec ${s.section}`;
+        
+        // 2. Fetch Attendees
+        const aSnap = await getDocs(query(getAttPath(), where("sessionId", "==", id)));
+        window.currentSessionAttendees = [];
+        aSnap.forEach(d => window.currentSessionAttendees.push({id: d.id, ...d.data()}));
+        
+        // 3. Fetch Master List for Absentees
+        let qMaster = query(getMasterPath());
+        if(s.section) qMaster = query(getMasterPath(), where("section", "==", s.section));
+        
+        const mSnap = await getDocs(qMaster);
+        const allStudents = [];
+        mSnap.forEach(d => {
+            const data = d.data();
+            allStudents.push({ id: d.id, ...data }); // Ensure ID is captured
+        });
+        
+        const attendees = window.currentSessionAttendees;
+        const presentList = attendees.filter(a => a.status === 'present');
+        const pendingList = attendees.filter(a => a.status === 'pending');
+        
+        // Update Stats UI
+        const totalCount = allStudents.length > 0 ? allStudents.length : attendees.length;
+        document.getElementById('sd-present-count').innerText = presentList.length;
+        document.getElementById('sd-pending-count').innerText = pendingList.length;
+        document.getElementById('sd-absent-count').innerText = Math.max(0, totalCount - presentList.length - pendingList.length);
+        document.getElementById('sd-total-count').innerText = totalCount;
 
-                   attList.innerHTML += `
-                    <div onclick="reviewAttendance(${index})" class="flex justify-between items-center py-1.5 border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50 transition-colors rounded px-1 active:scale-95">
-                        <div class="flex items-center gap-2">
-                             <div class="w-6 h-6 rounded-full ${bgClass} flex items-center justify-center text-[8px] font-bold">${statusIcon}</div>
-                             <div><p class="text-[10px] font-bold text-slate-700">${a.studentRoll}</p><p class="text-[9px] text-slate-400 uppercase">${a.studentName.split(' ')[0]}</p></div>
-                        </div>
-                        <span class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 rounded">${time}</span>
+        // --- RENDER PRESENT/PENDING LIST ---
+        attList.innerHTML = '';
+        if(attendees.length === 0) attList.innerHTML = '<p class="text-xs text-slate-400 italic p-2">No attendees yet.</p>';
+        
+        attendees.sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+        
+        attendees.forEach((a, index) => {
+            const time = a.timestamp ? new Date(a.timestamp.seconds*1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+            const isManual = a.method === 'Manual Admin Entry';
+            const isPending = a.status === 'pending';
+
+            let statusIcon = '<i class="fa-solid fa-camera"></i>';
+            let bgClass = 'bg-green-100 text-green-600';
+            let badgeHTML = `<span class="bg-green-100 text-green-700 text-[8px] px-1.5 py-0.5 rounded font-bold">LIVE</span>`;
+
+            if (isPending) {
+                statusIcon = '<i class="fa-solid fa-clock text-xs"></i>';
+                bgClass = 'bg-orange-50 border-orange-200 text-orange-500';
+                badgeHTML = `<span class="bg-orange-50 text-orange-600 text-[8px] px-1.5 py-0.5 rounded font-bold">PENDING</span>`;
+            } else if (isManual) {
+                statusIcon = '<i class="fa-solid fa-user-gear"></i>';
+                bgClass = 'bg-purple-100 text-purple-600';
+                badgeHTML = `<span class="bg-purple-100 text-purple-700 text-[8px] px-1.5 py-0.5 rounded font-bold">ADMIN</span>`;
+            }
+
+            attList.innerHTML += `
+                <div onclick="reviewAttendance(${index})" class="flex justify-between items-center py-1.5 border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50 transition-colors rounded px-1">
+                    <div class="flex items-center gap-2">
+                         <div class="w-7 h-7 rounded-full ${bgClass} flex items-center justify-center text-[10px] font-bold shadow-sm">${statusIcon}</div>
+                         <div>
+                            <div class="flex items-center gap-1">
+                                <p class="text-[10px] font-bold text-slate-700">${a.studentRoll}</p>
+                                ${badgeHTML}
+                            </div>
+                            <p class="text-[9px] text-slate-400 uppercase">${a.studentName ? a.studentName.split(' ')[0] : 'Unknown'}</p>
+                         </div>
                     </div>
-                   `; 
-                });
-                
-                const absList = document.getElementById('sd-absentee-list');
-                absList.innerHTML = '';
-                // Absentee logic: not present AND not pending
-                // We assume `attendees` contains all attempts including pending.
-                // So if a student roll exists in `attendees` (either present or pending), they are not absent.
-                const markedRolls = new Set(attendees.map(a => a.studentRoll));
-                const absentees = allStudents.filter(s => !markedRolls.has(s.rollNo));
-                
-                if(absentees.length === 0 && totalCount > 0) absList.innerHTML = '<p class="text-xs text-green-500 font-bold">100% Attendance!</p>';
-                else if (totalCount === 0) absList.innerHTML = '<p class="text-xs text-slate-400 italic">Master list empty.</p>';
-                
-                absentees.forEach(ab => {
-                    absList.innerHTML += `<span class="px-2 py-1 rounded bg-red-50 text-red-500 text-[10px] font-bold border border-red-100">${ab.rollNo}</span>`;
-                });
+                    <div class="text-right">
+                        <p class="text-[9px] font-mono text-slate-400 bg-slate-50 px-1 rounded inline-block">${time}</p>
+                    </div>
+                </div>
+            `;
+        });
 
-            } catch(e) { console.error(e); showToast("Error loading details", "error"); }
-        };
+        // --- RENDER ABSENT LIST ---
+        const markedRolls = new Set(attendees.map(a => a.studentRoll));
+        const absentees = allStudents.filter(s => !markedRolls.has(s.rollNo));
+
+        if (totalCount > 0 && absentees.length === 0) {
+            absList.innerHTML = '<p class="text-xs text-green-500 font-bold p-3">🎉 100% Attendance Achieved!</p>';
+        }
+
+        absentees.forEach(s => {
+            // Fix: We use 'id' (the function parameter) as the sessionId
+            const absentItemHTML = `
+                <div class="flex items-center justify-between p-3 border-b hover:bg-blue-50 transition-colors group">
+                    <div class="flex items-center gap-3">
+                        <div onclick="markPresentManually('${s.id}', '${s.name}', '${s.rollNo}', '${id}')" 
+                             class="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center font-mono font-bold cursor-pointer group-hover:bg-green-600 group-hover:text-white transition-all shadow-sm">
+                            ${s.rollNo.slice(-2)}
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-800 text-sm">${s.name}</p>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Roll: ${s.rollNo}</p>
+                        </div>
+                    </div>
+                    <button onclick="markPresentManually('${s.id}', '${s.name}', '${s.rollNo}', '${id}')" 
+                            class="text-[10px] font-extrabold text-blue-600 hover:text-white hover:bg-green-600 border border-blue-100 hover:border-green-600 px-3 py-1.5 rounded-md bg-white transition-all shadow-sm">
+                        MARK PRESENT
+                    </button>
+                </div>
+            `;
+            absList.insertAdjacentHTML('beforeend', absentItemHTML);
+        });
+
+    } catch(e) { 
+        console.error(e); 
+        showToast("Error loading details", "error"); 
+    }
+};
         
         window.closeSessionModal = () => document.getElementById('session-details-modal').classList.add('hidden');
         window.closeReviewModal = () => document.getElementById('review-modal').classList.add('hidden');
@@ -3180,6 +3217,41 @@ async function batchWriteHelper(dataArray, collectionPathFn, docIdField = '_id')
                 }
             }
         });
+		
+		//MANUAL Review
+		// --- NEW: Manual Mark Present (Bypasses Camera) ---
+window.markPresentManually = async (studentId, studentName, rollNo, sessionId) => {
+    // confirmation to prevent accidental clicks
+    if(!confirm(`Manually mark ${studentName} (Roll: ${rollNo}) as Present?`)) return;
+
+    try {
+        // ID format matches your existing session logic: sessionId_studentId
+        const attendanceId = `${sessionId}_${studentId}`;
+        const attendanceRef = doc(db, 'artifacts', appId, 'public', 'data', 'attendance', attendanceId);
+
+        await setDoc(attendanceRef, {
+            id: attendanceId,
+            studentId: studentId,
+            studentName: studentName,
+            studentRoll: rollNo,
+            sessionId: sessionId,
+            status: 'present',
+            verified: true, // Bypass liveness check
+            method: 'Manual Admin Entry',
+            timestamp: serverTimestamp()
+        });
+
+        showToast(`${studentName} marked Present`, "success");
+
+        // Refresh the Session Details modal to move student from 'Absent' to 'Present'
+        if(typeof viewSessionDetails === 'function') {
+            viewSessionDetails(sessionId); 
+        }
+    } catch (e) {
+        console.error("Manual Entry Error:", e);
+        showToast("Failed to mark present", "error");
+    }
+};
 
         // Initialize Global State for the new UI
         window.OTP_REFRESH_RATE = 30; // 30 Seconds for the progress ring
