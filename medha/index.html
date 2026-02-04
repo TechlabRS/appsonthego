@@ -115,6 +115,18 @@
 
     <div id="toast-container" class="fixed top-4 left-0 right-0 z-[100] flex flex-col items-center gap-2 pointer-events-none p-4"></div>
 
+		<div id="init-overlay">
+		<div class="mb-6 text-center">
+			<h2 class="text-white text-xl font-bold">System Check</h2>
+			<p class="text-gray-400 text-sm">Verifying requirements...</p>
+		</div>
+		<div id="check-list">
+			<div class="check-item" id="check-gps"><i class="fas fa-location-dot"></i> GPS Access</div>
+			<div class="check-item" id="check-cam"><i class="fas fa-video"></i> Camera Permission</div>
+		</div>
+		<div class="loader-bar mt-6"><div id="init-progress"></div></div>
+	</div>
+
     <div id="session-modal-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-[120] flex items-center justify-center p-6">
         <div id="session-modal-card" class="bg-[#1e293b] border border-white/10 p-8 rounded-[3rem] w-full max-w-xs shadow-2xl transition-all duration-300 scale-95 opacity-0">
             <div id="session-modal-content"></div>
