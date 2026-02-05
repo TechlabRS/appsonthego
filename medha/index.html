@@ -125,17 +125,7 @@
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col text-slate-800">
 
-	<div id="init-overlay">
-		<div class="mb-6 text-center">
-			<h2 class="text-white text-xl font-bold">System Check</h2>
-			<p class="text-gray-400 text-sm">Verifying requirements...</p>
-		</div>
-		<div id="check-list">
-			<div class="check-item" id="check-gps"><i class="fas fa-location-dot"></i> GPS Access</div>
-			<div class="check-item" id="check-cam"><i class="fas fa-video"></i> Camera Permission</div>
-		</div>
-		<div class="loader-bar mt-6"><div id="init-progress"></div></div>
-	</div>
+	
 
     <div id="toast-container" class="fixed top-4 left-0 right-0 z-[100] flex flex-col items-center gap-2 pointer-events-none p-4"></div>
 
@@ -456,86 +446,13 @@
         const MASTER_KEY_HASH = "b257d4499962eb197c6f57ca98113d9dd244aa007a5cb27ae067567135ba8fb9"; 
         
         const ATTENDANCE_RADIUS_METERS = 300; 
-        const FACE_MATCH_THRESHOLD = 0.38; // STRICTER THRESHOLD (Lower is stricter)
+        const FACE_MATCH_THRESHOLD = 0.4; // STRICTER THRESHOLD (Lower is stricter)
         const OTP_REFRESH_RATE = 30; 
         const PHOTO_RETENTION_DAYS = 3;
 		
 		window.appState = { isCameraOpen: false, userLocation: null };
 
-		async function runInitialization() {
-  const progress = document.getElementById('init-progress');
-  const overlay = document.getElementById('init-overlay');
-
-  const updateUI = (id, success) => {
-    const el = document.getElementById(id);
-    el.classList.remove('success', 'error');
-    el.classList.add(success ? 'success' : 'error');
-    el.querySelector('i').className =
-      success ? 'fas fa-check-circle' : 'fas fa-times-circle';
-  };
-
-  const getLocation = () =>
-    new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        pos => resolve(pos.coords),
-        err => reject(err),
-        { timeout: 7000, enableHighAccuracy: true }
-      );
-    });
-
-  const getCamera = () =>
-    navigator.mediaDevices.getUserMedia({ video: true });
-
-  try {
-    /* ===== 1. GPS CHECK ===== */
-    let coords;
-    try {
-      coords = await getLocation();
-    } catch (e) {
-      alert("Turn ON your location and tap OK to retry.");
-      coords = await getLocation(); // retry once
-    }
-
-    window.appState.userLocation = {
-      lat: coords.latitude,
-      lng: coords.longitude
-    };
-
-    updateUI('check-gps', true);
-    progress.style.width = '50%';
-
-    /* ===== 2. CAMERA CHECK ===== */
-    let stream;
-    try {
-      stream = await getCamera();
-    } catch (e) {
-      alert("Camera permission is required. Please allow and retry.");
-      stream = await getCamera(); // retry once
-    }
-
-    stream.getTracks().forEach(t => t.stop());
-    updateUI('check-cam', true);
-    progress.style.width = '100%';
-
-    /* ===== 3. FINISH ===== */
-    setTimeout(() => {
-      overlay.style.opacity = '0';
-      setTimeout(() => overlay.remove(), 500);
-    }, 500);
-
-  } catch (err) {
-    console.error("Initialization failed:", err);
-
-    alert(
-      "Initialization failed.\n" +
-      "Please enable Location & Camera permissions from browser settings and reload."
-    );
-
-    // overlay intentionally NOT removed → hard block only after retry failure
-  }
-}
-		// Start checks before page fully loads
-		document.addEventListener('DOMContentLoaded', runInitialization);
+		
 
         // --- STATE ---
         window.appState = {
