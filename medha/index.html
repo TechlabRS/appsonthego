@@ -2320,142 +2320,143 @@ window.closeCamera = () => {
     window.appState.challengeStep = 0;
 };
 
-// OPTIMIZED LIVENESS LOOP
 async function startLivenessLoop(video) {
-            const canvas = document.getElementById('overlay-canvas');
-            const displaySize = { width: video.videoWidth, height: video.videoHeight };
-            faceapi.matchDimensions(canvas, displaySize);
+    const canvas = document.getElementById('overlay-canvas');
+    const displaySize = { width: video.videoWidth, height: video.videoHeight };
+    faceapi.matchDimensions(canvas, displaySize);
+    
+    const status = document.getElementById('camera-status');
+    const challengeBox = document.getElementById('liveness-challenge');
+    const challengeText = document.getElementById('challenge-text');
+    
+    // --- LIVENESS & PERFORMANCE TRACKING ---
+    let state = 'WAIT'; 
+    let challengeType = Math.floor(Math.random() * 3); 
+    let stabilizationCounter = 0; 
+    let lastDescriptor = null; 
+    let depthHistory = []; 
+    let frameCount = 0; // For performance throttling
+
+    const loop = async () => {
+        if (!activeMode) return;
+        frameCount++;
+
+        // inputSize 224 is the best balance for Mobile/Desktop performance
+        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.7 });
+        const detections = await faceapi.detectSingleFace(video, options).withFaceLandmarks(true).withFaceDescriptor();
+        
+        const ctx = canvas.getContext('2d'); 
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (detections) {
+            const dims = faceapi.resizeResults(detections, displaySize);
+            faceapi.draw.drawDetections(canvas, dims);
             
-            const btn = document.getElementById('capture-btn'), status = document.getElementById('camera-status'), challengeBox = document.getElementById('liveness-challenge');
-            let state = 'WAIT', challengeType = Math.floor(Math.random() * 3); 
-            const challengeNames = ["Blink Eyes", "Turn Head", "Nod (Up/Down)"];
-            let stabilizationCounter = 0; // NEW: Counter for stable alignment
+            const lm = detections.landmarks;
+            const nose = lm.positions[30];
+            const jaw = lm.getJawOutline();
 
-            // RECURSIVE LOOP for better control than setInterval
-            const loop = async () => {
-                if (!activeMode) return;
-                
-                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
-                const detections = await faceapi.detectSingleFace(video, options).withFaceLandmarks(true).withFaceDescriptor();
-                const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                if (detections) {
-                    const dims = faceapi.resizeResults(detections, displaySize); faceapi.draw.drawDetections(canvas, dims);
-                    if (state === 'WAIT') {
-                        status.innerText = "Face Detected";
-                        if (detections.detection.score > 0.7) {
-                            state = 'CHALLENGE'; challengeBox.classList.remove('hidden');
-                            document.getElementById('challenge-text').innerText = challengeNames[challengeType];
-                        }
-                    } else if (state === 'CHALLENGE') {
-                        const lm = detections.landmarks;
-                        const leftEye = lm.getLeftEye(), rightEye = lm.getRightEye(), nose = lm.getNose(), jaw = lm.getJawOutline();
-                        let passed = false;
-                        
-                        // --- IMPROVED LOGIC ---
-                        if (challengeType === 0) { // BLINK
-                            // Calculate EAR (Eye Aspect Ratio)
-                            const lEAR = (getDist(leftEye[1], leftEye[5]) + getDist(leftEye[2], leftEye[4])) / (2 * getDist(leftEye[0], leftEye[3]));
-                            const rEAR = (getDist(rightEye[1], rightEye[5]) + getDist(rightEye[2], rightEye[4])) / (2 * getDist(rightEye[0], rightEye[3]));
-                            const avgEAR = (lEAR + rEAR) / 2;
-                            if (avgEAR < 0.30) passed = true; // Relaxed threshold
-                        } else if (challengeType === 1) { // TURN HEAD
-                            const noseX = nose[0].x, boxW = detections.detection.box.width, center = detections.detection.box.x + boxW/2;
-                            if (Math.abs(noseX - center) > boxW * 0.12) passed = true; // Slightly more sensitive
-                        } else if (challengeType === 2) { // NOD
-                            const noseTip = nose[6], chinTip = jaw[8], verticalDist = chinTip.y - noseTip.y, boxH = detections.detection.box.height, ratio = verticalDist / boxH;
-                            // Widen range for "Action"
-                            if(ratio < 0.28 || ratio > 0.45) passed = true; 
-                        }
-                        
-                        if (passed) {
-                            challengeBox.classList.add('challenge-success');
-                            document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-check"></i>';
-                            document.getElementById('challenge-text').innerText = "Verified";
-                            setTimeout(() => {
-                                state = 'ALIGN';
-                                challengeBox.classList.remove('challenge-success'); 
-                                challengeBox.classList.remove('hidden');
-                                document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-camera"></i>';
-                                document.getElementById('challenge-text').innerText = "Look Straight";
-                                stabilizationCounter = 0;
-                            }, 500); 
-                        }
-                    } else if (state === 'ALIGN') {
-                        // Strict Pose Check Logic
-                        const lm = detections.landmarks;
-                        const nose = lm.positions[30]; // Tip of nose
-                        const jaw = lm.getJawOutline();
-                        const jawLeft = jaw[0];
-                        const jawRight = jaw[16];
-                        const leftEye = lm.getLeftEye();
-                        const rightEye = lm.getRightEye();
-
-                        // 1. YAW: Symmetry Check (Nose centered horizontally on face)
-                        const distToLeft = Math.abs(nose.x - jawLeft.x);
-                        const distToRight = Math.abs(nose.x - jawRight.x);
-                        const ratio = distToLeft / (distToRight || 1);
-                        const isFacingFront = ratio > 0.8 && ratio < 1.25;
-
-                        // 2. ROLL: Tilt Check (Eyes horizontal)
-                        const leftEyeCenter = { x: (leftEye[0].x + leftEye[3].x)/2, y: (leftEye[0].y + leftEye[3].y)/2 };
-                        const rightEyeCenter = { x: (rightEye[0].x + rightEye[3].x)/2, y: (rightEye[0].y + rightEye[3].y)/2 };
-                        const dY = rightEyeCenter.y - leftEyeCenter.y;
-                        const dX = rightEyeCenter.x - leftEyeCenter.x;
-                        const angle = Math.atan2(dY, dX) * (180 / Math.PI);
-                        const isLevel = Math.abs(angle) < 10; // Max 10 degree tilt
-
-                        // 3. CENTERING: Face centered in camera frame
-                        const box = detections.detection.box;
-                        const boxCenter = box.x + box.width / 2;
-                        const frameCenter = displaySize.width / 2;
-                        const isCentered = Math.abs(boxCenter - frameCenter) < (displaySize.width * 0.15); // Within 15% center
-
-                        // 4. NOD CHECK (Heuristic via score): High confidence usually means frontal face
-                        const isHighQuality = detections.detection.score > 0.85;
-
-                        if (isFacingFront && isLevel && isCentered && isHighQuality) {
-                            stabilizationCounter++;
-                            document.getElementById('challenge-text').innerText = "Hold Still...";
-                            document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-camera"></i>';
-                            status.innerText = "Perfect. Hold it.";
-                            
-                            // Require 5 consecutive stable frames (~500ms)
-                            if (stabilizationCounter > 5) { 
-                                state = 'CAPTURE';
-                            }
-                        } else {
-                            stabilizationCounter = 0; // Reset if user moves
-                            document.getElementById('challenge-text').innerText = "Look Straight";
-                            document.getElementById('challenge-icon').innerHTML = '<i class="fa-solid fa-user"></i>';
-                            
-                            // Specific feedback
-                            if(!isFacingFront) status.innerText = "Turn Face Forward";
-                            else if(!isLevel) status.innerText = "Keep Head Straight";
-                            else if(!isCentered) status.innerText = "Center Your Face";
-                            else if(!isHighQuality) status.innerText = "Look Straight (No Nod)";
-                        }
-
-                    } else if (state === 'CAPTURE') {
-                        status.innerText = "Processing..."; 
-                        // Capture Logic
-                        const capCanvas = document.createElement('canvas'); capCanvas.width = 300; capCanvas.height = 300;
-                        const ctx2 = capCanvas.getContext('2d'); ctx2.translate(300, 0); ctx2.scale(-1, 1); 
-                        ctx2.drawImage(video, 0, 0, 300, 300);
-                        const imgData = capCanvas.toDataURL('image/jpeg', 0.6);
-                        
-                        closeCamera(); 
-                        if (onCaptureCallback) onCaptureCallback(detections.descriptor, detections.detection.score, imgData);
-                        return; // Stop Loop
-                    }
-                } else { status.innerText = "Position face in frame"; }
-                
-                // Run loop again in 100ms
-                setTimeout(loop, 100);
-            };
+            // --- 1. 3D DEPTH PERSPECTIVE (ANTI-FLAT SPOOF) ---
+            // Only calculate heavy math every 2 frames to save CPU
+            if (frameCount % 2 === 0) {
+                const eyeDist = getDist(lm.getLeftEye()[0], lm.getRightEye()[3]);
+                const noseToChin = getDist(lm.getNose()[6], jaw[8]);
+                depthHistory.push(eyeDist / noseToChin);
+                if (depthHistory.length > 10) depthHistory.shift();
+            }
             
-            loop(); // Start loop
+            const depthVariance = depthHistory.length > 5 ? 
+                (Math.max(...depthHistory) - Math.min(...depthHistory)) : 1;
+
+            // --- STATE MACHINE ---
+            if (state === 'WAIT') {
+                status.innerText = "Analyzing Face...";
+                if (detections.detection.score > 0.8) {
+                    state = 'CHALLENGE';
+                    challengeBox.classList.remove('hidden');
+                    challengeText.innerText = ["Blink Eyes", "Turn Head Slightly", "Nod Slowly"][challengeType];
+                }
+            } 
+            
+            else if (state === 'CHALLENGE') {
+                let passed = false;
+                if (challengeType === 0) { // BLINK
+                    const lE = lm.getLeftEye(), rE = lm.getRightEye();
+                    const ear = (getDist(lE[1], lE[5]) + getDist(rE[1], rE[5])) / (2 * getDist(lE[0], lE[3]));
+                    if (ear < 0.27) passed = true;
+                } else if (challengeType === 1) { // TURN
+                    const box = detections.detection.box;
+                    if (Math.abs(nose.x - (box.x + box.width / 2)) > box.width * 0.15) passed = true;
+                } else if (challengeType === 2) { // NOD
+                    const ratio = (jaw[8].y - nose.y) / detections.detection.box.height;
+                    if (ratio < 0.32 || ratio > 0.45) passed = true;
+                }
+
+                if (passed) {
+                    state = 'ALIGN';
+                    challengeText.innerText = "Hold Still for 3D Scan";
+                    stabilizationCounter = 0;
+                }
+            } 
+
+            else if (state === 'ALIGN') {
+                // --- ANTI-SPOOF: STATIC IMAGE CHECK ---
+                let isStatic = false;
+                if (lastDescriptor) {
+                    const dist = faceapi.euclideanDistance(detections.descriptor, lastDescriptor);
+                    if (dist < 0.0012) isStatic = true; // No micro-jitter = fake image
+                }
+                lastDescriptor = detections.descriptor;
+
+                // Position Check
+                const yaw = Math.abs(nose.x - jaw[0].x) / Math.abs(nose.x - jaw[16].x);
+                const isCentered = yaw > 0.8 && yaw < 1.25;
+
+                if (isCentered && !isStatic && depthVariance > 0.0008) {
+                    stabilizationCounter++;
+                    status.innerText = `Verifying... ${Math.round((stabilizationCounter/15)*100)}%`;
+                    challengeBox.style.borderColor = "#4CAF50"; 
+                    
+                    if (stabilizationCounter > 15) state = 'CAPTURE';
+                } else {
+                    stabilizationCounter = Math.max(0, stabilizationCounter - 2);
+                    challengeBox.style.borderColor = "#F44336";
+                    
+                    if (isStatic) status.innerText = "Live person required (No static clips)";
+                    else if (depthVariance <= 0.0008) status.innerText = "3D depth not detected. Move slightly.";
+                    else status.innerText = "Center your face";
+                }
+            } 
+
+            else if (state === 'CAPTURE') {
+                status.innerText = "Processing...";
+                const capCanvas = document.createElement('canvas');
+                capCanvas.width = 400; capCanvas.height = 400;
+                const ctx2 = capCanvas.getContext('2d');
+                ctx2.translate(400, 0); ctx2.scale(-1, 1);
+                ctx2.drawImage(video, 0, 0, 400, 400);
+                
+                const imgData = capCanvas.toDataURL('image/jpeg', 0.9);
+                closeCamera();
+                onCaptureCallback(detections.descriptor, detections.detection.score, imgData);
+                return;
+            }
+        } else {
+            status.innerText = "Face not found";
+            stabilizationCounter = 0;
         }
+        
+        // Use 100ms for stable performance on mobile, or 80ms for desktop
+        setTimeout(loop, 90); 
+    };
+    loop();
+}
+
+// Helper: Standard Euclidean distance
+
+
+
+
 
 
         // --- OTP & EXPORT/IMPORT ---
