@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OmniPulse AI - Pro Broadcast</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Modern Poster Gradients */
+        .bg-gradient-urgent { background: linear-gradient(135deg, #ef4444 0%, #7f1d1d 100%); }
+        .bg-gradient-info { background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%); }
+        .bg-gradient-success { background: linear-gradient(135deg, #10b981 0%, #064e3b 100%); }
+        .bg-gradient-festive { background: linear-gradient(135deg, #a855f7 0%, #db2777 100%); }
+        .bg-gradient-warning { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); }
+        .bg-gradient-alumni { background: linear-gradient(135deg, #475569 0%, #0f172a 100%); }
+        .bg-gradient-sos { background: radial-gradient(circle, #ff0000 0%, #990000 100%); animation: pulse-red 2s infinite; }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,0,0,0.7); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 20px rgba(255,0,0,0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,0,0,0); }
+        }
+
+        .poster-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        #camera-preview { transform: scaleX(-1); }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .role-btn.active {
+            background-color: #eef2ff;
+            border-color: #4f46e5;
+            color: #4f46e5;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center">
+
+    <div class="w-full max-w-6xl min-h-screen bg-white shadow-2xl flex flex-col relative overflow-hidden md:my-6 md:rounded-[2.5rem] md:min-h-[92vh]">
+        
+        <!-- SOS Alert Bar for Security -->
+        <div id="sos-bar" class="hidden bg-red-600 text-white p-3 text-center font-black animate-pulse uppercase tracking-widest text-[10px] z-[60]">
+            ⚠️ Security Alert Mode Active ⚠️
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm bg-slate-900 text-white p-4 rounded-2xl shadow-2xl flex items-center space-x-3 opacity-0 pointer-events-none transition-all duration-500">
+            <div class="p-2 bg-indigo-500 rounded-xl" id="toast-icon"></div>
+            <p class="text-xs font-bold" id="toast-msg"></p>
+        </div>
+
+        <!-- Header -->
+        <header class="pt-8 pb-4 px-8 flex justify-between items-center border-b border-slate-50 sticky top-0 bg-white/80 backdrop-blur-md z-40">
+            <div class="flex items-center space-x-2 text-indigo-600">
+                <i data-lucide="flame" size="24" class="fill-current"></i>
+                <h1 class="text-xl font-black text-slate-800 tracking-tighter uppercase">Omni<span class="text-indigo-600">Pulse</span></h1>
+            </div>
+            <div id="header-user" class="flex items-center space-x-4"></div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="flex-1 overflow-y-auto hide-scrollbar bg-slate-50/50 p-6 pb-32"></main>
+
+        <!-- Navigation -->
+        <nav id="bottom-nav" class="absolute bottom-0 w-full glass p-5 pb-8 flex justify-around items-center border-t border-slate-100 z-50">
+            <button onclick="switchTab('feed')" id="nav-feed" class="text-indigo-600 p-2"><i data-lucide="home" size="28"></i></button>
+            <button onclick="switchTab('create')" id="nav-create" class="hidden p-4 rounded-2xl bg-slate-900 text-white shadow-xl -translate-y-6 active:scale-90 transition-all"><i data-lucide="plus" size="30"></i></button>
+            
+            <!-- Security Quick Action -->
+            <button id="nav-sos" onclick="triggerSOS()" class="hidden p-4 rounded-2xl bg-red-600 text-white shadow-xl -translate-y-6 active:scale-75 transition-all animate-bounce">
+                <i data-lucide="siren" size="30"></i>
+            </button>
+
+            <button onclick="switchTab('settings')" id="nav-settings" class="text-slate-300 p-2"><i data-lucide="user" size="28"></i></button>
+        </nav>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="camera-modal" class="fixed inset-0 z-[110] hidden bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-6">
+        <div class="relative w-full max-w-md aspect-[3/4] overflow-hidden rounded-[2.5rem] bg-slate-800 shadow-2xl">
+            <video id="camera-preview" autoplay playsinline class="w-full h-full object-cover"></video>
+        </div>
+        <div class="flex space-x-6 mt-8">
+            <button onclick="closeCamera()" class="p-5 bg-white/10 text-white rounded-full"><i data-lucide="x"></i></button>
+            <button onclick="capturePhoto()" class="p-8 bg-white text-black rounded-full shadow-2xl active:scale-90"><i data-lucide="camera" size="32"></i></button>
+        </div>
+        <canvas id="photo-canvas" class="hidden"></canvas>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = {apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+  authDomain: "stuattnd.firebaseapp.com",
+  projectId: "stuattnd",
+  storageBucket: "stuattnd.firebasestorage.app",
+  messagingSenderId: "511533506488",
+  appId: "1:511533506488:web:aca4de3d513915d012f94d",
+  measurementId: "G-9PZZM5LFKX"};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'omnipulse-pro';
+        const apiKey = ""; 
+        const ADMIN_SECRET = "DEPT-ADMIN-2026"; 
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let userProfile = null;
+        let currentTab = 'feed';
+        let pulses = [];
+        let tempPhoto = null;
+        let cameraStream = null;
+        let selectedTarget = 'All';
+
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'info');
+                const snap = await getDoc(profileRef);
+                if (snap.exists()) {
+                    userProfile = snap.data();
+                    startSync();
+                    checkAutoTriggers();
+                    render();
+                } else {
+                    switchTab('settings');
+                }
+            } else {
+                initAuth();
+            }
+        });
+
+        // SMART FEATURES: Festivals, Birthdays, Alumni, SOS
+        async function checkAutoTriggers() {
+            if (!userProfile) return;
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const monthDay = dateStr.slice(5); // MM-DD
+
+            // 1. Birthday Check
+            if (userProfile.dob && userProfile.dob.includes(monthDay)) {
+                postAutoPulse(`Birthday Celebration! 🎂`, `Happy Birthday to ${userProfile.name}! Wishing you success and happiness.`, 'festive', 'CELEBRATION', 'All');
+            }
+
+            // 2. Festival Automation (South Indian & National)
+            // Admins will input these via a collection in Firestore. 
+            // For now, we simulate a check against common dates or an admin-set 'festivals' doc
+            const festRef = doc(db, 'artifacts', appId, 'public', 'data', 'festivals', dateStr);
+            const festSnap = await getDoc(festRef);
+            if (festSnap.exists()) {
+                const f = festSnap.data();
+                postAutoPulse(`${f.name} Greetings! ✨`, f.message, 'festive', 'FESTIVAL', 'All');
+            }
+
+            // 3. Alumni Status
+            if (userProfile.role === 'alumni' && !userProfile.alumniPulseSent) {
+                postAutoPulse(`Alumni Spotlight 🎓`, `${userProfile.name} has joined the Alumni network! Best wishes.`, 'alumni', 'GRADUATION', 'All');
+                await setDoc(doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'info'), { alumniPulseSent: true }, { merge: true });
+            }
+
+            // 4. Placement Success
+            if (userProfile.placed && !userProfile.placementPulseSent) {
+                postAutoPulse(`Placement Success! 💼`, `Congrats to ${userProfile.name} for placement at ${userProfile.company || 'Top Tier Firm'}!`, 'success', 'PLACEMENTS', 'All');
+                await setDoc(doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'info'), { placementPulseSent: true }, { merge: true });
+            }
+        }
+
+        async function triggerSOS() {
+            if (!userProfile || userProfile.role !== 'security') return;
+            
+            // Haptic Feedback
+            if ("vibrate" in navigator) navigator.vibrate([200, 100, 200, 100, 500]);
+            
+            showToast("SOS BROADCASTED", "siren");
+            
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pulses'), {
+                title: "CRITICAL SECURITY ALERT",
+                content: `Emergency SOS triggered by Security at ${new Date().toLocaleTimeString()}. Please remain alert.`,
+                theme: 'sos',
+                category: 'SECURITY',
+                audience: 'All',
+                createdAt: serverTimestamp(),
+                sender: auth.currentUser.uid,
+                meta: { date: 'IMMEDIATE', time: 'NOW' }
+            });
+        }
+
+        async function postAutoPulse(title, content, theme, category, audience) {
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pulses'), {
+                title: title.toUpperCase(),
+                content,
+                theme,
+                category,
+                audience,
+                createdAt: serverTimestamp(),
+                sender: 'SYSTEM',
+                isAuto: true,
+                meta: { 
+                    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    time: 'Smart Pulse' 
+                }
+            });
+        }
+
+        function startSync() {
+            const q = collection(db, 'artifacts', appId, 'public', 'data', 'pulses');
+            onSnapshot(q, (snapshot) => {
+                pulses = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                pulses.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                render();
+            });
+        }
+
+        window.render = () => {
+            const main = document.getElementById('main-content');
+            if (!auth.currentUser) return;
+
+            if (currentTab === 'feed') {
+                const filtered = pulses.filter(p => 
+                    userProfile?.role === 'admin' || 
+                    p.audience === 'All' || 
+                    p.audience?.toLowerCase() === userProfile?.role?.toLowerCase() ||
+                    (p.theme === 'sos') // SOS visible to all
+                );
+
+                main.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-10">
+                        ${filtered.map(p => createPulsePoster(p)).join('')}
+                    </div>
+                `;
+            } else if (currentTab === 'create') {
+                main.innerHTML = `
+                    <div class="max-w-2xl mx-auto space-y-8">
+                        <div class="bg-white p-8 rounded-[3rem] shadow-2xl border border-slate-100">
+                            <textarea id="pulse-input" class="w-full h-48 bg-transparent text-slate-700 font-bold text-xl focus:outline-none resize-none" 
+                                placeholder="Broadcast a message... (AI will format it automatically)"></textarea>
+                            
+                            <div class="flex flex-wrap gap-2 mt-6">
+                                ${['All', 'Student', 'Staff', 'Alumni'].map(target => `
+                                    <button onclick="setTarget('${target}')" class="target-btn px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest transition-all ${target === selectedTarget ? 'border-indigo-500 text-indigo-600 bg-indigo-50' : 'border-slate-50 text-slate-400'}">${target}</button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Admin Festival Input Shortcut -->
+                        ${userProfile?.role === 'admin' ? `
+                            <div class="bg-indigo-50 p-4 rounded-3xl border-2 border-indigo-100 flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase text-indigo-600">Register Annual Festival</span>
+                                <button onclick="setFestivalMode()" class="p-2 bg-indigo-600 text-white rounded-xl"><i data-lucide="calendar-plus" size="16"></i></button>
+                            </div>
+                        ` : ''}
+
+                        <button onclick="broadcastPulse()" id="btn-post" class="w-full py-6 bg-slate-900 text-white rounded-3xl font-black uppercase tracking-widest shadow-2xl flex items-center justify-center space-x-3">
+                            <span>Push Smart Pulse</span>
+                            <i data-lucide="sparkles"></i>
+                        </button>
+                    </div>
+                `;
+            } else if (currentTab === 'settings') {
+                main.innerHTML = `
+                    <div class="max-w-xl mx-auto space-y-8">
+                        <div class="bg-white p-10 rounded-[3.5rem] shadow-2xl border border-slate-100 text-center">
+                            <div class="relative inline-block cursor-pointer" onclick="openCamera()">
+                                <div class="w-32 h-32 rounded-full border-4 border-indigo-500 overflow-hidden bg-slate-100 mx-auto">
+                                    <img id="pfp-preview" src="${userProfile?.pfp || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + auth.currentUser.uid}" class="w-full h-full object-cover">
+                                </div>
+                            </div>
+                            <h3 class="mt-6 font-black text-slate-800 text-2xl uppercase">${userProfile?.name || 'Identity Sync'}</h3>
+
+                            <div class="mt-10 space-y-6 text-left">
+                                <input id="reg-name" type="text" value="${userProfile?.name || ''}" placeholder="Full Name" class="w-full p-5 bg-slate-50 rounded-3xl font-bold border-2 border-transparent focus:border-indigo-500 outline-none">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input id="reg-dob" type="date" value="${userProfile?.dob || ''}" class="w-full p-5 bg-slate-50 rounded-3xl font-bold">
+                                    <select id="reg-role" onchange="render()" class="w-full p-5 bg-slate-50 rounded-3xl font-bold border-none outline-none">
+                                        <option value="student" ${userProfile?.role === 'student' ? 'selected' : ''}>Student</option>
+                                        <option value="teaching" ${userProfile?.role === 'teaching' ? 'selected' : ''}>Teaching Staff</option>
+                                        <option value="non-teaching" ${userProfile?.role === 'non-teaching' ? 'selected' : ''}>Non-Teaching Staff</option>
+                                        <option value="exam-section" ${userProfile?.role === 'exam-section' ? 'selected' : ''}>Exam Section</option>
+                                        <option value="security" ${userProfile?.role === 'security' ? 'selected' : ''}>Security Staff</option>
+                                        <option value="alumni" ${userProfile?.role === 'alumni' ? 'selected' : ''}>Alumni</option>
+                                        <option value="admin" ${userProfile?.role === 'admin' ? 'selected' : ''}>System Admin</option>
+                                    </select>
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-4">
+                                    <input id="reg-dept" type="text" value="${userProfile?.dept || ''}" placeholder="Department (e.g. CSE)" class="w-full p-5 bg-slate-50 rounded-3xl font-bold border-none outline-none">
+                                    <div class="flex items-center space-x-4 ml-4">
+                                        <input id="reg-placed" type="checkbox" ${userProfile?.placed ? 'checked' : ''} class="w-5 h-5 accent-indigo-600">
+                                        <label class="text-xs font-black text-slate-500 uppercase">Graduated / Placed</label>
+                                    </div>
+                                    <input id="reg-company" type="text" value="${userProfile?.company || ''}" placeholder="Company Name" class="w-full p-5 bg-slate-50 rounded-3xl font-bold border-none outline-none">
+                                </div>
+
+                                ${userProfile?.role === 'admin' || userProfile?.role === 'security' || userProfile?.role === 'exam-section' ? `
+                                    <div class="bg-amber-50 p-6 rounded-[2.5rem] border-2 border-amber-100">
+                                        <p class="text-[10px] font-black text-amber-600 uppercase mb-3">Privileged Access Key</p>
+                                        <input id="reg-key" type="password" placeholder="Enter Access Code" class="w-full p-4 bg-white rounded-2xl font-bold outline-none border-none">
+                                    </div>
+                                ` : ''}
+
+                                <button onclick="saveProfile()" class="w-full py-6 bg-indigo-600 text-white rounded-3xl font-black uppercase tracking-widest shadow-xl mt-6">Update Profile</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+            updateHeaderUI();
+            updateNavUI();
+        };
+
+        window.setFestivalMode = async () => {
+            const name = prompt("Festival Name (e.g. Sankranti)");
+            const date = prompt("Date (YYYY-MM-DD)");
+            const msg = prompt("Message to broadcast");
+            if(name && date && msg) {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'festivals', date), { name, message: msg });
+                showToast("Festival Scheduled", "calendar");
+            }
+        };
+
+        window.broadcastPulse = async () => {
+            const input = document.getElementById('pulse-input').value.trim();
+            if(!input) return;
+
+            const btn = document.getElementById('btn-post');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="animate-spin" data-lucide="loader-2"></i>`;
+            lucide.createIcons();
+
+            const promptText = `Broadcast: "${input}". 
+            Determine: 1. Theme (urgent/info/success/festive/warning). 2. Category (EXAMS/SECURITY/OFFICIAL/EVENTS). 3. Extracted Date/Time. 4. Short Catchy Title. 
+            Return JSON only: {"title":"...","theme":"...","category":"...","date":"...","time":"..."}`;
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                });
+                const aiData = await res.json();
+                const ai = JSON.parse(aiData.candidates[0].content.parts[0].text.replace(/```json|```/g, ""));
+
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pulses'), {
+                    title: ai.title.toUpperCase(),
+                    content: input,
+                    theme: ai.theme,
+                    category: ai.category.toUpperCase(),
+                    audience: selectedTarget,
+                    createdAt: serverTimestamp(),
+                    sender: auth.currentUser.uid,
+                    meta: { date: ai.date || 'TBD', time: ai.time || 'Live' }
+                });
+                showToast("Smart Pulse Broad-casted", "sparkles");
+                switchTab('feed');
+            } catch (e) {
+                console.error(e);
+                showToast("AI Processing Error", "alert-circle");
+                btn.disabled = false;
+                btn.innerHTML = `<span>Push Smart Pulse</span><i data-lucide="sparkles"></i>`;
+                lucide.createIcons();
+            }
+        };
+
+        function createPulsePoster(data) {
+            const themes = { urgent: 'bg-gradient-urgent', warning: 'bg-gradient-warning', success: 'bg-gradient-success', festive: 'bg-gradient-festive', info: 'bg-gradient-info', alumni: 'bg-gradient-alumni', sos: 'bg-gradient-sos' };
+            const icons = { urgent: 'siren', warning: 'triangle-alert', success: 'check-circle', festive: 'party-popper', info: 'info', alumni: 'graduation-cap', sos: 'zap' };
+            
+            const timeAgo = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Now';
+
+            return `
+                <div class="poster-card w-full aspect-[3/4.2] rounded-[2.5rem] ${themes[data.theme] || themes.info} p-8 text-white flex flex-col shadow-2xl relative overflow-hidden">
+                    <div class="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+                    
+                    <div class="flex justify-between items-start mb-auto relative z-10">
+                        <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md border border-white/10">
+                            <i data-lucide="${icons[data.theme] || 'info'}" size="32"></i>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">${data.category}</p>
+                            <span class="text-[8px] font-black bg-black/20 px-2 py-0.5 rounded-full uppercase">For: ${data.audience}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="relative z-10 space-y-4">
+                        <div class="space-y-1">
+                            <h3 class="text-4xl font-black tracking-tighter leading-none uppercase drop-shadow-lg">${data.title}</h3>
+                            <div class="flex items-center space-x-2 opacity-70">
+                                <i data-lucide="calendar" size="12"></i>
+                                <span class="text-[10px] font-black uppercase tracking-widest">${data.meta?.date || 'Upcoming'}</span>
+                                <span class="opacity-50">•</span>
+                                <i data-lucide="clock" size="12"></i>
+                                <span class="text-[10px] font-black uppercase tracking-widest">${data.meta?.time || timeAgo}</span>
+                            </div>
+                        </div>
+                        <p class="text-lg font-bold leading-tight opacity-90">${data.content}</p>
+                    </div>
+
+                    <div class="mt-auto pt-6 border-t border-white/10 flex justify-between items-center relative z-10">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                                <i data-lucide="user" size="12"></i>
+                            </div>
+                            <p class="text-[10px] font-black opacity-60 uppercase tracking-widest">${data.sender === 'SYSTEM' ? 'Smart Bot' : 'Admin'}</p>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <div class="w-1 h-1 rounded-full bg-red-400 animate-ping"></div>
+                            <div class="bg-white/10 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">Active</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.openCamera = async () => {
+            document.getElementById('camera-modal').classList.remove('hidden');
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            document.getElementById('camera-preview').srcObject = cameraStream;
+        };
+
+        window.closeCamera = () => {
+            if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+            document.getElementById('camera-modal').classList.add('hidden');
+        };
+
+        window.capturePhoto = () => {
+            const video = document.getElementById('camera-preview');
+            const canvas = document.getElementById('photo-canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+            tempPhoto = canvas.toDataURL('image/jpeg', 0.8);
+            document.getElementById('pfp-preview').src = tempPhoto;
+            closeCamera();
+            showToast("Photo Updated", "camera");
+        };
+
+        window.saveProfile = async () => {
+            const name = document.getElementById('reg-name').value;
+            const dob = document.getElementById('reg-dob').value;
+            const role = document.getElementById('reg-role').value;
+            const dept = document.getElementById('reg-dept').value;
+            const company = document.getElementById('reg-company').value;
+            const placed = document.getElementById('reg-placed').checked;
+            const key = document.getElementById('reg-key')?.value;
+
+            // Simple Security Validation for Privileged Roles
+            if ((role === 'admin' || role === 'security' || role === 'exam-section') && key !== ADMIN_SECRET) {
+                return showToast("Access Key Denied", "lock");
+            }
+
+            const data = {
+                name, dob, role, dept, company, placed,
+                pfp: tempPhoto || userProfile?.pfp || `https://api.dicebear.com/7.x/avataaars/svg?seed=${auth.currentUser.uid}`
+            };
+
+            await setDoc(doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'info'), data, { merge: true });
+            userProfile = data;
+            showToast("Profile Updated", "shield-check");
+            checkAutoTriggers();
+            switchTab('feed');
+        };
+
+        window.setTarget = (t) => { selectedTarget = t; render(); };
+
+        function updateHeaderUI() {
+            const el = document.getElementById('header-user');
+            if (userProfile?.name) {
+                el.innerHTML = `
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-slate-800 leading-none">${userProfile.name.split(' ')[0]}</p>
+                        <p class="text-[8px] font-black text-indigo-500 uppercase tracking-widest mt-0.5">${userProfile.role}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full border-2 border-slate-100 overflow-hidden bg-slate-50">
+                        <img src="${userProfile.pfp}" class="w-full h-full object-cover">
+                    </div>
+                `;
+            }
+        }
+
+        window.switchTab = (t) => { currentTab = t; render(); };
+        
+        function updateNavUI() {
+            ['feed', 'create', 'settings'].forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                if (btn) btn.classList.toggle('text-indigo-600', currentTab === t);
+            });
+            
+            const isAdmin = (userProfile?.role === 'admin' || userProfile?.role === 'teaching' || userProfile?.role === 'exam-section');
+            document.getElementById('nav-create').classList.toggle('hidden', !isAdmin);
+            
+            const isSecurity = (userProfile?.role === 'security');
+            document.getElementById('nav-sos').classList.toggle('hidden', !isSecurity);
+            document.getElementById('sos-bar').classList.toggle('hidden', !isSecurity);
+        }
+
+        function showToast(msg, icon) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            document.getElementById('toast-icon').innerHTML = `<i data-lucide="${icon}" size="18"></i>`;
+            lucide.createIcons();
+            t.style.opacity = "1";
+            setTimeout(() => t.style.opacity = "0", 3000);
+        }
+    </script>
+</body>
+</html>
