@@ -132,7 +132,7 @@
         <header class="pt-6 pb-4 px-8 flex justify-between items-center bg-white/70 backdrop-blur-md z-40 shrink-0 border-b border-slate-50">
             <div class="flex items-center space-x-2 text-indigo-600">
                 <i data-lucide="zap" size="24" class="fill-current"></i>
-                <h1 class="text-xl font-black text-slate-800 tracking-tighter uppercase">V Connect <span class="text-blue-600">AI </span><span class="text-violet-600">Pulse</span></h1>
+                <h1 class="text-xl font-purple text-slate-800 tracking-tighter uppercase">V Connect <span class="text-indigo-600">AI Pulse</span></h1>
             </div>
             <div id="header-user" class="flex items-center space-x-3"></div>
         </header>
@@ -140,16 +140,16 @@
         <main id="main-content" class="flex-1 overflow-y-auto hide-scrollbar bg-slate-50/30 p-4 pb-32"></main>
 
         <nav id="bottom-nav" class="glass px-6">
-            <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn flex flex-col items-center space-y-1">
+            <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn w-20 flex flex-col items-center space-y-1">
                 <i data-lucide="layout-grid" size="26"></i>
                 <span class="text-[8px] font-black uppercase tracking-widest">Feed</span>
             </button>
             
-            <div id="nav-center-container" class="flex items-center justify-center">
+            <div id="nav-center-container" class="flex-1 flex items-center justify-center">
                 <!-- Dynamic Post/SOS Button injected here -->
             </div>
             
-            <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn flex flex-col items-center space-y-1">
+            <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn w-20 flex flex-col items-center space-y-1">
                 <i data-lucide="layout-dashboard" size="26"></i>
                 <span class="text-[8px] font-black uppercase tracking-widest">Dashboard</span>
             </button>
@@ -175,7 +175,7 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp, doc, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-		const firebaseConfig = {apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+         const firebaseConfig = {apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
 		  authDomain: "stuattnd.firebaseapp.com",
 		  projectId: "stuattnd",
 		  storageBucket: "stuattnd.firebasestorage.app",
@@ -221,6 +221,7 @@
                 const snap = await getDoc(profileRef);
                 if (snap.exists()) {
                     userProfile = snap.data();
+                    editMode = false;
                     startSync();
                 } else {
                     userProfile = { role: 'Students', name: '', pfp: null, dept: '', gender: 'Other', mobile: '', dob: '', generatedId: '' };
@@ -243,8 +244,8 @@
 
         async function runDailyAIGenerator() {
             const now = new Date();
-            const todayKey = now.toISOString().split('T')[0]; // YYYY-MM-DD
-            const todayMMDD = todayKey.substring(5); // MM-DD
+            const todayKey = now.toISOString().split('T')[0];
+            const todayMMDD = todayKey.substring(5);
             
             const checkRef = doc(db, 'artifacts', appId, 'public', 'data', 'daily_check', todayKey);
             const checkSnap = await getDoc(checkRef);
@@ -253,7 +254,6 @@
 
             await setDoc(checkRef, { processed: true, at: serverTimestamp() });
 
-            // 1. Check Global Calendar first
             const calendarMatch = GLOBAL_CALENDAR.find(item => item.date === todayMMDD);
             if (calendarMatch) {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pulses'), {
@@ -268,10 +268,7 @@
                 });
             }
 
-            // 2. Birthday Scan
-            // Note: In a large system we'd use a server query. For this logic, 
-            // the AI logic in the previous prompt continues below if no calendar match exists or as a secondary check.
-            
+				
             const prompt = `Today is ${todayKey}. 
             1. Are there any major festivals today (Indian context preferred)?
             2. Generate a celebratory text for it.
@@ -288,7 +285,6 @@
                 const items = JSON.parse(aiResp.candidates[0].content.parts[0].text.replace(/```json|```/g, "").trim());
                 
                 for (const item of items) {
-                    // Check if we already posted a similar title from the global calendar to avoid duplicates
                     if (calendarMatch && item.title.toLowerCase().includes(calendarMatch.title.toLowerCase().split(' ')[0])) continue;
 
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'pulses'), {
@@ -541,11 +537,22 @@
         
         function updateNavUI() {
             const container = document.getElementById('nav-center-container');
-            const isAdmin = ['Faculty', 'Examination', 'All other Staff'].includes(userProfile?.role);
+            const isRegistered = !editMode && userProfile?.name;
+            const isAuthorized = ['Faculty', 'Examination', 'Security', 'All other Staff'].includes(userProfile?.role);
             const isSecurity = userProfile?.role === 'Security';
-            if (isSecurity) container.innerHTML = `<button onclick="triggerSOS()" class="p-6 rounded-[2.2rem] bg-red-600 text-white shadow-2xl -translate-y-8 active:scale-90 transition-all shadow-red-200"><i data-lucide="zap" size="32" class="fill-current"></i></button>`;
-            else if (isAdmin) container.innerHTML = `<button onclick="switchTab('create')" class="p-6 rounded-[2.2rem] bg-slate-900 text-white shadow-2xl -translate-y-8 active:scale-90 transition-all ${currentTab === 'create' ? 'bg-indigo-600' : ''}"><i data-lucide="plus" size="32"></i></button>`;
-            else container.innerHTML = '';
+            
+            // Clear current container content
+            container.innerHTML = '';
+
+            // Only show action button if registered AND (is authorized admin or is security)
+            if (isRegistered) {
+                if (isSecurity) {
+                    container.innerHTML = `<button onclick="triggerSOS()" class="p-6 rounded-[2.2rem] bg-red-600 text-white shadow-2xl -translate-y-8 active:scale-90 transition-all shadow-red-200 flex items-center justify-center"><i data-lucide="zap" size="32" class="fill-current"></i></button>`;
+                } else if (isAuthorized) {
+                    container.innerHTML = `<button onclick="switchTab('create')" class="p-6 rounded-[2.2rem] bg-slate-900 text-white shadow-2xl -translate-y-8 active:scale-90 transition-all flex items-center justify-center ${currentTab === 'create' ? 'bg-indigo-600' : ''}"><i data-lucide="plus" size="32"></i></button>`;
+                }
+            }
+            
             document.getElementById('sos-bar').classList.toggle('hidden', !isSecurity);
             lucide.createIcons();
         }
