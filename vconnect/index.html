@@ -1,20 +1,39 @@
-<script>
-// Define a temporary state variable to hold form values
-let formState = {};
+<html>
+<head>
+    <title>Profile</title>
+</head>
+<body>
+    <div id="tabs">
+        <button onclick="showTab('tab1')">Tab 1</button>
+        <button onclick="showTab('tab2')">Tab 2</button>
+    </div>
 
-// Function to preserve form input values when switching tabs
-function preserveFormValues() {
-    const formInputs = document.querySelectorAll('form input, form textarea');
-    formInputs.forEach(input => {
-        input.addEventListener('input', () => {
-            formState[input.name] = input.value;
-        });
-        if (formState[input.name]) {
-            input.value = formState[input.name];
+    <form id="profileForm">
+        <input type="text" id="name" placeholder="Name" />
+        <input type="email" id="email" placeholder="Email" />
+        <input type="text" id="phone" placeholder="Phone" />
+    </form>
+
+    <script>
+        let formState = {};
+
+        function saveFormState() {
+            formState.name = document.getElementById('name').value;
+            formState.email = document.getElementById('email').value;
+            formState.phone = document.getElementById('phone').value;
         }
-    });
-}
 
-// Call the preserveFormValues function on page load
-window.onload = preserveFormValues;
-</script>
+        function restoreFormState() {
+            document.getElementById('name').value = formState.name || '';
+            document.getElementById('email').value = formState.email || '';
+            document.getElementById('phone').value = formState.phone || '';
+        }
+
+        function showTab(tabName) {
+            saveFormState();
+            // Logic to show/hide tabs goes here
+            restoreFormState();
+        }
+    </script>
+</body>
+</html>
