@@ -2023,7 +2023,7 @@
             renderStudentDashboard(container, p);
         };
 
-        window.registerStudent = async () => {
+        /*window.registerStudent = async () => {
             const roll = document.getElementById('s-roll').value.toUpperCase().replace(/[^A-Z0-9]/g, ''), name = document.getElementById('s-name').value.toUpperCase();
             if (!roll || !name) return showToast("Invalid Input", "error");
             try {
@@ -2032,7 +2032,55 @@
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', window.appState.userId), { rollNo: roll, name: name, uid: window.appState.userId, status: 'pending', createdAt: serverTimestamp(), deviceLocked: true });
                 window.appState.studentProfile = { rollNo: roll, name: name, status: 'pending' }; renderView();
             } catch(e) { showToast("Error", "error"); }
-        };
+        };*/
+
+		window.registerStudent = async () => {
+	    const roll = document.getElementById('s-roll').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+	    const name = document.getElementById('s-name').value.toUpperCase();
+	    const section = document.getElementById('s-section')?.value || 'A'; // Added for dynamic sections
+	    
+	    if (!roll || !name) return showToast("Invalid Input", "error");
+	
+	    try {
+	        // 1. Check if the Roll Number already exists in the Database
+	        const q = query(getStudentsPath(), where("rollNo", "==", roll));
+	        const existingSnap = await getDocs(q);
+	
+	        if (!existingSnap.empty) {
+	            // SUCCESS: Restore existing data to this device
+	            const existingDoc = existingSnap.docs[0];
+	            const existingData = existingDoc.data();
+	            
+	            // Re-link the existing Firestore ID to the current local browser state
+	            window.appState.userId = existingDoc.id; 
+	            window.appState.studentProfile = existingData;
+	            
+	            showToast("Welcome back! Profile restored.", "success");
+	            renderView();
+	            return;
+	        }
+	
+	        // 2. NEW REGISTRATION (Only if Roll No is not found)
+	        // Note: We include 'section' here so the filter works later
+	        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', window.appState.userId), { 
+	            rollNo: roll, 
+	            name: name, 
+	            section: section, // Dynamic section support
+	            uid: window.appState.userId, 
+	            status: 'pending', 
+	            createdAt: serverTimestamp(), 
+	            deviceLocked: true 
+	        });
+	
+	        window.appState.studentProfile = { rollNo: roll, name: name, section: section, status: 'pending' }; 
+	        renderView();
+	        showToast("Registration Successful", "success");
+	
+	    } catch (e) { 
+	        console.error("Registration Error:", e);
+	        showToast("Connection Error", "error"); 
+	    }
+	};
 
         function renderStudentDashboard(container, p) {
     // 1. SECURITY & NULL CHECK
