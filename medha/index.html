@@ -811,7 +811,7 @@
 
                         // Force tab UI update
                         switchTab(window.appState.role, false); // false = don't double render
-
+						await checkFacultyRegistration();
                         renderView();
                         setTimeout(loadAIModels, 500);
                     }
@@ -858,7 +858,8 @@
         const getTemplatesPath = () => collection(db, 'artifacts', appId, 'public', 'data', 'templates');
         const getMasterPath = () => collection(db, 'artifacts', appId, 'public', 'data', 'master_students');
         const getUserProfileDoc = (uid) => doc(db, 'artifacts', appId, 'users', uid, 'profile', 'data');
-        const getFacultyProfileDoc = (uid) => doc(db, 'artifacts', appId, 'users', uid, 'faculty_data', 'creds');
+        //const getFacultyProfileDoc = (uid) => doc(db, 'artifacts', appId, 'users', uid, 'faculty_data', 'creds');
+		const getFacultyProfileDoc = (uid) => doc(db, 'artifacts', appId, 'faculties', `faculty_user_${uid}`);
 
         async function loadFaceData() {
             if (!window.appState.userId) return;
@@ -914,10 +915,27 @@
         }
 
         async function checkFacultyRegistration() {
-            if (!window.appState.userId) return;
-            const docSnap = await getDoc(getFacultyProfileDoc(window.appState.userId));
-            if (docSnap.exists()) window.appState.facultyProfile = docSnap.data();
+    if (!window.appState.userId) return;
+
+    // 1. Try Local Storage (Fastest)
+    const localData = localStorage.getItem(`faculty_auth_${window.appState.userId}`);
+    if (localData) {
+        window.appState.facultyProfile = JSON.parse(localData);
+        return; // Profile found, skip network
+    }
+
+    // 2. Try Cloud (Slow/Backup)
+    try {
+        const docSnap = await getDoc(getFacultyProfileDoc(window.appState.userId));
+        if (docSnap.exists()) {
+            const cloudData = docSnap.data();
+            window.appState.facultyProfile = cloudData;
+            localStorage.setItem(`faculty_auth_${window.appState.userId}`, JSON.stringify(cloudData));
         }
+    } catch (e) {
+        console.warn("Could not reach cloud for registration check.");
+    }
+}
 
         window.switchTab = (tab, shouldRender = true) => {
             // ADDED: Clean up memory before switching tabs
@@ -1494,28 +1512,33 @@ window.handleStudentSearch = () => {
             const container = document.getElementById('report-body');
             const analyticsContainer = document.getElementById('analytics-dash');
 
+            // Show Loader
             container.innerHTML = '<div class="flex justify-center py-8"><div class="loader"></div></div>';
 
             try {
-                // 1. Fetch Sessions
-                const qSess = query(getSessionPath());
+                // --- 1. OPTIMIZED SESSION FETCH (The "Quota Saver") ---
+                // Fetch only the most recent 60 sessions. Prevents reading thousands of old records.
+                const qSess = query(
+                    getSessionPath(), 
+                    orderBy("timestamp", "desc"), 
+                    limit(60) 
+                );
                 const snapSess = await getDocs(qSess);
+                
                 const sessions = [];
                 const now = new Date();
-                const limit = new Date();
+                const limitDate = new Date();
 
-                // Time Filter Logic
-                if (window.currentReportFilter === 'week') limit.setDate(now.getDate() - 7);
-                else if (window.currentReportFilter === 'month') limit.setDate(now.getDate() - 30);
-                else limit.setFullYear(2000);
+                // Apply Time Filter
+                if (window.currentReportFilter === 'week') limitDate.setDate(now.getDate() - 7);
+                else if (window.currentReportFilter === 'month') limitDate.setDate(now.getDate() - 30);
+                else limitDate.setFullYear(2000);
 
-                // --- DATA FILTERING LOOP ---
                 snapSess.forEach(d => {
                     const data = d.data();
                     const sessDate = data.timestamp ? data.timestamp.toDate() : new Date(data.date);
-
-                    // Time Check & Section Check
-                    if (sessDate >= limit) {
+                    // Filter by Time and Section
+                    if (sessDate >= limitDate) {
                         if (window.currentReportSection === 'all' || data.section === window.currentReportSection) {
                             sessions.push({ id: d.id, ...data });
                         }
@@ -1528,180 +1551,179 @@ window.handleStudentSearch = () => {
                     return;
                 }
 
-                // 2. Fetch Master List and Attendance
-                const masterSnap = await getDocs(getMasterPath());
-                const snapAtt = await getDocs(getAttPath());
-                const attendance = [];
-                snapAtt.forEach(d => attendance.push({ id: d.id, ...d.data() }));
+                // --- 2. CACHED MASTER LIST (Prevents 200 reads per click) ---
+                let masterData = [];
+                if (window.appState && window.appState.masterListCache) {
+                    masterData = window.appState.masterListCache;
+                } else {
+                    const masterSnap = await getDocs(getMasterPath());
+                    masterData = masterSnap.docs.map(d => d.data());
+                    if (!window.appState) window.appState = {};
+                    window.appState.masterListCache = masterData; 
+                }
 
-                // --- ANALYTICS DASHBOARD LOGIC ---
+                // --- 3. TARGETED ATTENDANCE FETCH (Prevents "Full Collection" scan) ---
+                const attendance = [];
+                const sessionIds = sessions.map(s => s.id);
+                
+                // Chunk to 30 because Firestore 'in' query limit
+                for (let i = 0; i < sessionIds.length; i += 30) {
+                    const chunk = sessionIds.slice(i, i + 30);
+                    const qAtt = query(getAttPath(), where("sessionId", "in", chunk));
+                    const snapAtt = await getDocs(qAtt);
+                    snapAtt.forEach(d => attendance.push({ id: d.id, ...d.data() }));
+                }
+
+                // --- 4. DATA PROCESSING ---
                 const subjectStats = {};
                 const studentStats = {};
-
-                // Group sessions by subject
-                sessions.forEach(s => {
-                    if (!subjectStats[s.subject]) subjectStats[s.subject] = { sessions: [], attendance: [] };
-                    subjectStats[s.subject].sessions.push(s);
-                });
-
-                // Map attendance to subjects
-                sessions.forEach(s => {
-                    const sessAtt = attendance.filter(a => a.sessionId === s.id);
-                    if (subjectStats[s.subject]) subjectStats[s.subject].attendance.push(...sessAtt);
-                });
-
-                // CALC MASTER SIZE FOR SECTION: Filter master list to get correct student count for this section
                 let sectionMasterCount = 0;
-                masterSnap.forEach(d => {
-                    const s = d.data();
-                    // Only track students belonging to current section filter
+
+                // Prep Student Stats from Master (Filtered by Section)
+                masterData.forEach(s => {
                     if (window.currentReportSection === 'all' || s.section === window.currentReportSection) {
-                        studentStats[s.rollNo] = { name: s.name, total: sessions.length, present: 0 };
+                        studentStats[s.rollNo] = { name: s.name, total: 0, present: 0 };
                         sectionMasterCount++;
                     }
                 });
 
-                // Count student presence
+                // Group sessions and increment total counts
+                sessions.forEach(s => {
+                    if (!subjectStats[s.subject]) subjectStats[s.subject] = { sessions: [], attendance: [] };
+                    subjectStats[s.subject].sessions.push(s);
+                    
+                    // For every session in this section, increment total class count for students
+                    Object.keys(studentStats).forEach(roll => studentStats[roll].total++);
+                });
+
+                // Count Attendance
                 attendance.forEach(a => {
-                    if (sessions.find(s => s.id === a.sessionId) && studentStats[a.studentRoll]) {
+                    if (studentStats[a.studentRoll]) {
                         studentStats[a.studentRoll].present++;
+                        // Link attendance to subject
+                        const parentSess = sessions.find(s => s.id === a.sessionId);
+                        if (parentSess && subjectStats[parentSess.subject]) {
+                            subjectStats[parentSess.subject].attendance.push(a);
+                        }
                     }
                 });
 
-                // Determine the base number of students for percentage calculations
                 const baseSize = sectionMasterCount;
 
+                // --- 5. RENDER ANALYTICS ---
                 if (window.currentReportView === 'subject') {
-                    // 1. Chart Data
                     const labels = Object.keys(subjectStats);
                     const avgData = labels.map(sub => {
                         const data = subjectStats[sub];
-                        // Total possible = (Number of sessions in this subject) * (Number of students in this section)
                         const totalPossible = data.sessions.length * baseSize;
-                        const actual = data.attendance.length;
-                        return totalPossible > 0 ? Math.round((actual / totalPossible) * 100) : 0;
+                        return totalPossible > 0 ? Math.round((data.attendance.length / totalPossible) * 100) : 0;
                     });
 
-                    // 2. Irregular Students
                     const irregulars = Object.values(studentStats).filter(s => {
                         const pct = s.total > 0 ? (s.present / s.total) * 100 : 0;
                         return pct < 75 && s.total > 0;
                     }).sort((a, b) => (a.present / a.total) - (b.present / b.total));
 
                     analyticsContainer.innerHTML = `
-						<div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex flex-col h-64">
-							 <h3 class="font-bold text-slate-800 text-sm mb-3">Analytics (${window.currentReportSection === 'all' ? 'All Sections' : 'Section ' + window.currentReportSection})</h3>
-							 <div class="flex-1 relative min-h-0">
-								<canvas id="chartCanvas"></canvas>
-							 </div>
-						</div>
-						
-						${irregulars.length > 0 ? `
-						<div class="bg-red-50 rounded-xl p-4 border border-red-100">
-							<h3 class="font-bold text-red-800 text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> Irregular Students <span class="bg-red-200 text-red-700 px-1.5 py-0.5 rounded text-[9px]">${irregulars.length}</span></h3>
-							<div class="max-h-40 overflow-y-auto pr-1 space-y-2">
-								${irregulars.map(s => {
-                        const pct = Math.round((s.present / s.total) * 100);
-                        let remark = pct < 50 ? "Critical" : "Low Attendance";
-                        return `<div class="bg-white p-2 rounded-lg border border-red-100 flex justify-between items-center">
-										<div><p class="font-bold text-xs text-slate-700">${s.name}</p><p class="text-[9px] text-slate-400">${s.present}/${s.total} Classes</p></div>
-										<div class="text-right"><p class="font-bold text-xs text-red-600">${pct}%</p><p class="text-[8px] font-bold text-red-400 uppercase tracking-wide">${remark}</p></div>
-									</div>`;
-                    }).join('')}
-							</div>
-						</div>` : ''}
-					`;
+                        <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 h-64 flex flex-col">
+                            <h3 class="font-bold text-slate-800 text-xs mb-3 flex items-center gap-2"><i class="fa-solid fa-chart-simple text-blue-500"></i> Subject Performance</h3>
+                            <div class="flex-1 relative min-h-0"><canvas id="chartCanvas"></canvas></div>
+                        </div>
+                        ${irregulars.length > 0 ? `
+                        <div class="bg-red-50 rounded-xl p-4 border border-red-100 mt-4">
+                            <h3 class="font-bold text-red-800 text-[11px] mb-2 uppercase tracking-tight">Attention Required: Below 75%</h3>
+                            <div class="max-h-32 overflow-y-auto space-y-2">
+                                ${irregulars.map(s => `
+                                    <div class="bg-white p-2 rounded-lg flex justify-between items-center shadow-sm">
+                                        <div><p class="font-bold text-[11px] text-slate-700">${s.name}</p></div>
+                                        <p class="font-bold text-[11px] text-red-600">${Math.round((s.present/s.total)*100)}%</p>
+                                    </div>`).join('')}
+                            </div>
+                        </div>` : ''}`;
 
                     setTimeout(() => {
-                        if (typeof Chart !== 'undefined' && document.getElementById('chartCanvas')) {
-                            new Chart(document.getElementById('chartCanvas'), {
+                        const ctx = document.getElementById('chartCanvas');
+                        if (ctx) {
+                            new Chart(ctx, {
                                 type: 'bar',
                                 data: {
-                                    labels: labels.map(l => l.substring(0, 10) + '..'),
-                                    datasets: [{ label: 'Avg %', data: avgData, backgroundColor: '#3b82f6', borderRadius: 4 }]
+                                    labels: labels.map(l => l.length > 10 ? l.substring(0, 8) + '..' : l),
+                                    datasets: [{ data: avgData, backgroundColor: '#3b82f6', borderRadius: 6 }]
                                 },
-                                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
+                                options: { 
+                                    responsive: true, 
+                                    maintainAspectRatio: false, 
+                                    scales: { y: { beginAtZero: true, max: 100 } },
+                                    plugins: { legend: { display: false } } 
+                                }
                             });
                         }
                     }, 100);
-                } else {
-                    analyticsContainer.innerHTML = '';
                 }
 
-                // Render List Views
+                // --- 6. RENDER LISTS (WITH PROGRESS BARS) ---
                 if (window.currentReportView === 'session') {
-                    let html = '<div class="space-y-3">';
+                    let html = '<div class="grid grid-cols-1 gap-3">';
                     sessions.sort((a, b) => b.timestamp - a.timestamp).forEach(s => {
                         const attendees = attendance.filter(a => a.sessionId === s.id);
-                        const pCount = attendees.length;
-                        // Correctly use baseSize (the filtered section count)
-                        const pPercent = baseSize > 0 ? Math.round((pCount / baseSize) * 100) : 0;
+                        const pPercent = baseSize > 0 ? Math.round((attendees.length / baseSize) * 100) : 0;
+                        const barColor = pPercent > 75 ? 'bg-green-500' : (pPercent > 50 ? 'bg-orange-500' : 'bg-red-500');
 
                         html += `
-						<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-							<div class="flex justify-between items-start mb-2">
-								<div>
-									<h4 class="font-bold text-slate-800 text-sm">${s.subject}</h4>
-									<p class="text-[10px] text-slate-500 font-mono mt-0.5">${s.date} | ${s.timeSlot}</p>
-									<span class="bg-slate-100 text-slate-600 px-1.5 rounded text-[9px] font-bold mt-1 inline-block">Sec ${s.section}</span>
-								</div>
-								<div class="text-right">
-									<span class="text-xs font-bold ${pPercent > 75 ? 'text-green-600' : 'text-orange-500'}">${pPercent}%</span>
-								</div>
-							</div>
-							<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-2">
-								<div class="h-full bg-green-500 rounded-full" style="width: ${pPercent}%"></div>
-							</div>
-							<button onclick="viewSessionDetails('${s.id}')" class="w-full py-1.5 rounded-lg border border-slate-100 text-[10px] font-bold text-blue-600 hover:bg-blue-50">View Details</button>
-						</div>`;
+                        <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="font-bold text-slate-800 text-sm leading-tight">${s.subject}</h4>
+                                    <p class="text-[10px] text-slate-500 mt-1 font-mono">${s.date} • ${s.timeSlot}</p>
+                                    <span class="inline-block mt-2 px-2 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-600">Sec ${s.section}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-bold ${pPercent > 75 ? 'text-green-600' : 'text-orange-500'}">${pPercent}%</span>
+                                    <p class="text-[9px] text-slate-400">${attendees.length}/${baseSize}</p>
+                                </div>
+                            </div>
+                            <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-3">
+                                <div class="h-full ${barColor} transition-all duration-700" style="width: ${pPercent}%"></div>
+                            </div>
+                            <button onclick="viewSessionDetails('${s.id}')" class="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold hover:bg-blue-100">VIEW DETAILS</button>
+                        </div>`;
                     });
                     container.innerHTML = html + '</div>';
                 } else {
-                    // SUBJECT VIEW TABLE
-                    let html = '<div class="space-y-6">';
+                    // SUBJECT TABLE VIEW
+                    let html = '<div class="space-y-4">';
                     for (const [sub, data] of Object.entries(subjectStats)) {
-                        const totalSessions = data.sessions.length;
-                        // Since we calculate attendance per student, the total possible sessions for this subject
-                        const studentMap = {};
-                        masterSnap.forEach(m => {
-                            const s = m.data();
-                            if (window.currentReportSection === 'all' || s.section === window.currentReportSection) {
-                                studentMap[s.rollNo] = { name: s.name, count: 0 };
-                            }
-                        });
-
-                        data.attendance.forEach(a => {
-                            if (studentMap[a.studentRoll]) studentMap[a.studentRoll].count++;
-                        });
-
                         html += `
-						  <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-							 <div class="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
-								 <div><h3 class="font-bold text-slate-800 text-sm">${sub}</h3><p class="text-[10px] text-slate-500 mt-1">Sessions: ${totalSessions}</p></div>
-								 <button onclick="downloadSubjectReport('${sub}')" class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 shadow-sm"><i class="fa-solid fa-file-csv"></i></button>
-							 </div>
-							 <div class="max-h-64 overflow-y-auto">
-								 <table class="w-full text-left border-collapse">
-									 <thead class="bg-white text-[9px] text-slate-400 font-bold uppercase sticky top-0 z-10 shadow-sm">
-										 <tr><th class="p-3">Roll No</th><th class="p-3">Name</th><th class="p-3 text-center">Classes</th><th class="p-3 text-right">%</th></tr>
-									 </thead>
-									 <tbody class="text-xs text-slate-700 divide-y divide-slate-50">
-										 ${Object.entries(studentMap).map(([roll, s]) => {
-                            const pct = totalSessions > 0 ? Math.round((s.count / totalSessions) * 100) : 0;
-                            let color = pct >= 75 ? 'text-green-600' : (pct >= 60 ? 'text-orange-500' : 'text-red-500');
-                            return `<tr class="hover:bg-slate-50"><td class="p-3 font-mono font-bold">${roll}</td><td class="p-3">${s.name}</td><td class="p-3 text-center font-bold">${s.count}/${totalSessions}</td><td class="p-3 text-right font-bold ${color}">${pct}%</td></tr>`;
-                        }).join('')}
-									 </tbody>
-								 </table>
-							 </div>
-						  </div>`;
+                        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="bg-slate-50 p-3 border-b border-slate-100 flex justify-between items-center">
+                                <h3 class="font-bold text-slate-800 text-xs">${sub}</h3>
+                                <button onclick="downloadSubjectReport('${sub}')" class="text-blue-600 text-xs font-bold"><i class="fa-solid fa-download"></i> CSV</button>
+                            </div>
+                            <div class="max-h-60 overflow-y-auto">
+                                <table class="w-full text-[11px] text-left">
+                                    <thead class="bg-white sticky top-0 shadow-sm text-slate-400">
+                                        <tr><th class="p-2">Roll</th><th class="p-2">Name</th><th class="p-2 text-right">%</th></tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-50">
+                                        ${Object.entries(studentStats).map(([roll, s]) => {
+                                            const count = data.attendance.filter(a => a.studentRoll === roll).length;
+                                            const pct = data.sessions.length > 0 ? Math.round((count / data.sessions.length) * 100) : 0;
+                                            return `<tr>
+                                                <td class="p-2 font-mono font-bold">${roll}</td>
+                                                <td class="p-2">${s.name}</td>
+                                                <td class="p-2 text-right font-bold ${pct < 75 ? 'text-red-500' : 'text-green-600'}">${pct}%</td>
+                                            </tr>`;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>`;
                     }
                     container.innerHTML = html + '</div>';
                 }
-
             } catch (e) {
-                console.error(e);
-                container.innerHTML = '<p class="text-red-500 text-xs text-center">Error loading data.</p>';
+                console.error("Report System Error:", e);
+                container.innerHTML = '<p class="text-red-500 text-xs text-center p-10">System Error: Check Internet Connection</p>';
             }
         }
 
@@ -2329,17 +2351,80 @@ window.handleStudentSearch = () => {
         }
         //<button onclick="loginFaculty()" class="w-full max-w-xs bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-transform active:scale-95">Access Dashboard</button>
         // SECURED REGISTRATION WITH HASH
+
         window.registerFaculty = async () => {
-            const name = document.getElementById('reg-name').value, pin = document.getElementById('reg-pin').value, master = document.getElementById('reg-master').value;
+    const name = document.getElementById('reg-name').value;
+    const pin = document.getElementById('reg-pin').value;
+    const master = document.getElementById('reg-master').value;
 
-            // Hash the input master key
-            const masterHash = await sha256(master);
+    if (!name || !pin || !master) return showToast("Please fill all fields", "error");
 
-            if (masterHash !== MASTER_KEY_HASH) return showToast("Invalid Master Key", "error");
-            if (pin.length !== 6) return showToast("PIN must be 6 digits", "error");
-            try { await setDoc(getFacultyProfileDoc(window.appState.userId), { name, pin, createdAt: serverTimestamp() }); window.appState.facultyProfile = { name, pin }; window.appState.isFacultyLoggedIn = true; renderView(); } catch (e) { showToast("Error", "error"); }
+    // Hash the input master key
+    const masterHash = await sha256(master);
+    if (masterHash !== MASTER_KEY_HASH) return showToast("Invalid Master Key", "error");
+    if (pin.length !== 6) return showToast("PIN must be 6 digits", "error");
+
+    try {
+        const profile = { 
+            name, 
+            pin, 
+            role: 'faculty',
+            isRegistered: true,
+            createdAt: serverTimestamp() 
         };
-        window.loginFaculty = () => { if (document.getElementById('login-pin').value === window.appState.facultyProfile.pin) { window.appState.isFacultyLoggedIn = true; renderView(); } else showToast("Incorrect PIN", "error"); };
+
+        // 1. Save to Firestore (The Cloud)
+        await setDoc(getFacultyProfileDoc(window.appState.userId), profile);
+        
+        // 2. Save to LocalStorage (The Device Memory)
+        // We use a unique key for this specific faculty user
+        localStorage.setItem(`faculty_auth_${window.appState.userId}`, JSON.stringify({ name, pin }));
+        
+        window.appState.facultyProfile = profile;
+        window.appState.isFacultyLoggedIn = true;
+        
+        showToast("Registration Successful", "success");
+        renderView(); 
+    } catch (e) {
+        console.error("Registration Error:", e);
+        showToast("Error connecting to database", "error");
+    }
+};
+        window.loginFaculty = async () => {
+    const inputPin = document.getElementById('login-pin').value;
+    if (inputPin.length !== 6) return showToast("Enter 6-digit PIN", "error");
+
+    // 1. Check local cache first (Instant / Offline)
+    if (!window.appState.facultyProfile) {
+        const cached = localStorage.getItem(`faculty_auth_${window.appState.userId}`);
+        if (cached) window.appState.facultyProfile = JSON.parse(cached);
+    }
+
+    let profile = window.appState.facultyProfile;
+
+    // 2. If no local profile, try one Cloud Sync (New Device fallback)
+    if (!profile) {
+        try {
+            const docSnap = await getDoc(getFacultyProfileDoc(window.appState.userId));
+            if (docSnap.exists()) {
+                profile = docSnap.data();
+                // Cache it so we never have to do this read again
+                localStorage.setItem(`faculty_auth_${window.appState.userId}`, JSON.stringify(profile));
+                window.appState.facultyProfile = profile;
+            }
+        } catch (e) { console.log("Cloud sync failed, staying offline"); }
+    }
+
+    // 3. Verify PIN
+    if (profile && inputPin === profile.pin) {
+        window.appState.isFacultyLoggedIn = true;
+        showToast(`Welcome, ${profile.name}`, "success");
+        renderView();
+    } else {
+        showToast("Incorrect PIN or Account not found", "error");
+    }
+};
+		
         window.logoutFaculty = () => { window.appState.isFacultyLoggedIn = false; renderView(); }
 
         // --- STUDENT ---
@@ -3695,10 +3780,5 @@ window.handleStudentSearch = () => {
         initFirebase();
 
     </script>
-	<script>
-		  	document.addEventListener('contextmenu', function(event) {
-				event.preventDefault(); // Prevents the default context menu
-		  	});
-	</script>
 </body>
 </html>
