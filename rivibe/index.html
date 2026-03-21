@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RiVibe | Prestige Cloud Vault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+        
+        :root {
+            --bg-deep: #05070a;
+            --card-dark: #0f1218;
+            --gold-primary: #d4af37;
+            --gold-light: #f3e5ab;
+            --accent-glow: rgba(212, 175, 55, 0.15);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-deep);
+            color: #ffffff;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* The Invisible 'i' - Subtle & High-End */
+        .invisible-i {
+            opacity: 0.15;
+            font-weight: 300;
+            color: var(--gold-primary);
+        }
+
+        /* Animated Gold Gradient Text */
+        .gold-gradient-text {
+            background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: shine 4s linear infinite;
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        /* Luxury PIN Dots */
+        .pin-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .pin-dot.filled {
+            background: var(--gold-primary);
+            border-color: var(--gold-light);
+            transform: scale(1.3);
+            box-shadow: 0 0 15px var(--gold-primary);
+        }
+
+        /* Stunning Card Design */
+        .vibe-card {
+            background: linear-gradient(145deg, #161a22, #0f1218);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 2rem;
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .vibe-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+        }
+        .vibe-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(212, 175, 55, 0.4);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.1);
+        }
+
+        /* Progressive Mood Drawer */
+        #mood-drawer {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #mood-drawer.open {
+            max-height: 500px;
+            opacity: 1;
+            margin-top: 1.5rem;
+        }
+
+        .mood-chip {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        .mood-chip:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: var(--gold-primary);
+        }
+        .mood-chip.active {
+            background: var(--gold-primary);
+            color: #000;
+        }
+
+        /* Capsule Filters */
+        .capsule {
+            padding: 0.6rem 1.4rem;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 900;
+            color: #64748b;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        .capsule.active {
+            background: var(--gold-primary);
+            border-color: var(--gold-primary);
+            color: #000;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
+        }
+
+        /* Glowing Buttons */
+        .btn-gold {
+            background: linear-gradient(135deg, #d4af37 0%, #aa771c 100%);
+            color: #000;
+            font-weight: 900;
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+            transition: all 0.3s ease;
+        }
+        .btn-gold:hover {
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Glass Input */
+        .glass-input {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            border-color: var(--gold-primary) !important;
+            background: rgba(255, 255, 255, 0.07) !important;
+        }
+
+        /* Custom Scroll */
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--gold-primary); border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- AUTH SCREEN (PRESTIGE LOCK) -->
+    <div id="auth-screen" class="fixed inset-0 z-[100] bg-[#05070a] flex items-center justify-center p-6">
+        <div class="w-full max-w-sm text-center">
+            <div class="w-28 h-28 mx-auto mb-8 relative">
+                <div class="absolute inset-0 bg-gold-primary opacity-20 blur-2xl rounded-full"></div>
+                <svg viewBox="0 0 100 100" class="relative z-10 w-full h-full">
+                    <path d="M50 85C50 85 15 65 15 35C15 18 35 12 50 28C65 12 85 18 85 35C85 65 50 85 50 85Z" fill="#d4af37"/>
+                    <text x="32" y="55" font-family="Outfit" font-weight="900" font-size="24" fill="#000">R</text>
+                    <text x="50" y="55" font-family="Outfit" font-weight="900" font-size="24" fill="#fff">V</text>
+                </svg>
+            </div>
+            <h1 class="text-5xl font-bold tracking-tighter mb-2">R<span class="invisible-i">i</span>Vibe</h1>
+            <p class="text-slate-500 text-[10px] font-black uppercase tracking-[0.5em] mb-12">Private Sovereign Vault</p>
+            
+            <div class="flex justify-center gap-6 mb-16" id="pin-dots">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-8">
+                <button onclick="inputPin('1')" class="h-16 text-2xl font-light hover:text-gold-primary transition-colors">1</button>
+                <button onclick="inputPin('2')" class="h-16 text-2xl font-light hover:text-gold-primary transition-colors">2</button>
+                <button onclick="inputPin('3')" class="h-16 text-2xl font-light hover:text-gold-primary transition-colors">3</button>
+                <button onclick="inputPin('4')" class="h-16 text-2xl font-light hover:text-gold-primary transition-colors">4</button>
+                <button onclick="inputPin('5')" class="h-16 text-2xl font-light hover:text-gold-primary transition-colors">5</button>
+                <button onclick="inputPin('6')" class="h-16 text-2xl font-light hover:text-gold-primary transition-colors">6</button>
+                <button onclick="inputPin('7')" class="h-16 text-2xl font-light hover:text-gold-primary transition-colors">7</button>
+                <button onclick="inputPin('8')" class="h-16 text-2xl font-light hover:text-gold-primary transition-colors">8</button>
+                <button onclick="inputPin('9')" class="h-16 text-2xl font-light hover:text-gold-primary transition-colors">9</button>
+                <button onclick="resetPin()" class="h-16 text-rose-500 opacity-50"><i class="fas fa-times"></i></button>
+                <button onclick="inputPin('0')" class="h-16 text-2xl font-light hover:text-gold-primary transition-colors">0</button>
+                <button onclick="backspacePin()" class="h-16 text-gold-primary opacity-50"><i class="fas fa-backspace"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="main-app" class="hidden opacity-0 transition-opacity duration-1000 max-w-6xl mx-auto px-6 py-8 md:py-16">
+        
+        <!-- Luxury Navigation -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-10 mb-12">
+            <div class="flex items-center gap-6">
+                <div class="w-16 h-16">
+                    <svg viewBox="0 0 100 100">
+                        <path d="M50 85C50 85 15 65 15 35C15 18 35 12 50 28C65 12 85 18 85 35C85 65 50 85 50 85Z" fill="#d4af37"/>
+                        <text x="35" y="52" font-family="Outfit" font-weight="900" font-size="20" fill="#000">R</text>
+                        <text x="50" y="52" font-family="Outfit" font-weight="900" font-size="20" fill="#fff">V</text>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-4xl font-black tracking-tighter">R<span class="invisible-i">i</span>Vibe</h1>
+                    <div class="flex items-center gap-2 text-gold-primary/40 text-[9px] font-black uppercase tracking-[0.3em] mt-1">
+                        <i class="fas fa-crown text-[8px]"></i> Sovereign Cloud Identity
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="openModal()" class="btn-gold px-10 py-4 rounded-2xl text-[10px] uppercase tracking-widest flex items-center gap-3">
+                    <i class="fas fa-plus"></i> New Vibe
+                </button>
+                <div class="h-10 w-[1px] bg-white/10 mx-2"></div>
+                <button onclick="exportData()" class="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-gold-primary transition-all">
+                    <i class="fas fa-file-export"></i>
+                </button>
+                <label class="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-gold-primary transition-all cursor-pointer">
+                    <i class="fas fa-file-import"></i>
+                    <input type="file" class="hidden" onchange="importData(this)" accept=".json">
+                </label>
+                <button onclick="location.reload()" class="p-4 bg-white/5 border border-white/10 rounded-2xl text-rose-500/50 hover:text-rose-500 transition-all">
+                    <i class="fas fa-power-off"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Sovereign Search & Filter Suite -->
+        <div class="mb-16 space-y-8">
+            <div class="relative group">
+                <i class="fas fa-search absolute left-8 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-gold-primary transition-colors"></i>
+                <input type="text" id="global-search" oninput="applyFilters()" placeholder="Search terms or #labels..." class="w-full bg-white/5 border border-white/5 rounded-[2rem] pl-20 pr-8 py-6 text-lg font-medium outline-none focus:border-gold-primary/30 transition-all placeholder:text-slate-800">
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-4 overflow-x-auto pb-4 no-scrollbar">
+                <button onclick="setFilter('all')" id="filter-all" class="capsule active">All Time</button>
+                <button onclick="setFilter('week')" id="filter-week" class="capsule">This Week</button>
+                <button onclick="setFilter('month')" id="filter-month" class="capsule">This Month</button>
+                <div class="h-6 w-[1px] bg-white/10 mx-2"></div>
+                <div class="flex items-center gap-3 bg-white/5 px-6 py-2 rounded-full border border-white/5">
+                    <input type="date" id="filter-from" onchange="setFilter('custom')" class="bg-transparent text-[10px] font-black uppercase text-slate-400 outline-none">
+                    <span class="text-slate-700 text-[10px]">TO</span>
+                    <input type="date" id="filter-to" onchange="setFilter('custom')" class="bg-transparent text-[10px] font-black uppercase text-slate-400 outline-none">
+                </div>
+                <button onclick="resetFilters()" class="text-[9px] font-black uppercase tracking-tighter text-rose-500/40 hover:text-rose-500 transition-colors ml-auto">Clear Filters</button>
+            </div>
+        </div>
+
+        <!-- Dynamic Intelligence Bar -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+            <div class="bg-white/5 p-10 rounded-[2.5rem] border border-white/5 relative group overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 text-white/5 text-8xl group-hover:scale-110 transition-transform"><i class="fas fa-layer-group"></i></div>
+                <p class="text-[9px] font-black text-gold-primary uppercase tracking-[0.3em] mb-4">Archives Found</p>
+                <h3 id="stat-count" class="text-5xl font-black tracking-tighter">0</h3>
+            </div>
+            <div class="bg-white/5 p-10 rounded-[2.5rem] border border-white/5 relative group overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 text-white/5 text-8xl group-hover:scale-110 transition-transform"><i class="fas fa-bolt"></i></div>
+                <p class="text-[9px] font-black text-gold-primary uppercase tracking-[0.3em] mb-4">Dominant Aura</p>
+                <h3 id="stat-mood" class="text-5xl font-black tracking-tighter">—</h3>
+            </div>
+            <div class="bg-gradient-to-br from-gold-primary to-[#aa771c] p-10 rounded-[2.5rem] text-black">
+                <p class="text-[9px] font-black opacity-60 uppercase tracking-[0.3em] mb-4">Encryption</p>
+                <h3 class="text-xl font-black uppercase tracking-tighter flex items-center gap-3">
+                    <i class="fas fa-shield-halved"></i> 256-BIT AES
+                </h3>
+            </div>
+        </div>
+
+        <!-- The Feed -->
+        <div id="entries-feed" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <!-- Cards Injected -->
+        </div>
+
+        <div id="empty-state" class="hidden py-40 text-center flex flex-col items-center">
+            <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-gold-primary/20 mb-6">
+                <i class="fas fa-moon text-3xl"></i>
+            </div>
+            <p class="font-black uppercase tracking-[0.5em] text-[10px] text-slate-600">No matching vibrations found</p>
+        </div>
+    </div>
+
+    <!-- PRESTIGE MODAL -->
+    <div id="entry-modal" class="fixed inset-0 z-[110] flex items-center justify-center hidden p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-3xl" onclick="closeModal()"></div>
+        <div class="relative bg-[#0f1218] w-full max-w-2xl rounded-[3.5rem] border border-white/10 shadow-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <div class="p-10 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-gold-primary rounded-xl flex items-center justify-center text-black shadow-lg shadow-gold-primary/20">
+                        <i class="fas fa-pen-nib"></i>
+                    </div>
+                    <h2 id="modal-title" class="text-xl font-black tracking-tight uppercase">Archive Moment</h2>
+                </div>
+                <button onclick="closeModal()" class="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 text-slate-500 hover:text-white transition-all"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="p-10 overflow-y-auto custom-scroll flex-grow space-y-12">
+                <div>
+                    <label class="text-[10px] font-black text-gold-primary uppercase tracking-[0.3em] block mb-4">Moment Date</label>
+                    <input type="date" id="form-date" class="w-full glass-input rounded-2xl px-8 py-5 font-bold outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gold-primary uppercase tracking-[0.3em] block mb-4">Emotional Frequency</label>
+                    <button onclick="toggleMoodDrawer()" id="mood-trigger" class="w-full bg-white/5 border border-white/10 rounded-3xl px-8 py-6 flex items-center justify-between group">
+                        <div class="flex items-center gap-6">
+                            <span id="trigger-emoji" class="text-5xl">🙂</span>
+                            <span id="trigger-label" class="font-black text-xl tracking-tighter uppercase">Calm</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-gold-primary/30 group-hover:text-gold-primary transition-transform" id="trigger-icon"></i>
+                    </button>
+                    <input type="hidden" id="form-mood" value="🙂 Calm">
+                    <div id="mood-drawer">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="mood-grid"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gold-primary uppercase tracking-[0.3em] block mb-4">The Narrative</label>
+                    <textarea id="form-content" rows="7" placeholder="Translate your vibrations into text..." class="w-full glass-input rounded-[2.5rem] px-8 py-8 text-base font-medium leading-relaxed outline-none resize-none placeholder:text-slate-700"></textarea>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gold-primary uppercase tracking-[0.3em] block mb-4">Context Labels</label>
+                    <input type="text" id="form-tags" placeholder="e.g. expansion, focus, deep" class="w-full glass-input rounded-2xl px-8 py-5 font-bold outline-none">
+                </div>
+            </div>
+
+            <div class="p-10 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-8 bg-white/[0.02]">
+                <div class="flex gap-8">
+                    <button id="delete-btn" onclick="handleDelete()" class="text-[10px] font-black text-rose-500/40 uppercase tracking-widest hover:text-rose-500 hidden transition-colors"><i class="fas fa-trash-alt mr-2"></i> Wipe Memory</button>
+                </div>
+                <button onclick="saveEntry()" class="w-full sm:w-auto btn-gold px-14 py-5 rounded-2xl text-[11px] uppercase tracking-[0.3em]">Commit to Vault</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION -->
+    <div id="toast" class="fixed bottom-12 left-1/2 -translate-x-1/2 px-10 py-5 bg-gold-primary text-black rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] shadow-[0_20px_60px_rgba(212,175,55,0.4)] z-[200] opacity-0 translate-y-12 transition-all duration-500 pointer-events-none flex items-center gap-4">
+        <i class="fas fa-check-circle"></i><span id="toast-text">Success</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, query, onSnapshot, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+  authDomain: "stuattnd.firebaseapp.com",
+  projectId: "stuattnd",
+  storageBucket: "stuattnd.firebasestorage.app",
+  messagingSenderId: "511533506488",
+  appId: "1:511533506488:web:aca4de3d513915d012f94d",
+  measurementId: "G-9PZZM5LFKX"};
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'rivibe-on';
+        const apiKey = ""; // Gemini API Key
+
+        let user = null;
+        let masterKey = "";
+        let currentPin = "";
+        let editingId = null;
+        let entries = [];
+        let activeTimeFilter = 'all';
+
+        const MOODS = [
+            { emoji: '✨', label: 'Radiant' }, { emoji: '👑', label: 'Power' },
+            { emoji: '🙂', label: 'Calm' }, { emoji: '💡', label: 'Creative' },
+            { emoji: '🌪️', label: 'Heavy' }, { emoji: '🔋', label: 'Tired' },
+            { emoji: '🌫️', label: 'Vague' }, { emoji: '😐', label: 'Neutral' }
+        ];
+
+        // BOOTSTRAP
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch(e) { console.error(e); }
+        };
+
+        onAuthStateChanged(auth, (u) => { user = u; });
+        initAuth();
+
+        window.inputPin = async (n) => {
+            if (currentPin.length >= 6) return;
+            currentPin += n;
+            updateDots();
+            if (currentPin.length === 6) {
+                const hashed = CryptoJS.SHA256(currentPin).toString();
+                const secRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'security');
+                const secDoc = await getDoc(secRef);
+                if (!secDoc.exists()) {
+                    await setDoc(secRef, { pinHash: hashed });
+                    unlock(currentPin);
+                } else {
+                    if (secDoc.data().pinHash === hashed) unlock(currentPin);
+                    else { resetPin(); showToast("Invalid Protocol Key"); }
+                }
+            }
+        };
+
+        const updateDots = () => {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((d, i) => i < currentPin.length ? d.classList.add('filled') : d.classList.remove('filled'));
+        };
+
+        window.resetPin = () => { currentPin = ""; updateDots(); };
+        window.backspacePin = () => { currentPin = currentPin.slice(0, -1); updateDots(); };
+
+        const unlock = (pin) => {
+            masterKey = pin;
+            document.getElementById('auth-screen').classList.add('hidden');
+            const main = document.getElementById('main-app');
+            main.classList.remove('hidden');
+            setTimeout(() => main.classList.replace('opacity-0', 'opacity-100'), 50);
+            renderMoodGrid();
+            subscribe();
+        };
+
+        const encrypt = (t) => CryptoJS.AES.encrypt(t, masterKey).toString();
+        const decrypt = (c) => {
+            try {
+                const bytes = CryptoJS.AES.decrypt(c, masterKey);
+                return bytes.toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+            } catch { return "[Secure Fragment]"; }
+        };
+
+        const subscribe = () => {
+            if (!user) return;
+            const q = collection(db, 'artifacts', appId, 'users', user.uid, 'entries');
+            onSnapshot(q, (snapshot) => {
+                entries = snapshot.docs.map(d => ({ 
+                    id: d.id, 
+                    ...d.data(),
+                    decryptedContent: decrypt(d.data().content) // Decrypt once for searching
+                }));
+                applyFilters();
+            }, (err) => showToast("Sync Interrupted"));
+        };
+
+        // SEARCH & FILTER LOGIC
+        window.setFilter = (type) => {
+            activeTimeFilter = type;
+            document.querySelectorAll('.capsule').forEach(c => c.classList.remove('active'));
+            if(type !== 'custom') document.getElementById(`filter-${type}`).classList.add('active');
+            applyFilters();
+        };
+
+        window.resetFilters = () => {
+            document.getElementById('global-search').value = "";
+            document.getElementById('filter-from').value = "";
+            document.getElementById('filter-to').value = "";
+            setFilter('all');
+        };
+
+        window.applyFilters = () => {
+            const searchTerm = document.getElementById('global-search').value.toLowerCase();
+            const fromDate = document.getElementById('filter-from').value;
+            const toDate = document.getElementById('filter-to').value;
+            
+            let filtered = entries.filter(e => {
+                // Search Content & Tags
+                const matchesSearch = e.decryptedContent.toLowerCase().includes(searchTerm) || 
+                                     e.tags.some(t => t.toLowerCase().includes(searchTerm));
+                
+                // Time Filter
+                const eDate = new Date(e.date);
+                const now = new Date();
+                let matchesTime = true;
+
+                if (activeTimeFilter === 'week') {
+                    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                    matchesTime = eDate >= startOfWeek;
+                } else if (activeTimeFilter === 'month') {
+                    matchesTime = eDate.getMonth() === now.getMonth() && eDate.getFullYear() === now.getFullYear();
+                } else if (activeTimeFilter === 'custom' && fromDate && toDate) {
+                    matchesTime = eDate >= new Date(fromDate) && eDate <= new Date(toDate);
+                }
+
+                return matchesSearch && matchesTime;
+            });
+
+            renderFeed(filtered);
+            updateStats(filtered);
+        };
+
+        const renderFeed = (filteredData) => {
+            const feed = document.getElementById('entries-feed');
+            const empty = document.getElementById('empty-state');
+            feed.innerHTML = "";
+            
+            if (filteredData.length === 0) { empty.classList.remove('hidden'); return; }
+            empty.classList.add('hidden');
+
+            filteredData.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(e => {
+                const div = document.createElement('div');
+                div.className = "vibe-card p-10 flex flex-col cursor-pointer";
+                div.onclick = () => openEdit(e.id);
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-10">
+                        <span class="text-6xl">${e.mood.split(' ')[0]}</span>
+                        <div class="text-right">
+                            <p class="text-[10px] font-black text-slate-600 uppercase tracking-widest">${e.date}</p>
+                            <p class="text-[10px] font-black text-gold-primary uppercase tracking-widest mt-1">${e.mood.split(' ')[1]}</p>
+                        </div>
+                    </div>
+                    <p class="text-slate-400 text-lg leading-relaxed line-clamp-4 flex-grow font-medium">${e.decryptedContent}</p>
+                    <div class="flex flex-wrap gap-3 mt-10">
+                        ${e.tags.map(t => `<span class="bg-white/5 px-3 py-1 rounded-lg text-[9px] font-black text-slate-500 uppercase tracking-tighter">#${t}</span>`).join('')}
+                    </div>
+                `;
+                feed.appendChild(div);
+            });
+        };
+
+        // UI ACTIONS
+        window.openModal = () => {
+            editingId = null;
+            document.getElementById('modal-title').innerText = "Archive Moment";
+            document.getElementById('form-date').valueAsDate = new Date();
+            document.getElementById('form-content').value = "";
+            document.getElementById('form-tags').value = "";
+            document.getElementById('delete-btn').classList.add('hidden');
+            document.getElementById('entry-modal').classList.remove('hidden');
+            selectMood('✨', 'Radiant');
+        };
+
+        const openEdit = (id) => {
+            const e = entries.find(x => x.id === id);
+            editingId = id;
+            document.getElementById('modal-title').innerText = "Refine Archive";
+            document.getElementById('form-date').value = e.date;
+            document.getElementById('form-content').value = decrypt(e.content);
+            document.getElementById('form-tags').value = e.tags.join(', ');
+            const [emo, lbl] = e.mood.split(' ');
+            selectMood(emo, lbl);
+            document.getElementById('delete-btn').classList.remove('hidden');
+            document.getElementById('entry-modal').classList.remove('hidden');
+        };
+
+        window.closeModal = () => {
+            document.getElementById('entry-modal').classList.add('hidden');
+            document.getElementById('mood-drawer').classList.remove('open');
+            document.getElementById('trigger-icon').classList.remove('rotate-180');
+        };
+
+        window.toggleMoodDrawer = () => {
+            document.getElementById('mood-drawer').classList.toggle('open');
+            document.getElementById('trigger-icon').classList.toggle('rotate-180');
+        };
+
+        const renderMoodGrid = () => {
+            const grid = document.getElementById('mood-grid');
+            grid.innerHTML = MOODS.map(m => `
+                <div onclick="selectMood('${m.emoji}', '${m.label}')" class="mood-chip p-6 rounded-3xl flex flex-col items-center gap-2">
+                    <span class="text-3xl">${m.emoji}</span>
+                    <span class="text-[9px] font-black uppercase tracking-widest">${m.label}</span>
+                </div>
+            `).join('');
+        };
+
+        window.selectMood = (emoji, label) => {
+            document.getElementById('trigger-emoji').innerText = emoji;
+            document.getElementById('trigger-label').innerText = label;
+            document.getElementById('form-mood').value = `${emoji} ${label}`;
+            setTimeout(() => {
+                document.getElementById('mood-drawer').classList.remove('open');
+                document.getElementById('trigger-icon').classList.remove('rotate-180');
+            }, 300);
+        };
+
+        window.saveEntry = async () => {
+            const content = document.getElementById('form-content').value;
+            if(!content) return showToast("Archive remains empty");
+            const data = {
+                date: document.getElementById('form-date').value,
+                mood: document.getElementById('form-mood').value,
+                content: encrypt(content),
+                tags: document.getElementById('form-tags').value.split(',').map(t => t.trim()).filter(t => t),
+                updatedAt: new Date().toISOString()
+            };
+            const colRef = collection(db, 'artifacts', appId, 'users', user.uid, 'entries');
+            try {
+                if(editingId) await updateDoc(doc(colRef, editingId), data);
+                else await setDoc(doc(colRef), data);
+                closeModal();
+                showToast("Vault Committed");
+            } catch(e) { showToast("Cloud Sync Error"); }
+        };
+
+        window.handleDelete = async () => {
+            if(!editingId) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'entries', editingId));
+            closeModal();
+            showToast("Vibe Vaporized");
+        };
+
+        window.exportData = () => {
+            const backup = entries.map(e => ({...e, decrypted: decrypt(e.content)}));
+            const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `RiVibe_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showToast("Export Dispatched");
+        };
+
+        window.importData = (input) => {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const data = JSON.parse(ev.target.result);
+                const colRef = collection(db, 'artifacts', appId, 'users', user.uid, 'entries');
+                for(let item of data) {
+                    const c = item.decrypted || decrypt(item.content);
+                    await setDoc(doc(colRef), {
+                        date: item.date, mood: item.mood, content: encrypt(c),
+                        tags: item.tags, updatedAt: new Date().toISOString()
+                    });
+                }
+                showToast("Archives Restored");
+            };
+            reader.readAsText(file);
+        };
+
+        const updateStats = (currentSet) => {
+            document.getElementById('stat-count').innerText = currentSet.length;
+            if(currentSet.length > 0) {
+                const counts = {};
+                currentSet.forEach(e => {
+                    const l = e.mood.split(' ')[1];
+                    counts[l] = (counts[l] || 0) + 1;
+                });
+                const top = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                document.getElementById('stat-mood').innerText = top.toUpperCase();
+            } else {
+                document.getElementById('stat-mood').innerText = "—";
+            }
+        };
+
+        const showToast = (m) => {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = m;
+            t.classList.replace('opacity-0', 'opacity-100');
+            t.classList.replace('translate-y-12', 'translate-y-0');
+            setTimeout(() => {
+                t.classList.replace('opacity-100', 'opacity-0');
+                t.classList.replace('translate-y-0', 'translate-y-12');
+            }, 3000);
+        };
+    </script>
+</body>
+</html>
+
