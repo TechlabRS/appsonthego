@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>DBMS Exam Preparation Guide - JNTUA R23</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+            --safe-left: env(safe-area-inset-left);
+            --safe-right: env(safe-area-inset-right);
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            background-attachment: fixed;
+            color: #f8fafc;
+            margin: 0;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+            padding-left: var(--safe-left);
+            padding-right: var(--safe-right);
+            min-height: 100vh;
+        }
+        
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            border-radius: 1.5rem;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+        
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* Material Design 3 inspired Chips */
+        .chip {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            padding: 0.5rem 1.25rem;
+            border-radius: 2rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .chip:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .chip.active {
+            background: #3b82f6;
+            border-color: #60a5fa;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tag {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Hide scrollbar for chip container but keep functionality */
+        .chip-container::-webkit-scrollbar {
+            display: none;
+        }
+        .chip-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <header class="glass-panel p-8 mb-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 gradient-text tracking-tight">DBMS Exam Preparation Guide</h1>
+            <p class="text-slate-300 text-lg max-w-2xl mx-auto">Complete JNTUA R23 Regulations structural breakdown. High-yield Q&A format designed for maximum scoring potential.</p>
+        </header>
+
+        <div class="sticky top-4 z-50 mb-8">
+            <div class="glass-panel py-3 px-4 flex gap-3 overflow-x-auto chip-container items-center shadow-2xl">
+                <span class="text-sm font-semibold text-slate-400 uppercase tracking-wider ml-2 mr-2">Filters:</span>
+                <button class="chip active" onclick="filterContent('all', this)">All Units</button>
+                <button class="chip" onclick="filterContent('unit1', this)">Unit I</button>
+                <button class="chip" onclick="filterContent('unit2', this)">Unit II</button>
+                <button class="chip" onclick="filterContent('unit3', this)">Unit III</button>
+                <button class="chip" onclick="filterContent('unit4', this)">Unit IV</button>
+                <button class="chip" onclick="filterContent('unit5', this)">Unit V</button>
+            </div>
+        </div>
+
+        <main id="content-container" class="space-y-12">
+
+            <section class="unit-section" data-unit="unit1">
+                <div class="glass-panel p-6 md:p-8">
+                    <div class="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                        <h2 class="text-3xl font-bold text-white">UNIT I: Introduction & ER Model</h2>
+                        <span class="tag">Foundation</span>
+                    </div>
+                    <p class="text-slate-300 mb-8 italic">This unit forms the foundation of database management. It covers the transition from traditional file systems to robust database systems, data models, architectural independence, and the visual representation of data using the Entity-Relationship (ER) model.</p>
+
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        2-Mark Questions
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">1. Define a Database Management System (DBMS).</h4>
+                            <p class="text-sm text-slate-300">A DBMS is a software system that enables users to define, create, maintain, and control access to a database.<br><span class="text-blue-300 mt-2 block"><em>Example:</em> MySQL or Oracle managing student records in a university portal.</span></p>
+                        </div>
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">2. What is Data Independence?</h4>
+                            <p class="text-sm text-slate-300">It is the ability to modify the schema at one level of the database architecture without altering the schema at the next higher level.<br><span class="text-blue-300 mt-2 block"><em>Example:</em> Changing the hard drive storage (Physical level) without modifying the application code (Logical level).</span></p>
+                        </div>
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">3. Differentiate between an Entity and an Attribute.</h4>
+                            <p class="text-sm text-slate-300">An entity is a real-world object with independent existence, while an attribute is a property that describes that entity.<br><span class="text-blue-300 mt-2 block"><em>Example:</em> In a college database, "Student" is an entity, and "Roll Number" is an attribute.</span></p>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-purple-400 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        10-Mark Questions
+                    </h3>
+                    <div class="space-y-6 mb-10">
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">1. Explain the differences between a Database System and a File System. Highlight the advantages of DBMS.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> A file system manages data in disparate files, whereas a DBMS integrates data in a centralized repository.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong> File systems suffer from data redundancy (duplicate data), data inconsistency, difficulty in access, and lack of security. DBMS solves this by offering centralized control, data sharing, backup, and concurrency control.</li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw a two-part diagram. On the left, show multiple users accessing different independent files (File System). On the right, show multiple users interacting with a central "DBMS" circle, which then points to the "Database" storage.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> A banking system. If an address changes, a DBMS updates it once centrally, whereas a file system might require updating the "Loans" file and the "Savings" file separately.</li>
+                                <li><strong class="text-white">Conclusion:</strong> Transitioning to a DBMS is mandatory for enterprise applications due to data integrity and security benefits.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">2. Describe the Three-tier Schema Architecture for Data Independence.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> An architecture that separates the user applications from the physical database, divided into internal, conceptual, and external levels.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>Internal Level:</em> Deals with physical storage.<br>
+                                    - <em>Conceptual Level:</em> Describes what data is stored and relationships (Community view).<br>
+                                    - <em>External Level:</em> Describes the part of the database relevant to specific users (User views).
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw three horizontal layers. Top: Multiple User Views. Middle: Conceptual Schema. Bottom: Internal Schema pointing to Physical Storage. Connect them with mapping arrows.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> A university portal. Students only see their grades (External), admins see all student data (Conceptual), and DBAs manage server space (Internal).</li>
+                                <li><strong class="text-white">Conclusion:</strong> This architecture ensures that changes in storage hardware do not break front-end user applications.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">3. What is an ER Model? Explain the representation of entities, attributes, and relationships with an ER Diagram.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> The ER Model is a high-level conceptual data model that represents the logical structure of a database visually.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>Entity:</em> Represented by a rectangle.<br>
+                                    - <em>Attribute:</em> Represented by an oval (Key attributes are underlined).<br>
+                                    - <em>Relationship:</em> Represented by a diamond connecting entities.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw a rectangle "Customer" connected by a diamond "Deposits" to a rectangle "Account". Draw ovals from "Customer" for "Name" and "Cust_ID" (underlined).</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> E-commerce database designing where 'Users' place 'Orders' containing 'Products'.</li>
+                                <li><strong class="text-white">Conclusion:</strong> ER diagrams are the universal blueprint used by architects before writing any SQL code.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">4. Discuss Specialization, Generalization, and Inheritance in ER Models.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> These are extended ER features used to model complex hierarchical data.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>Specialization:</em> Top-down approach. Splitting a higher-level entity into lower-level entities.<br>
+                                    - <em>Generalization:</em> Bottom-up approach. Combining lower-level entities into a higher-level entity based on common attributes.<br>
+                                    - <em>Inheritance:</em> Lower-level entities inherit attributes from their superclass.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw a triangle (labeled "ISA") pointing up to a superclass (e.g., "Employee") and down to subclasses (e.g., "Full-time", "Part-time").</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> An HR Management system categorizing different types of employees who share basic details but have specific benefits.</li>
+                                <li><strong class="text-white">Conclusion:</strong> These concepts reduce attribute redundancy and apply object-oriented principles to database design.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">5. Detail the Database System Structure and Environment.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> The systematic breakdown of a database environment into its functional components and users.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong> The system consists of query processors (DML compiler, DDL interpreter) and storage managers (buffer manager, transaction manager). It operates in environments ranging from centralized to client-server architectures.</li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw a block diagram showing "Users" at the top, passing queries to the "Query Processor", which communicates with the "Storage Manager", ending at the "Disk Storage" at the bottom.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> A corporate data center where multiple clients (front-end apps) connect to a robust Oracle server (back-end).</li>
+                                <li><strong class="text-white">Conclusion:</strong> Understanding the system structure is vital for database administrators to optimize performance and troubleshoot bottlenecks.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-xl p-4 flex items-center gap-3">
+                        <span class="text-2xl">🔥</span>
+                        <div>
+                            <strong class="text-white block mb-1">Important Topics for Unit I</strong>
+                            <span class="text-sm text-orange-200">Data Independence Architecture, ER Diagram construction, DBMS vs File System.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="unit-section" data-unit="unit2">
+                <div class="glass-panel p-6 md:p-8">
+                    <div class="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                        <h2 class="text-3xl font-bold text-white">UNIT II: Relational Model & Basic SQL</h2>
+                        <span class="tag">Logical Design</span>
+                    </div>
+                    <p class="text-slate-300 mb-8 italic">This unit transitions from conceptual design to logical structures using the Relational Model. It covers constraints, relational algebra, and the foundational elements of Basic SQL (DDL and DML).</p>
+
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        2-Mark Questions
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">1. Define Tuple and Domain in a Relational Model.</h4>
+                            <p class="text-sm text-slate-300">A tuple is a single row or record in a table. A domain is the set of all permitted values for a given attribute.<br><span class="text-blue-300 mt-2 block"><em>Example:</em> In an Age column, the domain might be integers from 1 to 120.</span></p>
+                        </div>
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">2. What is the importance of NULL values?</h4>
+                            <p class="text-sm text-slate-300">NULL represents a missing, unknown, or inapplicable value, not zero or a blank space.<br><span class="text-blue-300 mt-2 block"><em>Example:</em> A "Middle Name" column might be NULL if a person doesn't have one.</span></p>
+                        </div>
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">3. List any three DML operations.</h4>
+                            <p class="text-sm text-slate-300">INSERT (adds data), UPDATE (modifies data), and DELETE (removes data).</p>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-purple-400 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        10-Mark Questions
+                    </h3>
+                    <div class="space-y-6 mb-10">
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">1. Explain the various constraints in the Relational Model (Domain, Key, Integrity).</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Constraints are rules enforced on data to ensure its accuracy, validity, and reliability.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>Domain Constraint:</em> Ensures data in a column meets the data type criteria.<br>
+                                    - <em>Key Constraint:</em> Ensures every row is uniquely identifiable (Primary Key).<br>
+                                    - <em>Integrity Constraint (Referential):</em> Ensures relationships between tables are valid via Foreign Keys.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Show two tables: "Department" and "Employee". Draw an arrow from "Dept_ID" in the Employee table to "Dept_ID" in the Department table to visualize Referential Integrity.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> A shopping cart system. You cannot add an item to an order if that item ID does not exist in the master Inventory table.</li>
+                                <li><strong class="text-white">Conclusion:</strong> Constraints are the primary defense against data corruption in relational databases.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">2. Discuss Relational Algebra and explain its fundamental operations.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> A procedural query language consisting of a set of operations that take one or two relations as input and produce a new relation.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>Select (σ):</em> Filters rows based on a condition.<br>
+                                    - <em>Project (π):</em> Filters columns.<br>
+                                    - <em>Union (∪):</em> Combines tuples from two relations.<br>
+                                    - <em>Set Difference (-):</em> Tuples in relation A but not in B.<br>
+                                    - <em>Cartesian Product (X):</em> Combines every tuple of A with every tuple of B.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Use Venn diagrams to show Union (both circles filled) and Set Difference (only the left circle filled minus the intersection).</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> An airline app filtering available flights (Select) and showing only flight numbers and prices (Project).</li>
+                                <li><strong class="text-white">Conclusion:</strong> Relational algebra forms the theoretical foundation upon which SQL execution engines are built.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">3. Explain DDL commands in SQL with syntax and examples.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Data Definition Language (DDL) defines the structure or schema of the database.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <code>CREATE</code>: Makes a new table. <code>CREATE TABLE Student (ID int, Name varchar(50));</code><br>
+                                    - <code>ALTER</code>: Modifies structure. <code>ALTER TABLE Student ADD Age int;</code><br>
+                                    - <code>DROP</code>: Deletes the table completely. <code>DROP TABLE Student;</code><br>
+                                    - <code>TRUNCATE</code>: Empties the table but keeps structure.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> N/A for pure SQL commands, but you can draw a visual representation of an empty table structure being created.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> A software release where the database schema must be upgraded by adding a new "Discount_Code" column to the "Payments" table using ALTER.</li>
+                                <li><strong class="text-white">Conclusion:</strong> DDL commands are auto-committed and must be used with caution as they alter the system blueprint.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">4. Describe DML operations with examples.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Data Manipulation Language (DML) manages data within existing schema objects.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <code>INSERT</code>: <code>INSERT INTO Student VALUES (1, 'John');</code><br>
+                                    - <code>UPDATE</code>: <code>UPDATE Student SET Name = 'Doe' WHERE ID = 1;</code><br>
+                                    - <code>DELETE</code>: <code>DELETE FROM Student WHERE ID = 1;</code>
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Show a tabular grid. Highlight a row being added (INSERT), a cell changing color (UPDATE), and a row being crossed out (DELETE).</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> A social media app where a user posts a comment (INSERT), edits it (UPDATE), or removes it (DELETE).</li>
+                                <li><strong class="text-white">Conclusion:</strong> DML operations are the most frequently executed commands in any active software application.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">5. Compare Relational Algebra and Relational Calculus.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Relational algebra is procedural (how to get data), while relational calculus is non-procedural/declarative (what data to get).</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong> Algebra uses mathematical symbols to describe the exact steps (Select, Project, Join). Calculus uses logic formulations (Tuple Relational Calculus and Domain Relational Calculus) describing the desired result without specifying the steps.</li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Create a comparison table outlining Procedural vs Non-Procedural, Sequence of operations, and examples of syntax.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> SQL is heavily inspired by Relational Calculus (stating what you want), while the internal database query optimizer uses Relational Algebra to figure out how to get it.</li>
+                                <li><strong class="text-white">Conclusion:</strong> A strong grasp of both is essential for understanding query optimization engines.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-xl p-4 flex items-center gap-3">
+                        <span class="text-2xl">🔥</span>
+                        <div>
+                            <strong class="text-white block mb-1">Important Topics for Unit II</strong>
+                            <span class="text-sm text-orange-200">Primary and Foreign Key Constraints, Relational Algebra operations, SQL CREATE and ALTER syntax.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="unit-section" data-unit="unit3">
+                <div class="glass-panel p-6 md:p-8">
+                    <div class="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                        <h2 class="text-3xl font-bold text-white">UNIT III: SQL Querying</h2>
+                        <span class="tag">Practical SQL</span>
+                    </div>
+                    <p class="text-slate-300 mb-8 italic">This unit focuses on practical database interaction. It covers advanced SQL, including functions, complex joins, nested queries, aggregation, and the implementation of views.</p>
+
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        2-Mark Questions
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">1. What is the purpose of the GROUP BY clause?</h4>
+                            <p class="text-sm text-slate-300">It is used in collaboration with aggregate functions to group rows that have the same values into summary rows.<br><span class="text-blue-300 mt-2 block"><em>Example:</em> <code>SELECT Dept, SUM(Salary) FROM Employee GROUP BY Dept;</code></span></p>
+                        </div>
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">2. Define a View in SQL.</h4>
+                            <p class="text-sm text-slate-300">A view is a virtual table based on the result-set of an SQL statement. It does not store data physically.</p>
+                        </div>
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">3. What is a Subquery?</h4>
+                            <p class="text-sm text-slate-300">A query nested inside another query, used to restrict or enhance the data to be queried by the main query.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-purple-400 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        10-Mark Questions
+                    </h3>
+                    <div class="space-y-6 mb-10">
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">1. Explain the different types of Joins in SQL with examples.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> A JOIN clause is used to combine rows from two or more tables based on a related column.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>INNER JOIN:</em> Returns records with matching values in both tables.<br>
+                                    - <em>LEFT JOIN:</em> Returns all records from the left table, and matched records from the right.<br>
+                                    - <em>RIGHT JOIN:</em> Returns all records from the right table, and matched records from the left.<br>
+                                    - <em>FULL OUTER JOIN:</em> Returns all records when there is a match in either table.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw Venn diagrams for each. Inner Join = intersection. Left Join = left circle fully shaded + intersection, etc.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> An E-commerce dashboard joining the "Users" table and "Orders" table to show a customer's name next to their purchase history.</li>
+                                <li><strong class="text-white">Conclusion:</strong> Joins are fundamental for retrieving meaningful information from normalized databases.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">2. Discuss Aggregate Functions and Grouping in SQL.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Aggregate functions perform calculations on multiple rows of a single column to return a single value.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong> Key functions include <code>COUNT()</code>, <code>SUM()</code>, <code>AVG()</code>, <code>MAX()</code>, and <code>MIN()</code>. These are heavily used with the <code>GROUP BY</code> clause. The <code>HAVING</code> clause is used to filter grouped records (since <code>WHERE</code> cannot be used with aggregates).</li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Show a table of employees with different departments and salaries. Draw an arrow pointing to a smaller summary table showing just Departments and their Total Salaries.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> A corporate financial report calculating the total payroll cost (SUM) for each department (GROUP BY).</li>
+                                <li><strong class="text-white">Conclusion:</strong> Mastering aggregation is critical for data analysis and generating business intelligence reports.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">3. What are Nested Queries? Explain with syntax.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> A nested query (subquery) is a query within another SQL query, embedded within the WHERE, HAVING, or FROM clause.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong> The inner query executes first, and its result is passed to the outer query. <br>
+                                <em>Syntax Example:</em> <code>SELECT Name FROM Employee WHERE Salary > (SELECT AVG(Salary) FROM Employee);</code></li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw an outer box (Main Query) containing an inner box (Subquery). Show an arrow indicating data flowing from the inner box to the outer box.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> Finding all students who scored higher than the class average. The average must be calculated first (inner query) before comparing (outer query).</li>
+                                <li><strong class="text-white">Conclusion:</strong> Nested queries solve complex multi-step logical problems within a single SQL statement.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">4. Explain Views in SQL. Differentiate between updatable and non-updatable views.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> A view is a stored query accessible as a virtual table.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>Updatable View:</em> Allows DML operations (Insert/Update/Delete) that reflect directly on the base table. Usually, these views draw from a single table without aggregates.<br>
+                                    - <em>Non-updatable View:</em> Read-only views. They usually contain Joins, GROUP BY, or Aggregate functions, meaning the DBMS cannot map a change back to a specific base row.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Show a "User" looking through a "Window (View)" to see a subset of the "Base Tables".</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> Creating a "Public_Employee_Directory" view that only shows Names and Emails, hiding the base table's Salary and SSN columns from normal staff.</li>
+                                <li><strong class="text-white">Conclusion:</strong> Views are an excellent tool for enhancing security and simplifying complex query access for end-users.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">5. Describe SQL Functions (Date/Time, Numeric, String conversion).</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Built-in SQL utilities used to manipulate data items and return transformed values.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>String:</em> <code>UPPER()</code>, <code>LENGTH()</code>, <code>SUBSTRING()</code>.<br>
+                                    - <em>Numeric:</em> <code>ROUND()</code>, <code>ABS()</code>, <code>POWER()</code>.<br>
+                                    - <em>Date/Time:</em> <code>SYSDATE()</code>, <code>DATEDIFF()</code>, <code>MONTH()</code>.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Create a 3-column table categorizing the function types, with a brief example next to each.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> Calculating the exact age of a user in an application by using Date functions to find the difference between <code>SYSDATE()</code> and their stored Date of Birth.</li>
+                                <li><strong class="text-white">Conclusion:</strong> Using database-level functions is often faster and more efficient than manipulating data in the application backend layer.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-xl p-4 flex items-center gap-3">
+                        <span class="text-2xl">🔥</span>
+                        <div>
+                            <strong class="text-white block mb-1">Important Topics for Unit III</strong>
+                            <span class="text-sm text-orange-200">Types of Joins, Subqueries vs Joins, GROUP BY with HAVING clause.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="unit-section" data-unit="unit4">
+                <div class="glass-panel p-6 md:p-8">
+                    <div class="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                        <h2 class="text-3xl font-bold text-white">UNIT IV: Schema Refinement</h2>
+                        <span class="tag">Normalization</span>
+                    </div>
+                    <p class="text-slate-300 mb-8 italic">This unit tackles database design flaws. It covers the mathematical process of Normalization to eliminate data redundancy and insertion/deletion anomalies using functional dependencies.</p>
+
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        2-Mark Questions
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">1. What is the purpose of Normalization?</h4>
+                            <p class="text-sm text-slate-300">To refine a database schema to minimize redundancy and prevent insertion, deletion, and update anomalies.</p>
+                        </div>
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">2. Define Functional Dependency.</h4>
+                            <p class="text-sm text-slate-300">A relationship where one attribute uniquely determines another. If X determines Y (X -> Y), X is the determinant.</p>
+                        </div>
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">3. What is a Surrogate Key?</h4>
+                            <p class="text-sm text-slate-300">An artificially generated key (like an auto-incrementing integer) used when natural columns do not form a good primary key.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-purple-400 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        10-Mark Questions
+                    </h3>
+                    <div class="space-y-6 mb-10">
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">1. Explain 1NF, 2NF, and 3NF with examples.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> The sequential rules of normalization to organize data efficiently.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>1NF:</em> Ensures attributes are atomic (no multi-valued attributes or repeating groups).<br>
+                                    - <em>2NF:</em> Must be in 1NF. Removes partial dependencies (non-prime attributes must depend on the <em>entire</em> primary key).<br>
+                                    - <em>3NF:</em> Must be in 2NF. Removes transitive dependencies (non-prime attributes must not depend on other non-prime attributes).
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw a single massive table breaking down into three separate, cleaner tables as it passes through the normal forms.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> A student registration system. Moving from a messy spreadsheet where a student has "Multiple Phone Numbers" in one cell (violates 1NF) to separate properly linked tables.</li>
+                                <li><strong class="text-white">Conclusion:</strong> Achieving 3NF is considered the standard requirement for most business applications.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">2. Discuss Boyce-Codd Normal Form (BCNF). How is it different from 3NF?</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> BCNF is a stricter version of 3NF. For every functional dependency X -> Y, X must be a super key.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong> A table can be in 3NF but fail BCNF if a prime attribute depends on a non-prime attribute (usually happens when there are overlapping candidate keys).</li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Show a table schema: <code>Student, Course, Instructor</code>. Instructor determines Course. If an Instructor only teaches one Course, <code>Instructor -> Course</code>. Since <code>Instructor</code> is not a super key, it violates BCNF despite being in 3NF.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> University scheduling where multiple professors teach overlapping subjects.</li>
+                                <li><strong class="text-white">Conclusion:</strong> BCNF ensures absolute elimination of redundancy caused by overlapping candidate keys.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">3. What is a Lossless Join and Dependency Preserving Decomposition?</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Properties of a good decomposition when breaking a large table into smaller normalized tables.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>Lossless Join:</em> When decomposed tables are natural-joined, they must yield the exact original table without creating "spurious" (fake) tuples.<br>
+                                    - <em>Dependency Preserving:</em> All original functional dependencies must be checkable in the new tables without needing a join.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw Table R splitting into R1 and R2. Show an equation: <code>R1 JOIN R2 = R</code>.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> Refactoring a legacy corporate database. You must ensure splitting tables doesn't lose historical connections or violate existing business rules.</li>
+                                <li><strong class="text-white">Conclusion:</strong> Decompositions must always be lossless; dependency preservation is highly desired but sometimes sacrificed for BCNF.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">4. Explain Multi-Valued Dependency (MVD) and Fourth Normal Form (4NF).</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> 4NF deals with multi-valued dependencies where one attribute independently multi-determines two other attributes.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong> If a teacher teaches multiple Subjects AND participates in multiple Hobbies, storing them in one table creates massive redundancy (Cartesian product of subjects and hobbies). 4NF requires splitting this into two tables: (Teacher, Subject) and (Teacher, Hobby).</li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Show a badly formed table with repeating combinations of subjects and hobbies, then arrows splitting it into two distinct, smaller tables.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> A restaurant database where a restaurant offers multiple delivery areas AND multiple distinct cuisines.</li>
+                                <li><strong class="text-white">Conclusion:</strong> 4NF is essential when an entity has multiple, independent 1-to-Many relationships.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">5. Briefly describe the concept of Fifth Normal Form (5NF).</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Also known as Project-Join Normal Form (PJNF). It deals with cases where information can be reconstructed from smaller pieces that can be joined together.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong> A table is in 5NF if it is in 4NF and cannot be decomposed into smaller tables without losing data upon rejoining (Join Dependency). It usually applies to complex ternary (3-way) relationships.</li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw a 3-column table (Supplier, Part, Project) and show it decomposing into three 2-column tables to avoid redundancy.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> Supply chain management where specific suppliers only provide specific parts to specific projects.</li>
+                                <li><strong class="text-white">Conclusion:</strong> 5NF is rarely implemented practically but represents the theoretical pinnacle of database normalization.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-xl p-4 flex items-center gap-3">
+                        <span class="text-2xl">🔥</span>
+                        <div>
+                            <strong class="text-white block mb-1">Important Topics for Unit IV</strong>
+                            <span class="text-sm text-orange-200">Functional Dependencies, 1NF to 3NF, BCNF, Lossless Decomposition.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="unit-section" data-unit="unit5">
+                <div class="glass-panel p-6 md:p-8">
+                    <div class="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                        <h2 class="text-3xl font-bold text-white">UNIT V: Transactions & Indexing</h2>
+                        <span class="tag">Advanced Concepts</span>
+                    </div>
+                    <p class="text-slate-300 mb-8 italic">This final unit covers the dynamic aspects of databases: how simultaneous transactions are managed safely (Concurrency/ACID properties), how systems recover from crashes, and how to retrieve data quickly using Indexing.</p>
+
+                    <h3 class="text-xl font-semibold text-blue-400 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        2-Mark Questions
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">1. What are the ACID properties?</h4>
+                            <p class="text-sm text-slate-300">Atomicity, Consistency, Isolation, and Durability. They guarantee transaction reliability.</p>
+                        </div>
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">2. Define a Deadlock.</h4>
+                            <p class="text-sm text-slate-300">A situation where two or more transactions are waiting indefinitely for each other to release locks.</p>
+                        </div>
+                        <div class="glass-card p-5">
+                            <h4 class="font-bold text-white mb-2">3. What is the purpose of B+ Trees in databases?</h4>
+                            <p class="text-sm text-slate-300">B+ trees are used for dynamic multilevel indexing to allow fast, balanced search, insertion, and deletion of records.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-purple-400 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        10-Mark Questions
+                    </h3>
+                    <div class="space-y-6 mb-10">
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">1. Explain the ACID properties of a Transaction in detail.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> A transaction is a logical unit of work. ACID ensures its reliable execution.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>Atomicity:</em> "All or nothing." The transaction completes entirely or leaves the database unchanged.<br>
+                                    - <em>Consistency:</em> The database transitions from one valid state to another.<br>
+                                    - <em>Isolation:</em> Concurrent transactions execute as if they were serial.<br>
+                                    - <em>Durability:</em> Committed changes survive system crashes.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Create a 4-quadrant box with A, C, I, D and a one-word keyword in each (e.g., A=Entirety, C=Validity).</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> Transferring $100 from Account A to B. Atomicity ensures A isn't debited without B being credited if the server crashes mid-transfer.</li>
+                                <li><strong class="text-white">Conclusion:</strong> ACID is the absolute core mechanism that prevents financial and data catastrophes in software.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">2. Describe Transaction States with a state transition diagram.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> The life cycle of a transaction from initiation to completion or failure.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong> The states are: Active, Partially Committed (after last statement execution), Committed (successful save), Failed (hardware/logic error), and Aborted (rolled back).</li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw circles for each state. Start at "Active". Branch left to "Failed" -> "Aborted". Branch right to "Partially Committed" -> "Committed".</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> An online ticket booking. Active while you select seats. Failed if your card declines. Committed when the confirmation email sends.</li>
+                                <li><strong class="text-white">Conclusion:</strong> The state machine model allows DBMS recovery managers to know exactly when to roll back or permanently write data.</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">3. Discuss Concurrency Control protocols (Lock-based and Timestamp-based).</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Mechanisms to ensure that multiple transactions can occur simultaneously without violating Isolation.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>Lock-Based:</em> Uses Shared (Read) and Exclusive (Write) locks. Two-Phase Locking (2PL) dictates a growing phase (acquiring locks) and a shrinking phase (releasing locks) to ensure serializability.<br>
+                                    - <em>Timestamp-Based:</em> Assigns a unique system time to every transaction. Older transactions get priority over younger ones to prevent conflicts without using locks.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Draw a timeline for 2PL showing a rising slope (Growing Phase), a peak (Locked), and a falling slope (Shrinking Phase).</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> Flash sales on E-commerce sites. Thousands of users trying to buy the last iPhone simultaneously require strict locking to prevent overselling.</li>
+                                <li><strong class="text-white">Conclusion:</strong> Choosing the right protocol balances data safety with system throughput (speed).</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">4. Explain the concept of Database Recovery Algorithms.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Techniques used to restore the database to a consistent state after a system failure.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong> Involves Log-based recovery.<br>
+                                    - <em>Deferred Update:</em> Doesn't physically update the database until the transaction commits (only writes to log). No UNDO required, only REDO.<br>
+                                    - <em>Immediate Update:</em> Updates physical database as the transaction progresses. Requires both UNDO (for uncommitted) and REDO (for committed).
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> Show a timeline with a "System Crash" point. Show transactions that finished before the crash being REDOne, and those active during the crash being UNDOne.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> A power outage strikes a server room. Upon reboot, the DBMS reads the logs and instantly rolls back incomplete operations.</li>
+                                <li><strong class="text-white">Conclusion:</strong> Recovery algorithms ensure Durability (the 'D' in ACID).</li>
+                            </ul>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-bold text-white mb-3">5. Introduce Indexing Techniques: Detail B+ Trees and Hash-Based Indexing.</h4>
+                            <ul class="space-y-2 text-slate-300 text-sm">
+                                <li><strong class="text-white">Definition:</strong> Indexing creates a data structure that improves the speed of data retrieval operations.</li>
+                                <li><strong class="text-white">Detailed Explanation:</strong><br>
+                                    - <em>B+ Trees:</em> A balanced tree structure where all data pointers are stored at the leaf nodes, which are linked sequentially. Excellent for range queries.<br>
+                                    - <em>Hash-Based Indexing:</em> Uses a hash function to compute the exact bucket location of a record based on its key. Extremely fast for exact-match queries.
+                                </li>
+                                <li><strong class="text-white">Diagram Explanation:</strong> For B+ Trees, draw a root node pointing to internal nodes, pointing to a linked list of leaf nodes.</li>
+                                <li><strong class="text-white">Real-time Use Case:</strong> Searching for an employee ID <code>105</code> (Hash is faster). Searching for employees hired between <code>2020 and 2023</code> (B+ Tree is faster).</li>
+                                <li><strong class="text-white">Conclusion:</strong> Proper indexing is the most effective way a database administrator can tune query performance in large-scale databases.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-xl p-4 flex items-center gap-3">
+                        <span class="text-2xl">🔥</span>
+                        <div>
+                            <strong class="text-white block mb-1">Important Topics for Unit V</strong>
+                            <span class="text-sm text-orange-200">ACID Properties, 2-Phase Locking (2PL), B+ Tree structure, Transaction State Diagram.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+        
+        <footer class="mt-12 text-center text-slate-500 text-sm pb-8">
+            <p>Designed for complete JNTUA R23 alignment. Good luck with your exams!</p>
+        </footer>
+
+    </div>
+
+    <script>
+        function filterContent(unitId, btnElement) {
+            // Update chip active state
+            const chips = document.querySelectorAll('.chip');
+            chips.forEach(chip => chip.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            // Filter content smoothly
+            const sections = document.querySelectorAll('.unit-section');
+            
+            sections.forEach(section => {
+                if (unitId === 'all') {
+                    section.style.display = 'block';
+                    // Optional: add a small fade-in animation effect class if needed
+                    section.animate([ { opacity: 0 }, { opacity: 1 } ], { duration: 300, fill: 'forwards' });
+                } else {
+                    if (section.dataset.unit === unitId) {
+                        section.style.display = 'block';
+                        section.animate([ { opacity: 0 }, { opacity: 1 } ], { duration: 300, fill: 'forwards' });
+                    } else {
+                        section.style.display = 'none';
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
