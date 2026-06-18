@@ -1,10 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smart Attendance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Mode</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(135deg, #141517 0%, #090a0f 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Canvas background for the animation */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: all;
+        }
+
+        /* UI Overlay */
+        .container {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 2rem;
+            pointer-events: none; /* Allows mouse to pass through to the canvas */
+            user-select: none;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #8a92a6;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .hint {
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: #4a5061;
+            letter-spacing: 1px;
+            text-transform: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1); color: #ff4757; text-shadow: 0 0 15px rgba(255, 71, 87, 0.6); }
+        }
+    </style>
 </head>
-  <h1>WELCOME THIS PAGE IS OFFLINE FOR A WHILE </h1>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="container">
+        <h1>WELCOME</h1>
+        <p>This page is offline for a while</p>
+        <div class="hint">Move your mouse / drag your finger to move the paddle</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Handle Resize
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Game objects
+        const paddle = {
+            x: canvas.width / 2 - 60,
+            y: canvas.height - 40,
+            width: 120,
+            height: 12,
+            targetX: canvas.width / 2 - 60,
+            speed: 0.15 // Smooth interpolation factor
+        };
+
+        const balls = [];
+        const colors = ['#00d2d3', '#ffff2e', '#ff4757', '#1dd1a1', '#9b59b6'];
+
+        // Track Mouse/Touch
+        function movePaddle(clientX) {
+            paddle.targetX = clientX - paddle.width / 2;
+        }
+
+        window.addEventListener('mousemove', (e) => movePaddle(e.clientX));
+        window.addEventListener('touchmove', (e) => {
+            if(e.touches.length > 0) movePaddle(e.touches[0].clientX);
+        }, { passive: true });
+
+        // Ball Constructor
+        class Ball {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * -canvas.height; // Stagger entry from top
+            }
+
+            reset() {
+                this.radius = Math.random() * 8 + 6;
+                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
+                this.y = -this.radius;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = Math.random() * 3 + 2;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Wall collisions (Left/Right)
+                if (this.x - this.radius < 0 || this.x + this.radius > canvas.width) {
+                    this.vx *= -1;
+                }
+
+                // Paddle collision
+                if (this.y + this.radius >= paddle.y && 
+                    this.y - this.radius <= paddle.y + paddle.height &&
+                    this.x >= paddle.x && 
+                    this.x <= paddle.x + paddle.width) {
+                    
+                    this.vy = -Math.abs(this.vy) * 1.02; // Bounce up and slightly speed up
+                    // Adjust angle based on where it hits the paddle
+                    let hitPoint = (this.x - (paddle.x + paddle.width/2)) / (paddle.width/2);
+                    this.vx = hitPoint * 5;
+                }
+
+                // Reset if it falls past bottom
+                if (this.y - this.radius > canvas.height) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        // Initialize 15 falling balls
+        for (let i = 0; i < 15; i++) {
+            balls.push(new Ball());
+        }
+
+        // Animation Loop
+        function animate() {
+            // Clear canvas with a slight opacity for trail effect
+            ctx.fillStyle = 'rgba(11, 12, 16, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Smoothly ease paddle to target mouse position
+            paddle.x += (paddle.targetX - paddle.x) * paddle.speed;
+            
+            // Keep paddle on screen
+            if (paddle.x < 0) paddle.x = 0;
+            if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
+
+            // Draw Paddle
+            ctx.beginPath();
+            ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 6);
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = '#ffffff';
+            ctx.fill();
+            ctx.closePath();
+
+            // Update and Draw Balls
+            balls.forEach(ball => {
+                ball.update();
+                ball.draw();
+            });
+
+            // Reset shadow configuration for next frame performance
+            ctx.shadowBlur = 0;
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
 </html>
