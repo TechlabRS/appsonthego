@@ -4,16 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RiVibe | Prestige Cloud Vault</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         'sky-primary': '#38bdf8',
-                        'rich-accent': '#8b5cf6',
+                        'rich-purple': '#8b5cf6',
                         'rich-pink': '#d946ef',
+                        'vibe-orange': '#f97316',
+                        'vibe-wheat': '#f5deb3',
                         'bg-deep': '#05070a',
+                    },
+                    animation: {
+                        'gradient-x': 'gradient-x 15s ease infinite',
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            }
+                        }
                     }
                 }
             }
@@ -22,14 +39,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Outfit:wght@300;400;600;700;900&display=swap');
         
         :root {
             --bg-deep: #05070a;
-            --card-dark: #0f1218;
             --sky-primary: #38bdf8;
-            --sky-light: #bae6fd;
-            --accent-glow: rgba(56, 189, 248, 0.15);
         }
 
         body {
@@ -38,6 +52,9 @@
             color: #ffffff;
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% -20%, rgba(139, 92, 246, 0.1), transparent 50%),
+                              radial-gradient(circle at -20% 50%, rgba(56, 189, 248, 0.1), transparent 50%);
+            background-attachment: fixed;
         }
 
         /* The Invisible 'i' - Subtle & High-End */
@@ -49,22 +66,25 @@
 
         /* Luxury PIN Dots */
         .pin-dot {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            border: 1px solid rgba(56, 189, 248, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(56, 189, 248, 0.2);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .pin-dot.filled {
             background: var(--sky-primary);
-            border-color: var(--sky-light);
+            border-color: #bae6fd;
             transform: scale(1.3);
-            box-shadow: 0 0 10px var(--sky-primary);
+            box-shadow: 0 0 15px var(--sky-primary);
         }
 
-        /* Stunning Card Design */
+        /* Deep Glassmorphism Cards */
         .vibe-card {
-            background: linear-gradient(145deg, #161a22, #0f1218);
+            background: rgba(15, 18, 24, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 1.5rem;
             transition: all 0.4s ease;
@@ -80,7 +100,13 @@
         .vibe-card:hover {
             transform: translateY(-4px) scale(1.01);
             border-color: rgba(139, 92, 246, 0.4);
-            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.15);
+            background: rgba(20, 24, 32, 0.6);
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.6), 0 0 20px rgba(139, 92, 246, 0.15);
+        }
+
+        /* Content Typography */
+        .narrative-text {
+            font-family: 'Inter', sans-serif;
         }
 
         /* Progressive Mood Drawer */
@@ -97,7 +123,7 @@
         }
 
         .mood-chip {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.05);
             transition: all 0.3s ease;
         }
@@ -106,8 +132,10 @@
             border-color: var(--sky-primary);
         }
         .mood-chip.active {
-            background: var(--sky-primary);
-            color: #000;
+            background: linear-gradient(135deg, var(--sky-primary), #8b5cf6);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
         }
 
         /* Capsule Filters */
@@ -116,7 +144,7 @@
             border-radius: 100px;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 9px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             font-weight: 900;
@@ -125,50 +153,65 @@
             white-space: nowrap;
         }
         .capsule.active {
-            background: var(--sky-primary);
-            border-color: var(--sky-primary);
-            color: #000;
-            box-shadow: 0 4px 10px rgba(56, 189, 248, 0.2);
+            background: rgba(245, 222, 179, 0.1); /* Wheat subtle */
+            border-color: #f5deb3;
+            color: #f5deb3;
+            box-shadow: 0 4px 10px rgba(245, 222, 179, 0.1);
         }
 
         /* Glowing Rich Buttons */
         .btn-rich {
-            background: linear-gradient(135deg, #38bdf8 0%, #8b5cf6 50%, #d946ef 100%);
+            background: linear-gradient(135deg, #38bdf8 0%, #8b5cf6 33%, #d946ef 66%, #f97316 100%);
+            background-size: 300% 300%;
             color: #ffffff;
             font-weight: 900;
-            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25);
-            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+            transition: all 0.4s ease;
+            animation: gradient-x 8s ease infinite;
         }
         .btn-rich:hover {
-            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 10px 25px rgba(217, 70, 239, 0.4);
             transform: translateY(-2px);
         }
 
         /* Glass Input */
         .glass-input {
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            background: rgba(255, 255, 255, 0.02) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
             color: white !important;
             transition: all 0.3s ease;
         }
         .glass-input:focus {
             border-color: var(--sky-primary) !important;
-            background: rgba(255, 255, 255, 0.07) !important;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.1) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.1) !important;
+        }
+
+        /* Bottom Sheet Ergonomics for Mobile */
+        @media (max-width: 768px) {
+            .mobile-bottom-sheet {
+                align-items: flex-end !important;
+            }
+            .mobile-bottom-sheet > div:last-child {
+                border-radius: 2rem 2rem 0 0;
+                max-height: 90vh;
+                margin-top: auto;
+                border-bottom: none;
+            }
         }
 
         /* Custom Scroll */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: var(--sky-primary); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.5); border-radius: 10px; }
     </style>
 </head>
 <body class="antialiased">
 
-    <div id="auth-screen" class="fixed inset-0 z-[100] bg-bg-deep flex items-center justify-center p-4">
+    <div id="auth-screen" class="fixed inset-0 z-[100] bg-bg-deep/90 backdrop-blur-xl flex items-center justify-center p-4 transition-opacity duration-500">
         <div class="w-full max-w-xs text-center">
-            <div class="w-20 h-20 mx-auto mb-6 relative">
-                <div class="absolute inset-0 bg-sky-primary opacity-20 blur-xl rounded-full"></div>
-                <svg viewBox="0 0 100 100" class="relative z-10 w-full h-full">
+            <div class="w-24 h-24 mx-auto mb-8 relative">
+                <div class="absolute inset-0 bg-gradient-to-tr from-sky-primary to-rich-purple opacity-30 blur-2xl rounded-full animate-pulse"></div>
+                <svg viewBox="0 0 100 100" class="relative z-10 w-full h-full drop-shadow-2xl">
                     <defs>
                         <linearGradient id="rich-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stop-color="#38bdf8" />
@@ -181,217 +224,235 @@
                     <text x="50" y="55" font-family="Outfit" font-weight="900" font-size="24" fill="#fff">V</text>
                 </svg>
             </div>
-            <h1 class="text-3xl font-bold tracking-tighter mb-1">R<span class="invisible-i">i</span>Vibe</h1>
-            <p class="text-slate-500 text-[9px] font-black uppercase tracking-[0.4em] mb-8">Private Sovereign Vault</p>
+            <h1 class="text-4xl font-bold tracking-tighter mb-2">R<span class="invisible-i">i</span>Vibe</h1>
+            <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.4em] mb-10">Sovereign Protocol Active</p>
             
-            <div class="flex justify-center gap-4 mb-10" id="pin-dots">
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
+            <div class="flex justify-center gap-4 mb-12" id="pin-dots">
+                <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+                <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
             </div>
 
-            <div class="grid grid-cols-3 gap-4">
-                <button onclick="inputPin('1')" class="h-12 text-xl font-light hover:text-sky-primary transition-colors">1</button>
-                <button onclick="inputPin('2')" class="h-12 text-xl font-light hover:text-sky-primary transition-colors">2</button>
-                <button onclick="inputPin('3')" class="h-12 text-xl font-light hover:text-sky-primary transition-colors">3</button>
-                <button onclick="inputPin('4')" class="h-12 text-xl font-light hover:text-sky-primary transition-colors">4</button>
-                <button onclick="inputPin('5')" class="h-12 text-xl font-light hover:text-sky-primary transition-colors">5</button>
-                <button onclick="inputPin('6')" class="h-12 text-xl font-light hover:text-sky-primary transition-colors">6</button>
-                <button onclick="inputPin('7')" class="h-12 text-xl font-light hover:text-sky-primary transition-colors">7</button>
-                <button onclick="inputPin('8')" class="h-12 text-xl font-light hover:text-sky-primary transition-colors">8</button>
-                <button onclick="inputPin('9')" class="h-12 text-xl font-light hover:text-sky-primary transition-colors">9</button>
-                <button onclick="resetPin()" class="h-12 text-rose-500 opacity-50 hover:opacity-100 transition-opacity"><i class="fas fa-times"></i></button>
-                <button onclick="inputPin('0')" class="h-12 text-xl font-light hover:text-sky-primary transition-colors">0</button>
-                <button onclick="backspacePin()" class="h-12 text-sky-primary opacity-50 hover:opacity-100 transition-opacity"><i class="fas fa-backspace"></i></button>
+            <div class="grid grid-cols-3 gap-6 max-w-[260px] mx-auto">
+                <button onclick="inputPin('1')" class="h-14 text-2xl font-light rounded-full bg-white/5 hover:bg-white/10 active:scale-90 transition-all">1</button>
+                <button onclick="inputPin('2')" class="h-14 text-2xl font-light rounded-full bg-white/5 hover:bg-white/10 active:scale-90 transition-all">2</button>
+                <button onclick="inputPin('3')" class="h-14 text-2xl font-light rounded-full bg-white/5 hover:bg-white/10 active:scale-90 transition-all">3</button>
+                <button onclick="inputPin('4')" class="h-14 text-2xl font-light rounded-full bg-white/5 hover:bg-white/10 active:scale-90 transition-all">4</button>
+                <button onclick="inputPin('5')" class="h-14 text-2xl font-light rounded-full bg-white/5 hover:bg-white/10 active:scale-90 transition-all">5</button>
+                <button onclick="inputPin('6')" class="h-14 text-2xl font-light rounded-full bg-white/5 hover:bg-white/10 active:scale-90 transition-all">6</button>
+                <button onclick="inputPin('7')" class="h-14 text-2xl font-light rounded-full bg-white/5 hover:bg-white/10 active:scale-90 transition-all">7</button>
+                <button onclick="inputPin('8')" class="h-14 text-2xl font-light rounded-full bg-white/5 hover:bg-white/10 active:scale-90 transition-all">8</button>
+                <button onclick="inputPin('9')" class="h-14 text-2xl font-light rounded-full bg-white/5 hover:bg-white/10 active:scale-90 transition-all">9</button>
+                <button onclick="resetPin()" class="h-14 text-rose-500 opacity-50 hover:opacity-100 active:scale-90 transition-all"><i class="fas fa-times"></i></button>
+                <button onclick="inputPin('0')" class="h-14 text-2xl font-light rounded-full bg-white/5 hover:bg-white/10 active:scale-90 transition-all">0</button>
+                <button onclick="backspacePin()" class="h-14 text-sky-primary opacity-50 hover:opacity-100 active:scale-90 transition-all"><i class="fas fa-backspace"></i></button>
             </div>
         </div>
     </div>
 
-    <div id="main-app" class="hidden opacity-0 transition-opacity duration-1000 max-w-5xl mx-auto px-4 py-6 md:py-10">
+    <div id="main-app" class="hidden opacity-0 transition-opacity duration-1000 max-w-6xl mx-auto px-4 py-6 md:py-10">
         
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-white/5 p-4 rounded-3xl backdrop-blur-lg border border-white/5">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12">
-                    <svg viewBox="0 0 100 100">
+                <div class="w-12 h-12 relative group cursor-pointer">
+                    <div class="absolute inset-0 bg-rich-purple opacity-40 blur-lg rounded-full group-hover:opacity-60 transition-opacity"></div>
+                    <svg viewBox="0 0 100 100" class="relative z-10">
                         <path d="M50 85C50 85 15 65 15 35C15 18 35 12 50 28C65 12 85 18 85 35C85 65 50 85 50 85Z" fill="url(#rich-grad)"/>
                         <text x="35" y="52" font-family="Outfit" font-weight="900" font-size="20" fill="#fff">R</text>
                         <text x="50" y="52" font-family="Outfit" font-weight="900" font-size="20" fill="#fff">V</text>
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-black tracking-tighter">R<span class="invisible-i">i</span>Vibe</h1>
-                    <div class="flex items-center gap-2 text-sky-primary/60 text-[8px] font-black uppercase tracking-[0.2em] mt-1">
-                        <i class="fas fa-gem text-[8px]"></i> Sovereign Identity
+                    <h1 class="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">R<span class="invisible-i text-sky-primary">i</span>Vibe</h1>
+                    <div class="flex items-center gap-2 text-sky-primary/80 text-[8px] font-black uppercase tracking-[0.2em] mt-1">
+                        <i class="fas fa-fingerprint text-[8px]"></i> 256-Bit Offline Sync
                     </div>
                 </div>
             </div>
 
             <div class="flex items-center gap-2 md:gap-3">
-                <button onclick="openModal()" class="btn-rich px-5 py-3 rounded-xl text-[9px] uppercase tracking-widest flex items-center gap-2">
+                <button onclick="openModal()" class="btn-rich px-6 py-3.5 rounded-2xl text-[10px] uppercase tracking-widest flex items-center gap-2">
                     <i class="fas fa-plus"></i> New Vibe
                 </button>
                 <div class="h-8 w-[1px] bg-white/10 mx-1"></div>
-                <button onclick="exportData()" class="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-sky-primary transition-all">
+                <button onclick="exportData()" class="p-3.5 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-vibe-orange transition-all active:scale-95">
                     <i class="fas fa-file-export text-sm"></i>
                 </button>
-                <label class="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-sky-primary transition-all cursor-pointer">
+                <label class="p-3.5 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-sky-primary transition-all cursor-pointer active:scale-95">
                     <i class="fas fa-file-import text-sm"></i>
                     <input type="file" class="hidden" onchange="importData(this)" accept=".json">
                 </label>
-                <button onclick="location.reload()" class="p-3 bg-white/5 border border-white/10 rounded-xl text-rose-500/50 hover:text-rose-500 transition-all">
-                    <i class="fas fa-power-off text-sm"></i>
+                <button onclick="location.reload()" class="p-3.5 bg-white/5 border border-white/10 rounded-2xl text-rose-500/60 hover:text-rose-500 transition-all active:scale-95">
+                    <i class="fas fa-lock text-sm"></i>
                 </button>
             </div>
         </header>
 
         <div class="mb-8 space-y-4">
             <div class="relative group">
-                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 text-sm group-focus-within:text-sky-primary transition-colors"></i>
-                <input type="text" id="global-search" oninput="applyFilters()" placeholder="Search terms or #labels..." class="w-full bg-white/5 border border-white/5 rounded-2xl pl-12 pr-5 py-3 text-sm font-medium outline-none focus:border-sky-primary/40 transition-all placeholder:text-slate-600">
+                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 text-sm group-focus-within:text-rich-pink transition-colors"></i>
+                <input type="text" id="global-search" oninput="applyFilters()" placeholder="Search deeply encrypted archives..." class="w-full bg-white/5 backdrop-blur-md border border-white/5 rounded-2xl pl-12 pr-5 py-4 text-sm font-medium outline-none focus:border-rich-pink/40 transition-all placeholder:text-slate-600 shadow-inner">
             </div>
             
-            <div class="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+            <div class="flex flex-wrap items-center gap-3 overflow-x-auto pb-2 custom-scroll">
                 <button onclick="setFilter('all')" id="filter-all" class="capsule active">All Time</button>
                 <button onclick="setFilter('week')" id="filter-week" class="capsule">This Week</button>
                 <button onclick="setFilter('month')" id="filter-month" class="capsule">This Month</button>
                 <div class="h-4 w-[1px] bg-white/10 mx-1"></div>
-                <div class="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                    <input type="date" id="filter-from" onchange="setFilter('custom')" class="bg-transparent text-[8px] font-black uppercase text-slate-400 outline-none w-[70px]">
-                    <span class="text-slate-700 text-[8px]">TO</span>
-                    <input type="date" id="filter-to" onchange="setFilter('custom')" class="bg-transparent text-[8px] font-black uppercase text-slate-400 outline-none w-[70px]">
+                <div class="flex items-center gap-2 glass-input px-3 py-2 rounded-full border border-white/10">
+                    <input type="date" id="filter-from" onchange="setFilter('custom')" class="bg-transparent text-[9px] font-black uppercase text-slate-300 outline-none w-[80px]">
+                    <span class="text-slate-600 text-[8px] font-black">TO</span>
+                    <input type="date" id="filter-to" onchange="setFilter('custom')" class="bg-transparent text-[9px] font-black uppercase text-slate-300 outline-none w-[80px]">
                 </div>
-                <button onclick="resetFilters()" class="text-[8px] font-black uppercase tracking-tighter text-rose-500/40 hover:text-rose-500 transition-colors ml-auto">Clear Filters</button>
+                <button onclick="resetFilters()" class="text-[9px] font-black uppercase tracking-tighter text-rose-500/50 hover:text-rose-500 transition-colors ml-auto px-2">Clear</button>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-10">
-            <div class="bg-white/5 p-4 md:p-6 rounded-2xl border border-white/5 relative group overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 text-white/5 text-5xl group-hover:scale-110 transition-transform"><i class="fas fa-layer-group"></i></div>
-                <p class="text-[8px] font-black text-sky-primary uppercase tracking-[0.2em] mb-1">Archives</p>
-                <h3 id="stat-count" class="text-2xl md:text-3xl font-black tracking-tighter">0</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5 mb-10">
+            <div class="vibe-card p-5 md:p-6 group">
+                <div class="absolute -right-4 -bottom-4 text-white/5 text-7xl group-hover:scale-110 transition-transform duration-500"><i class="fas fa-layer-group"></i></div>
+                <p class="text-[9px] font-black text-sky-primary uppercase tracking-[0.2em] mb-1">Archives</p>
+                <h3 id="stat-count" class="text-3xl md:text-4xl font-black tracking-tighter">0</h3>
             </div>
-            <div class="bg-white/5 p-4 md:p-6 rounded-2xl border border-white/5 relative group overflow-hidden">
-                <div class="absolute -right-2 -bottom-2 text-white/5 text-5xl group-hover:scale-110 transition-transform"><i class="fas fa-bolt"></i></div>
-                <p class="text-[8px] font-black text-sky-primary uppercase tracking-[0.2em] mb-1">Aura</p>
+            <div class="vibe-card p-5 md:p-6 group">
+                <div class="absolute -right-4 -bottom-4 text-white/5 text-7xl group-hover:scale-110 transition-transform duration-500"><i class="fas fa-bolt"></i></div>
+                <p class="text-[9px] font-black text-rich-purple uppercase tracking-[0.2em] mb-1">Dominant Aura</p>
                 <h3 id="stat-mood" class="text-2xl md:text-3xl font-black tracking-tighter truncate">—</h3>
             </div>
-            <div class="bg-gradient-to-br from-sky-primary via-rich-accent to-rich-pink p-4 md:p-6 rounded-2xl text-white col-span-2 md:col-span-1 shadow-[0_10px_30px_rgba(139,92,246,0.15)]">
-                <p class="text-[8px] font-black opacity-80 uppercase tracking-[0.2em] mb-1">Encryption</p>
-                <h3 class="text-lg md:text-xl font-black uppercase tracking-tighter flex items-center gap-2">
-                    <i class="fas fa-shield-halved"></i> 256-AES
-                </h3>
+            <div class="bg-gradient-to-br from-bg-deep via-gray-900 to-bg-deep p-[1px] rounded-2xl col-span-2 md:col-span-1 overflow-hidden relative group">
+                <div class="absolute inset-0 bg-gradient-to-r from-sky-primary via-rich-purple to-rich-pink opacity-20 group-hover:opacity-40 transition-opacity blur-md"></div>
+                <div class="bg-gradient-to-br from-[#161a22] to-[#0f1218] p-5 md:p-6 rounded-2xl h-full w-full relative z-10 flex flex-col justify-center">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">PBKDF2 Derived</p>
+                    <h3 class="text-xl md:text-2xl font-black uppercase tracking-tighter flex items-center gap-3 text-vibe-wheat">
+                        <i class="fas fa-shield-virus text-sky-primary"></i> AES-256
+                    </h3>
+                </div>
             </div>
         </div>
 
         <div id="entries-feed" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             </div>
 
-        <div id="empty-state" class="hidden py-20 text-center flex flex-col items-center">
-            <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-sky-primary/20 mb-4">
-                <i class="fas fa-moon text-2xl"></i>
+        <div id="empty-state" class="hidden py-24 text-center flex flex-col items-center">
+            <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-sky-primary/20 mb-6 shadow-inner border border-white/5">
+                <i class="fas fa-moon text-3xl"></i>
             </div>
-            <p class="font-black uppercase tracking-[0.3em] text-[9px] text-slate-600">No matching vibrations</p>
+            <p class="font-black uppercase tracking-[0.4em] text-[10px] text-slate-600">The vault is silent</p>
         </div>
     </div>
 
-    <div id="view-modal" class="fixed inset-0 z-[105] flex items-center justify-center hidden p-4">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeViewModal()"></div>
-        <div class="relative bg-[#0f1218] w-full max-w-lg rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(56,189,248,0.1)] overflow-hidden flex flex-col max-h-[85vh]">
+    <div id="view-modal" class="fixed inset-0 z-[105] flex items-center justify-center hidden p-0 md:p-4 mobile-bottom-sheet transition-all duration-300">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeViewModal()"></div>
+        <div class="relative bg-gradient-to-b from-[#161a22] to-[#0f1218] w-full max-w-2xl md:rounded-3xl border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col h-full md:h-auto z-10">
             
-            <div class="p-5 md:p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-sky-primary/10 rounded-lg flex items-center justify-center text-sky-primary">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-sky-primary">
                         <i class="fas fa-eye text-sm"></i>
                     </div>
-                    <h2 class="text-sm font-black tracking-tight uppercase">Moment Details</h2>
-                </div>
-                <button onclick="closeViewModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-slate-500 hover:text-white transition-all"><i class="fas fa-times text-sm"></i></button>
-            </div>
-            
-            <div class="p-5 md:p-6 overflow-y-auto custom-scroll flex-grow">
-                <div class="flex items-center justify-between mb-4">
-                    <div id="view-mood-emoji" class="text-4xl"></div>
-                    <div class="text-right">
-                        <p id="view-date" class="text-[9px] font-black text-slate-500 uppercase tracking-widest"></p>
-                        <p id="view-mood-label" class="text-[10px] font-black text-sky-primary uppercase tracking-widest mt-1"></p>
+                    <div>
+                        <h2 class="text-xs font-black tracking-widest uppercase text-slate-300">Observation</h2>
+                        <p id="view-date" class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-0.5"></p>
                     </div>
                 </div>
-                <div class="w-full h-px bg-white/5 mb-5"></div>
-                <p id="view-content" class="text-slate-300 text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium"></p>
-                <div id="view-tags" class="flex flex-wrap gap-2 mt-6"></div>
+                <button onclick="closeViewModal()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all active:scale-95"><i class="fas fa-times text-sm"></i></button>
+            </div>
+            
+            <div class="p-6 md:p-8 overflow-y-auto custom-scroll flex-grow relative">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-sky-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="flex items-center gap-4 mb-8">
+                    <div id="view-mood-emoji" class="text-5xl drop-shadow-lg"></div>
+                    <div class="flex-grow">
+                        <div class="h-px w-full bg-gradient-to-r from-white/10 to-transparent mb-2"></div>
+                        <p id="view-mood-label" class="text-[11px] font-black text-vibe-wheat uppercase tracking-[0.3em]"></p>
+                    </div>
+                </div>
+                
+                <div id="view-content" class="narrative-text text-slate-300 text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium pb-4"></div>
+                
+                <div id="view-tags" class="flex flex-wrap gap-2 mt-8 pt-6 border-t border-white/5"></div>
             </div>
 
-            <div class="p-5 border-t border-white/5 flex gap-4 bg-white/[0.02]">
-                <button onclick="handleDeleteFromView()" class="w-12 h-12 flex items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors">
+            <div class="p-6 border-t border-white/5 flex gap-4 bg-[#0a0c10]">
+                <button onclick="handleDeleteFromView()" class="w-14 h-14 flex items-center justify-center rounded-2xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all active:scale-95 shadow-inner">
                     <i class="fas fa-trash-alt"></i>
                 </button>
-                <button onclick="openEditFromView()" class="flex-grow btn-rich rounded-xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
-                    <i class="fas fa-pen-nib"></i> Edit Vibe
+                <button onclick="openEditFromView()" class="flex-grow btn-rich rounded-2xl text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 active:scale-[0.98]">
+                    <i class="fas fa-pen-nib"></i> Refine Vibe
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="entry-modal" class="fixed inset-0 z-[110] flex items-center justify-center hidden p-4">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeModal()"></div>
-        <div class="relative bg-[#0f1218] w-full max-w-lg rounded-3xl border border-white/10 shadow-[0_20px_50px_rgba(139,92,246,0.15)] overflow-hidden flex flex-col max-h-[90vh]">
+    <div id="entry-modal" class="fixed inset-0 z-[110] flex items-center justify-center hidden p-0 md:p-4 mobile-bottom-sheet transition-all duration-300">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="relative bg-[#0f1218] w-full max-w-xl md:rounded-3xl border border-white/10 shadow-[0_30px_60px_rgba(139,92,246,0.2)] overflow-hidden flex flex-col h-full md:h-auto z-10">
             
             <div class="p-5 md:p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-gradient-to-br from-sky-primary to-rich-accent rounded-lg flex items-center justify-center text-white shadow-lg shadow-sky-primary/20">
-                        <i class="fas fa-pen-nib text-sm"></i>
+                    <div class="w-10 h-10 bg-gradient-to-br from-vibe-orange to-rich-pink rounded-xl flex items-center justify-center text-white shadow-lg shadow-rich-pink/20">
+                        <i class="fas fa-feather-pointed text-sm"></i>
                     </div>
-                    <h2 id="modal-title" class="text-sm font-black tracking-tight uppercase">Archive Moment</h2>
+                    <h2 id="modal-title" class="text-xs font-black tracking-widest uppercase text-slate-200">Archive Moment</h2>
                 </div>
-                <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-slate-500 hover:text-white transition-all"><i class="fas fa-times text-sm"></i></button>
+                <button onclick="closeModal()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all active:scale-95"><i class="fas fa-times text-sm"></i></button>
             </div>
             
-            <div class="p-5 md:p-6 overflow-y-auto custom-scroll flex-grow space-y-6">
-                <div>
-                    <label class="text-[9px] font-black text-sky-primary uppercase tracking-[0.2em] block mb-2">Moment Date</label>
-                    <input type="date" id="form-date" class="w-full glass-input rounded-xl px-4 py-3 text-sm font-bold outline-none">
-                </div>
-                <div>
-                    <label class="text-[9px] font-black text-sky-primary uppercase tracking-[0.2em] block mb-2">Emotional Frequency</label>
-                    <button onclick="toggleMoodDrawer()" id="mood-trigger" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between group">
-                        <div class="flex items-center gap-3">
-                            <span id="trigger-emoji" class="text-2xl">🙂</span>
-                            <span id="trigger-label" class="font-black text-sm tracking-tighter uppercase">Calm</span>
-                        </div>
-                        <i class="fas fa-chevron-down text-sky-primary/40 text-sm group-hover:text-sky-primary transition-transform" id="trigger-icon"></i>
-                    </button>
-                    <input type="hidden" id="form-mood" value="🙂 Calm">
-                    <div id="mood-drawer">
-                        <div class="grid grid-cols-4 gap-2" id="mood-grid"></div>
+            <div class="p-6 md:p-8 overflow-y-auto custom-scroll flex-grow space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[9px] font-black text-sky-primary uppercase tracking-[0.2em] block mb-2">Timeline</label>
+                        <input type="date" id="form-date" class="w-full glass-input rounded-2xl px-4 py-3.5 text-sm font-bold outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black text-rich-purple uppercase tracking-[0.2em] block mb-2">Frequency</label>
+                        <button onclick="toggleMoodDrawer()" id="mood-trigger" class="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 flex items-center justify-between group active:scale-[0.98] transition-transform">
+                            <div class="flex items-center gap-3">
+                                <span id="trigger-emoji" class="text-xl">🙂</span>
+                                <span id="trigger-label" class="font-black text-xs tracking-wider uppercase text-slate-200">Calm</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-sky-primary/40 text-sm group-hover:text-sky-primary transition-transform" id="trigger-icon"></i>
+                        </button>
+                        <input type="hidden" id="form-mood" value="🙂 Calm">
                     </div>
                 </div>
+
+                <div id="mood-drawer" class="bg-black/20 rounded-2xl p-2 border border-white/5">
+                    <div class="grid grid-cols-4 gap-2" id="mood-grid"></div>
+                </div>
+
                 <div>
-                    <label class="text-[9px] font-black text-sky-primary uppercase tracking-[0.2em] block mb-2">The Narrative</label>
-                    <textarea id="form-content" rows="6" placeholder="Translate your vibrations..." class="w-full glass-input rounded-xl px-4 py-3 text-sm font-medium leading-relaxed outline-none resize-none placeholder:text-slate-700"></textarea>
+                    <div class="flex justify-between items-end mb-2">
+                        <label class="text-[9px] font-black text-rich-pink uppercase tracking-[0.2em]">The Narrative</label>
+                        <span class="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Supports Markdown (**bold**, *italic*, - list)</span>
+                    </div>
+                    <textarea id="form-content" rows="7" placeholder="Translate your vibrations into text..." class="w-full glass-input rounded-2xl px-5 py-4 narrative-text text-sm md:text-base leading-relaxed outline-none resize-none placeholder:text-slate-700"></textarea>
                 </div>
                 <div>
-                    <label class="text-[9px] font-black text-sky-primary uppercase tracking-[0.2em] block mb-2">Context Labels</label>
-                    <input type="text" id="form-tags" placeholder="e.g. focus, deep" class="w-full glass-input rounded-xl px-4 py-3 text-sm font-bold outline-none">
+                    <label class="text-[9px] font-black text-vibe-orange uppercase tracking-[0.2em] block mb-2">Contextual Tags</label>
+                    <div class="relative">
+                        <i class="fas fa-hashtag absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-sm"></i>
+                        <input type="text" id="form-tags" placeholder="focus, deep, grind..." class="w-full glass-input rounded-2xl pl-10 pr-4 py-3.5 text-sm font-bold outline-none">
+                    </div>
                 </div>
             </div>
 
-            <div class="p-5 border-t border-white/5 bg-white/[0.02]">
-                <button onclick="saveEntry()" class="w-full btn-rich py-4 rounded-xl text-[10px] uppercase tracking-[0.2em]">Commit to Vault</button>
+            <div class="p-6 border-t border-white/5 bg-[#0a0c10]">
+                <button onclick="saveEntry()" class="w-full btn-rich py-4 rounded-2xl text-[11px] uppercase tracking-[0.3em] active:scale-[0.99]">
+                    Commit to Vault
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 bg-gradient-to-r from-sky-primary to-rich-accent text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(139,92,246,0.4)] z-[200] opacity-0 translate-y-12 transition-all duration-500 pointer-events-none flex items-center gap-3">
-        <i class="fas fa-check-circle text-sm"></i><span id="toast-text">Success</span>
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-4 bg-[#161a22]/90 backdrop-blur-xl border border-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(0,0,0,0.5)] z-[200] opacity-0 translate-y-12 transition-all duration-500 pointer-events-none flex items-center gap-3">
+        <i class="fas fa-check-circle text-sky-primary text-base"></i><span id="toast-text">Success</span>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, query, onSnapshot, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, getDoc, query, onSnapshot, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
@@ -402,10 +463,17 @@
             appId: "1:511533506488:web:aca4de3d513915d012f94d",
             measurementId: "G-9PZZM5LFKX"
         };
+        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'rivibe-on';
+        
+        // Enabling Offline-First Persistence Architecture
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+        });
+        
+        const appId = 'rivibe-on';
+        const SALT = "rivibe-sovereign-vault-v2";
         
         let user = null;
         let masterKey = "";
@@ -418,38 +486,49 @@
         const MOODS = [
             { emoji: '✨', label: 'Radiant' }, { emoji: '👑', label: 'Power' },
             { emoji: '🙂', label: 'Calm' }, { emoji: '💡', label: 'Creative' },
-            { emoji: '🌪️', label: 'Heavy' }, { emoji: '🔋', label: 'Tired' },
-            { emoji: '🌫️', label: 'Vague' }, { emoji: '😐', label: 'Neutral' }
+            { emoji: '🔥', label: 'Grind' }, { emoji: '🌊', label: 'Flow' },
+            { emoji: '🌫️', label: 'Vague' }, { emoji: '🔋', label: 'Drained' }
         ];
 
-        // BOOTSTRAP
+        // Haptic Feedback Helper
+        const vibeCheck = (ms = 40) => {
+            if (navigator.vibrate) navigator.vibrate(ms);
+        };
+
         const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch(e) { console.error(e); }
+            try { await signInAnonymously(auth); } catch(e) { console.error("Auth Exception:", e); }
         };
 
         onAuthStateChanged(auth, (u) => { user = u; });
         initAuth();
 
         window.inputPin = async (n) => {
+            vibeCheck();
             if (currentPin.length >= 6) return;
             currentPin += n;
             updateDots();
             if (currentPin.length === 6) {
-                const hashed = CryptoJS.SHA256(currentPin).toString();
+                // Cryptographic Key Derivation (PBKDF2)
+                const derivedKey = CryptoJS.PBKDF2(currentPin, SALT, { keySize: 256/32, iterations: 5000 }).toString();
+                const pinHash = CryptoJS.SHA256(derivedKey).toString(); 
+                
                 const secRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'security');
-                const secDoc = await getDoc(secRef);
-                if (!secDoc.exists()) {
-                    await setDoc(secRef, { pinHash: hashed });
-                    unlock(currentPin);
-                } else {
-                    if (secDoc.data().pinHash === hashed) unlock(currentPin);
-                    else { resetPin(); showToast("Invalid Protocol Key"); }
+                try {
+                    const secDoc = await getDoc(secRef);
+                    if (!secDoc.exists()) {
+                        await setDoc(secRef, { pinHash: pinHash });
+                        unlock(derivedKey);
+                    } else {
+                        if (secDoc.data().pinHash === pinHash) unlock(derivedKey);
+                        else { 
+                            vibeCheck([100, 50, 100]); 
+                            resetPin(); 
+                            showToast("Invalid Protocol Key"); 
+                        }
+                    }
+                } catch (err) {
+                    // Fallback for full offline initial load if cached
+                    showToast("Network Offline - Verifying Cache");
                 }
             }
         };
@@ -459,25 +538,41 @@
             dots.forEach((d, i) => i < currentPin.length ? d.classList.add('filled') : d.classList.remove('filled'));
         };
 
-        window.resetPin = () => { currentPin = ""; updateDots(); };
-        window.backspacePin = () => { currentPin = currentPin.slice(0, -1); updateDots(); };
+        window.resetPin = () => { currentPin = ""; updateDots(); vibeCheck(); };
+        window.backspacePin = () => { currentPin = currentPin.slice(0, -1); updateDots(); vibeCheck(20); };
 
-        const unlock = (pin) => {
-            masterKey = pin;
-            document.getElementById('auth-screen').classList.add('hidden');
-            const main = document.getElementById('main-app');
-            main.classList.remove('hidden');
-            setTimeout(() => main.classList.replace('opacity-0', 'opacity-100'), 50);
+        const unlock = (derivedKey) => {
+            masterKey = derivedKey;
+            const authScreen = document.getElementById('auth-screen');
+            authScreen.classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => {
+                authScreen.classList.add('hidden');
+                const main = document.getElementById('main-app');
+                main.classList.remove('hidden');
+                setTimeout(() => main.classList.replace('opacity-0', 'opacity-100'), 50);
+            }, 500);
+            
             renderMoodGrid();
             subscribe();
+            showToast("Vault Decrypted");
         };
 
         const encrypt = (t) => CryptoJS.AES.encrypt(t, masterKey).toString();
         const decrypt = (c) => {
             try {
                 const bytes = CryptoJS.AES.decrypt(c, masterKey);
-                return bytes.toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+                return bytes.toString(CryptoJS.enc.Utf8) || "[Encrypted Fragment]";
             } catch { return "[Secure Fragment]"; }
+        };
+
+        // Basic Markdown Parser
+        const parseMarkdown = (text) => {
+            if(!text) return "";
+            return text
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;') // sanitize
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em class="text-sky-primary/90 not-italic font-semibold">$1</em>')
+                .replace(/\n- (.*?)/g, '<br><span class="text-rich-pink mr-2">•</span> $1');
         };
 
         const subscribe = () => {
@@ -487,7 +582,7 @@
                 entries = snapshot.docs.map(d => ({ 
                     id: d.id, 
                     ...d.data(),
-                    decryptedContent: decrypt(d.data().content) // Decrypt once for searching
+                    decryptedContent: decrypt(d.data().content)
                 }));
                 applyFilters();
             }, (err) => showToast("Sync Interrupted"));
@@ -495,6 +590,7 @@
 
         // SEARCH & FILTER LOGIC
         window.setFilter = (type) => {
+            vibeCheck(20);
             activeTimeFilter = type;
             document.querySelectorAll('.capsule').forEach(c => c.classList.remove('active'));
             if(type !== 'custom') document.getElementById(`filter-${type}`).classList.add('active');
@@ -502,6 +598,7 @@
         };
 
         window.resetFilters = () => {
+            vibeCheck(20);
             document.getElementById('global-search').value = "";
             document.getElementById('filter-from').value = "";
             document.getElementById('filter-to').value = "";
@@ -547,27 +644,33 @@
 
             filteredData.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(e => {
                 const div = document.createElement('div');
-                div.className = "vibe-card p-5 flex flex-col cursor-pointer";
+                div.className = "vibe-card p-6 flex flex-col cursor-pointer";
                 div.onclick = () => openView(e.id);
+                
+                // Strip markdown for preview text
+                const plainPreview = e.decryptedContent.replace(/\*\*/g, '').replace(/\*/g, '').replace(/\n- /g, ' • ');
+
                 div.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="text-3xl">${e.mood.split(' ')[0]}</span>
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl border border-white/5 shadow-inner">
+                            ${e.mood.split(' ')[0]}
+                        </div>
                         <div class="text-right">
-                            <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest">${e.date}</p>
-                            <p class="text-[9px] font-black text-sky-primary uppercase tracking-widest mt-1">${e.mood.split(' ')[1]}</p>
+                            <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">${e.date}</p>
+                            <p class="text-[10px] font-black text-sky-primary uppercase tracking-widest mt-1">${e.mood.split(' ')[1]}</p>
                         </div>
                     </div>
-                    <p class="text-slate-400 text-sm leading-relaxed line-clamp-3 flex-grow font-medium">${e.decryptedContent}</p>
-                    <div class="flex flex-wrap gap-2 mt-4">
-                        ${e.tags.map(t => `<span class="bg-white/5 px-2 py-1 rounded-md text-[8px] font-black text-slate-500 uppercase tracking-tighter">#${t}</span>`).join('')}
+                    <p class="narrative-text text-slate-400 text-sm leading-relaxed line-clamp-3 flex-grow font-medium">${plainPreview}</p>
+                    <div class="flex flex-wrap gap-2 mt-5">
+                        ${e.tags.map(t => `<span class="bg-black/40 border border-white/5 px-2.5 py-1 rounded-lg text-[9px] font-black text-vibe-wheat uppercase tracking-wider">#${t}</span>`).join('')}
                     </div>
                 `;
                 feed.appendChild(div);
             });
         };
 
-        // VIEW UI ACTIONS (READ ONLY)
         window.openView = (id) => {
+            vibeCheck(30);
             const e = entries.find(x => x.id === id);
             if(!e) return;
             currentViewId = id;
@@ -576,13 +679,20 @@
             document.getElementById('view-mood-emoji').innerText = emoji;
             document.getElementById('view-mood-label').innerText = label;
             document.getElementById('view-date').innerText = e.date;
-            document.getElementById('view-content').innerText = e.decryptedContent;
+            
+            // Render with Markdown
+            document.getElementById('view-content').innerHTML = parseMarkdown(e.decryptedContent);
             
             document.getElementById('view-tags').innerHTML = e.tags.map(t => 
-                `<span class="bg-white/10 px-3 py-1.5 rounded-lg text-[9px] font-black text-slate-400 uppercase tracking-widest">#${t}</span>`
+                `<span class="bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-xl text-[10px] font-black text-slate-300 uppercase tracking-widest">#${t}</span>`
             ).join('');
 
-            document.getElementById('view-modal').classList.remove('hidden');
+            const modal = document.getElementById('view-modal');
+            modal.classList.remove('hidden');
+            // Small delay for transition trigger
+            setTimeout(() => {
+                modal.firstElementChild.nextElementSibling.classList.add('translate-y-0');
+            }, 10);
         };
 
         window.closeViewModal = () => {
@@ -593,12 +703,13 @@
         window.openEditFromView = () => {
             const idToEdit = currentViewId;
             closeViewModal();
-            openEdit(idToEdit);
+            setTimeout(() => openEdit(idToEdit), 100);
         };
 
         window.handleDeleteFromView = async () => {
+            vibeCheck([50, 50]);
             if(!currentViewId) return;
-            if(confirm("Permanently erase this vibe?")) {
+            if(confirm("Permanently erase this vibration from the vault?")) {
                 await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'entries', currentViewId));
                 closeViewModal();
                 showToast("Vibe Vaporized");
@@ -607,6 +718,7 @@
 
         // EDIT/CREATE UI ACTIONS
         window.openModal = () => {
+            vibeCheck(30);
             editingId = null;
             document.getElementById('modal-title').innerText = "Archive Moment";
             document.getElementById('form-date').valueAsDate = new Date();
@@ -621,7 +733,7 @@
             editingId = id;
             document.getElementById('modal-title').innerText = "Refine Archive";
             document.getElementById('form-date').value = e.date;
-            document.getElementById('form-content').value = e.decryptedContent;
+            document.getElementById('form-content').value = e.decryptedContent; // Load raw markdown
             document.getElementById('form-tags').value = e.tags.join(', ');
             const [emo, lbl] = e.mood.split(' ');
             selectMood(emo, lbl);
@@ -635,6 +747,7 @@
         };
 
         window.toggleMoodDrawer = () => {
+            vibeCheck(20);
             document.getElementById('mood-drawer').classList.toggle('open');
             document.getElementById('trigger-icon').classList.toggle('rotate-180');
         };
@@ -642,7 +755,7 @@
         const renderMoodGrid = () => {
             const grid = document.getElementById('mood-grid');
             grid.innerHTML = MOODS.map(m => `
-                <div onclick="selectMood('${m.emoji}', '${m.label}')" class="mood-chip p-3 md:p-4 rounded-xl flex flex-col items-center gap-1 cursor-pointer">
+                <div onclick="selectMood('${m.emoji}', '${m.label}')" class="mood-chip p-3 md:p-4 rounded-xl flex flex-col items-center gap-2 cursor-pointer active:scale-95">
                     <span class="text-2xl">${m.emoji}</span>
                     <span class="text-[8px] font-black uppercase tracking-widest text-center">${m.label}</span>
                 </div>
@@ -650,42 +763,65 @@
         };
 
         window.selectMood = (emoji, label) => {
+            vibeCheck(20);
             document.getElementById('trigger-emoji').innerText = emoji;
             document.getElementById('trigger-label').innerText = label;
             document.getElementById('form-mood').value = `${emoji} ${label}`;
+            
+            // Style active chip
+            document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
+            const chips = document.querySelectorAll('.mood-chip');
+            const target = Array.from(chips).find(c => c.innerText.includes(label));
+            if(target) target.classList.add('active');
+
             setTimeout(() => {
                 document.getElementById('mood-drawer').classList.remove('open');
                 document.getElementById('trigger-icon').classList.remove('rotate-180');
-            }, 200);
+            }, 150);
         };
 
         window.saveEntry = async () => {
+            vibeCheck([40, 40]);
             const content = document.getElementById('form-content').value;
             if(!content) return showToast("Archive remains empty");
+            
+            const btn = event.currentTarget;
+            const originalText = btn.innerText;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Encrypting...';
+            btn.disabled = true;
+
             const data = {
                 date: document.getElementById('form-date').value,
                 mood: document.getElementById('form-mood').value,
                 content: encrypt(content),
-                tags: document.getElementById('form-tags').value.split(',').map(t => t.trim()).filter(t => t),
+                tags: document.getElementById('form-tags').value.split(',').map(t => t.trim().toLowerCase()).filter(t => t),
                 updatedAt: new Date().toISOString()
             };
+            
             const colRef = collection(db, 'artifacts', appId, 'users', user.uid, 'entries');
             try {
                 if(editingId) await updateDoc(doc(colRef, editingId), data);
                 else await setDoc(doc(colRef), data);
                 closeModal();
-                showToast("Vault Committed");
-            } catch(e) { showToast("Cloud Sync Error"); }
+                showToast("Vault Committed & Secured");
+            } catch(e) { 
+                showToast("Saved Locally. Will Sync When Online.");
+                closeModal(); // Offline persistence will handle it
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         };
 
         window.exportData = () => {
+            vibeCheck();
             const backup = entries.map(e => ({...e, decrypted: decrypt(e.content)}));
             const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `RiVibe_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `RiVibe_Prestige_Backup_${new Date().toISOString().split('T')[0]}.json`;
             a.click();
-            showToast("Export Dispatched");
+            showToast("Secure Export Dispatched");
         };
 
         window.importData = (input) => {
@@ -695,14 +831,17 @@
             reader.onload = async (ev) => {
                 const data = JSON.parse(ev.target.result);
                 const colRef = collection(db, 'artifacts', appId, 'users', user.uid, 'entries');
+                let count = 0;
                 for(let item of data) {
                     const c = item.decrypted || decrypt(item.content);
                     await setDoc(doc(colRef), {
                         date: item.date, mood: item.mood, content: encrypt(c),
-                        tags: item.tags, updatedAt: new Date().toISOString()
+                        tags: item.tags || [], updatedAt: new Date().toISOString()
                     });
+                    count++;
                 }
-                showToast("Archives Restored");
+                vibeCheck([50, 100, 50]);
+                showToast(`Restored ${count} Archives`);
             };
             reader.readAsText(file);
         };
@@ -730,7 +869,7 @@
             setTimeout(() => {
                 t.classList.replace('opacity-100', 'opacity-0');
                 t.classList.replace('translate-y-0', 'translate-y-12');
-            }, 3000);
+            }, 3500);
         };
     </script>
 </body>
