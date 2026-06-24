@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Student Portal - RGM FacultyOptIn v2.1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --whatsapp: #25D366;
+            --whatsapp-hover: #128C7E;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --focus-ring: rgba(79, 70, 229, 0.2);
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        
+        body { 
+            background-color: var(--bg-body);
+            color: var(--text-main); 
+            padding: 16px; 
+            line-height: 1.5; 
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; position: relative; z-index: 10; display: flex; flex-direction: column; gap: 24px;}
+
+        /* --- Offline Bouncing Animation Overlay --- */
+        .offline-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .offline-overlay.active { opacity: 1; visibility: visible; }
+        .bouncing-box { width: 100px; height: 100px; border: 4px solid var(--primary); border-radius: 20px; position: relative; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15); background: rgba(255,255,255,0.5); overflow: hidden;}
+        .bouncing-ball { width: 24px; height: 24px; background: var(--primary); border-radius: 50%; position: absolute; animation: bounceX 1.3s infinite alternate linear, bounceY 1.7s infinite alternate linear; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);}
+        .offline-text { font-size: 1.5rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; margin-bottom: 8px;}
+        .offline-subtext { font-size: 1rem; color: var(--text-muted); font-weight: 500;}
+
+        @keyframes bounceX { 0% { left: 4px; } 100% { left: calc(100% - 28px); } }
+        @keyframes bounceY { 0% { top: 4px; } 100% { top: calc(100% - 28px); } }
+
+        .splash-screen { position: fixed; inset: 0; background: #ffffff; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s; }
+        .splash-screen.hidden { opacity: 0; visibility: hidden; }
+        .brand-logo-large { display: flex; align-items: center; gap: 12px; font-size: 2.5rem; font-weight: 800; color: var(--primary); letter-spacing: -0.05em; margin-bottom: 20px; animation: pulseLogo 2s infinite; }
+        .brand-logo-large svg { width: 48px; height: 48px; }
+        .loading-dots { display: flex; gap: 6px; }
+        .dot { width: 10px; height: 10px; background: var(--primary); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes pulseLogo { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* --- Redesigned Top Header --- */
+        .top-header {
+            background: var(--card-bg);
+            padding: 16px 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 16px;
+        }
+        .header-brand { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+        .header-brand svg { color: var(--primary); flex-shrink: 0; }
+        .brand-text { display: flex; flex-direction: column; }
+        .brand-text .title { font-size: 1.4rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+        .brand-text .subtitle { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+        .version-tag { background: var(--primary); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; }
+        
+        .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; overflow-x: auto; max-width: 100%; }
+        .network-status { padding: 8px 16px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; white-space: nowrap; flex-shrink: 0; }
+        .network-status.offline { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 rgba(34, 197, 94, 0.4); animation: pulseGreen 2s infinite; flex-shrink: 0; }
+        .network-status.offline .status-dot { background: #ef4444; animation: none; }
+        
+        @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+        /* -------------------------- */
+
+        .identity-card { background: var(--card-bg); padding: 32px 24px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); border: 1px solid var(--border); text-align: center; }
+        
+        /* --- Registration Form Styling --- */
+        .registration-form { max-width: 500px; margin: 0 auto; text-align: left; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .reg-input { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 1rem; outline: none; transition: all 0.3s; background: #f8fafc; color: var(--text-main); font-weight: 500; }
+        .reg-input:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px var(--focus-ring); }
+        .split-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;}
+        .split-row .form-group { margin-bottom: 0; flex: 1; min-width: 150px;}
+        
+        .otp-section { display: none; max-width: 500px; margin: 0 auto; text-align: center; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .otp-user-preview { background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .otp-input-wrapper { margin-bottom: 20px; text-align: left; }
+        .otp-input-wrapper label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .otp-input-wrapper input { width: 100%; padding: 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 1.1rem; outline: none; transition: all 0.3s; text-align: center; letter-spacing: 4px; font-weight: 600; background: #f8fafc; }
+        .otp-input-wrapper input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--focus-ring); background: #fff; }
+        
+        .btn-wa-otp { width: 100%; padding: 16px; background: var(--whatsapp); color: white; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-wa-otp:hover { background: var(--whatsapp-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3); }
+        .btn-verify { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-verify:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3); }
+        .cancel-link { color: var(--text-muted); font-size: 0.9rem; font-weight: 600; margin-top: 20px; cursor: pointer; display: inline-block; transition: color 0.2s; }
+        .cancel-link:hover { color: var(--text-main); }
+
+        .selfie-section { display: none; max-width: 500px; margin: 0 auto 30px; text-align: center; padding: 32px 24px; animation: slideUp 0.4s ease; background: var(--card-bg); border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.03);}
+        .camera-container { position: relative; width: 100%; max-width: 220px; margin: 0 auto 24px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; border: 4px solid var(--primary); box-shadow: 0 10px 25px rgba(67, 56, 202, 0.2); background: #0f172a; }
+        #videoElement { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        #capturedImage { width: 100%; height: 100%; object-fit: cover; display: none; transform: scaleX(-1); }
+
+        .active-user-banner { display: none; background: #4f46e5; border-radius: 20px; padding: 24px; color: white; flex-direction: row; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3); position: relative; overflow: hidden; flex-wrap: wrap; gap: 16px;}
+        .active-user-banner.active { display: flex; animation: slideUp 0.4s ease; }
+        .active-user-banner::before { content: ''; position: absolute; top: 0; right: 0; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; transform: translate(30%, -30%); pointer-events: none;}
+        
+        .user-info-group { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 250px;}
+        .avatar { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: 700; overflow: hidden; flex-shrink: 0;}
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-info-text-block { display: flex; flex-direction: column; }
+        .user-info-text { font-size: 0.85rem; opacity: 0.9; margin-bottom: 2px; font-weight: 500;}
+        .user-name-title { font-weight: 700; font-size: 1.4rem; letter-spacing: -0.02em; line-height: 1.2;}
+        .user-id-subtitle { font-size: 0.95rem; opacity: 0.9; font-weight: 500; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+        
+        .change-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; white-space: nowrap; z-index: 2;}
+        .change-btn:hover { background: rgba(255,255,255,0.3); }
+
+        .allocation-banner { display: none; background: #ffffff; border: 1px solid var(--border); padding: 24px; border-radius: 20px; flex-direction: column; gap: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .allocation-banner.active { display: flex; animation: slideUp 0.4s ease; }
+        .allocation-header { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.2rem; color: var(--text-main); }
+        .allocation-header svg { color: var(--success); width: 24px; height: 24px;}
+        .allocation-tags { display: flex; flex-wrap: wrap; gap: 12px; }
+        .subject-tag { background: #f8fafc; border: 1px solid #e2e8f0; color: var(--text-main); padding: 12px 16px; border-radius: 12px; font-weight: 700; font-size: 1rem; display: flex; flex-direction: column; gap: 4px; }
+        .subject-tag span { font-size: 0.8rem; opacity: 0.7; font-weight: 600; text-transform: uppercase; color: var(--primary);}
+
+        /* --- UI for Simple Dropdown Selection --- */
+        .subject-group { margin-bottom: 32px; background: #f8fafc; border-radius: 20px; padding: 24px; border: 1px solid var(--border); }
+        .subject-group-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid rgba(0,0,0,0.05); flex-wrap: wrap; gap: 12px;}
+        .subject-group-header h3 { font-size: 1.4rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px;}
+        .subject-group-header h3 svg { width: 22px; height: 22px; color: var(--primary); flex-shrink: 0;}
+        
+        .badge-success { background: #dcfce7; color: #166534; font-size: 0.75rem; padding: 6px 12px; border-radius: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px;}
+        .badge-pending { background: #fee2e2; color: #991b1b; font-size: 0.75rem; padding: 6px 12px; border-radius: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; }
+
+        .subject-select-body { margin-top: 16px; padding: 0; }
+        .select-action-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        
+        .custom-select-wrapper { position: relative; display: flex; align-items: center; min-width: 0; }
+        .custom-select { width: 100%; height: 52px; padding: 0 40px 0 20px; appearance: none; border: 2px solid var(--border); border-radius: 12px; font-size: 0.95rem; font-weight: 600; color: var(--text-main); background: #ffffff; outline: none; cursor: pointer; transition: all 0.3s; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+        .custom-select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--focus-ring); }
+        .custom-select:disabled { background: #e2e8f0; color: var(--text-muted); cursor: not-allowed; }
+        .select-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-muted); }
+        
+        .assigned-block { display: flex; justify-content: space-between; align-items: center; background: #ffffff; border: 2px solid #bbf7d0; padding: 16px 20px; border-radius: 12px; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.05); }
+        .assigned-info { display: flex; align-items: center; gap: 16px; }
+        .faculty-avatar-mini { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.05); flex-shrink: 0; }
+        
+        button.opt-btn { width: 100%; padding: 14px 24px; background: var(--text-main); color: white; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; height: 52px;}
+        button.opt-btn:hover:not(:disabled) { background: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(67, 56, 202, 0.2); }
+        button.opt-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
+        button.opt-btn.enrolled { background: var(--success); color: white; cursor: default; }
+        button.opt-btn.enrolled:hover { transform: none; box-shadow: none; }
+
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { min-width: 300px; background: #0f172a; color: white; padding: 14px 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); display: flex; align-items: center; gap: 12px; font-size: 0.95rem; font-weight: 500; animation: slideInRight 0.3s forwards; }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; opacity: 0; transition: opacity 0.3s; padding: 16px; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-card { background: #ffffff; width: 100%; max-width: 420px; border-radius: 20px; padding: 32px 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); transform: scale(0.95); transition: all 0.3s; text-align: center;}
+        .modal-overlay.active .modal-card { transform: scale(1); }
+        
+        .modal-card h2 { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; letter-spacing: -0.02em;}
+        .modal-card > p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; font-weight: 500;}
+
+        .modal-details { background: #f8fafc; padding: 20px; border-radius: 16px; margin: 0 0 24px 0; border: 1px solid var(--border); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); text-align: left;}
+        .modal-details p { margin-bottom: 14px; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;}
+        .modal-details p:last-child { margin-bottom: 0; }
+        .modal-details .label { color: var(--text-muted); font-weight: 600; flex-shrink: 0;}
+        .modal-details strong { color: var(--text-main); font-weight: 700; text-align: right; word-break: break-word; line-height: 1.4;}
+        
+        .modal-actions { display: flex; gap: 12px; }
+        .btn-cancel { background: #ffffff; color: var(--text-main); padding: 14px; flex: 1; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 0.95rem; transition: background 0.2s;}
+        .btn-cancel:hover { background: #f8fafc; }
+        .btn-confirm { background: var(--primary); color: white; padding: 14px; flex: 1; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 0.95rem; transition: all 0.2s; }
+        .btn-confirm:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);}
+
+        .loader { display: none; margin: 40px auto; border: 3px solid #e2e8f0; border-top: 3px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--card-bg); border-radius: 20px; border: 1px dashed var(--border); }
+
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Responsive Mobile Adjustments */
+        @media (max-width: 600px) {
+            .top-header { flex-direction: column; align-items: stretch; padding: 16px; }
+            .header-brand { justify-content: center; text-align: center; flex-direction: column; gap: 8px;}
+            .brand-text .title { justify-content: center; }
+            .header-actions { justify-content: center; border-top: 1px solid var(--border); padding-top: 16px; margin-top: 8px; width: 100%; flex-wrap: nowrap;}
+            .network-status { flex-shrink: 0; }
+            
+            .active-user-banner { flex-direction: column; align-items: stretch; padding: 24px; text-align: center; }
+            .user-info-group { flex-direction: column; gap: 12px; align-items: center;}
+            .change-btn { position: relative; right: auto; top: auto; transform: none; margin-top: 16px; width: 100%; text-align: center; }
+            
+            .toast-container { left: 16px; right: 16px; bottom: 16px; }
+            .toast { min-width: 0; width: 100%; }
+            .modal-card { padding: 24px 20px; }
+            .subject-group { padding: 16px; }
+            .subject-group-header h3 { font-size: 1.25rem; }
+            
+            .select-action-row { flex-direction: column; align-items: stretch; }
+            button.opt-btn { width: 100% !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="offlineOverlay" class="offline-overlay">
+    <div class="bouncing-box">
+        <div class="bouncing-ball"></div>
+    </div>
+    <div class="offline-text">Connection Lost</div>
+    <div class="offline-subtext">Waiting for network to resume...</div>
+</div>
+
+<div id="splashScreen" class="splash-screen">
+    <div class="brand-logo-large">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+        RGM FacultyOptIn
+    </div>
+    <div class="loading-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+</div>
+
+<div class="container">
+    <header class="top-header">
+        <div class="header-brand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+            <div class="brand-text">
+                <span class="title">RGM FacultyOptIn <span class="version-tag">v2.1</span></span>
+                <span class="subtitle">CSE(AI&ML) - Secure Subject & Faculty Allocation</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="network-status" id="networkStatus">
+                <div class="status-dot"></div>
+                <span id="networkText">Online</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="identity-card" id="identitySection">
+        <div style="text-align: center; margin-bottom: 24px;" id="searchInstructionBox">
+            <h2 style="font-size: 1.4rem; color: var(--text-main); font-weight: 800; letter-spacing: -0.02em;">Student Registration</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 6px;">Provide your correct academic details to proceed.</p>
+        </div>
+
+        <div class="registration-form" id="registrationForm">
+            <div class="form-group">
+                <label>Roll Identifier</label>
+                <input type="text" id="regRoll" placeholder="e.g., 20091A0501" class="reg-input">
+            </div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="regName" placeholder="e.g., John Doe" class="reg-input">
+            </div>
+            
+            <div class="split-row">
+                <div class="form-group">
+                    <label>Academic Year</label>
+                    <div class="custom-select-wrapper">
+                        <select id="regYear" class="custom-select" style="height:52px; padding-left:16px;">
+                            <option value="" disabled selected>Select Year</option>
+                            <option value="1">Year 1</option>
+                            <option value="2">Year 2</option>
+                            <option value="3">Year 3</option>
+                            <option value="4">Year 4</option>
+                        </select>
+                        <svg class="select-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                </div>
+                <div class="form-group" style="flex: 2;">
+                    <label>WhatsApp Mobile</label>
+                    <input type="tel" id="regMobile" placeholder="10-digit number" class="reg-input">
+                </div>
+            </div>
+            
+            <button class="btn-verify" onclick="window.initiateRegistrationOTP()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: text-bottom; margin-right: 6px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                Send Secure OTP
+            </button>
+        </div>
+
+        <div class="otp-section" id="otpSection">
+            <div class="otp-user-preview">
+                <div>
+                    <strong style="color: var(--text-main); font-size: 1.1rem; display: block; font-weight: 800;" id="otpStudentName">Name</strong>
+                    <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500;" id="otpStudentId">Roll No</span>
+                </div>
+                <div style="background: rgba(67, 56, 202, 0.1); padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 800; color: var(--primary);">PENDING</div>
+            </div>
+
+            <div id="stepGenerateOtp">
+                <div class="otp-input-wrapper" style="text-align: center; margin-bottom: 24px;">
+                    <p style="color: var(--text-muted); font-size: 0.95rem; font-weight: 500;">OTP will be generated for registered mobile:</p>
+                    <strong id="maskedMobileDisplay" style="font-size: 1.2rem; color: var(--text-main); letter-spacing: 2px;"></strong>
+                </div>
+                <button class="btn-wa-otp" id="btnGenOtp" onclick="window.generateAndSendOTP()">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    Open WhatsApp to get OTP
+                </button>
+            </div>
+
+            <div id="stepVerifyOtp" style="display: none; margin-top: 20px;">
+                <div class="otp-input-wrapper">
+                    <label>Enter 4-Digit Security Code</label>
+                    <input type="text" id="authOtpInput" placeholder="••••" maxlength="4" autocomplete="off">
+                </div>
+                <button class="btn-verify" onclick="window.verifyOTP()">Validate & Authenticate</button>
+            </div>
+
+            <div class="cancel-link" onclick="window.cancelOTPFlow()">Cancel and return to form</div>
+        </div>
+    </div>
+
+    <div class="selfie-section" id="selfieSection">
+        <h2 style="font-size: 1.5rem; color: var(--text-main); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;">Profile Photo Required</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px;">Please capture a clear photo of yourself to complete your profile verification.</p>
+        
+        <div class="camera-container">
+            <video id="videoElement" autoplay playsinline></video>
+            <img id="capturedImage" src="" />
+        </div>
+        
+        <div id="cameraControls">
+            <button class="btn-verify" onclick="window.captureSelfie()" style="margin: 0; box-shadow: 0 4px 12px rgba(67, 56, 202, 0.3);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px; vertical-align:middle;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                Capture Photo
+            </button>
+        </div>
+        <div id="captureControls" style="display: none; gap: 12px;">
+            <button class="btn-cancel" onclick="window.retakeSelfie()" style="flex: 1; margin: 0;">Retake</button>
+            <button class="btn-verify" onclick="window.confirmSelfie()" style="flex: 1; margin: 0;">Confirm & Proceed</button>
+        </div>
+        <canvas id="canvasElement" style="display: none;"></canvas>
+    </div>
+
+    <div class="active-user-banner" id="activeUserBanner">
+        <div class="user-info-group">
+            <div class="avatar" id="userAvatar">SP</div>
+            <div class="user-info-text-block">
+                <div class="user-info-text">Logged in securely as</div>
+                <div class="user-name-title" id="dispName">Student Profile</div>
+                <div class="user-id-subtitle"><span id="dispId">P100</span> <span style="opacity: 0.4; margin: 0 6px;">|</span> <span style="color: #cbd5e1; font-weight: 700;" id="dispYear">Year 1</span></div>
+            </div>
+        </div>
+        <button class="change-btn" onclick="window.clearSession()">Not you? Change</button>
+    </div>
+
+    <div class="allocation-banner" id="allocationBanner">
+        <div class="allocation-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            My Confirmed Schedule
+        </div>
+        <div class="allocation-tags" id="allocationTagsGrid">
+        </div>
+    </div>
+
+    <div class="loader" id="mainLoader"></div>
+    
+    <div id="facultySection" style="display: none; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;">
+        <div style="margin-bottom: 24px;">
+            <h2 style="font-size: 1.6rem; color: var(--text-main); font-weight: 800; letter-spacing: -0.02em;">Available Faculty Stacks</h2>
+            <p style="color: var(--text-muted); font-size: 1rem; font-weight: 500; margin-top: 4px;">Select your preferred subject expert from the dropdown below to secure your slot.</p>
+        </div>
+        <div id="facultyGridContainer"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-card">
+        <h2>Confirm Reservation</h2>
+        <p>Review your selection carefully.<br>Allocations are final.</p>
+        
+        <div class="modal-details">
+            <p>
+                <span class="label">Student:</span>
+                <strong><span id="modalName"></span><br><span id="modalId" style="font-size: 0.9em; font-family: monospace; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;"></span></strong>
+            </p>
+            <div style="height: 1px; background: var(--border); margin: 16px 0;"></div>
+            <p>
+                <span class="label">Subject:</span>
+                <strong><span id="modalSubject"></span></strong>
+            </p>
+            <p>
+                <span class="label">Faculty:</span>
+                <strong style="color: var(--primary);" id="modalFaculty"></strong>
+            </p>
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="window.closeModal()" id="cancelBtn">Cancel</button>
+            <button class="btn-confirm" id="confirmBtn" onclick="window.executeTransaction()">Confirm Slot</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, doc, onSnapshot, getDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+        authDomain: "stuattnd.firebaseapp.com",
+        projectId: "stuattnd",
+        storageBucket: "stuattnd.firebasestorage.app",
+        messagingSenderId: "511533506488",
+        appId: "1:511533506488:web:aca4de3d513915d012f94d",
+        measurementId: "G-9PZZM5LFKX"
+    };
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'demo-fs-app';
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let facultyDataStore = [];
+    let activeStudent = null;
+    let pendingSelection = null;
+    let studentAllocations = []; 
+    let studentAwaitingVerification = null;
+    let currentGeneratedOtp = null;
+    let cameraStream = null;
+
+    window.showToast = (msg, type) => {
+        let container = document.getElementById('toast-container') || document.createElement('div');
+        container.id = 'toast-container'; container.className = 'toast-container';
+        if(!container.parentNode) document.body.appendChild(container);
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = type === 'success' 
+            ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> ${msg}`
+            : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> ${msg}`;
+        
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.animation = 'fadeOut 0.4s forwards'; setTimeout(() => toast.remove(), 400); }, 3500);
+    };
+
+    const updateNetworkStatus = () => {
+        const isOnline = navigator.onLine;
+        const statusEl = document.getElementById('networkStatus');
+        if(statusEl) statusEl.className = `network-status ${isOnline ? '' : 'offline'}`;
+        const textEl = document.getElementById('networkText');
+        if(textEl) textEl.textContent = isOnline ? 'Online' : 'Offline';
+
+        const offlineOverlay = document.getElementById('offlineOverlay');
+        if (offlineOverlay) {
+            if (!isOnline) {
+                offlineOverlay.classList.add('active');
+            } else {
+                offlineOverlay.classList.remove('active');
+            }
+        }
+        
+        if(!isOnline) window.showToast('Connection lost. Waiting for network...', 'error');
+    };
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
+
+    const hideSplashScreen = () => {
+        const splash = document.getElementById('splashScreen');
+        if(splash && !splash.classList.contains('hidden')) {
+            splash.classList.add('hidden');
+            setTimeout(() => splash.remove(), 600);
+        }
+    };
+
+    const restoreSession = () => {
+        const saved = localStorage.getItem(`facultyApp_student_${appId}`);
+        if(saved) {
+            const student = JSON.parse(saved);
+            executeLogin(student, true);
+        }
+    };
+
+    window.initiateRegistrationOTP = () => {
+        const roll = document.getElementById('regRoll').value.trim();
+        const name = document.getElementById('regName').value.trim();
+        const year = document.getElementById('regYear').value;
+        const mobile = document.getElementById('regMobile').value.trim();
+
+        if (!roll || !name || !year || !mobile) {
+            window.showToast("Please fill in all registration fields.", "error");
+            return;
+        }
+
+        let cleanNumCheck = mobile.replace(/\D/g, '');
+        if (cleanNumCheck.length < 10) {
+            window.showToast("Invalid mobile number. Please enter 10 digits.", "error");
+            return;
+        }
+
+        studentAwaitingVerification = { id: roll, name: name, year: year, mobile: mobile };
+
+        document.getElementById('registrationForm').style.display = 'none';
+        document.getElementById('searchInstructionBox').style.display = 'none';
+        
+        document.getElementById('otpSection').style.display = 'block';
+        document.getElementById('otpStudentName').textContent = name;
+        document.getElementById('otpStudentId').textContent = roll;
+
+        const masked = '•••• ••• ' + cleanNumCheck.slice(-4);
+        document.getElementById('maskedMobileDisplay').textContent = masked;
+
+        document.getElementById('stepGenerateOtp').style.display = 'block';
+        document.getElementById('stepVerifyOtp').style.display = 'none';
+        document.getElementById('authOtpInput').value = '';
+        currentGeneratedOtp = null;
+    };
+
+    window.generateAndSendOTP = () => {
+        const rawNum = studentAwaitingVerification.mobile;
+        let cleanNum = rawNum.replace(/\D/g, '');
+        
+        if (cleanNum.length === 10) cleanNum = '91' + cleanNum;
+
+        currentGeneratedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+
+        const waMessage = `*RGM FacultyOptIn*\n\nSecure Access Code for Roll No ${studentAwaitingVerification.id}:\n*${currentGeneratedOtp}*\n\nDo not share this code.`;
+        const waLink = `https://wa.me/${cleanNum}?text=${encodeURIComponent(waMessage)}`;
+
+        window.open(waLink, '_blank');
+
+        document.getElementById('stepGenerateOtp').style.display = 'none';
+        document.getElementById('stepVerifyOtp').style.display = 'block';
+        document.getElementById('authOtpInput').focus();
+
+        window.showToast('Authorization code generated securely.', 'success');
+    };
+
+    window.verifyOTP = () => {
+        const enteredOtp = document.getElementById('authOtpInput').value.trim();
+        if (!enteredOtp) return window.showToast("Please enter the authorization code.", "error");
+
+        if (enteredOtp === currentGeneratedOtp) {
+            document.getElementById('otpSection').style.display = 'none';
+            const savedProfile = localStorage.getItem(`facultyApp_student_profile_${appId}`);
+            if (savedProfile) {
+                studentAwaitingVerification.profilePic = savedProfile;
+                executeLogin(studentAwaitingVerification);
+            } else {
+                document.getElementById('identitySection').style.display = 'none';
+                document.getElementById('selfieSection').style.display = 'block';
+                startCamera();
+            }
+        } else {
+            window.showToast("Verification failed. Code mismatch.", "error");
+        }
+    };
+
+    window.cancelOTPFlow = () => {
+        studentAwaitingVerification = null;
+        currentGeneratedOtp = null;
+        
+        document.getElementById('otpSection').style.display = 'none';
+        document.getElementById('registrationForm').style.display = 'block';
+        document.getElementById('searchInstructionBox').style.display = 'block';
+    };
+
+    window.startCamera = async () => {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+            const video = document.getElementById('videoElement');
+            video.srcObject = cameraStream;
+            video.style.display = 'block';
+            document.getElementById('capturedImage').style.display = 'none';
+            document.getElementById('cameraControls').style.display = 'block';
+            document.getElementById('captureControls').style.display = 'none';
+        } catch (err) {
+            window.showToast("Camera access required for profile verification.", "error");
+            executeLogin(studentAwaitingVerification);
+        }
+    };
+
+    window.captureSelfie = () => {
+        const video = document.getElementById('videoElement');
+        const canvas = document.getElementById('canvasElement');
+        
+        const targetSize = 150;
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        const ctx = canvas.getContext('2d');
+        
+        const minDim = Math.min(video.videoWidth, video.videoHeight);
+        const startX = (video.videoWidth - minDim) / 2;
+        const startY = (video.videoHeight - minDim) / 2;
+        
+        ctx.translate(targetSize, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, startX, startY, minDim, minDim, 0, 0, targetSize, targetSize);
+        
+        const base64Image = canvas.toDataURL('image/webp', 0.5); 
+        
+        document.getElementById('capturedImage').src = base64Image;
+        document.getElementById('capturedImage').style.display = 'block';
+        video.style.display = 'none';
+        
+        document.getElementById('cameraControls').style.display = 'none';
+        document.getElementById('captureControls').style.display = 'flex';
+    };
+
+    window.retakeSelfie = () => {
+        document.getElementById('capturedImage').style.display = 'none';
+        document.getElementById('videoElement').style.display = 'block';
+        document.getElementById('cameraControls').style.display = 'block';
+        document.getElementById('captureControls').style.display = 'none';
+    };
+
+    window.confirmSelfie = () => {
+        const base64Image = document.getElementById('capturedImage').src;
+        localStorage.setItem(`facultyApp_student_profile_${appId}`, base64Image);
+        studentAwaitingVerification.profilePic = base64Image;
+        
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        
+        document.getElementById('selfieSection').style.display = 'none';
+        executeLogin(studentAwaitingVerification);
+    };
+
+    function executeLogin(student, isRestore = false) {
+        activeStudent = student;
+        localStorage.setItem(`facultyApp_student_${appId}`, JSON.stringify(student));
+        
+        document.getElementById('identitySection').style.display = 'none';
+        document.getElementById('activeUserBanner').classList.add('active');
+        document.getElementById('facultySection').style.display = 'block';
+        document.getElementById('dispName').textContent = student.name;
+        document.getElementById('dispId').textContent = student.id;
+        document.getElementById('dispYear').textContent = student.year ? `Year ${student.year}` : `Year 1`;
+        
+        if (student.profilePic) {
+            document.getElementById('userAvatar').innerHTML = `<img src="${student.profilePic}">`;
+        } else {
+            const initials = student.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() || 'SP';
+            document.getElementById('userAvatar').textContent = initials;
+        }
+        
+        if(!isRestore) window.showToast(`Logged in successfully`, 'success');
+        
+        evaluateStudentStatus(); 
+    }
+
+    window.clearSession = () => {
+        activeStudent = null;
+        localStorage.removeItem(`facultyApp_student_${appId}`);
+        localStorage.removeItem(`facultyApp_student_profile_${appId}`); 
+        
+        if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; }
+
+        document.getElementById('identitySection').style.display = 'block';
+        document.getElementById('searchInstructionBox').style.display = 'block';
+        document.getElementById('registrationForm').style.display = 'block';
+        
+        document.getElementById('regRoll').value = '';
+        document.getElementById('regName').value = '';
+        document.getElementById('regYear').value = '';
+        document.getElementById('regMobile').value = '';
+
+        document.getElementById('otpSection').style.display = 'none';
+        document.getElementById('selfieSection').style.display = 'none';
+        
+        document.getElementById('activeUserBanner').classList.remove('active');
+        document.getElementById('allocationBanner').classList.remove('active');
+        document.getElementById('facultySection').style.display = 'none';
+        studentAllocations = [];
+        renderSelectViews(); 
+        window.showToast('Session ended.', 'success');
+    };
+
+    const initApp = async () => {
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } catch(e) {
+                    await signInAnonymously(auth);
+                }
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (error) { 
+            console.error("Auth Error", error); 
+            hideSplashScreen();
+        }
+    };
+
+    onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; setupRealtimeListeners(); }});
+
+    const setupRealtimeListeners = () => {
+        if (!currentUser) return;
+
+        const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'faculties');
+        onSnapshot(colRef, async (snapshot) => {
+            facultyDataStore = snapshot.docs.map(doc => ({ fbId: doc.id, ...doc.data() }));
+            
+            evaluateStudentStatus();
+            renderSelectViews();
+            restoreSession(); 
+            hideSplashScreen();
+        }, (error) => console.error("Snapshot error:", error));
+    };
+
+    const evaluateStudentStatus = () => {
+        if(!activeStudent || !facultyDataStore.length) return;
+        
+        studentAllocations = facultyDataStore.filter(f => f.enrolled && f.enrolled.some(s => s.id === activeStudent.id));
+        
+        const banner = document.getElementById('allocationBanner');
+        const tagsGrid = document.getElementById('allocationTagsGrid');
+        
+        if (studentAllocations.length > 0) {
+            banner.classList.add('active');
+            tagsGrid.innerHTML = studentAllocations.map(a => `
+                <div class="subject-tag">
+                    <span>${a.subject}</span>
+                    Prof. ${a.name}
+                </div>
+            `).join('');
+        } else {
+            banner.classList.remove('active');
+            tagsGrid.innerHTML = '';
+        }
+        renderSelectViews(); 
+    };
+
+    window.initiateSelectionFromDropdown = (selectId) => {
+        const selectEl = document.getElementById(selectId);
+        if (!selectEl.value) {
+            window.showToast("Please choose a professor from the dropdown.", "error");
+            return;
+        }
+        window.initiateSelection(parseInt(selectEl.value));
+    };
+
+    window.initiateSelection = (facultyIndex) => {
+        if (!activeStudent) return window.showToast("Authentication required before assignment.", "error");
+        
+        const faculty = facultyDataStore[facultyIndex];
+        
+        if (studentAllocations.some(a => a.subject === faculty.subject)) {
+            return window.showToast(`You have already selected a faculty for ${faculty.subject}.`, "error");
+        }
+
+        if (faculty.enrolled && faculty.enrolled.length >= faculty.maxSlots) return window.showToast('Capacity error: Stack is fully utilized.', 'error');
+
+        pendingSelection = { fbId: faculty.fbId, name: faculty.name, subject: faculty.subject, student: activeStudent };
+        document.getElementById('modalName').textContent = activeStudent.name;
+        document.getElementById('modalId').textContent = activeStudent.id;
+        document.getElementById('modalSubject').textContent = faculty.subject;
+        document.getElementById('modalFaculty').textContent = faculty.name;
+        document.getElementById('confirmModal').classList.add('active');
+    };
+
+    window.closeModal = () => {
+        document.getElementById('confirmModal').classList.remove('active');
+        pendingSelection = null;
+    };
+
+    window.executeTransaction = async () => {
+        if (!pendingSelection || !currentUser || !navigator.onLine) {
+            if(!navigator.onLine) window.showToast("Cannot finalize transaction while offline.", "error");
+            return;
+        }
+        
+        const btn = document.getElementById('confirmBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        btn.disabled = true; cancelBtn.disabled = true;
+        btn.innerHTML = `<svg class="loader" style="display:inline-block; margin:0; width:18px; height:18px; border-width:3px; border-top-color:white;" viewBox="0 0 24 24"></svg> Processing...`;
+
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'faculties', pendingSelection.fbId);
+            
+            await runTransaction(db, async (transaction) => {
+                const facultyDoc = await transaction.get(docRef);
+                if (!facultyDoc.exists()) throw "DocMissing";
+                
+                const data = facultyDoc.data();
+                const currentEnrolled = data.enrolled || [];
+                
+                if (currentEnrolled.length >= data.maxSlots) throw "StackFull";
+                if (currentEnrolled.some(s => s.id === pendingSelection.student.id)) throw "AlreadyEnrolled";
+
+                const newStudent = { 
+                    id: pendingSelection.student.id, 
+                    name: pendingSelection.student.name, 
+                    profilePic: pendingSelection.student.profilePic || null,
+                    timestamp: new Date().toISOString() 
+                };
+                transaction.update(docRef, { enrolled: [...currentEnrolled, newStudent] });
+            });
+
+            window.showToast(`Registered for ${pendingSelection.subject}`, 'success');
+            window.closeModal();
+
+        } catch (error) {
+            if (error === "StackFull") window.showToast("Transaction Aborted: Capacity reached during processing.", "error");
+            else if (error === "AlreadyEnrolled") window.showToast("Integrity Check: Duplicate record detected.", "error");
+            else window.showToast("Transaction timeout. Please retry.", "error");
+            window.closeModal();
+        } finally {
+            btn.disabled = false; cancelBtn.disabled = false;
+            btn.textContent = "Confirm Slot";
+        }
+    };
+
+    function renderSelectViews() {
+        const container = document.getElementById('facultyGridContainer');
+        container.innerHTML = '';
+
+        const availableFaculties = facultyDataStore.filter(f => !activeStudent || !activeStudent.year || f.year === activeStudent.year);
+
+        if (!availableFaculties.length) {
+            container.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#cbd5e1" stroke-width="2" style="margin-bottom:16px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <h3 style="color:var(--text-main); margin-bottom:8px; font-weight: 700;">Roster Unavailable</h3>
+                <p style="font-weight: 500;">No faculty stacks found for your academic year.</p>
+            </div>`;
+            return;
+        }
+
+        const groupedFaculties = {};
+        
+        availableFaculties.forEach((faculty) => {
+            if (!groupedFaculties[faculty.subject]) groupedFaculties[faculty.subject] = [];
+            const realIndex = facultyDataStore.findIndex(f => f.fbId === faculty.fbId);
+            groupedFaculties[faculty.subject].push({ ...faculty, originalIndex: realIndex });
+        });
+
+        Object.keys(groupedFaculties).sort().forEach((subject, subjIdx) => {
+            const isEnrolledInSubject = studentAllocations.some(a => a.subject === subject);
+            const enrolledFacultyFbId = isEnrolledInSubject ? studentAllocations.find(a => a.subject === subject).fbId : null;
+
+            const section = document.createElement('div');
+            section.className = 'subject-group';
+
+            const header = document.createElement('div');
+            header.className = 'subject-group-header';
+            header.innerHTML = `
+                <h3>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    ${subject}
+                </h3>
+                ${isEnrolledInSubject 
+                    ? `<span class="badge-success"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Completed</span>` 
+                    : `<span class="badge-pending">Action Required</span>`}
+            `;
+            section.appendChild(header);
+
+            const bodyDiv = document.createElement('div');
+            bodyDiv.className = 'subject-select-body';
+
+            if (isEnrolledInSubject) {
+                const assignedFac = facultyDataStore.find(f => f.fbId === enrolledFacultyFbId);
+                const avatarHtml = assignedFac.profilePic 
+                    ? `<img src="${assignedFac.profilePic}" class="faculty-avatar-mini" alt="Prof">`
+                    : `<div class="faculty-avatar-mini" style="background:#f1f5f9; color:var(--primary); display:flex; justify-content:center; align-items:center; font-weight:800; font-size:1rem;">${assignedFac.name.charAt(0).toUpperCase()}</div>`;
+                    
+                bodyDiv.innerHTML = `
+                    <div class="assigned-block">
+                        <div class="assigned-info">
+                            ${avatarHtml}
+                            <div>
+                                <div style="font-weight: 800; color: var(--text-main); font-size: 1.1rem;">Prof. ${assignedFac.name}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Successfully Assigned</div>
+                            </div>
+                        </div>
+                        <button class="opt-btn enrolled" style="width: auto; padding: 0 24px;" disabled>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Locked
+                        </button>
+                    </div>
+                `;
+            } else {
+                let optionsHtml = `<option value="" disabled selected>-- Choose a Professor --</option>`;
+                groupedFaculties[subject].sort((a,b) => a.name.localeCompare(b.name)).forEach(faculty => {
+                    const filled = (faculty.enrolled || []).length;
+                    const available = faculty.maxSlots - filled;
+                    const disabledStr = available <= 0 ? 'disabled' : '';
+                    const availText = available <= 0 ? '(FULL)' : `(${available} Slots left)`;
+                    
+                    optionsHtml += `<option value="${faculty.originalIndex}" ${disabledStr}>Prof. ${faculty.name} - ${availText}</option>`;
+                });
+
+                bodyDiv.innerHTML = `
+                    <div class="select-action-row">
+                        <div class="custom-select-wrapper" style="flex: 1;">
+                            <select id="sel-${subjIdx}" class="custom-select">
+                                ${optionsHtml}
+                            </select>
+                            <svg class="select-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <button class="opt-btn" style="width: auto; padding: 0 24px;" onclick="window.initiateSelectionFromDropdown('sel-${subjIdx}')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Secure Slot
+                        </button>
+                    </div>
+                `;
+            }
+            
+            section.appendChild(bodyDiv);
+            container.appendChild(section);
+        });
+    }
+
+    document.getElementById('authOtpInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') window.verifyOTP();
+    });
+
+    initApp();
+</script>
+</body>
+</html>
