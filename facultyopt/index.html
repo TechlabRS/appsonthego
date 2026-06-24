@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Faculty Dashboard - RGM FacultyOptIn v2.1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e1b4b; 
+            --accent: #4338ca;
+            --accent-hover: #3730a3;
+            --bg-color: #f1f5f9;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: rgba(0,0,0,0.08);
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        
+        body { 
+            background: #f8fafc; 
+            color: var(--text-main); 
+            -webkit-font-smoothing: antialiased; 
+            min-height: 100vh;
+        }
+
+        /* --- Offline Bouncing Animation Overlay --- */
+        .offline-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .offline-overlay.active { opacity: 1; visibility: visible; }
+        .bouncing-box { width: 100px; height: 100px; border: 4px solid var(--primary); border-radius: 20px; position: relative; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(30, 27, 75, 0.15); background: rgba(255,255,255,0.5); overflow: hidden;}
+        .bouncing-ball { width: 24px; height: 24px; background: var(--primary); border-radius: 50%; position: absolute; animation: bounceX 1.3s infinite alternate linear, bounceY 1.7s infinite alternate linear; box-shadow: 0 4px 10px rgba(30, 27, 75, 0.4);}
+        .offline-text { font-size: 1.5rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; margin-bottom: 8px;}
+        .offline-subtext { font-size: 1rem; color: var(--text-muted); font-weight: 500;}
+
+        @keyframes bounceX { 0% { left: 4px; } 100% { left: calc(100% - 28px); } }
+        @keyframes bounceY { 0% { top: 4px; } 100% { top: calc(100% - 28px); } }
+        /* ------------------------------------------ */
+
+        .splash-screen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.6s ease, visibility 0.6s; color: white; }
+        .splash-screen.hidden { opacity: 0; visibility: hidden; }
+        .brand-logo-large { display: flex; align-items: center; gap: 12px; font-size: 2.5rem; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 20px; animation: pulseLogo 2s infinite; }
+        .brand-logo-large svg { width: 48px; height: 48px; }
+        .loading-dots { display: flex; gap: 6px; }
+        .dot { width: 10px; height: 10px; background: white; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes pulseLogo { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* --- Redesigned Navbar --- */
+        .top-navbar {
+            background: var(--primary);
+            color: white;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            gap: 16px;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 14px; }
+        .nav-brand svg { flex-shrink: 0; color: var(--accent); }
+        .brand-text { display: flex; flex-direction: column; }
+        .brand-text .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
+        .brand-text .subtitle { font-size: 0.85rem; color: #94a3b8; font-weight: 500; margin-top: 2px; }
+        .version-tag { background: rgba(255,255,255,0.15); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; }
+        
+        .nav-actions { display: flex; align-items: center; gap: 16px; background: rgba(0,0,0,0.2); padding: 6px 6px 6px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); max-width: 100%; overflow-x: auto; }
+        .network-status { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; flex-shrink: 0; }
+        .status-indicator { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 rgba(16, 185, 129, 0.4); animation: pulse 2s infinite; }
+        .network-status.offline .status-indicator { background: #ef4444; animation: none; }
+        .network-status.offline { color: #fca5a5; }
+        
+        .nav-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.15); flex-shrink: 0; }
+
+        .btn-setup { background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 10px rgba(67, 56, 202, 0.3); white-space: nowrap; flex-shrink: 0; }
+        .btn-setup:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+
+        .container { max-width: 1400px; margin: 30px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 24px; min-height: calc(100vh - 120px); }
+        .dashboard-header { background: var(--card-bg); padding: 24px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border); display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; align-items: end; }
+        
+        .form-group { display: flex; flex-direction: column; gap: 10px; }
+        .form-group label { font-size: 0.8rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        /* --- Dropdown Layouts --- */
+        .dropdown-container { display: flex; gap: 12px; width: 100%; align-items: center; }
+        .custom-select-wrapper { position: relative; flex: 1; display: flex; align-items: center; min-width: 0; }
+        .custom-select { width: 100%; height: 52px; padding: 0 40px 0 20px; appearance: none; border: 2px solid var(--border); border-radius: 12px; font-size: 0.95rem; font-weight: 600; color: var(--text-main); background: #f8fafc; outline: none; cursor: pointer; transition: all 0.3s; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+        .custom-select:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 4px rgba(67, 56, 202, 0.1); }
+        .custom-select:disabled { background: #e2e8f0; color: var(--text-muted); cursor: not-allowed; }
+        .select-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-muted); }
+        
+        /* Faculty Avatar Preview next to selection */
+        .faculty-preview-avatar { width: 52px; height: 52px; border-radius: 12px; border: 1px solid var(--border); object-fit: cover; display: none; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+        input.filter-input { width: 100%; height: 52px; padding: 0 20px; border: 2px solid var(--border); border-radius: 12px; font-size: 1rem; outline: none; transition: all 0.3s; background: #f8fafc; font-weight: 500; }
+        input.filter-input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 4px rgba(67, 56, 202, 0.1); }
+        
+        .stats-card { background: #eff6ff; padding: 14px 24px; border-radius: 12px; border: 1px solid #bfdbfe; display: flex; justify-content: space-between; align-items: center; height: 52px; }
+        .stats-label { font-size: 0.9rem; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;}
+        .stats-value { font-size: 1.4rem; font-weight: 800; color: var(--primary); display: flex; align-items: baseline; gap: 4px; }
+        .stats-value span { font-size: 0.95rem; color: var(--text-muted); font-weight: 600; }
+
+        .btn-export { background: var(--text-main); border: none; padding: 0 24px; border-radius: 12px; font-weight: 700; color: white; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: all 0.3s; height: 52px; width: 100%; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15); }
+        .btn-export:hover { background: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2); }
+        .btn-export svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+        .table-container { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; background: var(--card-bg); border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        thead { background-color: #f8fafc; border-bottom: 1px solid var(--border); }
+        th { padding: 20px 24px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; white-space: nowrap; }
+        td { padding: 14px 24px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tbody tr { transition: background 0.2s; }
+        tbody tr:hover { background-color: #f8fafc; }
+        tbody tr:last-child td { border-bottom: none; }
+        .id-badge { background: #f1f5f9; color: var(--primary); padding: 4px 10px; border-radius: 8px; font-family: monospace; font-size: 0.9rem; font-weight: 700; border: 1px solid rgba(0,0,0,0.05); display: inline-block; letter-spacing: 0.05em; }
+        .timestamp { color: var(--text-muted); font-size: 0.85rem; font-weight: 500; }
+        
+        .student-profile-pic { width: 48px; height: 48px; border-radius: 14px; object-fit: cover; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 4px 10px rgba(0,0,0,0.06); display: block; background: #fff;}
+        .student-profile-fallback { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #f8fafc, #e2e8f0); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; letter-spacing: 0.05em; border: 1px solid rgba(0,0,0,0.05); box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 4px 10px rgba(0,0,0,0.04);}
+
+        .loader { display: none; margin: 80px auto; border: 3px solid #e2e8f0; border-top: 3px solid var(--accent); border-radius: 50%; width: 44px; height: 44px; animation: spin 0.8s linear infinite; }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000; opacity: 0; transition: opacity 0.4s; padding: 20px; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-card { background: #ffffff; width: 100%; max-width: 540px; border-radius: 24px; padding: 40px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); transform: scale(0.95); transition: all 0.3s; max-height: 90vh; overflow-y: auto; }
+        .modal-overlay.active .modal-card { transform: scale(1); }
+        
+        .upload-zone { border: 2px dashed rgba(67, 56, 202, 0.3); border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 20px; background: rgba(67, 56, 202, 0.02); transition: all 0.3s; }
+        .upload-zone:hover { border-color: var(--accent); background: rgba(67, 56, 202, 0.05); }
+        .upload-zone input[type="file"] { display: none; }
+        .upload-btn { display: inline-block; padding: 12px 24px; background: var(--primary); color: white; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.95rem; margin-top: 14px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(30, 27, 75, 0.2); }
+        .upload-btn:hover { background: var(--text-main); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(30, 27, 75, 0.3); }
+
+        /* --- Faculty Selfie Enrollment Space --- */
+        .faculty-selfie-box { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 16px; background: #f8fafc; border: 1px dashed var(--border); padding: 16px; border-radius: 16px; }
+        .faculty-camera-view { width: 110px; height: 110px; border-radius: 50%; overflow: hidden; border: 3px solid var(--accent); position: relative; background: #000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .faculty-camera-view video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .faculty-camera-view img { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: none; }
+        .selfie-actions-row { display: flex; gap: 8px; width: 100%; justify-content: center; }
+        .btn-mini-action { padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-mini-action.snap { background: var(--accent); color: white; }
+        .btn-mini-action.retake { background: #e2e8f0; color: var(--text-main); }
+        .btn-mini-action.save { background: var(--success); color: white; }
+        
+        .toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 2000; display: flex; flex-direction: column; gap: 12px; }
+        .toast { min-width: 320px; background: #0f172a; color: white; padding: 18px 24px; border-radius: 16px; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3); display: flex; align-items: center; gap: 12px; font-size: 1rem; font-weight: 600; animation: slideInRight 0.3s forwards; border: 1px solid rgba(255,255,255,0.1); }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Responsive Mobile Adjustments */
+        @media (max-width: 768px) {
+            .top-navbar { flex-direction: column; align-items: stretch; padding: 16px; gap: 16px; }
+            .nav-actions { justify-content: space-between; padding: 8px 8px 8px 16px; }
+            .brand-text .title { font-size: 1.1rem; }
+            .btn-setup { padding: 8px 14px; }
+            .brand-text .subtitle.admin-tag { display: none; }
+            
+            .dashboard-header { grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+            .form-group:first-child { grid-column: 1 / -1; }
+            .form-group label { font-size: 0.75rem; }
+            .dropdown-container { flex-direction: column; align-items: stretch; }
+            .faculty-preview-avatar { display: none !important; }
+            input.filter-input, .stats-card, .btn-export { height: 46px; }
+            .stats-value { font-size: 1.3rem; }
+            
+            .table-container { background: transparent; border: none; box-shadow: none; padding: 0 4px;}
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; } 
+            
+            tbody tr:not(.empty-row) { 
+                background: var(--card-bg); 
+                border: 1px solid var(--border); border-radius: 16px; 
+                margin-bottom: 14px; padding: 16px; 
+                box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+                display: grid; 
+                grid-template-columns: 48px 1fr auto; 
+                grid-template-areas: 
+                    "pic name no"
+                    "pic id time";
+                gap: 8px 12px;
+                align-items: center;
+            }
+            
+            /* Safeguard Empty Row layout from breaking */
+            tbody tr.empty-row { display: block !important; border: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; }
+            tbody tr.empty-row td { display: block !important; width: 100% !important; padding: 0 !important; text-align: center !important; }
+            
+            td { border: none; padding: 0; display: flex; justify-content: flex-start; text-align: left; }
+            td::before { display: none; } 
+            
+            td:nth-child(1) { grid-area: no; justify-content: flex-end; font-size: 0.8rem; opacity: 0.6; }
+            td:nth-child(2) { grid-area: pic; }
+            td:nth-child(3) { grid-area: id; align-items: flex-start; }
+            td:nth-child(4) { grid-area: name; align-items: flex-end; font-size: 1rem; letter-spacing: -0.01em; padding-top: 2px; font-weight: 700;}
+            td:nth-child(5) { grid-area: time; justify-content: flex-end; font-size: 0.75rem; }
+            
+            .id-badge { padding: 4px 8px; font-size: 0.75rem; background: rgba(67, 56, 202, 0.08); color: var(--accent); border: none; }
+            .student-profile-pic, .student-profile-fallback { width: 48px; height: 48px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="offlineOverlay" class="offline-overlay">
+    <div class="bouncing-box">
+        <div class="bouncing-ball"></div>
+    </div>
+    <div class="offline-text">Connection Lost</div>
+    <div class="offline-subtext">Waiting for network to resume...</div>
+</div>
+
+<div id="splashScreen" class="splash-screen">
+    <div class="brand-logo-large">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+        RGM FacultyOptIn
+    </div>
+    <div class="loading-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+</div>
+
+<nav class="top-navbar">
+    <div class="nav-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+        <div class="brand-text">
+            <span class="title">RGM FacultyOptIn <span class="version-tag">v2.1</span></span>
+            <span class="subtitle admin-tag">CSE(AI&ML) | Admin Panel</span>
+        </div>
+    </div>
+    <div class="nav-actions">
+        <div class="network-status" id="networkStatus">
+            <span class="status-indicator"></span> 
+            <span id="networkText" class="status-text">Syncing</span>
+        </div>
+        <div class="nav-divider"></div>
+        <button class="btn-setup" onclick="window.openSetupHub()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <span>Data Hub</span>
+        </button>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="dashboard-header">
+        <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Select Subject & Faculty</label>
+            <div class="dropdown-container">
+                <!-- Faculty Profile Image Sync display -->
+                <img id="facSelectedAvatar" class="faculty-preview-avatar" src="" alt="Faculty Portrait">
+                
+                <div class="custom-select-wrapper">
+                    <select id="subjectSelect" class="custom-select" onchange="window.handleSubjectChange()" disabled>
+                        <option value="">Initializing Subjects...</option>
+                    </select>
+                    <svg class="select-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="custom-select-wrapper">
+                    <select id="facultySelect" class="custom-select" onchange="window.handleFacultyChange()" disabled>
+                        <option value="">Select Faculty</option>
+                    </select>
+                    <svg class="select-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Filter Records</label>
+            <input type="text" id="tableFilter" class="filter-input" placeholder="Search Roll ID or Name..." oninput="window.filterTable()">
+        </div>
+
+        <div class="stats-card">
+            <div class="stats-label">Stack Capacity</div>
+            <div class="stats-value" id="capacityStats">0<span>/0</span></div>
+        </div>
+
+        <div class="form-group">
+            <label style="opacity: 0; display: none; @media(min-width: 768px){ display: block; }">Action</label>
+            <button class="btn-export" onclick="window.downloadCSV()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export CSV Report
+            </button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="loader" id="mainLoader"></div>
+        <table id="dataTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th width="8%">No.</th>
+                    <th width="12%">Profile</th>
+                    <th width="20%">Roll Identifier</th>
+                    <th width="30%">Student Name</th>
+                    <th width="30%">Registration Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal-overlay" id="importModal">
+    <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 style="font-size: 1.6rem; color: var(--text-main); font-weight: 800; letter-spacing: -0.02em;">Data Setup Hub v2.1</h2>
+            <button onclick="window.closeSetupHub()" style="background: none; border: none; cursor: pointer; font-size: 2rem; color: var(--text-muted); line-height: 1;">&times;</button>
+        </div>
+        
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; font-weight: 500; line-height: 1.5;">Deploy roster databases and assign biometric configurations.</p>
+
+        <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 8px;">1. Deploy Student Database</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Format: <code>RollNo, Full Name, MobileNumber, Year</code><br><em>e.g. "P001, John Doe, 9876543210, 3"</em></p>
+        <div class="upload-zone" id="studentZone">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            <br>
+            <label class="upload-btn">
+                Select Student CSV
+                <input type="file" id="studentCsvInput" accept=".csv" onchange="window.handleStudentUpload(event)">
+            </label>
+        </div>
+
+        <div style="height: 1px; background: var(--border); margin: 24px 0;"></div>
+
+        <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 4px;">2. Deploy Faculty-Subject Matrix</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Format: <code>StackID, Faculty Name, Subject, Capacity, Year</code><br><em>e.g. "F1-PHY, Dr. Smith, Physics, 70, 3"</em></p>
+        <div class="upload-zone" id="facultyZone">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line></svg>
+            <br>
+            <label class="upload-btn">
+                Select Matrix CSV
+                <input type="file" id="facultyCsvInput" accept=".csv" onchange="window.handleFacultyUpload(event)">
+            </label>
+        </div>
+
+        <!-- Faculty Biometric Registration Panel -->
+        <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 4px;">3. Faculty Biometric Selfie Hub</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Enroll modern facial identifiers for secure tracking loops.</p>
+        
+        <div class="faculty-selfie-box">
+            <div class="custom-select-wrapper" style="width:100%;">
+                <select id="biometricFacultySelect" class="custom-select" style="height:44px; font-size:0.85rem;" onchange="window.handleBiometricFacultySelect()">
+                    <option value="">-- Choose Faculty to Enroll --</option>
+                </select>
+                <svg class="select-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="faculty-camera-view">
+                <video id="facVideo" autoplay playsinline style="display:none;"></video>
+                <img id="facImg" src="" alt="Captured portrait panel" />
+            </div>
+            
+            <div class="selfie-actions-row">
+                <button id="btnFacSnap" class="btn-mini-action snap" style="display:none;" onclick="window.captureFacultySelfie()">Capture Biometric</button>
+                <button id="btnFacRetake" class="btn-mini-action retake" style="display:none;" onclick="window.retakeFacultySelfie()">Retake</button>
+                <button id="btnFacSave" class="btn-mini-action save" style="display:none;" onclick="window.saveFacultyBiometric()">Confirm Profile Photo</button>
+            </div>
+            <canvas id="facCanvas" style="display:none;"></canvas>
+        </div>
+
+        <!-- NEW: Danger Zone for Data Wiper -->
+        <div style="height: 1px; background: var(--border); margin: 32px 0 24px 0;"></div>
+        
+        <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; color: var(--danger);">Danger Zone: Database Reset</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">Irreversibly delete records to start fresh for a new semester.</p>
+        
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button class="btn-export" style="background: #fef2f2; color: var(--danger); border: 1px solid #fca5a5; height: 44px; flex: 1; font-size: 0.85rem; box-shadow: none;" onclick="window.confirmDataWipe('students')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Wipe Student Roster
+            </button>
+            <button class="btn-export" style="background: #fef2f2; color: var(--danger); border: 1px solid #fca5a5; height: 44px; flex: 1; font-size: 0.85rem; box-shadow: none;" onclick="window.confirmDataWipe('faculty')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Wipe Faculty Matrix
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal for Data Wipe -->
+<div class="modal-overlay" id="dangerModal" style="z-index: 10000;">
+    <div class="modal-card" style="text-align: center; max-width: 400px; padding: 32px 24px;">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" style="margin-bottom: 16px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Confirm Data Wipe</h2>
+        <p id="dangerModalText" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; font-weight: 500;">Are you sure?</p>
+        <div style="display: flex; gap: 12px;">
+            <button class="btn-export" style="background: #ffffff; color: var(--text-main); border: 1px solid var(--border); box-shadow: none; flex: 1; height: 46px;" onclick="window.closeDangerModal()">Cancel</button>
+            <button class="btn-export" style="background: var(--danger); flex: 1; height: 46px;" onclick="window.executeDataWipe()">Yes, Delete</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+        authDomain: "stuattnd.firebaseapp.com",
+        projectId: "stuattnd",
+        storageBucket: "stuattnd.firebasestorage.app",
+        messagingSenderId: "511533506488",
+        appId: "1:511533506488:web:aca4de3d513915d012f94d",
+        measurementId: "G-9PZZM5LFKX"
+    };
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'fs-app';
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let facultyDataStore = [];
+    let currentRenderedData = [];
+    
+    let currentSubject = null;
+    let selectedFacultyId = null;
+    let facultyCameraStream = null;
+    let pendingWipeType = null;
+
+    window.showToast = (msg, type) => {
+        let container = document.getElementById('toast-container') || document.createElement('div');
+        container.id = 'toast-container'; container.className = 'toast-container';
+        if(!container.parentNode) document.body.appendChild(container);
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = type === 'success' 
+            ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> ${msg}`
+            : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> ${msg}`;
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.animation = 'fadeOut 0.4s forwards'; setTimeout(() => toast.remove(), 400); }, 3500);
+    };
+
+    const updateNetworkStatus = () => {
+        const isOnline = navigator.onLine;
+        const statusEl = document.getElementById('networkStatus');
+        if(statusEl) statusEl.className = `network-status ${isOnline ? '' : 'offline'}`;
+        const textEl = document.getElementById('networkText');
+        if(textEl) textEl.textContent = isOnline ? 'Syncing' : 'Offline';
+
+        const offlineOverlay = document.getElementById('offlineOverlay');
+        if (offlineOverlay) {
+            if (!isOnline) offlineOverlay.classList.add('active');
+            else offlineOverlay.classList.remove('active');
+        }
+        if(!isOnline) window.showToast('Connection lost. Waiting for network...', 'error');
+    };
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
+
+    const hideSplashScreen = () => {
+        const splash = document.getElementById('splashScreen');
+        if(splash && !splash.classList.contains('hidden')) {
+            splash.classList.add('hidden');
+            setTimeout(() => splash.remove(), 600);
+        }
+    };
+
+    const initApp = async () => {
+        document.getElementById('mainLoader').style.display = 'block';
+        try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try { await signInWithCustomToken(auth, __initial_auth_token); } catch(e) { await signInAnonymously(auth); }
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (error) { 
+            console.error("Auth Error", error); 
+            hideSplashScreen();
+        }
+    };
+
+    onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; setupRealtimeListener(); }});
+
+    const setupRealtimeListener = () => {
+        const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'faculties');
+        onSnapshot(colRef, (snapshot) => {
+            document.getElementById('mainLoader').style.display = 'none';
+            document.getElementById('dataTable').style.display = 'table';
+            
+            facultyDataStore = snapshot.docs.map(doc => ({ fbId: doc.id, ...doc.data() }));
+            updateDropdowns();
+            updateBiometricFacultyDropdown();
+            hideSplashScreen();
+        });
+    };
+
+    window.handleStudentUpload = (event) => {
+        const file = event.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const text = e.target.result;
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'config', 'studentsData'), { csv: text });
+                window.showToast("Student roster deployed successfully.", "success");
+            } catch (err) {
+                window.showToast("Deployment failed.", "error");
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    window.handleFacultyUpload = (event) => {
+        const file = event.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const text = e.target.result;
+            const lines = text.split('\n').filter(l => l.trim().length > 0);
+            let startIndex = lines[0].toLowerCase().includes('id') || lines[0].toLowerCase().includes('name') ? 1 : 0;
+            
+            let successCount = 0;
+            for(let i = startIndex; i < lines.length; i++) {
+                const parts = lines[i].split(',');
+                if (parts.length >= 4) {
+                    const id = parts[0].trim();
+                    const name = parts[1].trim();
+                    const subject = parts[2].trim();
+                    const maxSlots = parseInt(parts[3].trim()) || 70;
+                    // Integrate new Year column safely (Default to 1 if not passed)
+                    const year = parts[4] ? parts[4].trim() : "1";
+                    
+                    if (id && name) {
+                        try {
+                            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'faculties', id), {
+                                id: id,
+                                name: name,
+                                subject: subject,
+                                maxSlots: maxSlots,
+                                year: year
+                            }, { merge: true });
+                            successCount++;
+                        } catch (err) {
+                            console.error(err);
+                        }
+                    }
+                }
+            }
+            window.showToast(`Deployed ${successCount} active faculty stacks.`, "success");
+        };
+        reader.readAsText(file);
+    };
+
+    function updateDropdowns() {
+        const subjectSelect = document.getElementById('subjectSelect');
+        const facultySelect = document.getElementById('facultySelect');
+
+        if (!facultyDataStore.length) {
+            subjectSelect.innerHTML = `<option value="">No Configuration Found (Run Hub)</option>`;
+            subjectSelect.disabled = true;
+            facultySelect.disabled = true;
+            
+            // Clear Avatar preview if we wipe data out completely
+            document.getElementById('facSelectedAvatar').style.display = 'none';
+            return;
+        }
+
+        subjectSelect.disabled = false;
+        const subjects = [...new Set(facultyDataStore.map(f => f.subject))].sort();
+        const currentSubjVal = currentSubject || subjectSelect.value;
+        
+        subjectSelect.innerHTML = `<option value="" disabled ${!currentSubjVal ? 'selected' : ''}>-- Select Subject --</option>`;
+        subjects.forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub;
+            opt.textContent = sub;
+            if (sub === currentSubjVal) {
+                opt.selected = true;
+                currentSubject = sub;
+            }
+            subjectSelect.appendChild(opt);
+        });
+
+        if (!currentSubject && subjects.length > 0) {
+            currentSubject = subjects[0];
+            subjectSelect.value = currentSubject;
+        }
+
+        window.handleSubjectChange(true);
+    }
+
+    window.handleSubjectChange = (isInitial = false) => {
+        const subjectSelect = document.getElementById('subjectSelect');
+        const facultySelect = document.getElementById('facultySelect');
+        currentSubject = subjectSelect.value;
+
+        facultySelect.innerHTML = `<option value="" disabled>-- Select Faculty --</option>`;
+        if (!currentSubject) {
+            facultySelect.disabled = true;
+            return;
+        }
+
+        facultySelect.disabled = false;
+        const relatedFaculties = facultyDataStore
+            .filter(f => f.subject === currentSubject)
+            .sort((a,b) => a.name.localeCompare(b.name));
+
+        relatedFaculties.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.fbId;
+            opt.textContent = `Asst.Prof. ${f.name} (${f.id}) - Year ${f.year || 1}`;
+            facultySelect.appendChild(opt);
+        });
+
+        if (isInitial && selectedFacultyId && relatedFaculties.some(f => f.fbId === selectedFacultyId)) {
+            facultySelect.value = selectedFacultyId;
+        } else if (relatedFaculties.length > 0) {
+            selectedFacultyId = relatedFaculties[0].fbId;
+            facultySelect.value = selectedFacultyId;
+        } else {
+            selectedFacultyId = null;
+        }
+
+        window.handleFacultyChange();
+    };
+
+    window.handleFacultyChange = () => {
+        selectedFacultyId = document.getElementById('facultySelect').value;
+        const imgEl = document.getElementById('facSelectedAvatar');
+        
+        const currentFacultyObj = facultyDataStore.find(f => f.fbId === selectedFacultyId);
+        if (currentFacultyObj && currentFacultyObj.profilePic) {
+            imgEl.src = currentFacultyObj.profilePic;
+            imgEl.style.display = 'block';
+        } else {
+            imgEl.style.display = 'none';
+        }
+
+        window.renderTable();
+    };
+
+    function updateBiometricFacultyDropdown() {
+        const bioSelect = document.getElementById('biometricFacultySelect');
+        const currentVal = bioSelect.value;
+        
+        bioSelect.innerHTML = '<option value="">-- Choose Faculty to Enroll --</option>';
+        const sortedFaculties = [...facultyDataStore].sort((a,b) => a.name.localeCompare(b.name));
+        
+        sortedFaculties.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.fbId;
+            opt.textContent = `Asst.Prof. ${f.name} [${f.subject}] - Yr ${f.year || 1}`;
+            if (f.fbId === currentVal) opt.selected = true;
+            bioSelect.appendChild(opt);
+        });
+    }
+
+    /* --- Faculty Camera Methods --- */
+    window.openSetupHub = () => {
+        document.getElementById('importModal').classList.add('active');
+        // Camera access is deferred until a faculty member is selected from the dropdown
+    };
+
+    window.closeSetupHub = () => {
+        document.getElementById('importModal').classList.remove('active');
+        if (facultyCameraStream) {
+            facultyCameraStream.getTracks().forEach(track => track.stop());
+            facultyCameraStream = null;
+        }
+        document.getElementById('biometricFacultySelect').value = "";
+        document.getElementById('facVideo').style.display = 'none';
+        document.getElementById('facImg').style.display = 'none';
+        document.getElementById('btnFacSnap').style.display = 'none';
+        document.getElementById('btnFacRetake').style.display = 'none';
+        document.getElementById('btnFacSave').style.display = 'none';
+    };
+
+    window.handleBiometricFacultySelect = async () => {
+        const selectedId = document.getElementById('biometricFacultySelect').value;
+        
+        // Stop camera if placeholder is selected
+        if (!selectedId) {
+            if (facultyCameraStream) {
+                facultyCameraStream.getTracks().forEach(track => track.stop());
+                facultyCameraStream = null;
+            }
+            document.getElementById('facVideo').style.display = 'none';
+            document.getElementById('btnFacSnap').style.display = 'none';
+            return;
+        }
+
+        // Request camera access only when a specific faculty is selected
+        if (!facultyCameraStream) {
+            try {
+                facultyCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+                document.getElementById('facVideo').srcObject = facultyCameraStream;
+                window.retakeFacultySelfie();
+            } catch (err) {
+                window.showToast("Camera terminal initiation failed. Need Permissions.", "error");
+                document.getElementById('biometricFacultySelect').value = "";
+            }
+        } else {
+            // Camera is already running, just reset UI for a new capture
+            window.retakeFacultySelfie();
+        }
+    };
+
+    window.captureFacultySelfie = () => {
+        const video = document.getElementById('facVideo');
+        const canvas = document.getElementById('facCanvas');
+        const img = document.getElementById('facImg');
+        
+        const targetSize = 160;
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        
+        const ctx = canvas.getContext('2d');
+        const minDim = Math.min(video.videoWidth, video.videoHeight);
+        const sx = (video.videoWidth - minDim) / 2;
+        const sy = (video.videoHeight - minDim) / 2;
+        
+        ctx.translate(targetSize, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
+        
+        const baseStr = canvas.toDataURL('image/webp', 0.6);
+        img.src = baseStr;
+        img.style.display = 'block';
+        video.style.display = 'none';
+        
+        document.getElementById('btnFacSnap').style.display = 'none';
+        document.getElementById('btnFacRetake').style.display = 'inline-block';
+        document.getElementById('btnFacSave').style.display = 'inline-block';
+    };
+
+    window.retakeFacultySelfie = () => {
+        document.getElementById('facImg').style.display = 'none';
+        document.getElementById('facVideo').style.display = 'block';
+        document.getElementById('btnFacSnap').style.display = 'inline-block';
+        document.getElementById('btnFacRetake').style.display = 'none';
+        document.getElementById('btnFacSave').style.display = 'none';
+    };
+
+    window.saveFacultyBiometric = async () => {
+        const targetFacId = document.getElementById('biometricFacultySelect').value;
+        if (!targetFacId) return window.showToast("Please choose a target faculty stack first.", "error");
+        
+        const baseStrData = document.getElementById('facImg').src;
+        const targetFaculty = facultyDataStore.find(f => f.fbId === targetFacId);
+        
+        try {
+            // Smart Sync: Find ALL stacks taught by this specific professor
+            const matchingStacks = facultyDataStore.filter(f => f.name === targetFaculty.name);
+            
+            // Update all of their subject stacks concurrently with the same profile picture
+            const updatePromises = matchingStacks.map(stack => {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'faculties', stack.fbId);
+                return updateDoc(docRef, { profilePic: baseStrData });
+            });
+
+            await Promise.all(updatePromises);
+            
+            window.showToast(`Biometric synced across ${matchingStacks.length} subjects for Asst.Prof. ${targetFaculty.name}.`, "success");
+            window.retakeFacultySelfie();
+        } catch (err) {
+            window.showToast("Failed to write snapshot string to DB layer.", "error");
+        }
+    };
+
+    /* --- Data Wiper Logic --- */
+    window.confirmDataWipe = (type) => {
+        pendingWipeType = type;
+        const modalText = type === 'students' 
+            ? "This will permanently delete the entire student roster. Students will instantly be locked out of the portal until a new roster is uploaded. Proceed?"
+            : "This will permanently delete all configured faculty stacks AND their enrolled student assignments. Proceed?";
+        
+        document.getElementById('dangerModalText').textContent = modalText;
+        document.getElementById('dangerModal').classList.add('active');
+        
+        // Hide setup hub temporarily to avoid layered chaos on small screens
+        document.getElementById('importModal').style.opacity = '0';
+    };
+
+    window.closeDangerModal = () => {
+        pendingWipeType = null;
+        document.getElementById('dangerModal').classList.remove('active');
+        document.getElementById('importModal').style.opacity = '1';
+    };
+
+    window.executeDataWipe = async () => {
+        if (!pendingWipeType) return;
+        
+        try {
+            if (pendingWipeType === 'students') {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'config', 'studentsData'));
+                window.showToast("Student roster wiped successfully.", "success");
+            } else if (pendingWipeType === 'faculty') {
+                // Fetch all faculties and delete individually as standard Firebase client-side has no 'deleteCollection'
+                const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'faculties'));
+                const deletePromises = [];
+                snap.forEach(d => {
+                    deletePromises.push(deleteDoc(d.ref));
+                });
+                await Promise.all(deletePromises);
+                
+                window.showToast("Faculty matrix wiped successfully.", "success");
+            }
+        } catch (e) {
+            console.error("Wipe failed:", e);
+            window.showToast("An error occurred while wiping data.", "error");
+        } finally {
+            window.closeDangerModal();
+        }
+    };
+
+    /* --- Rendering Logs --- */
+    window.renderTable = () => {
+        const faculty = facultyDataStore.find(f => f.fbId === selectedFacultyId);
+        if(!faculty) {
+            drawTableRows([]);
+            document.getElementById('capacityStats').innerHTML = `0<span>/0</span>`;
+            return;
+        }
+        
+        const enrolledArr = faculty.enrolled || [];
+        document.getElementById('capacityStats').innerHTML = `${enrolledArr.length}<span>/${faculty.maxSlots}</span>`;
+
+        currentRenderedData = [...enrolledArr].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        document.getElementById('tableFilter').value = ''; 
+        drawTableRows(currentRenderedData);
+    };
+
+    window.filterTable = () => {
+        const query = document.getElementById('tableFilter').value.toLowerCase();
+        const filtered = currentRenderedData.filter(s => 
+            s.id.toLowerCase().includes(query) || s.name.toLowerCase().includes(query)
+        );
+        drawTableRows(filtered);
+    };
+
+    function drawTableRows(dataArray) {
+        const tbody = document.getElementById('studentTableBody');
+        tbody.innerHTML = '';
+
+        if (!dataArray.length) {
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="5"><div style="text-align:center; padding:60px 20px; color:var(--text-muted); background:rgba(0,0,0,0.02); border-radius: 16px; margin-top:16px; width: 100%; box-sizing: border-box;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#cbd5e1" stroke-width="2" style="margin-bottom:16px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <h3 style="color:var(--text-main); font-weight:800; margin-bottom:8px;">No Records Found</h3><p style="font-weight: 500;">There are no student allocations in this stack.</p>
+            </div></td></tr>`;
+            return;
+        }
+
+        dataArray.forEach((student, index) => {
+            const dateObj = new Date(student.timestamp);
+            const dateStr = student.timestamp ? `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : '-';
+            
+            const avatarHtml = student.profilePic 
+                ? `<img src="${student.profilePic}" class="student-profile-pic" alt="${student.name}">`
+                : `<div class="student-profile-fallback">${student.name.substring(0,2).toUpperCase()}</div>`;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td data-label="No."><span style="color:var(--text-muted); font-weight:700;">#${index + 1}</span></td>
+                    <td data-label="Profile">${avatarHtml}</td>
+                    <td data-label="Identifier"><span class="id-badge">${student.id}</span></td>
+                    <td data-label="Name" style="font-weight:700; color:var(--text-main);">${student.name}</td>
+                    <td data-label="Timestamp" class="timestamp">${dateStr}</td>
+                </tr>
+            `;
+        });
+    }
+
+    window.downloadCSV = () => {
+        if (!currentRenderedData.length) return window.showToast("Export failed: No data available.", "error");
+        
+        const faculty = facultyDataStore.find(f => f.fbId === selectedFacultyId);
+        if (!faculty) return;
+
+        const stackName = `${faculty.subject}_${faculty.name}`.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const fullEnrolledSorted = [...(faculty.enrolled || [])].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Export S.No,Subject,Assigned Faculty,Student Roll ID,Student Name,Queue Order,Timestamp\n"; 
+        
+        currentRenderedData.forEach((s, i) => {
+            const absoluteOrder = fullEnrolledSorted.findIndex(enrolledStudent => enrolledStudent.id === s.id) + 1;
+            const safeFacultyName = `"${faculty.name.replace(/"/g, '""')}"`;
+            const safeSubject = `"${faculty.subject.replace(/"/g, '""')}"`;
+            const safeStudentName = `"${s.name.replace(/"/g, '""')}"`;
+            const dateObj = new Date(s.timestamp);
+            const formattedDate = s.timestamp ? `"${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}"` : '"-"';
+
+            csvContent += `${i+1},${safeSubject},${safeFacultyName},${s.id},${safeStudentName},${absoluteOrder},${formattedDate}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `allocation_${stackName}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    initApp();
+</script>
+</body>
+</html>
