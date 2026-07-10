@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Academic Pro Attendance</title>
+    <title>Academic Attendance Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Rotates the date headers in the report for a compact matrix view */
@@ -23,7 +23,7 @@
             <!-- Pulsing Logo -->
             <svg class="w-20 h-20 text-indigo-400 mb-6 drop-shadow-[0_0_15px_rgba(129,140,248,0.5)]" style="animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
             
-            <h1 class="text-4xl font-black text-white tracking-widest drop-shadow-md">Pro<span class="text-indigo-400">Attendance</span></h1>
+            <h1 class="text-4xl font-black text-white tracking-widest drop-shadow-md">ATTENDANCE<span class="text-indigo-400">.PRO</span></h1>
             <p class="text-indigo-200 mt-4 text-xs font-semibold tracking-[0.3em] uppercase opacity-80" style="animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;">Initializing Workspace</p>
             
             <!-- Animated Orbitals -->
@@ -39,7 +39,7 @@
         <aside class="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 p-6 shadow-sm fixed top-0 left-0 h-full z-20">
             <h1 class="text-xl font-black mb-10 text-indigo-700 tracking-tight flex items-center gap-2">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                Pro ATTENDANCE
+                ATTENDANCE.PRO
             </h1>
             <nav class="space-y-3">
                 <button onclick="showSection('setup')" id="nav-desk-setup" class="nav-btn w-full text-left px-5 py-3 rounded-xl font-semibold text-indigo-700 bg-indigo-50 transition">1. Setup Groups</button>
@@ -79,7 +79,7 @@
             <!-- Mobile Header (Visible only on mobile) -->
             <header class="md:hidden flex items-center gap-2 mb-6 pt-2">
                 <svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                <h1 class="text-xl font-black text-indigo-700 tracking-tight">Pro Attendance</h1>
+                <h1 class="text-xl font-black text-indigo-700 tracking-tight">ATTENDANCE.PRO</h1>
             </header>
 
             <!-- 1. SETUP SECTION -->
@@ -205,6 +205,13 @@
                     <span id="cloudStatusLabel" class="text-xs font-bold text-rose-600 bg-rose-100 px-3 py-1 rounded-full border border-rose-200">Connecting...</span>
                 </div>
                 
+                <!-- Cross-Device Sync Key -->
+                <div class="mb-6 bg-white p-5 rounded-3xl shadow-sm border border-indigo-100">
+                    <h3 class="font-bold text-indigo-800 text-sm mb-2">Device Sync Key (Required for GitHub/Mobile)</h3>
+                    <input type="text" id="syncKeyInput" placeholder="Create a unique passcode (e.g., ProfName2026)" class="bg-slate-50 border border-slate-200 p-3 rounded-xl w-full text-sm focus:ring-2 ring-indigo-500 outline-none font-bold text-indigo-900">
+                    <p class="text-xs text-slate-500 mt-2">Use this exact same key on any device or link (like your GitHub page) to access your specific data.</p>
+                </div>
+
                 <!-- Push/Pull Actions -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
@@ -574,12 +581,10 @@
                 <th class="p-4 sm:p-5 text-left font-bold text-slate-700 whitespace-nowrap sticky left-0 top-0 bg-slate-50 z-30 border-b border-r border-slate-200">Roll No.</th>`;
             
             uniqueDatesRaw.forEach(d => {
-				// Split YYYY-MM-DD into components and rearrange to DD/MM
-				const [year, month, day] = d.split('-');
-				const shortDate = `${day}/${month}`;
-				
-				headHtml += `<th class="p-2 border-l border-b border-slate-200 rotate-text text-slate-500 font-semibold tracking-widest bg-slate-50">${shortDate}</th>`;
-			});
+                // Shorten date from YYYY-MM-DD to MM-DD for vertical headers
+                const shortDate = d.slice(5).replace('-', '/');
+                headHtml += `<th class="p-2 border-l border-b border-slate-200 rotate-text text-slate-500 font-semibold tracking-widest bg-slate-50">${shortDate}</th>`;
+            });
             
             headHtml += `
                 <th class="p-4 border-l border-b border-slate-200 text-slate-700 whitespace-nowrap bg-slate-50">Total Credits</th>
@@ -785,6 +790,8 @@
 
         // Global functions mapped for inline HTML onclick handlers
         window.syncToCloud = async function() {
+            const syncKey = document.getElementById('syncKeyInput').value.trim();
+            if(!syncKey) return alert("Please enter a unique Device Sync Key above to push your data across platforms.");
             if(!currentUserId || !db) return alert("Cloud connection not ready. Please check your internet.");
             const { doc, setDoc } = firestoreApi;
             
@@ -794,8 +801,8 @@
                 btn.innerHTML = "Pushing to Cloud...";
                 
                 // Cost-Saving Schema: Push all JSON data as one atomic document string.
-                // Mandatory Path Rule: /artifacts/{appId}/users/{userId}/data/attendance
-                const docRef = doc(db, 'artifacts', artifactAppId, 'users', currentUserId, 'data', 'attendance');
+                // Uses Public Path with Sync Key for cross-domain access (fixes GitHub Pages issue)
+                const docRef = doc(db, 'artifacts', artifactAppId, 'public', 'data', 'shared_attendance', syncKey);
                 
                 await setDoc(docRef, {
                     groups: JSON.stringify(groups),
@@ -803,13 +810,15 @@
                 });
                 
                 btn.innerHTML = origText;
-                alert("Successfully Synced to Firestore! Your data is safe in the cloud.");
+                alert("Successfully Synced to Firestore! Use your Sync Key to access this on GitHub Pages.");
             } catch(e) {
                 alert("Sync failed: " + e.message);
             }
         };
 
         window.fetchFromCloud = async function() {
+            const syncKey = document.getElementById('syncKeyInput').value.trim();
+            if(!syncKey) return alert("Please enter your Device Sync Key above to fetch your specific data.");
             if(!currentUserId || !db) return alert("Cloud connection not ready.");
             const { doc, getDoc } = firestoreApi;
             
@@ -820,7 +829,7 @@
                 const origText = btn.innerHTML;
                 btn.innerHTML = "Fetching Data...";
                 
-                const docRef = doc(db, 'artifacts', artifactAppId, 'users', currentUserId, 'data', 'attendance');
+                const docRef = doc(db, 'artifacts', artifactAppId, 'public', 'data', 'shared_attendance', syncKey);
                 const docSnap = await getDoc(docRef);
                 
                 if(docSnap.exists()) {
