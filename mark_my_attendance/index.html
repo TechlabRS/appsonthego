@@ -3,23 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Acoustic & GPS Attendance System | PWA</title>
-  <!-- Tailwind CSS CDN -->
+  <title>AcoustiXPresence | Ultrasonic PWA</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Custom Glassmorphism & UI Styles -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #B19CD8 100%);
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
       min-height: 100vh;
       color: #f8fafc;
       overflow-x: hidden;
       -webkit-tap-highlight-color: transparent;
     }
-    /* Glassmorphism Classes */
     .glass-panel {
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(16px);
@@ -36,9 +32,7 @@
     .glass-card:hover {
       transform: translateY(-3px);
       border-color: rgba(99, 102, 241, 0.5);
-      box-shadow: 0 12px 20px -10px rgba(99, 102, 241, 0.3);
     }
-    /* Interactive Chips */
     .chip {
       padding: 0.4rem 1rem;
       border-radius: 9999px;
@@ -55,26 +49,19 @@
       align-items: center;
       justify-content: center;
     }
-    .chip:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
+    .chip:hover { background: rgba(255, 255, 255, 0.15); }
     .chip.active {
       background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
       border-color: #818cf8;
       color: #ffffff;
       box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
     }
-    /* Custom Scrollbar for desktop */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
-    
-    /* Hide scrollbar for horizontal swipeable areas on mobile */
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-    /* Animation Keyframes */
     @keyframes pulse-ring {
       0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
       70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
@@ -85,22 +72,22 @@
 </head>
 <body class="flex flex-col min-h-screen text-slate-100">
 
-  <!-- TOP NAVIGATION BAR -->
-  <header class="glass-panel sticky top-0 z-50 border-b border-white/10 px-4 lg:px-8 py-3.5 flex items-center justify-between">
+  <!-- TOP NAVIGATION -->
+  <header class="glass-panel sticky top-0 z-40 border-b border-white/10 px-4 lg:px-8 py-3.5 flex items-center justify-between">
     <div class="flex items-center space-x-3 truncate">
       <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 font-extrabold text-base sm:text-lg shrink-0">
         <i class="fa-solid fa-wave-square"></i>
       </div>
       <div class="truncate">
-        <span class="text-base sm:text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-200 truncate">AcoustixPresence</span>
+        <span class="text-base sm:text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-200 truncate">AcoustiXPresence</span>
         <span class="flex items-center gap-1 text-[9px] sm:text-[10px] text-indigo-400 font-semibold tracking-wider uppercase truncate">
           Ultrasonic & GPS PWA
-          <span id="sync-status-indicator" class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 hidden" title="Cloud Sync Active"></span>
+          <span id="sync-status-indicator" class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 hidden"></span>
         </span>
       </div>
     </div>
 
-    <!-- User Profile & Role Switcher -->
+    <!-- User Profile Dropdown -->
     <div class="flex items-center space-x-3 shrink-0" id="nav-user-section">
       <div id="user-badge" class="hidden items-center space-x-2.5 bg-white/5 border border-white/10 px-2 sm:px-3 py-1.5 rounded-full">
         <img id="nav-profile-pic" src="" alt="Profile" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-indigo-400 shrink-0">
@@ -112,9 +99,7 @@
       <button id="btn-logout" class="hidden chip bg-red-500/20 border-red-500/40 text-red-300 hover:bg-red-500/30 px-3 py-1.5 sm:px-4 sm:py-2">
         <i class="fa-solid fa-power-off sm:mr-1"></i> <span class="hidden sm:inline">Logout</span>
       </button>
-      <button id="btn-show-login" class="chip active">
-        <i class="fa-solid fa-user-lock mr-1.5"></i> Portal
-      </button>
+      <button id="btn-show-login" class="chip active"><i class="fa-solid fa-user-lock mr-1.5"></i> Portal</button>
     </div>
   </header>
 
@@ -122,7 +107,7 @@
   <main class="flex-grow w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
 
     <!-- LANDING / ONBOARDING VIEW -->
-    <section id="view-onboarding" class="max-w-xl mx-auto mt-4 sm:mt-8">
+    <section id="view-onboarding" class="max-w-xl mx-auto mt-2 sm:mt-8">
       <div class="glass-panel rounded-[2rem] p-5 sm:p-8 shadow-2xl relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -170,17 +155,12 @@
 
         <!-- SIGN UP FORM -->
         <form id="form-signup" class="space-y-4 hidden">
-          <!-- Role Selector Chips -->
           <div class="flex justify-center gap-2.5 sm:gap-3 mb-5" id="role-selector">
-            <button type="button" class="chip active py-2 sm:py-2.5 flex-1" data-role="student">
-              <i class="fa-solid fa-user-graduate mr-2"></i> Student
-            </button>
-            <button type="button" class="chip py-2 sm:py-2.5 flex-1" data-role="faculty">
-              <i class="fa-solid fa-chalkboard-user mr-2"></i> Faculty
-            </button>
+            <button type="button" class="chip active py-2 sm:py-2.5 flex-1" data-role="student"><i class="fa-solid fa-user-graduate mr-2"></i> Student</button>
+            <button type="button" class="chip py-2 sm:py-2.5 flex-1" data-role="faculty"><i class="fa-solid fa-chalkboard-user mr-2"></i> Faculty</button>
           </div>
 
-          <!-- Master Key (Hidden by default, shown for Faculty) -->
+          <!-- Master Key (Hidden by default) -->
           <div id="wrapper-masterkey" class="hidden">
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-amber-300 mb-1.5">Faculty Master Key</label>
             <div class="relative">
@@ -214,12 +194,25 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="wrapper-student-details">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="wrapper-student-details">
             <div>
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Roll Number (CSV Validated)</label>
               <div class="relative">
                 <i class="fa-solid fa-id-card absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
                 <input type="text" id="signup-roll" required placeholder="EX: 101A" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase placeholder:normal-case placeholder:text-slate-600">
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Academic Year</label>
+              <div class="relative">
+                <i class="fa-solid fa-calendar-days absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
+                <select id="signup-year" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors appearance-none text-white">
+                  <option value="1">1st Year</option>
+                  <option value="2">2nd Year</option>
+                  <option value="3">3rd Year</option>
+                  <option value="4">4th Year</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
               </div>
             </div>
             <div>
@@ -259,7 +252,7 @@
     <!-- FACULTY DASHBOARD VIEW -->
     <section id="view-faculty" class="hidden space-y-4 sm:space-y-6">
       
-      <!-- Faculty Navigation Tabs (Swipeable on Mobile) -->
+      <!-- Faculty Navigation Tabs -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-2 rounded-2xl w-full overflow-hidden">
         <div class="flex gap-2 overflow-x-auto hide-scrollbar snap-x w-full sm:w-auto pb-1 sm:pb-0" id="faculty-tabs">
           <button class="chip active py-2.5 px-4 sm:px-5 shrink-0 snap-start" data-tab="fac-broadcast"><i class="fa-solid fa-tower-broadcast mr-1.5"></i>Broadcast</button>
@@ -296,9 +289,20 @@
               </div>
             </div>
 
+            <!-- Year Selection Chips -->
+            <div>
+              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">2. Target Academic Year</label>
+              <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-year">
+                <button type="button" class="chip active shrink-0" data-val="1">1st Year</button>
+                <button type="button" class="chip shrink-0" data-val="2">2nd Year</button>
+                <button type="button" class="chip shrink-0" data-val="3">3rd Year</button>
+                <button type="button" class="chip shrink-0" data-val="4">4th Year</button>
+              </div>
+            </div>
+
             <!-- Section Selection Chips -->
             <div>
-              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">2. Target Section / Branch</label>
+              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">3. Target Section / Branch</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-section">
                 <button type="button" class="chip active shrink-0" data-val="A">SECTION A</button>
                 <button type="button" class="chip shrink-0" data-val="B">SECTION B</button>
@@ -309,7 +313,7 @@
 
             <!-- Geofence Radius Selection -->
             <div>
-              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">3. Geofence Boundary Radius</label>
+              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">4. Geofence Boundary Radius</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-radius">
                 <button type="button" class="chip shrink-0" data-val="15">15m (STRICT ROOM)</button>
                 <button type="button" class="chip active shrink-0" data-val="25">25m (STANDARD)</button>
@@ -355,12 +359,16 @@
                 <h4 class="text-base sm:text-lg font-extrabold text-white font-mono">18,500 Hz Tone</h4>
                 <p class="text-[10px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">Geofence: <span id="active-coords" class="text-indigo-300 font-mono">0.00, 0.00</span></p>
               </div>
-              <div class="border-t border-white/10 pt-3 sm:pt-4 w-full grid grid-cols-2 gap-2 text-left">
-                <div class="bg-white/5 p-2 sm:p-2.5 rounded-xl overflow-hidden">
+              <div class="border-t border-white/10 pt-3 sm:pt-4 w-full grid grid-cols-3 gap-2 text-left">
+                <div class="bg-white/5 p-2 sm:p-2.5 rounded-xl overflow-hidden col-span-3">
                   <span class="text-[9px] sm:text-[10px] text-slate-400 block truncate">Active Subject</span>
                   <span id="stat-subject" class="text-[10px] sm:text-xs font-bold text-white truncate block">---</span>
                 </div>
-                <div class="bg-white/5 p-2 sm:p-2.5 rounded-xl overflow-hidden">
+                <div class="bg-white/5 p-2 sm:p-2.5 rounded-xl overflow-hidden col-span-1">
+                  <span class="text-[9px] sm:text-[10px] text-slate-400 block truncate">Target Year</span>
+                  <span id="stat-year" class="text-[10px] sm:text-xs font-bold text-white truncate block">---</span>
+                </div>
+                <div class="bg-white/5 p-2 sm:p-2.5 rounded-xl overflow-hidden col-span-2">
                   <span class="text-[9px] sm:text-[10px] text-slate-400 block truncate">Target Section</span>
                   <span id="stat-section" class="text-[10px] sm:text-xs font-bold text-white truncate block">---</span>
                 </div>
@@ -379,12 +387,11 @@
             <p class="text-[10px] sm:text-xs text-slate-400">Student cards animate into view upon handshake.</p>
           </div>
           <div class="flex items-center space-x-2 self-start sm:self-auto">
-            <button id="btn-manual-override" class="hidden chip bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30 text-[10px] py-1 px-2.5">
-              <i class="fa-solid fa-user-pen sm:mr-1.5"></i> <span class="hidden sm:inline">Manual Override</span>
+            <button id="btn-manual-override" class="chip bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30 text-[10px] py-1.5 px-3">
+              <i class="fa-solid fa-user-pen mr-1.5"></i> Manual Override
             </button>
-            <span class="text-[10px] sm:text-xs text-slate-400 ml-1">Sync:</span>
-            <span class="chip bg-emerald-500/20 text-emerald-300 border-emerald-500/30 font-mono text-[10px] py-1 px-2">
-              <i class="fa-solid fa-rotate animate-spin mr-1.5"></i> Local + Cloud
+            <span class="chip bg-emerald-500/20 text-emerald-300 border-emerald-500/30 font-mono text-[10px] py-1 px-2 hidden md:inline-flex">
+              <i class="fa-solid fa-rotate animate-spin mr-1.5"></i> Syncing DB
             </span>
           </div>
         </div>
@@ -406,14 +413,26 @@
             <h3 class="text-base sm:text-lg font-bold">Student Directory</h3>
             <p class="text-[10px] sm:text-xs text-slate-400">Sorted ASC by Roll Number.</p>
           </div>
-          <div class="flex items-center space-x-2 w-full sm:w-auto">
-            <span class="text-[10px] sm:text-xs font-semibold text-slate-300 shrink-0">Filter:</span>
-            <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="dir-section-filters">
-              <button class="chip active py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="ALL">ALL</button>
-              <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="A">SEC A</button>
-              <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="B">SEC B</button>
-              <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="C">SEC C</button>
-              <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="D">SEC D</button>
+          <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+            <div class="flex items-center space-x-2 w-full sm:w-auto">
+              <span class="text-[10px] sm:text-xs font-semibold text-slate-300 shrink-0">Year:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="dir-year-filters">
+                <button class="chip active py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="ALL">ALL</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="1">1st</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="2">2nd</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="3">3rd</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="4">4th</button>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 w-full sm:w-auto">
+              <span class="text-[10px] sm:text-xs font-semibold text-slate-300 shrink-0">Section:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="dir-section-filters">
+                <button class="chip active py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="ALL">ALL</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="A">SEC A</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="B">SEC B</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="C">SEC C</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="D">SEC D</button>
+              </div>
             </div>
           </div>
         </div>
@@ -426,7 +445,7 @@
                   <th class="py-3 px-4">Biometric</th>
                   <th class="py-3 px-4">Roll No</th>
                   <th class="py-3 px-4">Name</th>
-                  <th class="py-3 px-4">Section</th>
+                  <th class="py-3 px-4">Yr & Sec</th>
                   <th class="py-3 px-4">Role</th>
                   <th class="py-3 px-4">Status</th>
                 </tr>
@@ -513,6 +532,17 @@
             </div>
 
             <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Year:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-year">
+                <button class="chip active shrink-0" data-val="ALL">All Years</button>
+                <button class="chip shrink-0" data-val="1">1st Yr</button>
+                <button class="chip shrink-0" data-val="2">2nd Yr</button>
+                <button class="chip shrink-0" data-val="3">3rd Yr</button>
+                <button class="chip shrink-0" data-val="4">4th Yr</button>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 w-full overflow-hidden">
               <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Section:</span>
               <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-section">
                 <button class="chip active shrink-0" data-val="ALL">All Sections</button>
@@ -526,13 +556,13 @@
 
           <!-- Reports Data Table -->
           <div class="overflow-x-auto hide-scrollbar w-full -mx-5 px-5 sm:mx-0 sm:px-0">
-            <table class="w-full text-left text-[11px] sm:text-sm whitespace-nowrap min-w-[600px]">
+            <table class="w-full text-left text-[11px] sm:text-sm whitespace-nowrap min-w-[650px]">
               <thead class="bg-white/5 text-[10px] sm:text-xs uppercase tracking-wider text-slate-300 font-semibold border-b border-white/10">
                 <tr>
                   <th class="py-2.5 sm:py-3 px-3 sm:px-4">Date & Time</th>
                   <th class="py-2.5 sm:py-3 px-3 sm:px-4">Roll No</th>
                   <th class="py-2.5 sm:py-3 px-3 sm:px-4">Name</th>
-                  <th class="py-2.5 sm:py-3 px-3 sm:px-4">Sec</th>
+                  <th class="py-2.5 sm:py-3 px-3 sm:px-4">Yr & Sec</th>
                   <th class="py-2.5 sm:py-3 px-3 sm:px-4">Subject</th>
                   <th class="py-2.5 sm:py-3 px-3 sm:px-4">Selfie Check</th>
                 </tr>
@@ -557,7 +587,7 @@
           <button class="chip py-2 sm:py-2.5 px-4 sm:px-5 shrink-0" data-tab="stu-history"><i class="fa-solid fa-clock-rotate-left mr-1.5"></i>Timeline</button>
         </div>
         <div class="px-3 py-1.5 sm:py-1 bg-slate-900/60 rounded-xl border border-white/5 text-[10px] sm:text-xs font-mono self-start sm:self-auto shrink-0">
-          <span class="text-slate-400">Section:</span> <strong id="stu-my-section" class="text-indigo-400">--</strong>
+          <span class="text-slate-400">Class:</span> <strong id="stu-my-section" class="text-indigo-400">--</strong>
         </div>
       </div>
 
@@ -620,7 +650,7 @@
                 <i class="fa-solid fa-fingerprint text-lg sm:text-xl"></i>
                 <span>Join Live Class</span>
               </button>
-              <p id="join-status-hint" class="text-[10px] sm:text-[11px] text-slate-400 mt-2.5 leading-tight px-2">Waiting for broadcast in Section <span class="font-bold text-white" id="hint-section">--</span>...</p>
+              <p id="join-status-hint" class="text-[10px] sm:text-[11px] text-slate-400 mt-2.5 leading-tight px-2">Waiting for broadcast in <span class="font-bold text-white" id="hint-section">--</span>...</p>
             </div>
 
           </div>
@@ -674,7 +704,28 @@
 
   </main>
 
-  <!-- SELFIE CAPTURE MODAL (Step 3 of Verification) -->
+  <!-- MANUAL OVERRIDE MODAL (Faculty Only) -->
+  <div id="modal-manual" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-panel max-w-lg w-full rounded-3xl p-5 sm:p-6 border-indigo-500/50 shadow-2xl space-y-4 max-h-[85vh] flex flex-col mt-[-5vh] sm:mt-0">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3 shrink-0">
+        <h3 class="font-extrabold text-base sm:text-lg">Manual Attendance Override</h3>
+        <button id="btn-close-manual" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      
+      <!-- Search -->
+      <div class="relative shrink-0">
+        <i class="fa-solid fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
+        <input type="text" id="manual-search" placeholder="Search Roll No or Name..." class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-xs font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase">
+      </div>
+
+      <!-- Student List -->
+      <div class="overflow-y-auto hide-scrollbar flex-grow space-y-2" id="manual-student-list">
+        <!-- JS Populated -->
+      </div>
+    </div>
+  </div>
+
+  <!-- SELFIE CAPTURE MODAL -->
   <div id="modal-selfie" class="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="glass-panel max-w-md w-full rounded-3xl p-5 sm:p-6 border-indigo-500/50 shadow-2xl space-y-4 sm:space-y-5 animate-in fade-in zoom-in duration-200 mt-[-10vh] sm:mt-0">
       <div class="flex items-center justify-between border-b border-white/10 pb-2.5 sm:pb-3">
@@ -687,7 +738,6 @@
 
       <p class="text-[11px] sm:text-xs text-slate-300 leading-relaxed">Handshake and GPS confirmed. Look directly at the front camera to snap your live attendance verification selfie.</p>
 
-      <!-- Camera Viewport -->
       <div class="relative rounded-2xl overflow-hidden bg-slate-900 border-2 border-dashed border-indigo-500/40 aspect-[4/3] flex items-center justify-center shadow-inner">
         <video id="selfie-video" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
         <canvas id="selfie-canvas" class="hidden"></canvas>
@@ -696,10 +746,10 @@
       </div>
 
       <div class="flex gap-2.5 sm:gap-3">
-        <button id="btn-retake-selfie" class="hidden flex-1 chip bg-slate-800 border-white/20 hover:bg-slate-700 py-3 sm:py-3 text-center font-bold text-sm">
+        <button id="btn-retake-selfie" class="hidden flex-1 chip bg-slate-800 border-white/20 hover:bg-slate-700 py-3 text-center font-bold text-sm">
           <i class="fa-solid fa-rotate-left mr-1.5"></i> Retake
         </button>
-        <button id="btn-snap-selfie" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3 sm:py-3 px-4 sm:px-6 rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base">
+        <button id="btn-snap-selfie" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3 px-4 sm:px-6 rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base">
           <i class="fa-solid fa-camera mr-1.5"></i>
           <span>Snap & Submit</span>
         </button>
@@ -718,37 +768,13 @@
         <video id="reg-video" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
         <canvas id="reg-canvas" class="hidden"></canvas>
       </div>
-      <button id="btn-snap-reg" class="w-full py-3 sm:py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition-all text-sm sm:text-base flex items-center justify-center">
+      <button id="btn-snap-reg" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition-all text-sm sm:text-base flex items-center justify-center">
         <i class="fa-solid fa-camera mr-2"></i> Compress & Save
       </button>
     </div>
   </div>
 
-  <!-- MANUAL OVERRIDE MODAL FOR FACULTY -->
-  <div id="modal-manual" class="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="glass-panel max-w-lg w-full rounded-3xl p-5 sm:p-6 border-indigo-500/50 shadow-2xl space-y-4 sm:space-y-5 animate-in fade-in zoom-in duration-200 mt-[-5vh] sm:mt-0 max-h-[85vh] flex flex-col">
-      <div class="flex items-center justify-between border-b border-white/10 pb-2.5 sm:pb-3 shrink-0">
-        <div class="flex items-center space-x-2.5">
-          <i class="fa-solid fa-user-pen text-indigo-400"></i>
-          <h3 class="font-extrabold text-base sm:text-lg">Manual Attendance</h3>
-        </div>
-        <button id="btn-close-manual" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      
-      <p class="text-[11px] sm:text-xs text-slate-300 leading-relaxed shrink-0">Mark students as Present or Absent if they face technical difficulties during the active session.</p>
-
-      <div class="relative shrink-0">
-         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
-         <input type="text" id="manual-search" placeholder="SEARCH ROLL NO OR NAME" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase placeholder:normal-case placeholder:text-slate-500">
-      </div>
-
-      <div class="flex-grow overflow-y-auto hide-scrollbar bg-slate-900/50 border border-white/5 rounded-xl p-2 space-y-1" id="manual-student-list">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-  </div>
-
-  <!-- FLOATING TOAST NOTIFICATION CONTAINER (Optimized for Mobile & Desktop) -->
+  <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
   <div id="toast-container" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-[200] flex flex-col space-y-2.5 sm:max-w-sm pointer-events-none"></div>
 
   <!-- ========================================== -->
@@ -760,14 +786,14 @@
 
     // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
-	  apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
-	  authDomain: "stuattnd.firebaseapp.com",
-	  projectId: "stuattnd",
-	  storageBucket: "stuattnd.firebasestorage.app",
-	  messagingSenderId: "511533506488",
-	  appId: "1:511533506488:web:aca4de3d513915d012f94d",
-	  measurementId: "G-9PZZM5LFKX"
-	};
+      apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+      authDomain: "stuattnd.firebaseapp.com",
+      projectId: "stuattnd",
+      storageBucket: "stuattnd.firebasestorage.app",
+      messagingSenderId: "511533506488",
+      appId: "1:511533506488:web:aca4de3d513915d012f94d",
+      measurementId: "G-9PZZM5LFKX"
+    };
 
     let app, db, useMockStorage = false;
     try {
@@ -787,6 +813,7 @@
       sessionListener: null,    
       selectedRole: 'student',  
       facSubject: 'ADVANCED DATABASE SYSTEMS',
+      facYear: '1',
       facSection: 'A',
       facRadius: 25,
       facGps: null,
@@ -798,7 +825,9 @@
       capturedSelfie: null,     
       reportFilterTime: 'ALL',
       reportFilterSubj: 'ALL',
+      reportFilterYear: 'ALL',
       reportFilterSec: 'ALL',
+      dirFilterYear: 'ALL',
       dirFilterSec: 'ALL',
       activeWhitelist: [] 
     };
@@ -828,6 +857,7 @@
 
       signupName: document.getElementById('signup-name'),
       signupRoll: document.getElementById('signup-roll'),
+      signupYear: document.getElementById('signup-year'),
       signupSection: document.getElementById('signup-section'),
       signupEmail: document.getElementById('signup-email'),
       signupPin: document.getElementById('signup-pin'),
@@ -848,6 +878,7 @@
       activeTimer: document.getElementById('active-timer'),
       activeCoords: document.getElementById('active-coords'),
       statSubject: document.getElementById('stat-subject'),
+      statYear: document.getElementById('stat-year'),
       statSection: document.getElementById('stat-section'),
       broadcastInactive: document.getElementById('broadcast-inactive-state'),
       broadcastActive: document.getElementById('broadcast-active-state'),
@@ -881,7 +912,8 @@
       btnClearWhitelist: document.getElementById('btn-clear-whitelist'),
       whitelistCount: document.getElementById('whitelist-count'),
       whitelistPreview: document.getElementById('whitelist-preview'),
-      
+
+      // Manual Override Elements
       btnManualOverride: document.getElementById('btn-manual-override'),
       modalManual: document.getElementById('modal-manual'),
       btnCloseManual: document.getElementById('btn-close-manual'),
@@ -898,7 +930,6 @@
     }
 
     // --- HARDWARE DEVICE BINDING INIT ---
-    // Generates a unique UUID per browser/device if not already present
     function getHardwareDeviceId() {
       let dId = localStorage.getItem('acoustix_hardware_id');
       if (!dId) {
@@ -917,8 +948,7 @@
       if (type === 'error') { border = 'border-red-500/40'; icon = 'fa-triangle-exclamation text-red-400'; }
       if (type === 'warn') { border = 'border-amber-500/40'; icon = 'fa-bell text-amber-400'; }
 
-      // Fully responsive toast sizing
-      toast.className = `glass-panel ${bg} border ${border} p-3.5 sm:p-4 rounded-2xl shadow-2xl flex items-center space-x-3 pointer-events-auto transform translate-y-2 opacity-0 transition-all duration-300 text-[11px] sm:text-xs font-semibold w-full max-w-[calc(100vw-2rem)] sm:max-w-sm mx-auto sm:mx-0`;
+      toast.className = `glass-panel ${bg} border ${border} p-3.5 sm:p-4 rounded-2xl shadow-2xl flex items-center space-x-3 pointer-events-auto transform translate-y-2 opacity-0 transition-all duration-300 text-[11px] sm:text-xs font-semibold w-full max-w-[calc(100vw-2rem)] sm:max-w-sm mx-auto sm:mx-0 z-[300]`;
       toast.innerHTML = `<i class="fa-solid ${icon} text-sm sm:text-base shrink-0"></i><span class="text-slate-200 leading-tight">${message}</span>`;
       
       document.getElementById('toast-container').appendChild(toast);
@@ -1016,7 +1046,7 @@
 
     setInterval(() => SYNC_QUEUE.flushToCloud(), 4000);
 
-    // --- ADVANCED DB LAYER (Always Local First -> Sync Queue) ---
+    // --- BULLETPROOF DB LAYER (Guarantees Local & Cloud Write sync) ---
     const DB_ENGINE = {
       async getWhitelist() {
         return JSON.parse(localStorage.getItem('acoustix_whitelist') || '[]');
@@ -1027,21 +1057,21 @@
       },
       
       async getUserByEmail(email) {
-        // Query Local First
         const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
         const localUser = Object.values(users).find(u => u.email === email);
         if (localUser) return localUser;
 
-        // Fallback to Cloud if Online
         if (!useMockStorage && navigator.onLine) {
-           const q = query(collection(db, "users"), where("email", "==", email));
-           const snap = await getDocs(q);
-           if (!snap.empty) {
-               const cloudUser = snap.docs[0].data();
-               users[cloudUser.rollNo] = cloudUser; // Sync to local
-               localStorage.setItem('acoustix_users', JSON.stringify(users));
-               return cloudUser;
-           }
+           try {
+             const q = query(collection(db, "users"), where("email", "==", email));
+             const snap = await getDocs(q);
+             if (!snap.empty) {
+                 const cloudUser = snap.docs[0].data();
+                 users[cloudUser.rollNo] = cloudUser; 
+                 localStorage.setItem('acoustix_users', JSON.stringify(users));
+                 return cloudUser;
+             }
+           } catch(e) {}
         }
         return null;
       },
@@ -1063,9 +1093,12 @@
         return sessionData.sessionId;
       },
       
+      // FIX: Ensure 'attendees' map exists before writing to prevent TypeError
       async updateSessionAttendees(sessionId, studentId, attendeeRecord) {
+        // 1. Force Local Update Immediately (0ms Latency)
         const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
         if (session && session.sessionId === sessionId) {
+          session.attendees = session.attendees || {};
           session.attendees[studentId] = attendeeRecord;
           session.attendeeCount = Object.keys(session.attendees).length;
           localStorage.setItem('acoustix_active_session', JSON.stringify(session));
@@ -1076,11 +1109,42 @@
           localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
         }
 
-        const updatePayload = {
-          [`attendees.${studentId}`]: attendeeRecord,
-          attendeeCount: Object.keys(session ? session.attendees : {}).length
-        };
-        SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, updatePayload);
+        // 2. Force Firebase Update (Bypass Queue for real-time Faculty Grid)
+        if (!useMockStorage && navigator.onLine) {
+           try {
+               const docRef = doc(db, "sessions", sessionId);
+               await updateDoc(docRef, {
+                 [`attendees.${studentId}`]: attendeeRecord
+               });
+           } catch(e) { console.error("Cloud DB Update Failed", e); }
+        }
+      },
+
+      async removeSessionAttendee(sessionId, studentId) {
+        // Local removal
+        const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
+        if (session && session.sessionId === sessionId && session.attendees && session.attendees[studentId]) {
+          delete session.attendees[studentId];
+          session.attendeeCount = Object.keys(session.attendees).length;
+          localStorage.setItem('acoustix_active_session', JSON.stringify(session));
+          
+          const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
+          const idx = all.findIndex(s => s.sessionId === sessionId);
+          if (idx !== -1) all[idx] = session;
+          localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
+        }
+        
+        // Firebase removal (using active STATE object to map delete)
+        if (!useMockStorage && navigator.onLine) {
+           try {
+               const docRef = doc(db, "sessions", sessionId);
+               const attendeesObj = STATE.activeSession.attendees || {};
+               delete attendeesObj[studentId];
+               await updateDoc(docRef, {
+                 attendees: attendeesObj
+               });
+           } catch(e) {}
+        }
       },
       
       async endSession(sessionId) {
@@ -1101,9 +1165,9 @@
         return JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
       },
       
-      subscribeToActiveSession(section, callback) {
+      subscribeToActiveSession(year, section, callback) {
         if (!useMockStorage && navigator.onLine) {
-          const q = query(collection(db, "sessions"), where("isActive", "==", true), where("section", "==", section));
+          const q = query(collection(db, "sessions"), where("isActive", "==", true), where("year", "==", year), where("section", "==", section));
           return onSnapshot(q, (snap) => {
             if (!snap.empty) {
               const cloudData = snap.docs[0].data();
@@ -1116,8 +1180,11 @@
         } else {
           const interval = setInterval(() => {
             const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
-            if (session && session.isActive && session.section === section) callback(session);
-            else if (session && !session.isActive) callback(null);
+            if (session && session.isActive && session.year === year && session.section === section) {
+                callback(session);
+            } else if (session && (!session.isActive || session.year !== year || session.section !== section)) {
+                callback(null);
+            }
           }, 1500);
           return () => clearInterval(interval);
         }
@@ -1127,11 +1194,7 @@
 
     // --- STRICT CAPITALIZATION ENFORCEMENT ---
     [DOM.signupName, DOM.signupRoll, DOM.signupSection].forEach(el => {
-      if (el) {
-        el.addEventListener('input', (e) => {
-          e.target.value = e.target.value.toUpperCase();
-        });
-      }
+      if (el) el.addEventListener('input', (e) => e.target.value = e.target.value.toUpperCase());
     });
 
     // --- AUTH TOGGLE TABS ---
@@ -1230,7 +1293,6 @@
          return;
       }
 
-      // Verify PIN Hash
       const hashedAttempt = await hashString(pin);
       if (user.pinHash !== hashedAttempt) {
          showToast("Incorrect 6-Digit PIN. Access Denied.", "error");
@@ -1238,14 +1300,12 @@
          return;
       }
 
-      // STRICT DEVICE BINDING CHECK (Students Only)
       if (user.role === 'student') {
          if (user.deviceId && user.deviceId !== CURRENT_DEVICE_ID) {
-             showToast("SECURITY LOCK: This account is permanently bound to another device. You cannot login here.", "error");
+             showToast("SECURITY LOCK: This account is permanently bound to another device.", "error");
              DOM.btnShowLogin.innerHTML = `<i class="fa-solid fa-user-lock mr-1.5"></i> Portal`;
              return;
          }
-         // Migrate legacy students to device binding on first successful login
          if (!user.deviceId) {
              user.deviceId = CURRENT_DEVICE_ID;
              await DB_ENGINE.saveUser(user);
@@ -1263,6 +1323,7 @@
       const email = DOM.signupEmail.value.trim().toLowerCase();
       const pin = DOM.signupPin.value.trim();
       let rollNo = DOM.signupRoll.value.trim().toUpperCase();
+      let year = DOM.signupYear ? DOM.signupYear.value : "1";
       let section = DOM.signupSection.value.trim().toUpperCase() || "N/A";
 
       if (pin.length !== 6) {
@@ -1273,8 +1334,7 @@
       if (STATE.selectedRole === 'faculty') {
         const masterKeyInput = DOM.signupMasterKey.value;
         const hashedMasterAttempt = await hashString(masterKeyInput);
-        // SHA-256 Hash of 'MKy@2239'
-        const expectedMasterHash = "4229722a5b00213afb1afba6aeaef76819feb8314ccf039531444cc7e6ed8e0e"; 
+        const expectedMasterHash = "b47c94a28f8fdb9e09d1b64cf2330a6c0c2bc0ecb20b22a07c1b52e391b10a26"; // MKy@2239
 
         if (hashedMasterAttempt !== expectedMasterHash) {
             showToast("Invalid Faculty Master Key. Unauthorized access.", "error");
@@ -1282,6 +1342,7 @@
         }
 
         rollNo = name.replace(/\s+/g, '_') + '_FACULTY_' + Date.now().toString().slice(-4); 
+        year = "FACULTY";
         section = "FACULTY";
       }
 
@@ -1292,14 +1353,12 @@
 
       showToast("Verifying identity metrics...", "info");
       
-      // Check if email already exists
       const existingUser = await DB_ENGINE.getUserByEmail(email);
       if (existingUser) {
           showToast("This email is already registered. Please login.", "error");
           return;
       }
 
-      // Check CSV Whitelist (Students Only)
       const activeWhitelist = await DB_ENGINE.getWhitelist();
       let isApproved = false;
       
@@ -1314,19 +1373,14 @@
         return;
       }
 
-      // Cryptographically Hash the PIN before saving
       const pinHash = await hashString(pin);
 
       const userData = {
-        email,
-        pinHash,
-        name, 
-        rollNo, 
-        section,
+        email, pinHash, name, rollNo, year, section,
         role: STATE.selectedRole,
         profilePicUrl: STATE.capturedRegPhoto,
         registeredAt: Date.now(),
-        deviceId: STATE.selectedRole === 'student' ? CURRENT_DEVICE_ID : null // Bind device for students immediately
+        deviceId: STATE.selectedRole === 'student' ? CURRENT_DEVICE_ID : null
       };
 
       await DB_ENGINE.saveUser(userData);
@@ -1337,7 +1391,7 @@
     function loginUserToApp(userData) {
       STATE.currentUser = userData;
       DOM.navUserName.textContent = userData.name;
-      DOM.navUserRole.textContent = `${userData.role} ${userData.role === 'student' ? '• SEC ' + userData.section : ''}`;
+      DOM.navUserRole.textContent = `${userData.role} ${userData.role === 'student' ? '• YR ' + userData.year + ' SEC ' + userData.section : ''}`;
       DOM.navProfilePic.src = userData.profilePicUrl;
       
       DOM.userBadge.classList.remove('hidden');
@@ -1363,7 +1417,13 @@
       location.reload();
     });
 
+    // MOCK STORAGE DIAGNOSTIC WARNING
     window.addEventListener('DOMContentLoaded', () => {
+      if (useMockStorage) {
+         setTimeout(() => {
+             showToast("Local DB Active! ⚠️ Open Faculty & Student in TWO TABS within the SAME browser to see sync work without Firebase.", "warn");
+         }, 1500);
+      }
       const cached = localStorage.getItem('acoustix_current_user');
       if (cached) {
         try { loginUserToApp(JSON.parse(cached)); } catch(e){}
@@ -1383,6 +1443,7 @@
       });
     }
     setupChipGroup('chip-group-subject', 'facSubject');
+    setupChipGroup('chip-group-year', 'facYear');
     setupChipGroup('chip-group-section', 'facSection');
     setupChipGroup('chip-group-radius', 'facRadius');
 
@@ -1396,7 +1457,6 @@
         });
         document.getElementById(`tab-${tabId}`).classList.remove('hidden');
         
-        // Scroll horizontal tab container into view gently if clicked near edge
         e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
         if (tabId === 'fac-directory') renderStudentDirectory();
@@ -1493,7 +1553,6 @@
         STATE.oscillator.connect(gainNode);
         gainNode.connect(STATE.audioContext.destination);
         STATE.oscillator.start();
-        console.log(`[Acoustix] Transmitting at ${freq} Hz`);
       } catch (err) {
         showToast("Audio context blocked by browser.", "warn");
       }
@@ -1520,6 +1579,7 @@
         sessionId,
         subject: STATE.facSubject,
         facultyId: STATE.currentUser.rollNo,
+        year: STATE.facYear,
         section: STATE.facSection,
         timestamp: Date.now(),
         dateString: new Date().toISOString().split('T')[0],
@@ -1536,6 +1596,7 @@
       startUltrasoundBroadcast(18500);
       
       DOM.statSubject.textContent = STATE.facSubject;
+      DOM.statYear.textContent = `YR ${STATE.facYear}`;
       DOM.statSection.textContent = `SEC ${STATE.facSection}`;
       DOM.broadcastInactive.classList.add('hidden');
       DOM.broadcastActive.classList.remove('hidden');
@@ -1551,7 +1612,7 @@
       }, 1000);
 
       listenToLiveGrid(sessionId);
-      showToast(`Broadcast live! Airwaves active (18.5kHz) for SEC ${STATE.facSection}.`, "success");
+      showToast(`Broadcast live! Airwaves active (18.5kHz) for YR ${STATE.facYear} SEC ${STATE.facSection}.`, "success");
     });
 
     DOM.btnStopBroadcast.addEventListener('click', async () => {
@@ -1565,6 +1626,7 @@
       DOM.broadcastInactive.classList.remove('hidden');
       DOM.btnStopBroadcast.classList.add('hidden');
       DOM.btnStartBroadcast.classList.remove('hidden');
+      STATE.activeSession = null;
       showToast("Session terminated.", "info");
     });
 
@@ -1577,14 +1639,10 @@
     function listenToLiveGrid(sessionId) {
       if (STATE.sessionListener) STATE.sessionListener();
       
-      STATE.sessionListener = DB_ENGINE.subscribeToActiveSession(STATE.facSection, (session) => {
-        if (!session) {
-          DOM.btnManualOverride.classList.add('hidden');
-          return;
-        }
-        DOM.btnManualOverride.classList.remove('hidden');
+      STATE.sessionListener = DB_ENGINE.subscribeToActiveSession(STATE.facYear, STATE.facSection, (session) => {
+        if (!session) return;
         STATE.activeSession = session;
-        const attendees = Object.values(session.attendees || {}).filter(a => a.status !== 'absent');
+        const attendees = Object.values(session.attendees || {});
         DOM.facLiveCount.textContent = attendees.length;
         
         if (attendees.length === 0) {
@@ -1596,107 +1654,106 @@
         DOM.liveGrid.querySelectorAll('.student-card').forEach(c => c.remove());
         attendees.forEach(stu => {
           const card = document.createElement('div');
-          card.className = "student-card glass-card p-2 sm:p-3 rounded-xl sm:rounded-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-300 relative overflow-hidden";
+          const isManual = stu.status === 'MANUAL';
+          card.className = `student-card glass-card p-2 sm:p-3 rounded-xl sm:rounded-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-300 relative overflow-hidden ${isManual ? 'border-amber-500/40' : ''}`;
           card.innerHTML = `
-            <div class="absolute top-1.5 right-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${stu.status === 'manual' ? 'bg-indigo-400 shadow-indigo-400' : 'bg-emerald-400 shadow-emerald-400'} shadow-lg"></div>
-            <img src="${stu.profilePicUrl}" alt="" class="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover border-2 ${stu.status === 'manual' ? 'border-indigo-400' : 'border-emerald-400'} shadow-md mb-1.5 sm:mb-2">
+            <div class="absolute top-1.5 right-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isManual ? 'bg-amber-400 shadow-amber-400' : 'bg-emerald-400 shadow-emerald-400'} shadow-lg"></div>
+            <img src="${stu.profilePicUrl}" alt="" class="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-indigo-400 shadow-md mb-1.5 sm:mb-2">
             <span class="text-[10px] sm:text-xs font-extrabold text-white truncate w-full px-1">${stu.name}</span>
             <span class="text-[9px] sm:text-[10px] font-mono bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded mt-0.5 sm:mt-1">${stu.rollNo}</span>
-            <span class="text-[8px] sm:text-[9px] text-slate-400 mt-1 sm:mt-2"><i class="fa-solid fa-clock mr-1"></i>${new Date(stu.checkInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            <span class="text-[8px] sm:text-[9px] ${isManual ? 'text-amber-400' : 'text-slate-400'} mt-1 sm:mt-2 font-bold"><i class="fa-solid fa-clock mr-1"></i>${new Date(stu.checkInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
           `;
           DOM.liveGrid.appendChild(card);
         });
       });
     }
 
-    // --- FACULTY PORTAL: MANUAL OVERRIDE MODAL ---
-    let manualOverrideStudents = [];
-
+    // --- MANUAL OVERRIDE (FACULTY ONLY) ---
     DOM.btnManualOverride.addEventListener('click', async () => {
-       if (!STATE.activeSession) return;
-       DOM.modalManual.classList.remove('hidden');
-       DOM.manualSearch.value = '';
-       
-       const allStudents = await DB_ENGINE.getStudentDirectory();
-       manualOverrideStudents = allStudents.filter(s => s.section === STATE.activeSession.section);
-       manualOverrideStudents.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
-       
-       renderManualList();
+      if (!STATE.activeSession) {
+        showToast("You must initiate a broadcast session first.", "error");
+        return;
+      }
+      DOM.modalManual.classList.remove('hidden');
+      renderManualList();
     });
 
     DOM.btnCloseManual.addEventListener('click', () => {
-       DOM.modalManual.classList.add('hidden');
+      DOM.modalManual.classList.add('hidden');
     });
 
-    DOM.manualSearch.addEventListener('input', renderManualList);
+    DOM.manualSearch.addEventListener('input', () => renderManualList());
 
-    function renderManualList() {
-       const query = DOM.manualSearch.value.toUpperCase();
-       DOM.manualStudentList.innerHTML = '';
-       
-       if (manualOverrideStudents.length === 0) {
-           DOM.manualStudentList.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">No registered students found for SEC ${STATE.activeSession.section}.</div>`;
-           return;
-       }
+    async function renderManualList() {
+      const container = DOM.manualStudentList;
+      container.innerHTML = `<div class="text-center py-4 text-slate-400 text-xs"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Loading Students...</div>`;
+      
+      let students = await DB_ENGINE.getStudentDirectory();
+      students = students.filter(s => s.year === STATE.activeSession.year && s.section === STATE.activeSession.section);
+      
+      const query = DOM.manualSearch.value.trim().toUpperCase();
+      if (query) {
+         students = students.filter(s => s.rollNo.includes(query) || s.name.includes(query));
+      }
 
-       const attendees = STATE.activeSession.attendees || {};
+      students.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
-       manualOverrideStudents.forEach(stu => {
-           if (query && !stu.name.includes(query) && !stu.rollNo.includes(query)) return;
-           
-           const isPresent = attendees[stu.rollNo] && attendees[stu.rollNo].status !== 'absent';
-           const btnColor = isPresent ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30 border-red-500/30' : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border-emerald-500/30';
-           const btnIcon = isPresent ? 'fa-xmark' : 'fa-check';
-           const btnText = isPresent ? 'Mark Absent' : 'Mark Present';
+      container.innerHTML = '';
+      if (students.length === 0) {
+        container.innerHTML = `<div class="text-center py-4 text-slate-500 text-xs">No students match criteria.</div>`;
+        return;
+      }
 
-           const item = document.createElement('div');
-           item.className = "flex items-center justify-between p-2.5 border border-white/5 bg-slate-900/40 rounded-xl transition-colors";
-           item.innerHTML = `
-             <div class="flex items-center space-x-3 overflow-hidden">
-               <img src="${stu.profilePicUrl}" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover shrink-0 border border-white/10">
-               <div class="truncate">
-                 <p class="text-[11px] sm:text-xs font-bold text-white truncate">${stu.name}</p>
-                 <p class="text-[9px] sm:text-[10px] font-mono text-indigo-300">${stu.rollNo}</p>
-               </div>
-             </div>
-             <button class="chip ${btnColor} py-1.5 px-3 shrink-0 flex items-center text-[10px]" onclick="window.toggleManualAttendance('${stu.rollNo}', '${stu.name}', '${stu.profilePicUrl}', ${!isPresent})">
-               <i class="fa-solid ${btnIcon} sm:mr-1.5"></i> <span class="hidden sm:inline">${btnText}</span>
-             </button>
-           `;
-           DOM.manualStudentList.appendChild(item);
-       });
+      students.forEach(stu => {
+        const isPresent = STATE.activeSession.attendees && STATE.activeSession.attendees[stu.rollNo];
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between bg-white/5 p-2.5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors";
+        item.innerHTML = `
+          <div class="flex items-center space-x-3 overflow-hidden">
+            <img src="${stu.profilePicUrl}" class="w-8 h-8 rounded-full object-cover shrink-0 border border-white/20">
+            <div class="truncate">
+              <p class="text-xs font-bold text-white truncate">${stu.name}</p>
+              <p class="text-[10px] text-indigo-300 font-mono">${stu.rollNo}</p>
+            </div>
+          </div>
+          <button class="shrink-0 chip ${isPresent ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'} px-3 py-1.5 text-[10px]" onclick="toggleManualAttendance('${stu.rollNo}', '${stu.name.replace(/'/g, "\\'")}', '${stu.profilePicUrl}', ${!!isPresent})">
+            ${isPresent ? '<i class="fa-solid fa-xmark mr-1"></i> Revoke' : '<i class="fa-solid fa-check mr-1"></i> Mark Present'}
+          </button>
+        `;
+        container.appendChild(item);
+      });
     }
 
-    window.toggleManualAttendance = async (rollNo, name, picUrl, markPresent) => {
-       if (!STATE.activeSession) return;
-       
-       if (markPresent) {
-           const record = {
-               name: name,
-               rollNo: rollNo,
-               profilePicUrl: picUrl,
-               selfieUrl: null, 
-               checkInTime: Date.now(),
-               status: "manual"
-           };
-           await DB_ENGINE.updateSessionAttendees(STATE.activeSession.sessionId, rollNo, record);
-           showToast(`${name} marked PRESENT (Manual)`, "success");
-       } else {
-           const record = {
-               name: name,
-               rollNo: rollNo,
-               profilePicUrl: picUrl,
-               selfieUrl: null,
-               checkInTime: Date.now(),
-               status: "absent" 
-           };
-           await DB_ENGINE.updateSessionAttendees(STATE.activeSession.sessionId, rollNo, record);
-           showToast(`${name} marked ABSENT (Manual)`, "warn");
-       }
-       renderManualList();
+    // Attached to window so inline onclick can access it
+    window.toggleManualAttendance = async function(rollNo, name, picUrl, isPresent) {
+      if (isPresent) {
+         await DB_ENGINE.removeSessionAttendee(STATE.activeSession.sessionId, rollNo);
+         showToast(`Attendance revoked for ${rollNo}`, "info");
+      } else {
+         const record = {
+           name: name,
+           rollNo: rollNo,
+           profilePicUrl: picUrl,
+           selfieUrl: 'https://placehold.co/400x300/1e1b4b/a5b4fc?text=MANUAL+OVERRIDE',
+           checkInTime: Date.now(),
+           status: "MANUAL"
+         };
+         await DB_ENGINE.updateSessionAttendees(STATE.activeSession.sessionId, rollNo, record);
+         showToast(`${name} marked PRESENT (Manual)`, "success");
+      }
+      setTimeout(() => renderManualList(), 150); // slight delay to allow DB state refresh
     };
 
     // --- FACULTY PORTAL: STUDENT DIRECTORY ---
+    document.querySelectorAll('#dir-year-filters button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('#dir-year-filters button').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        STATE.dirFilterYear = e.currentTarget.dataset.yr;
+        renderStudentDirectory();
+      });
+    });
+
     document.querySelectorAll('#dir-section-filters button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('#dir-section-filters button').forEach(b => b.classList.remove('active'));
@@ -1711,6 +1768,9 @@
       tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Loading Directory...</td></tr>`;
       
       let students = await DB_ENGINE.getStudentDirectory();
+      if (STATE.dirFilterYear !== 'ALL') {
+        students = students.filter(s => s.year === STATE.dirFilterYear);
+      }
       if (STATE.dirFilterSec !== 'ALL') {
         students = students.filter(s => s.section === STATE.dirFilterSec);
       }
@@ -1730,9 +1790,9 @@
           <td class="py-2 sm:py-3 px-3 sm:px-4"><img src="${stu.profilePicUrl}" class="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover border border-white/20"></td>
           <td class="py-2 sm:py-3 px-3 sm:px-4 font-mono font-bold text-indigo-300 text-[10px] sm:text-xs">${stu.rollNo}</td>
           <td class="py-2 sm:py-3 px-3 sm:px-4 font-extrabold text-white text-[11px] sm:text-sm">${stu.name}</td>
-          <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">SEC ${stu.section}</span></td>
+          <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">Yr ${stu.year} | SEC ${stu.section}</span></td>
           <td class="py-2 sm:py-3 px-3 sm:px-4 text-[9px] sm:text-[10px] uppercase text-slate-400">${stu.role}</td>
-          <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="text-emerald-400 text-[9px] sm:text-[10px] flex items-center"><i class="fa-solid fa-check-circle mr-1 sm:mr-1.5"></i>Verified CSV</span></td>
+          <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="text-emerald-400 text-[9px] sm:text-[10px] flex items-center"><i class="fa-solid fa-check-circle mr-1 sm:mr-1.5"></i>Verified Identity</span></td>
         `;
         tbody.appendChild(tr);
       });
@@ -1751,6 +1811,7 @@
     }
     setupReportFilters('report-filter-time', 'reportFilterTime');
     setupReportFilters('report-filter-subject', 'reportFilterSubj');
+    setupReportFilters('report-filter-year', 'reportFilterYear');
     setupReportFilters('report-filter-section', 'reportFilterSec');
 
     let currentFilteredRecords = [];
@@ -1764,12 +1825,12 @@
       sessions.forEach(sess => {
         const attendees = Object.values(sess.attendees || {});
         attendees.forEach(att => {
-          if (att.status === 'absent') return; // Do not show explicitly marked absents in standard reports
           const record = {
             timestamp: att.checkInTime || sess.timestamp,
             dateStr: new Date(att.checkInTime || sess.timestamp).toLocaleString(),
             rollNo: att.rollNo,
             name: att.name,
+            year: sess.year,
             section: sess.section,
             subject: sess.subject,
             status: att.status,
@@ -1777,6 +1838,7 @@
           };
 
           if (STATE.reportFilterSubj !== 'ALL' && record.subject !== STATE.reportFilterSubj) return;
+          if (STATE.reportFilterYear !== 'ALL' && record.year !== STATE.reportFilterYear) return;
           if (STATE.reportFilterSec !== 'ALL' && record.section !== STATE.reportFilterSec) return;
           if (!isWithinTimeframe(record.timestamp, STATE.reportFilterTime)) return;
 
@@ -1793,16 +1855,21 @@
       }
 
       currentFilteredRecords.forEach(rec => {
+        const isManual = rec.status === 'MANUAL';
         const tr = document.createElement('tr');
         tr.className = "hover:bg-white/5 transition-colors";
         tr.innerHTML = `
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-[10px] sm:text-[11px] font-mono text-slate-300">${rec.dateStr}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 font-mono font-bold text-indigo-300 text-[10px] sm:text-xs">${rec.rollNo}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 font-bold text-white text-[11px] sm:text-sm">${rec.name}</td>
-          <td class="py-2.5 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">SEC ${rec.section}</span></td>
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">Yr ${rec.year} | SEC ${rec.section}</span></td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-[9px] sm:text-[11px] text-slate-300">${rec.subject}</td>
-          <td class="py-2.5 sm:py-3 px-3 sm:px-4"><span class="bg-emerald-500/10 ${rec.status === 'manual' ? 'text-indigo-300 border-indigo-500/30' : 'text-emerald-300 border-emerald-500/30'} border px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid ${rec.status === 'manual' ? 'fa-user-pen' : 'fa-wave-square'} mr-1"></i>${rec.status === 'manual' ? 'MANUAL' : 'Acoustic+GPS'}</span></td>
-          <td class="py-2.5 sm:py-3 px-3 sm:px-4">${rec.selfieUrl ? `<a href="${rec.selfieUrl}" target="_blank" class="text-indigo-400 hover:text-indigo-300 underline text-[10px] sm:text-xs flex items-center"><i class="fa-solid fa-image mr-1"></i>Selfie</a>` : `<span class="text-slate-500 text-[10px] italic">Bypassed</span>`}</td>
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4">
+            ${isManual ? 
+              '<span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-user-pen mr-1"></i>Faculty Override</span>' : 
+              '<span class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-wave-square mr-1"></i>Acoustic+GPS</span>'
+            }
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -1814,9 +1881,9 @@
         showToast("No records to export.", "warn");
         return;
       }
-      const headers = ["Date & Time", "Roll Number", "Student Name", "Section", "Course Subject", "Selfie URL"];
+      const headers = ["Date & Time", "Roll Number", "Student Name", "Year", "Section", "Course Subject", "Verification Method"];
       const rows = currentFilteredRecords.map(r => [
-        `"${r.dateStr}"`, `"${r.rollNo}"`, `"${r.name}"`, `"${r.section}"`, `"${r.subject}"`, `"${r.selfieUrl}"`
+        `"${r.dateStr}"`, `"${r.rollNo}"`, `"${r.name}"`, `"${r.year}"`, `"${r.section}"`, `"${r.subject}"`, `"${r.status}"`
       ]);
       
       const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
@@ -1832,8 +1899,8 @@
 
     // --- STUDENT PORTAL ---
     function initStudentPortal() {
-      DOM.stuMySection.textContent = `SEC ${STATE.currentUser.section}`;
-      DOM.hintSection.textContent = STATE.currentUser.section;
+      DOM.stuMySection.textContent = `YR ${STATE.currentUser.year} | SEC ${STATE.currentUser.section}`;
+      DOM.hintSection.textContent = `${STATE.currentUser.year}-${STATE.currentUser.section}`;
 
       document.querySelectorAll('#student-tabs button').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1848,7 +1915,8 @@
       });
 
       if (STATE.sessionListener) STATE.sessionListener();
-      STATE.sessionListener = DB_ENGINE.subscribeToActiveSession(STATE.currentUser.section, (session) => {
+      // Listen specifically for their Year AND Section
+      STATE.sessionListener = DB_ENGINE.subscribeToActiveSession(STATE.currentUser.year, STATE.currentUser.section, (session) => {
         if (session && session.isActive) {
           STATE.activeSession = session;
           DOM.stuSubjectTitle.textContent = session.subject;
@@ -1868,7 +1936,7 @@
           
           DOM.btnJoinClass.disabled = true;
           DOM.btnJoinClass.classList.remove('animate-pulse-ring');
-          document.getElementById('join-status-hint').textContent = `Waiting for broadcast in SEC ${STATE.currentUser.section}...`;
+          document.getElementById('join-status-hint').textContent = `Waiting for broadcast in YR ${STATE.currentUser.year} SEC ${STATE.currentUser.section}...`;
         }
       });
     }
@@ -2003,7 +2071,7 @@
     });
 
     async function submitAttendanceRecord() {
-      showToast("Data saved locally! Committing to Cloud sync queue...", "info");
+      showToast("Data saved locally! Uploading to Database...", "info");
       
       const attendeeRecord = {
         name: STATE.currentUser.name,
@@ -2037,10 +2105,11 @@
       
       const myRecords = [];
       allSessions.forEach(sess => {
-        if (sess.timestamp >= sevenDaysAgo && sess.attendees && sess.attendees[STATE.currentUser.rollNo] && sess.attendees[STATE.currentUser.rollNo].status !== 'absent') {
+        if (sess.timestamp >= sevenDaysAgo && sess.attendees && sess.attendees[STATE.currentUser.rollNo]) {
           myRecords.push({
             ...sess.attendees[STATE.currentUser.rollNo],
             subject: sess.subject,
+            year: sess.year,
             section: sess.section,
             sessionTime: sess.timestamp
           });
@@ -2057,8 +2126,9 @@
       }
 
       myRecords.forEach(rec => {
+        const isManual = rec.status === 'MANUAL';
         const item = document.createElement('div');
-        item.className = `glass-panel p-3 sm:p-4 rounded-2xl flex items-center justify-between border-l-[3px] sm:border-l-4 ${rec.status === 'manual' ? 'border-l-indigo-500' : 'border-l-emerald-500'} hover:bg-white/5 transition-all w-full`;
+        item.className = `glass-panel p-3 sm:p-4 rounded-2xl flex items-center justify-between border-l-[3px] sm:border-l-4 ${isManual ? 'border-l-amber-500' : 'border-l-emerald-500'} hover:bg-white/5 transition-all w-full`;
         item.innerHTML = `
           <div class="flex items-center space-x-3 sm:space-x-4 overflow-hidden">
             <img src="${rec.selfieUrl || rec.profilePicUrl}" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border border-white/20 shadow shrink-0">
@@ -2068,13 +2138,16 @@
             </div>
           </div>
           <div class="text-right flex flex-col items-end shrink-0 ml-2">
-            <span class="chip ${rec.status === 'manual' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'} text-[8px] sm:text-[9px] font-extrabold uppercase py-1 px-2"><i class="fa-solid ${rec.status === 'manual' ? 'fa-user-pen' : 'fa-check'} sm:mr-1"></i> <span class="hidden sm:inline">${rec.status === 'manual' ? 'Manual' : 'Verified'}</span></span>
-            <span class="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 sm:mt-1.5">SEC ${rec.section}</span>
+            <span class="chip ${isManual ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'} text-[8px] sm:text-[9px] font-extrabold uppercase py-1 px-2">
+               ${isManual ? '<i class="fa-solid fa-user-pen sm:mr-1"></i> <span class="hidden sm:inline">Manual</span>' : '<i class="fa-solid fa-check sm:mr-1"></i> <span class="hidden sm:inline">Verified</span>'}
+            </span>
+            <span class="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 sm:mt-1.5">Yr ${rec.year} | SEC ${rec.section}</span>
           </div>
         `;
         container.appendChild(item);
       });
     }
+  </script>
   </script>
   <script>
         document.addEventListener('contextmenu', function(event) {
