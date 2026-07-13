@@ -82,7 +82,7 @@
         <span class="text-base sm:text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-200 truncate">AcoustiXPresence</span>
         <span class="flex items-center gap-1 text-[9px] sm:text-[10px] text-indigo-400 font-semibold tracking-wider uppercase truncate">
           Ultrasonic & GPS PWA
-          <span id="sync-status-indicator" class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 hidden"></span>
+          <span id="sync-status-indicator" class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 hidden" title="Cloud Sync Active"></span>
         </span>
       </div>
     </div>
@@ -99,7 +99,7 @@
       <button id="btn-logout" class="hidden chip bg-red-500/20 border-red-500/40 text-red-300 hover:bg-red-500/30 px-3 py-1.5 sm:px-4 sm:py-2">
         <i class="fa-solid fa-power-off sm:mr-1"></i> <span class="hidden sm:inline">Logout</span>
       </button>
-      <button id="btn-show-login" class="chip active"><i class="fa-solid fa-user-lock mr-1.5"></i> Portal</button>
+      <button id="btn-show-login" class="chip active" disabled><i class="fa-solid fa-circle-notch animate-spin mr-1.5"></i> Connecting DB</button>
     </div>
   </header>
 
@@ -107,7 +107,7 @@
   <main class="flex-grow w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
 
     <!-- LANDING / ONBOARDING VIEW -->
-    <section id="view-onboarding" class="max-w-xl mx-auto mt-2 sm:mt-8">
+    <section id="view-onboarding" class="max-w-xl mx-auto mt-2 sm:mt-8 hidden">
       <div class="glass-panel rounded-[2rem] p-5 sm:p-8 shadow-2xl relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -196,7 +196,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="wrapper-student-details">
             <div>
-              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Roll Number (CSV Validated)</label>
+              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Roll No (CSV Validated)</label>
               <div class="relative">
                 <i class="fa-solid fa-id-card absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
                 <input type="text" id="signup-roll" required placeholder="EX: 101A" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase placeholder:normal-case placeholder:text-slate-600">
@@ -278,18 +278,16 @@
               <p class="text-[11px] sm:text-xs text-slate-400 mt-1">Select parameters using interactive chips to initiate acoustic and geofenced verification.</p>
             </div>
 
-            <!-- Subject Selection Chips -->
             <div>
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">1. Select Course Subject</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-subject">
-                <button type="button" class="chip active shrink-0" data-val="CVIP">CVIP</button>
-                <button type="button" class="chip shrink-0" data-val="CVML">CVML</button>
-                <button type="button" class="chip shrink-0" data-val="PE-AI">PE-AI</button>
-                <button type="button" class="chip shrink-0" data-val="PE-BS">PE-BS</button>
+                <button type="button" class="chip active shrink-0" data-val="ADVANCED DATABASE SYSTEMS">ADVANCED DATABASE SYSTEMS</button>
+                <button type="button" class="chip shrink-0" data-val="MOBILE ARCHITECTURE & UX">MOBILE ARCHITECTURE & UX</button>
+                <button type="button" class="chip shrink-0" data-val="FULL STACK ENGINEERING">FULL STACK ENGINEERING</button>
+                <button type="button" class="chip shrink-0" data-val="CLOUD COMPUTE & DEVOPS">CLOUD COMPUTE & DEVOPS</button>
               </div>
             </div>
 
-            <!-- Year Selection Chips -->
             <div>
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">2. Target Academic Year</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-year">
@@ -300,7 +298,6 @@
               </div>
             </div>
 
-            <!-- Section Selection Chips -->
             <div>
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">3. Target Section / Branch</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-section">
@@ -311,7 +308,6 @@
               </div>
             </div>
 
-            <!-- Geofence Radius Selection -->
             <div>
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">4. Geofence Boundary Radius</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-radius">
@@ -334,7 +330,7 @@
             </div>
           </div>
 
-          <!-- Visualizer & Status Panel -->
+          <!-- Visualizer Panel -->
           <div class="lg:col-span-5 bg-slate-900/80 border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[280px] sm:min-h-[340px]">
             <div id="broadcast-inactive-state" class="space-y-3 w-full">
               <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center mx-auto text-slate-500 text-2xl sm:text-3xl">
@@ -451,7 +447,6 @@
                 </tr>
               </thead>
               <tbody id="directory-table-body" class="divide-y divide-white/5 text-slate-300 font-medium">
-                <!-- Dynamically Populated -->
               </tbody>
             </table>
           </div>
@@ -507,7 +502,6 @@
             </button>
           </div>
 
-          <!-- Filter Chip Groups (Swipeable horizontally on mobile) -->
           <div class="space-y-3 sm:space-y-4 border-y border-white/10 py-4 sm:py-5 w-full">
             <div class="flex items-center gap-2 w-full overflow-hidden">
               <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Time:</span>
@@ -524,10 +518,10 @@
               <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Subject:</span>
               <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-subject">
                 <button class="chip active shrink-0" data-val="ALL">All Subjects</button>
-                <button class="chip shrink-0" data-val="CVIP">CVIP</button>
-                <button class="chip shrink-0" data-val="CVML">CVML</button>
-                <button class="chip shrink-0" data-val="PE-AI">PE-AI</button>
-                <button class="chip shrink-0" data-val="PE-BS">PE-BS</button>
+                <button class="chip shrink-0" data-val="ADVANCED DATABASE SYSTEMS">DATABASE</button>
+                <button class="chip shrink-0" data-val="MOBILE ARCHITECTURE & UX">MOBILE UX</button>
+                <button class="chip shrink-0" data-val="FULL STACK ENGINEERING">FULL STACK</button>
+                <button class="chip shrink-0" data-val="CLOUD COMPUTE & DEVOPS">CLOUD/DEVOPS</button>
               </div>
             </div>
 
@@ -554,7 +548,6 @@
             </div>
           </div>
 
-          <!-- Reports Data Table -->
           <div class="overflow-x-auto hide-scrollbar w-full -mx-5 px-5 sm:mx-0 sm:px-0">
             <table class="w-full text-left text-[11px] sm:text-sm whitespace-nowrap min-w-[650px]">
               <thead class="bg-white/5 text-[10px] sm:text-xs uppercase tracking-wider text-slate-300 font-semibold border-b border-white/10">
@@ -568,7 +561,6 @@
                 </tr>
               </thead>
               <tbody id="reports-table-body" class="divide-y divide-white/5 text-slate-300 font-medium">
-                <!-- Dynamically Populated -->
               </tbody>
             </table>
           </div>
@@ -594,7 +586,6 @@
       <!-- Tab 1: Live Class Verification -->
       <div id="tab-stu-live" class="space-y-4 sm:space-y-6">
         
-        <!-- Status Banner -->
         <div id="stu-session-banner" class="glass-panel rounded-3xl p-5 sm:p-6 lg:p-8 relative overflow-hidden border-indigo-500/30">
           <div class="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
             
@@ -609,7 +600,6 @@
               <h2 id="stu-subject-title" class="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">No Active Session</h2>
               <p id="stu-subject-desc" class="text-[11px] sm:text-sm text-slate-300 max-w-xl leading-relaxed">System is scanning for your section's ultrasonic beacon and verifying GPS limits.</p>
               
-              <!-- Handshake Indicators -->
               <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-2 w-full max-w-lg">
                 <div class="bg-slate-900/80 p-2.5 sm:p-3 rounded-xl border border-white/5 flex items-center space-x-2.5 sm:space-x-3">
                   <div id="ind-gps-icon" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 text-xs sm:text-sm shrink-0">
@@ -644,7 +634,6 @@
 
             </div>
 
-            <!-- Action Button Area -->
             <div class="md:col-span-4 flex flex-col items-center justify-center bg-slate-900/40 p-5 sm:p-6 rounded-2xl border border-white/5 text-center mt-2 md:mt-0">
               <button id="btn-join-class" disabled class="w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl font-extrabold text-sm sm:text-base bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-xl shadow-indigo-600/30 transition-all transform active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center space-x-2">
                 <i class="fa-solid fa-fingerprint text-lg sm:text-xl"></i>
@@ -696,7 +685,6 @@
         </div>
 
         <div id="stu-timeline-container" class="space-y-2.5 sm:space-y-3 w-full pb-4">
-          <!-- Populated by JS -->
         </div>
       </div>
 
@@ -704,7 +692,7 @@
 
   </main>
 
-  <!-- MANUAL OVERRIDE MODAL (Faculty Only) -->
+  <!-- MANUAL OVERRIDE MODAL -->
   <div id="modal-manual" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="glass-panel max-w-lg w-full rounded-3xl p-5 sm:p-6 border-indigo-500/50 shadow-2xl space-y-4 max-h-[85vh] flex flex-col mt-[-5vh] sm:mt-0">
       <div class="flex items-center justify-between border-b border-white/10 pb-3 shrink-0">
@@ -712,15 +700,12 @@
         <button id="btn-close-manual" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       
-      <!-- Search -->
       <div class="relative shrink-0">
         <i class="fa-solid fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
         <input type="text" id="manual-search" placeholder="Search Roll No or Name..." class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-xs font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase">
       </div>
 
-      <!-- Student List -->
       <div class="overflow-y-auto hide-scrollbar flex-grow space-y-2" id="manual-student-list">
-        <!-- JS Populated -->
       </div>
     </div>
   </div>
@@ -783,8 +768,9 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // --- FIREBASE CONFIGURATION ---
+    // --- FIREBASE CONFIGURATION (Provided by User) ---
     const firebaseConfig = {
       apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
       authDomain: "stuattnd.firebaseapp.com",
@@ -795,15 +781,55 @@
       measurementId: "G-9PZZM5LFKX"
     };
 
-    let app, db, useMockStorage = false;
+    // System-Requested Path ID
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'uvlog_att_app';
+
+    let app, db, auth, useMockStorage = false;
+    let isAuthReady = false;
+
+    // --- INITIALIZE FIREBASE & AUTHENTICATION ---
     try {
-      if (firebaseConfig.apiKey === "YOUR_API_KEY") throw new Error("Default keys detected.");
       app = initializeApp(firebaseConfig);
       db = getFirestore(app);
+      auth = getAuth(app);
       console.log("[System] Connected to Firebase v10 Backend.");
     } catch (err) {
-      console.warn("[System Notice] Firebase keys unconfigured. Running fully on Local Storage.");
+      console.error("[System Notice] Firebase initialization failed. Offline fallback active.", err);
       useMockStorage = true;
+      isAuthReady = true; // Bypass auth check if running entirely locally
+      document.getElementById('view-onboarding').classList.remove('hidden');
+      document.getElementById('btn-show-login').innerHTML = `<i class="fa-solid fa-user-lock mr-1.5"></i> Portal`;
+      document.getElementById('btn-show-login').disabled = false;
+    }
+
+    // Required strictly to read/write Firestore rules if online
+    if (!useMockStorage) {
+      signInAnonymously(auth).then(() => {
+        isAuthReady = true;
+        document.getElementById('btn-show-login').innerHTML = `<i class="fa-solid fa-user-lock mr-1.5"></i> Portal`;
+        document.getElementById('btn-show-login').disabled = false;
+        
+        // Show proper view now that auth is ready
+        if(!STATE.currentUser) {
+            document.getElementById('view-onboarding').classList.remove('hidden');
+        }
+      }).catch((error) => {
+        console.error("Auth Failed", error);
+        showToast("Backend authentication failed. Operating in offline cache mode.", "error");
+        useMockStorage = true;
+        isAuthReady = true;
+        document.getElementById('view-onboarding').classList.remove('hidden');
+        document.getElementById('btn-show-login').innerHTML = `<i class="fa-solid fa-user-lock mr-1.5"></i> Portal`;
+        document.getElementById('btn-show-login').disabled = false;
+      });
+    }
+
+    // --- HELPER: CONSTRUCT STRICT PATHS FOR SINGLE SOURCE OF TRUTH ---
+    function getDocRef(collectionName, documentId) {
+        return doc(db, 'artifacts', appId, 'public', 'data', collectionName, documentId);
+    }
+    function getColRef(collectionName) {
+        return collection(db, 'artifacts', appId, 'public', 'data', collectionName);
     }
 
     // --- GLOBAL APPLICATION STATE ---
@@ -913,7 +939,6 @@
       whitelistCount: document.getElementById('whitelist-count'),
       whitelistPreview: document.getElementById('whitelist-preview'),
 
-      // Manual Override Elements
       btnManualOverride: document.getElementById('btn-manual-override'),
       modalManual: document.getElementById('modal-manual'),
       btnCloseManual: document.getElementById('btn-close-manual'),
@@ -960,7 +985,6 @@
       }, 4000);
     }
 
-    // --- IMAGE COMPRESSION & MATH UTILS ---
     function compressImage(canvas, maxWidth = 350, quality = 0.65) {
       const scale = maxWidth / canvas.width;
       const offscreen = document.createElement('canvas');
@@ -1000,8 +1024,9 @@
     }
 
     // ==========================================
-    // 🧠 LOCAL-FIRST BACKGROUND SYNC ENGINE
+    // 🧠 CLOUD-FIRST DB ENGINE (SINGLE SOURCE OF TRUTH)
     // ==========================================
+    // Operations that fail to write to the cloud due to offline status go here.
     const SYNC_QUEUE = {
       getQueue: () => JSON.parse(localStorage.getItem('acoustix_sync_queue') || '[]'),
       
@@ -1018,7 +1043,7 @@
       },
 
       async flushToCloud() {
-        if (useMockStorage || !navigator.onLine) return;
+        if (useMockStorage || !navigator.onLine || !isAuthReady) return;
 
         const queue = SYNC_QUEUE.getQueue();
         if (queue.length === 0) {
@@ -1030,10 +1055,11 @@
         
         for (const op of queue) {
           try {
+            const docRef = getDocRef(op.collectionName, op.docId);
             if (op.action === 'SET') {
-              await setDoc(doc(db, op.collectionName, op.docId), op.data);
+              await setDoc(docRef, op.data);
             } else if (op.action === 'UPDATE') {
-              await updateDoc(doc(db, op.collectionName, op.docId), op.data);
+              await updateDoc(docRef, op.data);
             }
             SYNC_QUEUE.removeOperation(op.id);
           } catch (err) {
@@ -1046,40 +1072,66 @@
 
     setInterval(() => SYNC_QUEUE.flushToCloud(), 4000);
 
-    // --- BULLETPROOF DB LAYER (Guarantees Local & Cloud Write sync) ---
     const DB_ENGINE = {
+      // 1. Fetch from CLOUD FIRST. Fallback to local storage if offline.
       async getWhitelist() {
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+           try {
+               const docRef = getDocRef('config', 'whitelist');
+               const snap = await getDoc(docRef);
+               if (snap.exists()) {
+                   const list = snap.data().list || [];
+                   localStorage.setItem('acoustix_whitelist', JSON.stringify(list)); // Cache it
+                   return list;
+               }
+           } catch(e) { console.error("Whitelist cloud fetch failed", e); }
+        }
         return JSON.parse(localStorage.getItem('acoustix_whitelist') || '[]');
       },
+
+      // 2. Write to CLOUD FIRST. Cache to local.
       async saveWhitelist(listArray) {
         localStorage.setItem('acoustix_whitelist', JSON.stringify(listArray)); 
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+            try {
+                await setDoc(getDocRef('config', 'whitelist'), { list: listArray });
+                return;
+            } catch(e) { console.error("Cloud write failed", e); }
+        }
         SYNC_QUEUE.pushOperation('SET', 'config', 'whitelist', { list: listArray }); 
       },
       
+      // 1. Fetch from CLOUD FIRST. Fallback to local storage if offline.
       async getUserByEmail(email) {
-        const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
-        const localUser = Object.values(users).find(u => u.email === email);
-        if (localUser) return localUser;
-
-        if (!useMockStorage && navigator.onLine) {
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
            try {
-             const q = query(collection(db, "users"), where("email", "==", email));
+             const q = query(getColRef('users'), where("email", "==", email));
              const snap = await getDocs(q);
              if (!snap.empty) {
                  const cloudUser = snap.docs[0].data();
+                 const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
                  users[cloudUser.rollNo] = cloudUser; 
-                 localStorage.setItem('acoustix_users', JSON.stringify(users));
+                 localStorage.setItem('acoustix_users', JSON.stringify(users)); // Cache it
                  return cloudUser;
              }
-           } catch(e) {}
+           } catch(e) { console.error("User cloud fetch failed", e); }
         }
-        return null;
+        // Local Fallback
+        const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
+        return Object.values(users).find(u => u.email === email) || null;
       },
 
       async saveUser(userData) {
         const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
         users[userData.rollNo] = userData;
         localStorage.setItem('acoustix_users', JSON.stringify(users)); 
+        
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+            try {
+                await setDoc(getDocRef('users', userData.rollNo), userData);
+                return;
+            } catch(e) { console.error("Cloud user write failed", e); }
+        }
         SYNC_QUEUE.pushOperation('SET', 'users', userData.rollNo, userData); 
       },
       
@@ -1089,35 +1141,36 @@
         all.push(sessionData);
         localStorage.setItem('acoustix_all_sessions', JSON.stringify(all)); 
         
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+            try {
+                await setDoc(getDocRef('sessions', sessionData.sessionId), sessionData);
+                return sessionData.sessionId;
+            } catch(e) {}
+        }
         SYNC_QUEUE.pushOperation('SET', 'sessions', sessionData.sessionId, sessionData); 
         return sessionData.sessionId;
       },
       
-      // FIX: Ensure 'attendees' map exists before writing to prevent TypeError
       async updateSessionAttendees(sessionId, studentId, attendeeRecord) {
-        // 1. Force Local Update Immediately (0ms Latency)
         const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
         if (session && session.sessionId === sessionId) {
           session.attendees = session.attendees || {};
           session.attendees[studentId] = attendeeRecord;
           session.attendeeCount = Object.keys(session.attendees).length;
           localStorage.setItem('acoustix_active_session', JSON.stringify(session));
-          
-          const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
-          const idx = all.findIndex(s => s.sessionId === sessionId);
-          if (idx !== -1) all[idx] = session;
-          localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
         }
 
-        // 2. Force Firebase Update (Bypass Queue for real-time Faculty Grid)
-        if (!useMockStorage && navigator.onLine) {
+        const updatePayload = {
+          [`attendees.${studentId}`]: attendeeRecord
+        };
+
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
            try {
-               const docRef = doc(db, "sessions", sessionId);
-               await updateDoc(docRef, {
-                 [`attendees.${studentId}`]: attendeeRecord
-               });
+               await updateDoc(getDocRef('sessions', sessionId), updatePayload);
+               return;
            } catch(e) { console.error("Cloud DB Update Failed", e); }
         }
+        SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, updatePayload);
       },
 
       async removeSessionAttendee(sessionId, studentId) {
@@ -1127,22 +1180,14 @@
           delete session.attendees[studentId];
           session.attendeeCount = Object.keys(session.attendees).length;
           localStorage.setItem('acoustix_active_session', JSON.stringify(session));
-          
-          const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
-          const idx = all.findIndex(s => s.sessionId === sessionId);
-          if (idx !== -1) all[idx] = session;
-          localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
         }
         
-        // Firebase removal (using active STATE object to map delete)
-        if (!useMockStorage && navigator.onLine) {
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
            try {
-               const docRef = doc(db, "sessions", sessionId);
+               const docRef = getDocRef('sessions', sessionId);
                const attendeesObj = STATE.activeSession.attendees || {};
                delete attendeesObj[studentId];
-               await updateDoc(docRef, {
-                 attendees: attendeesObj
-               });
+               await updateDoc(docRef, { attendees: attendeesObj });
            } catch(e) {}
         }
       },
@@ -1153,25 +1198,47 @@
           session.isActive = false; 
           localStorage.setItem('acoustix_active_session', JSON.stringify(session)); 
         }
+
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+           try {
+               await updateDoc(getDocRef('sessions', sessionId), { isActive: false });
+               return;
+           } catch(e) {}
+        }
         SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, { isActive: false });
       },
       
       async getStudentDirectory() {
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+            try {
+                const q = query(getColRef("users"), where("role", "==", "student"));
+                const snap = await getDocs(q);
+                return snap.docs.map(d => d.data());
+            } catch(e) { console.error("Cloud directory fail", e); }
+        }
         const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
         return Object.values(users).filter(u => u.role === 'student');
       },
       
       async getAllSessions() {
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+            try {
+                const snap = await getDocs(getColRef("sessions"));
+                const cloudSessions = snap.docs.map(d => d.data());
+                localStorage.setItem('acoustix_all_sessions', JSON.stringify(cloudSessions));
+                return cloudSessions;
+            } catch(e) {}
+        }
         return JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
       },
       
       subscribeToActiveSession(year, section, callback) {
-        if (!useMockStorage && navigator.onLine) {
-          const q = query(collection(db, "sessions"), where("isActive", "==", true), where("year", "==", year), where("section", "==", section));
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+          const q = query(getColRef("sessions"), where("isActive", "==", true), where("year", "==", year), where("section", "==", section));
           return onSnapshot(q, (snap) => {
             if (!snap.empty) {
               const cloudData = snap.docs[0].data();
-              localStorage.setItem('acoustix_active_session', JSON.stringify(cloudData));
+              localStorage.setItem('acoustix_active_session', JSON.stringify(cloudData)); // Sync cloud directly down to local instantly
               callback(cloudData);
             } else {
               callback(null);
@@ -1274,6 +1341,8 @@
     // --- SECURE LOGIN SUBMISSION ---
     DOM.formLogin.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if(!isAuthReady) { showToast("System connecting. Please wait.", "warn"); return; }
+      
       const email = DOM.loginEmail.value.trim().toLowerCase();
       const pin = DOM.loginPin.value.trim();
 
@@ -1283,7 +1352,7 @@
       }
 
       DOM.btnShowLogin.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i>`;
-      showToast("Authenticating profile...", "info");
+      showToast("Authenticating profile securely...", "info");
 
       const user = await DB_ENGINE.getUserByEmail(email);
       
@@ -1319,6 +1388,8 @@
     // --- NEW REGISTRATION FORM SUBMISSION ---
     DOM.formSignup.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if(!isAuthReady) { showToast("System connecting. Please wait.", "warn"); return; }
+
       const name = DOM.signupName.value.trim().toUpperCase();
       const email = DOM.signupEmail.value.trim().toLowerCase();
       const pin = DOM.signupPin.value.trim();
@@ -1417,16 +1488,18 @@
       location.reload();
     });
 
-    // MOCK STORAGE DIAGNOSTIC WARNING
     window.addEventListener('DOMContentLoaded', () => {
-      if (useMockStorage) {
-         setTimeout(() => {
-             showToast("Local DB Active! ⚠️ Open Faculty & Student in TWO TABS within the SAME browser to see sync work without Firebase.", "warn");
-         }, 1500);
-      }
       const cached = localStorage.getItem('acoustix_current_user');
       if (cached) {
-        try { loginUserToApp(JSON.parse(cached)); } catch(e){}
+        try { 
+            // Wait for DB engine auth before loading app
+            const checkAuth = setInterval(() => {
+                if (isAuthReady) {
+                    clearInterval(checkAuth);
+                    loginUserToApp(JSON.parse(cached)); 
+                }
+            }, 100);
+        } catch(e){}
       }
     });
 
@@ -1724,7 +1797,6 @@
       });
     }
 
-    // Attached to window so inline onclick can access it
     window.toggleManualAttendance = async function(rollNo, name, picUrl, isPresent) {
       if (isPresent) {
          await DB_ENGINE.removeSessionAttendee(STATE.activeSession.sessionId, rollNo);
@@ -1741,7 +1813,7 @@
          await DB_ENGINE.updateSessionAttendees(STATE.activeSession.sessionId, rollNo, record);
          showToast(`${name} marked PRESENT (Manual)`, "success");
       }
-      setTimeout(() => renderManualList(), 150); // slight delay to allow DB state refresh
+      setTimeout(() => renderManualList(), 150); 
     };
 
     // --- FACULTY PORTAL: STUDENT DIRECTORY ---
@@ -1915,7 +1987,6 @@
       });
 
       if (STATE.sessionListener) STATE.sessionListener();
-      // Listen specifically for their Year AND Section
       STATE.sessionListener = DB_ENGINE.subscribeToActiveSession(STATE.currentUser.year, STATE.currentUser.section, (session) => {
         if (session && session.isActive) {
           STATE.activeSession = session;
@@ -2147,11 +2218,6 @@
         container.appendChild(item);
       });
     }
-  </script>
-  <script>
-        document.addEventListener('contextmenu', function(event) {
-            event.preventDefault();
-        });
   </script>
 </body>
 </html>
