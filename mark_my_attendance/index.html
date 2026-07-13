@@ -281,10 +281,10 @@
             <div>
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">1. Select Course Subject</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-subject">
-                <button type="button" class="chip active shrink-0" data-val="ADVANCED DATABASE SYSTEMS">ADVANCED DATABASE SYSTEMS</button>
-                <button type="button" class="chip shrink-0" data-val="MOBILE ARCHITECTURE & UX">MOBILE ARCHITECTURE & UX</button>
-                <button type="button" class="chip shrink-0" data-val="FULL STACK ENGINEERING">FULL STACK ENGINEERING</button>
-                <button type="button" class="chip shrink-0" data-val="CLOUD COMPUTE & DEVOPS">CLOUD COMPUTE & DEVOPS</button>
+                <button type="button" class="chip active shrink-0" data-val="PE-BS">PE-BS</button>
+                <button type="button" class="chip shrink-0" data-val="CVIP">CVIP</button>
+                <button type="button" class="chip shrink-0" data-val="CVIP LAB">CVIP LAB</button>
+                <button type="button" class="chip shrink-0" data-val="PE-AIML">PE-AIML</button>
               </div>
             </div>
 
@@ -396,8 +396,8 @@
           <!-- Empty State -->
           <div id="grid-empty-state" class="col-span-full glass-panel rounded-2xl p-8 sm:p-12 text-center text-slate-500">
             <i class="fa-solid fa-user-clock text-3xl sm:text-4xl mb-3 opacity-50"></i>
-            <p class="text-xs sm:text-sm font-semibold">No students verified yet.</p>
-            <p class="text-[10px] sm:text-xs opacity-70 mt-1">Ensure broadcast is active and students are in range.</p>
+            <p class="text-xs sm:text-sm font-semibold">No students expected or verified.</p>
+            <p class="text-[10px] sm:text-xs opacity-70 mt-1">Ensure broadcast is active and Master List is loaded.</p>
           </div>
         </div>
       </div>
@@ -453,7 +453,7 @@
         </div>
       </div>
 
-      <!-- Tab 4: MANAGE WHITELIST -->
+      <!-- Tab 4: MANAGE MASTER LIST (CSV Import) -->
       <div id="tab-fac-whitelist" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-8 space-y-5 sm:space-y-6">
           <div>
@@ -476,7 +476,30 @@
             </div>
           </div>
           
-          <div class="bg-slate-900/60 border border-white/5 p-4 sm:p-6 rounded-2xl">
+          <div class="space-y-3 sm:space-y-4 w-full">
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Year:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="wl-filter-year">
+                <button class="chip active shrink-0" data-val="ALL">All Years</button>
+                <button class="chip shrink-0" data-val="1">1st Yr</button>
+                <button class="chip shrink-0" data-val="2">2nd Yr</button>
+                <button class="chip shrink-0" data-val="3">3rd Yr</button>
+                <button class="chip shrink-0" data-val="4">4th Yr</button>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Section:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="wl-filter-section">
+                <button class="chip active shrink-0" data-val="ALL">All Sections</button>
+                <button class="chip shrink-0" data-val="A">Sec A</button>
+                <button class="chip shrink-0" data-val="B">Sec B</button>
+                <button class="chip shrink-0" data-val="C">Sec C</button>
+                <button class="chip shrink-0" data-val="D">Sec D</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-slate-900/60 border border-white/5 p-4 sm:p-6 rounded-2xl mt-2">
             <div class="flex justify-between items-center mb-3 sm:mb-4 border-b border-white/10 pb-2 sm:pb-3">
               <span class="text-xs sm:text-sm font-bold text-slate-300">Expected Student Records</span>
               <span class="text-[10px] sm:text-xs font-mono bg-emerald-500/20 text-emerald-300 px-2 sm:px-3 py-1 rounded-full">Total: <strong id="whitelist-count">0</strong></span>
@@ -488,13 +511,13 @@
         </div>
       </div>
 
-      <!-- Tab 5: Analytics & Reports -->
+      <!-- Tab 5: Analytics & Reports (With Historic Editing) -->
       <div id="tab-fac-reports" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-5 sm:space-y-6 w-full overflow-hidden">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Attendance Analytics</h3>
-              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Filter historic records and export cleanly to CSV.</p>
+              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Filter historic records, manually override statuses, and export to CSV.</p>
             </div>
             <button id="btn-export-csv" class="chip bg-emerald-500/20 border-emerald-500/40 hover:bg-emerald-500/30 text-emerald-300 py-2 sm:py-2.5 px-4 sm:px-5 font-bold flex items-center justify-center space-x-2 w-full sm:w-auto">
               <i class="fa-solid fa-file-csv text-sm sm:text-base"></i>
@@ -518,10 +541,10 @@
               <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Subject:</span>
               <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-subject">
                 <button class="chip active shrink-0" data-val="ALL">All Subjects</button>
-                <button class="chip shrink-0" data-val="ADVANCED DATABASE SYSTEMS">DATABASE</button>
-                <button class="chip shrink-0" data-val="MOBILE ARCHITECTURE & UX">MOBILE UX</button>
-                <button class="chip shrink-0" data-val="FULL STACK ENGINEERING">FULL STACK</button>
-                <button class="chip shrink-0" data-val="CLOUD COMPUTE & DEVOPS">CLOUD/DEVOPS</button>
+                <button class="chip shrink-0" data-val="PE-BS">PE-BS</button>
+                <button class="chip shrink-0" data-val="CVIP">CVIP</button>
+                <button class="chip shrink-0" data-val="CVIP LAB">CVIP LAB</button>
+                <button class="chip shrink-0" data-val="PE-AIML">PE-AIML</button>
               </div>
             </div>
 
@@ -557,7 +580,8 @@
                   <th class="py-2.5 sm:py-3 px-3 sm:px-4">Name</th>
                   <th class="py-2.5 sm:py-3 px-3 sm:px-4">Yr & Sec</th>
                   <th class="py-2.5 sm:py-3 px-3 sm:px-4">Subject</th>
-                  <th class="py-2.5 sm:py-3 px-3 sm:px-4">Selfie Check</th>
+                  <th class="py-2.5 sm:py-3 px-3 sm:px-4">Status</th>
+                  <th class="py-2.5 sm:py-3 px-3 sm:px-4 text-center">Action</th>
                 </tr>
               </thead>
               <tbody id="reports-table-body" class="divide-y divide-white/5 text-slate-300 font-medium">
@@ -677,10 +701,10 @@
         <div class="glass-panel p-3 sm:p-4 rounded-2xl flex items-center justify-between">
           <div>
             <h3 class="text-base sm:text-lg font-bold">7-Day Timeline</h3>
-            <p class="text-[10px] sm:text-xs text-slate-400">Verified sessions (168h).</p>
+            <p class="text-[10px] sm:text-xs text-slate-400">Your historical attendance (168h).</p>
           </div>
           <span class="chip bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-mono text-[10px] sm:text-xs shrink-0 py-1.5 px-3">
-            Count: <strong id="stu-history-count" class="ml-1">0</strong>
+            Records: <strong id="stu-history-count" class="ml-1">0</strong>
           </span>
         </div>
 
@@ -731,10 +755,10 @@
       </div>
 
       <div class="flex gap-2.5 sm:gap-3">
-        <button id="btn-retake-selfie" class="hidden flex-1 chip bg-slate-800 border-white/20 hover:bg-slate-700 py-3 text-center font-bold text-sm">
+        <button id="btn-retake-selfie" class="hidden flex-1 chip bg-slate-800 border-white/20 hover:bg-slate-700 py-3 sm:py-3 text-center font-bold text-sm">
           <i class="fa-solid fa-rotate-left mr-1.5"></i> Retake
         </button>
-        <button id="btn-snap-selfie" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3 px-4 sm:px-6 rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base">
+        <button id="btn-snap-selfie" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3 sm:py-3 px-4 sm:px-6 rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base">
           <i class="fa-solid fa-camera mr-1.5"></i>
           <span>Snap & Submit</span>
         </button>
@@ -768,9 +792,9 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // --- FIREBASE CONFIGURATION (Provided by User) ---
+    // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
       apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
       authDomain: "stuattnd.firebaseapp.com",
@@ -781,7 +805,6 @@
       measurementId: "G-9PZZM5LFKX"
     };
 
-    // System-Requested Path ID
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'uvlog_att_app';
 
     let app, db, auth, useMockStorage = false;
@@ -792,30 +815,24 @@
       app = initializeApp(firebaseConfig);
       db = getFirestore(app);
       auth = getAuth(app);
-      console.log("[System] Connected to Firebase v10 Backend.");
     } catch (err) {
-      console.error("[System Notice] Firebase initialization failed. Offline fallback active.", err);
       useMockStorage = true;
-      isAuthReady = true; // Bypass auth check if running entirely locally
+      isAuthReady = true; 
       document.getElementById('view-onboarding').classList.remove('hidden');
       document.getElementById('btn-show-login').innerHTML = `<i class="fa-solid fa-user-lock mr-1.5"></i> Portal`;
       document.getElementById('btn-show-login').disabled = false;
     }
 
-    // Required strictly to read/write Firestore rules if online
     if (!useMockStorage) {
       signInAnonymously(auth).then(() => {
         isAuthReady = true;
         document.getElementById('btn-show-login').innerHTML = `<i class="fa-solid fa-user-lock mr-1.5"></i> Portal`;
         document.getElementById('btn-show-login').disabled = false;
         
-        // Show proper view now that auth is ready
         if(!STATE.currentUser) {
             document.getElementById('view-onboarding').classList.remove('hidden');
         }
       }).catch((error) => {
-        console.error("Auth Failed", error);
-        showToast("Backend authentication failed. Operating in offline cache mode.", "error");
         useMockStorage = true;
         isAuthReady = true;
         document.getElementById('view-onboarding').classList.remove('hidden');
@@ -824,7 +841,6 @@
       });
     }
 
-    // --- HELPER: CONSTRUCT STRICT PATHS FOR SINGLE SOURCE OF TRUTH ---
     function getDocRef(collectionName, documentId) {
         return doc(db, 'artifacts', appId, 'public', 'data', collectionName, documentId);
     }
@@ -838,7 +854,7 @@
       activeSession: null,      
       sessionListener: null,    
       selectedRole: 'student',  
-      facSubject: 'ADVANCED DATABASE SYSTEMS',
+      facSubject: 'CVIP',
       facYear: '1',
       facSection: 'A',
       facRadius: 25,
@@ -855,6 +871,8 @@
       reportFilterSec: 'ALL',
       dirFilterYear: 'ALL',
       dirFilterSec: 'ALL',
+      wlFilterYear: 'ALL',      // NEW: Whitelist Year Filter
+      wlFilterSec: 'ALL',       // NEW: Whitelist Section Filter
       activeWhitelist: [] 
     };
 
@@ -1026,7 +1044,6 @@
     // ==========================================
     // 🧠 CLOUD-FIRST DB ENGINE (SINGLE SOURCE OF TRUTH)
     // ==========================================
-    // Operations that fail to write to the cloud due to offline status go here.
     const SYNC_QUEUE = {
       getQueue: () => JSON.parse(localStorage.getItem('acoustix_sync_queue') || '[]'),
       
@@ -1073,7 +1090,6 @@
     setInterval(() => SYNC_QUEUE.flushToCloud(), 4000);
 
     const DB_ENGINE = {
-      // 1. Fetch from CLOUD FIRST. Fallback to local storage if offline.
       async getWhitelist() {
         if (!useMockStorage && navigator.onLine && isAuthReady) {
            try {
@@ -1089,7 +1105,6 @@
         return JSON.parse(localStorage.getItem('acoustix_whitelist') || '[]');
       },
 
-      // 2. Write to CLOUD FIRST. Cache to local.
       async saveWhitelist(listArray) {
         localStorage.setItem('acoustix_whitelist', JSON.stringify(listArray)); 
         if (!useMockStorage && navigator.onLine && isAuthReady) {
@@ -1101,7 +1116,6 @@
         SYNC_QUEUE.pushOperation('SET', 'config', 'whitelist', { list: listArray }); 
       },
       
-      // 1. Fetch from CLOUD FIRST. Fallback to local storage if offline.
       async getUserByEmail(email) {
         if (!useMockStorage && navigator.onLine && isAuthReady) {
            try {
@@ -1116,7 +1130,6 @@
              }
            } catch(e) { console.error("User cloud fetch failed", e); }
         }
-        // Local Fallback
         const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
         return Object.values(users).find(u => u.email === email) || null;
       },
@@ -1158,6 +1171,11 @@
           session.attendees[studentId] = attendeeRecord;
           session.attendeeCount = Object.keys(session.attendees).length;
           localStorage.setItem('acoustix_active_session', JSON.stringify(session));
+          
+          const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
+          const idx = all.findIndex(s => s.sessionId === sessionId);
+          if (idx !== -1) all[idx] = session;
+          localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
         }
 
         const updatePayload = {
@@ -1196,16 +1214,70 @@
         const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
         if (session) { 
           session.isActive = false; 
+          
+          // Proactive Engine: Auto-fill absentees from Master List
+          const whitelist = JSON.parse(localStorage.getItem('acoustix_whitelist') || '[]');
+          const expected = whitelist.filter(s => s.year === session.year && s.section === session.section);
+          
+          session.attendees = session.attendees || {};
+          expected.forEach(stu => {
+            if (!session.attendees[stu.rollNo]) {
+               session.attendees[stu.rollNo] = {
+                 name: stu.name,
+                 rollNo: stu.rollNo,
+                 profilePicUrl: 'https://placehold.co/100x100/333/666?text=ABSENT',
+                 selfieUrl: null,
+                 checkInTime: session.timestamp,
+                 status: "ABSENT"
+               };
+            }
+          });
+          session.attendeeCount = Object.keys(session.attendees).length;
+
           localStorage.setItem('acoustix_active_session', JSON.stringify(session)); 
+          
+          const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
+          const idx = all.findIndex(s => s.sessionId === sessionId);
+          if (idx !== -1) all[idx] = session;
+          localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
         }
 
         if (!useMockStorage && navigator.onLine && isAuthReady) {
            try {
-               await updateDoc(getDocRef('sessions', sessionId), { isActive: false });
+               await updateDoc(getDocRef('sessions', sessionId), { 
+                   isActive: false,
+                   attendees: session.attendees,
+                   attendeeCount: session.attendeeCount
+               });
                return;
            } catch(e) {}
         }
-        SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, { isActive: false });
+        SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, { 
+            isActive: false,
+            attendees: session.attendees,
+            attendeeCount: session.attendeeCount
+        });
+      },
+
+      async updateHistoricalAttendance(sessionId, rollNo, newStatus) {
+         const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
+         const session = all.find(s => s.sessionId === sessionId);
+         if (session && session.attendees && session.attendees[rollNo]) {
+             session.attendees[rollNo].status = newStatus;
+             localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
+
+             const updatePayload = {
+               [`attendees.${rollNo}.status`]: newStatus
+             };
+             
+             if (!useMockStorage && navigator.onLine && isAuthReady) {
+                 try {
+                     await updateDoc(getDocRef('sessions', sessionId), updatePayload);
+                     return;
+                 } catch(e) {}
+             }
+             SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, updatePayload);
+         }
       },
       
       async getStudentDirectory() {
@@ -1494,7 +1566,6 @@
       const cached = localStorage.getItem('acoustix_current_user');
       if (cached) {
         try { 
-            // Wait for DB engine auth before loading app
             const checkAuth = setInterval(() => {
                 if (isAuthReady) {
                     clearInterval(checkAuth);
@@ -1552,7 +1623,6 @@
         const text = event.target.result;
         const rows = text.split(/[\n]+/).filter(r => r.trim() !== '');
         
-        // Check if first row is header
         const hasHeader = rows[0].toUpperCase().includes('ROLL') || rows[0].toUpperCase().includes('NAME');
         const dataRows = hasHeader ? rows.slice(1) : rows;
 
@@ -1595,10 +1665,35 @@
       renderActiveWhitelistUI();
     }
 
+    // --- NEW: Attach Event Listeners to Whitelist Chips ---
+    function setupWhitelistFilters(containerId, stateKey) {
+      document.querySelectorAll(`#${containerId} button`).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll(`#${containerId} button`).forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          STATE[stateKey] = e.currentTarget.dataset.val;
+          renderActiveWhitelistUI();
+        });
+      });
+    }
+    setupWhitelistFilters('wl-filter-year', 'wlFilterYear');
+    setupWhitelistFilters('wl-filter-section', 'wlFilterSec');
+
     function renderActiveWhitelistUI() {
-      DOM.whitelistCount.textContent = STATE.activeWhitelist.length;
-      if (STATE.activeWhitelist.length === 0) {
-        DOM.whitelistPreview.innerHTML = `<div class="text-slate-500 text-[10px] sm:text-xs italic">No Master List loaded. System is blocking student registrations.</div>`;
+      // NEW: Apply Filters before mapping
+      let filteredList = STATE.activeWhitelist;
+      
+      if (STATE.wlFilterYear !== 'ALL') {
+        filteredList = filteredList.filter(s => s.year === STATE.wlFilterYear);
+      }
+      if (STATE.wlFilterSec !== 'ALL') {
+        filteredList = filteredList.filter(s => s.section === STATE.wlFilterSec);
+      }
+
+      DOM.whitelistCount.textContent = filteredList.length;
+      
+      if (filteredList.length === 0) {
+        DOM.whitelistPreview.innerHTML = `<div class="text-slate-500 text-[10px] sm:text-xs italic">No Master List records match criteria or list is empty.</div>`;
       } else {
         DOM.whitelistPreview.innerHTML = `
           <div class="overflow-x-auto hide-scrollbar">
@@ -1612,7 +1707,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-white/5 text-slate-400">
-                ${STATE.activeWhitelist.map(s => `
+                ${filteredList.map(s => `
                   <tr>
                     <td class="py-2 px-3 font-mono text-indigo-300">${s.rollNo}</td>
                     <td class="py-2 px-3 text-white font-semibold">${s.name}</td>
@@ -1738,12 +1833,12 @@
       DOM.btnStopBroadcast.classList.add('hidden');
       DOM.btnStartBroadcast.classList.remove('hidden');
       STATE.activeSession = null;
-      showToast("Session terminated.", "info");
+      showToast("Session terminated. Absentees finalized.", "info");
     });
 
     function initFacultyPortal() {
       acquireFacultyGPS();
-      loadAndRenderWhitelist(); // Pre-load master list silently
+      loadAndRenderWhitelist(); 
       renderStudentDirectory();
     }
 
@@ -1755,9 +1850,10 @@
         if (!session) return;
         STATE.activeSession = session;
         const attendees = session.attendees || {};
-        const presentCount = Object.keys(attendees).length;
         
-        // Find expected students from master list
+        // Count only present/manual students (exclude auto-absent)
+        const presentCount = Object.values(attendees).filter(a => a.status !== 'ABSENT').length;
+        
         const expectedStudents = STATE.activeWhitelist.filter(s => s.year === session.year && s.section === session.section);
         const totalExpected = expectedStudents.length > 0 ? expectedStudents.length : presentCount;
 
@@ -1774,11 +1870,10 @@
         DOM.liveGrid.querySelectorAll('.student-card').forEach(c => c.remove());
         const renderedRolls = new Set();
 
-        // 1. Render all EXPECTED students from Master List
         expectedStudents.forEach(stu => {
           renderedRolls.add(stu.rollNo);
           const att = attendees[stu.rollNo];
-          const isPresent = !!att;
+          const isPresent = att && att.status !== 'ABSENT';
           const isManual = att && att.status === 'MANUAL';
           
           const card = document.createElement('div');
@@ -1792,7 +1887,6 @@
                <span class="text-[8px] sm:text-[9px] ${isManual ? 'text-amber-400' : 'text-emerald-400'} mt-1 sm:mt-2 font-bold"><i class="fa-solid fa-clock mr-1"></i>${new Date(att.checkInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
              `;
           } else {
-             // Rendering ABSENT CARD
              card.className = `student-card glass-card p-2 sm:p-3 rounded-xl sm:rounded-2xl flex flex-col items-center text-center relative overflow-hidden border-red-500/20 bg-red-900/10 opacity-75`;
              card.innerHTML = `
                <div class="absolute top-1.5 right-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 shadow-lg shadow-red-500"></div>
@@ -1807,9 +1901,8 @@
           DOM.liveGrid.appendChild(card);
         });
 
-        // 2. Render EXTRA students who joined but weren't on expected list (e.g. Faculty overrides)
         Object.values(attendees).forEach(att => {
-          if (!renderedRolls.has(att.rollNo)) {
+          if (!renderedRolls.has(att.rollNo) && att.status !== 'ABSENT') {
              const card = document.createElement('div');
              card.className = `student-card glass-card p-2 sm:p-3 rounded-xl sm:rounded-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-300 relative overflow-hidden border-indigo-500/40`;
              card.innerHTML = `
@@ -1862,7 +1955,9 @@
       }
 
       students.forEach(stu => {
-        const isPresent = STATE.activeSession.attendees && STATE.activeSession.attendees[stu.rollNo];
+        const att = STATE.activeSession.attendees && STATE.activeSession.attendees[stu.rollNo];
+        const isPresent = att && att.status !== 'ABSENT';
+
         const item = document.createElement('div');
         item.className = "flex items-center justify-between bg-white/5 p-2.5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors";
         item.innerHTML = `
@@ -1954,7 +2049,7 @@
       });
     }
 
-    // --- FACULTY PORTAL: ANALYTICS ---
+    // --- FACULTY PORTAL: ANALYTICS WITH HISTORICAL OVERRIDE ---
     function setupReportFilters(containerId, stateKey) {
       document.querySelectorAll(`#${containerId} button`).forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1973,7 +2068,7 @@
     let currentFilteredRecords = [];
     async function renderReportsTable() {
       const tbody = document.getElementById('reports-table-body');
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Filtering Records...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Filtering Records...</td></tr>`;
       
       const sessions = await DB_ENGINE.getAllSessions();
       currentFilteredRecords = [];
@@ -1982,6 +2077,7 @@
         const attendees = Object.values(sess.attendees || {});
         attendees.forEach(att => {
           const record = {
+            sessionId: sess.sessionId,
             timestamp: att.checkInTime || sess.timestamp,
             dateStr: new Date(att.checkInTime || sess.timestamp).toLocaleString(),
             rollNo: att.rollNo,
@@ -2006,12 +2102,19 @@
 
       tbody.innerHTML = '';
       if (currentFilteredRecords.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 sm:py-8 text-slate-500 text-[10px] sm:text-xs">No records match criteria.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 sm:py-8 text-slate-500 text-[10px] sm:text-xs">No records match criteria.</td></tr>`;
         return;
       }
 
       currentFilteredRecords.forEach(rec => {
         const isManual = rec.status === 'MANUAL';
+        const isAbsent = rec.status === 'ABSENT';
+        
+        let statusBadge = '';
+        if (isManual) statusBadge = '<span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-user-pen mr-1"></i>Manual</span>';
+        else if (isAbsent) statusBadge = '<span class="bg-red-500/10 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-xmark mr-1"></i>Absent</span>';
+        else statusBadge = '<span class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-wave-square mr-1"></i>Verified</span>';
+
         const tr = document.createElement('tr');
         tr.className = "hover:bg-white/5 transition-colors";
         tr.innerHTML = `
@@ -2020,16 +2123,23 @@
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 font-bold text-white text-[11px] sm:text-sm">${rec.name}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">Yr ${rec.year} | SEC ${rec.section}</span></td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-[9px] sm:text-[11px] text-slate-300">${rec.subject}</td>
-          <td class="py-2.5 sm:py-3 px-3 sm:px-4">
-            ${isManual ? 
-              '<span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-user-pen mr-1"></i>Faculty Override</span>' : 
-              '<span class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-wave-square mr-1"></i>Acoustic+GPS</span>'
-            }
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4">${statusBadge}</td>
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-center">
+             <button onclick="toggleHistoricalAttendance('${rec.sessionId}', '${rec.rollNo}', '${rec.status}')" class="chip bg-slate-800 border-white/10 hover:bg-slate-700 text-[9px] px-2 py-1" title="Toggle Manual Override">
+                 <i class="fa-solid fa-pencil"></i> Edit
+             </button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
+    
+    window.toggleHistoricalAttendance = async function(sessionId, rollNo, currentStatus) {
+        let newStatus = currentStatus === 'ABSENT' ? 'MANUAL' : 'ABSENT';
+        await DB_ENGINE.updateHistoricalAttendance(sessionId, rollNo, newStatus);
+        showToast(`Attendance for ${rollNo} manually updated to ${newStatus}.`, 'success');
+        renderReportsTable();
+    };
 
     // --- CSV EXPORT ---
     document.getElementById('btn-export-csv').addEventListener('click', () => {
@@ -2226,7 +2336,7 @@
     });
 
     async function submitAttendanceRecord() {
-      showToast("Data saved locally! Uploading to Database...", "info");
+      showToast("Data saved locally! Committing to Cloud sync queue...", "info");
       
       const attendeeRecord = {
         name: STATE.currentUser.name,
@@ -2276,14 +2386,23 @@
 
       container.innerHTML = '';
       if (myRecords.length === 0) {
-        container.innerHTML = `<div class="glass-panel p-6 sm:p-8 rounded-2xl text-center text-slate-500 text-[11px] sm:text-xs font-semibold">No verified attendance records in the past 7 days.</div>`;
+        container.innerHTML = `<div class="glass-panel p-6 sm:p-8 rounded-2xl text-center text-slate-500 text-[11px] sm:text-xs font-semibold">No attendance records in the past 7 days.</div>`;
         return;
       }
 
       myRecords.forEach(rec => {
         const isManual = rec.status === 'MANUAL';
+        const isAbsent = rec.status === 'ABSENT';
+        
+        let borderColor = isAbsent ? 'border-l-red-500' : (isManual ? 'border-l-amber-500' : 'border-l-emerald-500');
+        
+        let statusChip = '';
+        if (isAbsent) statusChip = '<span class="chip bg-red-500/20 text-red-300 border-red-500/40 text-[8px] sm:text-[9px] font-extrabold uppercase py-1 px-2"><i class="fa-solid fa-xmark sm:mr-1"></i> <span class="hidden sm:inline">Absent</span></span>';
+        else if (isManual) statusChip = '<span class="chip bg-amber-500/20 text-amber-300 border-amber-500/40 text-[8px] sm:text-[9px] font-extrabold uppercase py-1 px-2"><i class="fa-solid fa-user-pen sm:mr-1"></i> <span class="hidden sm:inline">Manual</span></span>';
+        else statusChip = '<span class="chip bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[8px] sm:text-[9px] font-extrabold uppercase py-1 px-2"><i class="fa-solid fa-check sm:mr-1"></i> <span class="hidden sm:inline">Verified</span></span>';
+
         const item = document.createElement('div');
-        item.className = `glass-panel p-3 sm:p-4 rounded-2xl flex items-center justify-between border-l-[3px] sm:border-l-4 ${isManual ? 'border-l-amber-500' : 'border-l-emerald-500'} hover:bg-white/5 transition-all w-full`;
+        item.className = `glass-panel p-3 sm:p-4 rounded-2xl flex items-center justify-between border-l-[3px] sm:border-l-4 ${borderColor} hover:bg-white/5 transition-all w-full`;
         item.innerHTML = `
           <div class="flex items-center space-x-3 sm:space-x-4 overflow-hidden">
             <img src="${rec.selfieUrl || rec.profilePicUrl}" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border border-white/20 shadow shrink-0">
@@ -2293,9 +2412,7 @@
             </div>
           </div>
           <div class="text-right flex flex-col items-end shrink-0 ml-2">
-            <span class="chip ${isManual ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'} text-[8px] sm:text-[9px] font-extrabold uppercase py-1 px-2">
-               ${isManual ? '<i class="fa-solid fa-user-pen sm:mr-1"></i> <span class="hidden sm:inline">Manual</span>' : '<i class="fa-solid fa-check sm:mr-1"></i> <span class="hidden sm:inline">Verified</span>'}
-            </span>
+            ${statusChip}
             <span class="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 sm:mt-1.5">Yr ${rec.year} | SEC ${rec.section}</span>
           </div>
         `;
