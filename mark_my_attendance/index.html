@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AcoustiXPresence | Ultrasonic PWA</title>
+  <title>AcoustiXPresence | Smart Ultrasonic PWA</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -81,7 +81,7 @@
       <div class="truncate">
         <span class="text-base sm:text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-200 truncate">AcoustiXPresence</span>
         <span class="flex items-center gap-1 text-[9px] sm:text-[10px] text-indigo-400 font-semibold tracking-wider uppercase truncate">
-          Ultrasonic & GPS PWA
+          Smart Ultrasonic PWA
           <span id="sync-status-indicator" class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 hidden" title="Cloud Sync Active"></span>
         </span>
       </div>
@@ -217,10 +217,13 @@
             </div>
             <div>
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Section / Branch</label>
-              <div class="relative">
-                <i class="fa-solid fa-layer-group absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
-                <input type="text" id="signup-section" required placeholder="EX: A" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase placeholder:normal-case placeholder:text-slate-600">
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5" id="signup-chip-group-section">
+                <button type="button" class="chip active shrink-0 flex-1 py-3 text-xs" data-val="A">Sec A</button>
+                <button type="button" class="chip shrink-0 flex-1 py-3 text-xs" data-val="B">Sec B</button>
+                <button type="button" class="chip shrink-0 flex-1 py-3 text-xs" data-val="C">Sec C</button>
+                <button type="button" class="chip shrink-0 flex-1 py-3 text-xs" data-val="D">Sec D</button>
               </div>
+              <input type="hidden" id="signup-section" value="A">
             </div>
           </div>
 
@@ -260,6 +263,7 @@
           <button class="chip py-2.5 px-4 sm:px-5 shrink-0 snap-start" data-tab="fac-directory"><i class="fa-solid fa-users mr-1.5"></i>Directory</button>
           <button class="chip py-2.5 px-4 sm:px-5 shrink-0 snap-start" data-tab="fac-whitelist"><i class="fa-solid fa-list-check mr-1.5"></i>Master List</button>
           <button class="chip py-2.5 px-4 sm:px-5 shrink-0 snap-start" data-tab="fac-reports"><i class="fa-solid fa-chart-pie mr-1.5"></i>Reports</button>
+          <button class="chip py-2.5 px-4 sm:px-5 shrink-0 snap-start" data-tab="fac-users"><i class="fa-solid fa-user-shield mr-1.5"></i>Login Creds</button>
         </div>
         <div class="flex items-center justify-center space-x-2 px-3 py-1.5 bg-slate-900/60 rounded-xl border border-white/5 text-[10px] sm:text-xs shrink-0 self-start sm:self-auto">
           <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
@@ -271,7 +275,6 @@
       <div id="tab-fac-broadcast" class="glass-panel rounded-3xl p-5 sm:p-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           
-          <!-- Controls Panel -->
           <div class="lg:col-span-7 space-y-5 sm:space-y-6">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Configure Broadcast</h3>
@@ -281,10 +284,10 @@
             <div>
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">1. Select Course Subject</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-subject">
-                <button type="button" class="chip active shrink-0" data-val="PE-BS">PE-BS</button>
-                <button type="button" class="chip shrink-0" data-val="CVIP">CVIP</button>
-                <button type="button" class="chip shrink-0" data-val="CVIP LAB">CVIP LAB</button>
-                <button type="button" class="chip shrink-0" data-val="PE-AIML">PE-AIML</button>
+                <button type="button" class="chip active shrink-0" data-val="ADVANCED DATABASE SYSTEMS">ADVANCED DATABASE SYSTEMS</button>
+                <button type="button" class="chip shrink-0" data-val="MOBILE ARCHITECTURE & UX">MOBILE ARCHITECTURE & UX</button>
+                <button type="button" class="chip shrink-0" data-val="FULL STACK ENGINEERING">FULL STACK ENGINEERING</button>
+                <button type="button" class="chip shrink-0" data-val="CLOUD COMPUTE & DEVOPS">CLOUD COMPUTE & DEVOPS</button>
               </div>
             </div>
 
@@ -317,7 +320,6 @@
               </div>
             </div>
 
-            <!-- Action Button -->
             <div class="pt-2 sm:pt-4">
               <button id="btn-start-broadcast" class="w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl font-extrabold text-sm sm:text-base bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center space-x-2 sm:space-x-3">
                 <i class="fa-solid fa-podcast text-lg sm:text-xl animate-bounce"></i>
@@ -325,12 +327,11 @@
               </button>
               <button id="btn-stop-broadcast" class="hidden w-full py-3.5 sm:py-4 px-4 sm:px-6 rounded-2xl font-extrabold text-sm sm:text-base bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 shadow-lg shadow-red-500/20 transition-all flex items-center justify-center space-x-2 sm:space-x-3 animate-pulse-ring">
                 <i class="fa-solid fa-circle-stop text-lg sm:text-xl"></i>
-                <span class="truncate">Terminate Broadcast (<span id="active-timer">00:00</span>)</span>
+                <span class="truncate">End Session & Tag Absentees (<span id="active-timer">00:00</span>)</span>
               </button>
             </div>
           </div>
 
-          <!-- Visualizer Panel -->
           <div class="lg:col-span-5 bg-slate-900/80 border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[280px] sm:min-h-[340px]">
             <div id="broadcast-inactive-state" class="space-y-3 w-full">
               <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center mx-auto text-slate-500 text-2xl sm:text-3xl">
@@ -361,11 +362,11 @@
                   <span id="stat-subject" class="text-[10px] sm:text-xs font-bold text-white truncate block">---</span>
                 </div>
                 <div class="bg-white/5 p-2 sm:p-2.5 rounded-xl overflow-hidden col-span-1">
-                  <span class="text-[9px] sm:text-[10px] text-slate-400 block truncate">Target Year</span>
+                  <span class="text-[9px] sm:text-[10px] text-slate-400 block truncate">Target Yr</span>
                   <span id="stat-year" class="text-[10px] sm:text-xs font-bold text-white truncate block">---</span>
                 </div>
                 <div class="bg-white/5 p-2 sm:p-2.5 rounded-xl overflow-hidden col-span-2">
-                  <span class="text-[9px] sm:text-[10px] text-slate-400 block truncate">Target Section</span>
+                  <span class="text-[9px] sm:text-[10px] text-slate-400 block truncate">Target Sec</span>
                   <span id="stat-section" class="text-[10px] sm:text-xs font-bold text-white truncate block">---</span>
                 </div>
               </div>
@@ -380,7 +381,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 glass-panel p-4 rounded-2xl">
           <div>
             <h3 class="text-lg sm:text-xl font-bold">Live Classroom Grid</h3>
-            <p class="text-[10px] sm:text-xs text-slate-400">Student cards animate into view upon handshake.</p>
+            <p class="text-[10px] sm:text-xs text-slate-400">Master List cross-references absentees in real-time.</p>
           </div>
           <div class="flex items-center space-x-2 self-start sm:self-auto">
             <button id="btn-manual-override" class="chip bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30 text-[10px] py-1.5 px-3">
@@ -396,8 +397,8 @@
           <!-- Empty State -->
           <div id="grid-empty-state" class="col-span-full glass-panel rounded-2xl p-8 sm:p-12 text-center text-slate-500">
             <i class="fa-solid fa-user-clock text-3xl sm:text-4xl mb-3 opacity-50"></i>
-            <p class="text-xs sm:text-sm font-semibold">No students expected or verified.</p>
-            <p class="text-[10px] sm:text-xs opacity-70 mt-1">Ensure broadcast is active and Master List is loaded.</p>
+            <p class="text-xs sm:text-sm font-semibold">No active session.</p>
+            <p class="text-[10px] sm:text-xs opacity-70 mt-1">Start a broadcast to load the Master List grid.</p>
           </div>
         </div>
       </div>
@@ -407,7 +408,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-4 rounded-2xl">
           <div>
             <h3 class="text-base sm:text-lg font-bold">Student Directory</h3>
-            <p class="text-[10px] sm:text-xs text-slate-400">Sorted ASC by Roll Number.</p>
+            <p class="text-[10px] sm:text-xs text-slate-400">Registered students sorted ASC by Roll Number.</p>
           </div>
           <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
             <div class="flex items-center space-x-2 w-full sm:w-auto">
@@ -424,10 +425,10 @@
               <span class="text-[10px] sm:text-xs font-semibold text-slate-300 shrink-0">Section:</span>
               <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="dir-section-filters">
                 <button class="chip active py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="ALL">ALL</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="A">SEC A</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="B">SEC B</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="C">SEC C</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="D">SEC D</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="A">Sec A</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="B">Sec B</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="C">Sec C</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="D">Sec D</button>
               </div>
             </div>
           </div>
@@ -453,71 +454,70 @@
         </div>
       </div>
 
-      <!-- Tab 4: MANAGE MASTER LIST (CSV Import) -->
+      <!-- Tab 4: MANAGE MASTER LIST -->
       <div id="tab-fac-whitelist" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-8 space-y-5 sm:space-y-6">
           <div>
             <h3 class="text-lg sm:text-xl font-bold text-white">Master Attendance List</h3>
-            <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Upload a CSV containing: <strong>RollNo, Name, Year, Section</strong>. This generates ABSENT cards in the Live Grid.</p>
+            <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Upload a CSV containing: <strong>RollNo, Name, Year, Section</strong>. This generates expected cards in the Live Grid.</p>
           </div>
           
-          <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 border-y border-white/10 py-4 sm:py-5">
-            <input type="file" id="whitelist-csv-input" accept=".csv" class="hidden">
-            <button id="btn-upload-csv" class="chip bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30 py-2.5 sm:py-3 px-4 sm:px-6 font-bold flex items-center justify-center space-x-2 w-full sm:w-auto">
-              <i class="fa-solid fa-file-arrow-up text-base sm:text-lg"></i>
-              <span>Import Master CSV</span>
-            </button>
-            <button id="btn-clear-whitelist" class="chip bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30 py-2.5 sm:py-3 px-4 sm:px-6 font-bold flex items-center justify-center space-x-2 w-full sm:w-auto">
-              <i class="fa-solid fa-trash text-base sm:text-lg"></i>
-              <span>Wipe Master List</span>
-            </button>
-            <div class="text-[10px] sm:text-[11px] text-slate-400 max-w-xs mt-2 sm:mt-0 text-center sm:text-left">
-              <i class="fa-solid fa-circle-info text-indigo-400 sm:mr-1"></i> Expected format: RollNo, Name, Year, Section
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-y border-white/10 py-4 sm:py-5">
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input type="file" id="whitelist-csv-input" accept=".csv" class="hidden">
+              <button id="btn-upload-csv" class="chip bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30 py-2.5 sm:py-3 px-4 sm:px-6 font-bold flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-file-arrow-up text-base sm:text-lg"></i>
+                <span>Import Master CSV</span>
+              </button>
+              <button id="btn-clear-whitelist" class="chip bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30 py-2.5 sm:py-3 px-4 sm:px-6 font-bold flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-trash text-base sm:text-lg"></i>
+                <span>Wipe List</span>
+              </button>
+            </div>
+            
+            <div class="flex flex-col gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+               <div class="flex items-center space-x-2">
+                 <span class="text-[10px] text-slate-400 shrink-0 w-10">Year:</span>
+                 <div class="flex overflow-x-auto hide-scrollbar gap-1" id="master-year-filters">
+                   <button class="chip active py-1 px-2 text-[9px]" data-yr="ALL">ALL</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-yr="1">1st</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-yr="2">2nd</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-yr="3">3rd</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-yr="4">4th</button>
+                 </div>
+               </div>
+               <div class="flex items-center space-x-2">
+                 <span class="text-[10px] text-slate-400 shrink-0 w-10">Sec:</span>
+                 <div class="flex overflow-x-auto hide-scrollbar gap-1" id="master-section-filters">
+                   <button class="chip active py-1 px-2 text-[9px]" data-sec="ALL">ALL</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-sec="A">A</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-sec="B">B</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-sec="C">C</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-sec="D">D</button>
+                 </div>
+               </div>
             </div>
           </div>
           
-          <div class="space-y-3 sm:space-y-4 w-full">
-            <div class="flex items-center gap-2 w-full overflow-hidden">
-              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Year:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="wl-filter-year">
-                <button class="chip active shrink-0" data-val="ALL">All Years</button>
-                <button class="chip shrink-0" data-val="1">1st Yr</button>
-                <button class="chip shrink-0" data-val="2">2nd Yr</button>
-                <button class="chip shrink-0" data-val="3">3rd Yr</button>
-                <button class="chip shrink-0" data-val="4">4th Yr</button>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 w-full overflow-hidden">
-              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Section:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="wl-filter-section">
-                <button class="chip active shrink-0" data-val="ALL">All Sections</button>
-                <button class="chip shrink-0" data-val="A">Sec A</button>
-                <button class="chip shrink-0" data-val="B">Sec B</button>
-                <button class="chip shrink-0" data-val="C">Sec C</button>
-                <button class="chip shrink-0" data-val="D">Sec D</button>
-              </div>
-            </div>
-          </div>
-          
-          <div class="bg-slate-900/60 border border-white/5 p-4 sm:p-6 rounded-2xl mt-2">
+          <div class="bg-slate-900/60 border border-white/5 p-4 sm:p-6 rounded-2xl w-full overflow-hidden">
             <div class="flex justify-between items-center mb-3 sm:mb-4 border-b border-white/10 pb-2 sm:pb-3">
               <span class="text-xs sm:text-sm font-bold text-slate-300">Expected Student Records</span>
               <span class="text-[10px] sm:text-xs font-mono bg-emerald-500/20 text-emerald-300 px-2 sm:px-3 py-1 rounded-full">Total: <strong id="whitelist-count">0</strong></span>
             </div>
-            <div id="whitelist-preview" class="max-h-48 sm:max-h-64 overflow-y-auto pr-1 sm:pr-2 hide-scrollbar">
+            <div id="whitelist-preview" class="max-h-48 sm:max-h-64 overflow-y-auto pr-1 sm:pr-2 hide-scrollbar w-full">
               <div class="text-slate-500 text-[10px] sm:text-xs italic">No Master List loaded. System is blocking student registrations.</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Tab 5: Analytics & Reports (With Historic Editing) -->
+      <!-- Tab 5: Analytics & Reports (Historical Editing) -->
       <div id="tab-fac-reports" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-5 sm:space-y-6 w-full overflow-hidden">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Attendance Analytics</h3>
-              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Filter historic records, manually override statuses, and export to CSV.</p>
+              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Filter and Edit historical records dynamically. Export to CSV.</p>
             </div>
             <button id="btn-export-csv" class="chip bg-emerald-500/20 border-emerald-500/40 hover:bg-emerald-500/30 text-emerald-300 py-2 sm:py-2.5 px-4 sm:px-5 font-bold flex items-center justify-center space-x-2 w-full sm:w-auto">
               <i class="fa-solid fa-file-csv text-sm sm:text-base"></i>
@@ -541,10 +541,10 @@
               <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Subject:</span>
               <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-subject">
                 <button class="chip active shrink-0" data-val="ALL">All Subjects</button>
-                <button class="chip shrink-0" data-val="PE-BS">PE-BS</button>
-                <button class="chip shrink-0" data-val="CVIP">CVIP</button>
-                <button class="chip shrink-0" data-val="CVIP LAB">CVIP LAB</button>
-                <button class="chip shrink-0" data-val="PE-AIML">PE-AIML</button>
+                <button class="chip shrink-0" data-val="ADVANCED DATABASE SYSTEMS">DATABASE</button>
+                <button class="chip shrink-0" data-val="MOBILE ARCHITECTURE & UX">MOBILE UX</button>
+                <button class="chip shrink-0" data-val="FULL STACK ENGINEERING">FULL STACK</button>
+                <button class="chip shrink-0" data-val="CLOUD COMPUTE & DEVOPS">CLOUD/DEVOPS</button>
               </div>
             </div>
 
@@ -572,7 +572,7 @@
           </div>
 
           <div class="overflow-x-auto hide-scrollbar w-full -mx-5 px-5 sm:mx-0 sm:px-0">
-            <table class="w-full text-left text-[11px] sm:text-sm whitespace-nowrap min-w-[650px]">
+            <table class="w-full text-left text-[11px] sm:text-sm whitespace-nowrap min-w-[750px]">
               <thead class="bg-white/5 text-[10px] sm:text-xs uppercase tracking-wider text-slate-300 font-semibold border-b border-white/10">
                 <tr>
                   <th class="py-2.5 sm:py-3 px-3 sm:px-4">Date & Time</th>
@@ -585,6 +585,71 @@
                 </tr>
               </thead>
               <tbody id="reports-table-body" class="divide-y divide-white/5 text-slate-300 font-medium">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 6: Manage Login Credentials -->
+      <div id="tab-fac-users" class="hidden space-y-4 sm:space-y-6">
+        <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-5 sm:space-y-6 w-full overflow-hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div>
+              <h3 class="text-lg sm:text-xl font-bold">Manage Login Credentials</h3>
+              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">View and update registered student and faculty details.</p>
+            </div>
+          </div>
+
+          <div class="space-y-3 sm:space-y-4 border-y border-white/10 py-4 sm:py-5 w-full">
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Role:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="user-filter-role">
+                <button class="chip active shrink-0" data-val="ALL">All Roles</button>
+                <button class="chip shrink-0" data-val="student">Students</button>
+                <button class="chip shrink-0" data-val="faculty">Faculty / Staff</button>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Year:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="user-filter-year">
+                <button class="chip active shrink-0" data-val="ALL">All Years</button>
+                <button class="chip shrink-0" data-val="1">1st Yr</button>
+                <button class="chip shrink-0" data-val="2">2nd Yr</button>
+                <button class="chip shrink-0" data-val="3">3rd Yr</button>
+                <button class="chip shrink-0" data-val="4">4th Yr</button>
+                <button class="chip shrink-0" data-val="FACULTY">Faculty</button>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Section:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="user-filter-section">
+                <button class="chip active shrink-0" data-val="ALL">All Sections</button>
+                <button class="chip shrink-0" data-val="A">Sec A</button>
+                <button class="chip shrink-0" data-val="B">Sec B</button>
+                <button class="chip shrink-0" data-val="C">Sec C</button>
+                <button class="chip shrink-0" data-val="D">Sec D</button>
+                <button class="chip shrink-0" data-val="FACULTY">Faculty</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto hide-scrollbar w-full -mx-5 px-5 sm:mx-0 sm:px-0">
+            <table class="w-full text-left text-[11px] sm:text-sm whitespace-nowrap min-w-[700px]">
+              <thead class="bg-white/5 text-[10px] sm:text-xs uppercase tracking-wider text-slate-300 font-semibold border-b border-white/10">
+                <tr>
+                  <th class="py-2.5 sm:py-3 px-3 sm:px-4">Biometric</th>
+                  <th class="py-2.5 sm:py-3 px-3 sm:px-4">Roll No / ID</th>
+                  <th class="py-2.5 sm:py-3 px-3 sm:px-4">Name</th>
+                  <th class="py-2.5 sm:py-3 px-3 sm:px-4">Role</th>
+                  <th class="py-2.5 sm:py-3 px-3 sm:px-4">Yr & Sec</th>
+                  <th class="py-2.5 sm:py-3 px-3 sm:px-4">Email Addr</th>
+                  <th class="py-2.5 sm:py-3 px-3 sm:px-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body" class="divide-y divide-white/5 text-slate-300 font-medium">
               </tbody>
             </table>
           </div>
@@ -669,7 +734,6 @@
           </div>
         </div>
 
-        <!-- Live Visualizer Section -->
         <div class="glass-panel rounded-2xl p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 items-center">
           <div>
             <h4 class="font-bold text-sm sm:text-base">Airwave Spectrum Monitor</h4>
@@ -681,7 +745,6 @@
           </div>
           <div class="bg-slate-900 rounded-xl p-3 sm:p-4 border border-white/10 h-28 sm:h-32 flex items-center justify-center relative overflow-hidden">
             <div class="flex items-end space-x-0.5 sm:space-x-1 h-20 w-full justify-center px-2 sm:px-4" id="audio-visualizer-bars">
-              <!-- Animated bars generated by JS -->
               <div class="w-1.5 sm:w-2 bg-indigo-500/30 h-4 rounded-t transition-all duration-75"></div>
               <div class="w-1.5 sm:w-2 bg-indigo-500/40 h-8 rounded-t transition-all duration-75"></div>
               <div class="w-1.5 sm:w-2 bg-indigo-500/50 h-6 rounded-t transition-all duration-75"></div>
@@ -701,10 +764,10 @@
         <div class="glass-panel p-3 sm:p-4 rounded-2xl flex items-center justify-between">
           <div>
             <h3 class="text-base sm:text-lg font-bold">7-Day Timeline</h3>
-            <p class="text-[10px] sm:text-xs text-slate-400">Your historical attendance (168h).</p>
+            <p class="text-[10px] sm:text-xs text-slate-400">Your complete attendance history (168h).</p>
           </div>
           <span class="chip bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-mono text-[10px] sm:text-xs shrink-0 py-1.5 px-3">
-            Records: <strong id="stu-history-count" class="ml-1">0</strong>
+            Count: <strong id="stu-history-count" class="ml-1">0</strong>
           </span>
         </div>
 
@@ -720,17 +783,71 @@
   <div id="modal-manual" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="glass-panel max-w-lg w-full rounded-3xl p-5 sm:p-6 border-indigo-500/50 shadow-2xl space-y-4 max-h-[85vh] flex flex-col mt-[-5vh] sm:mt-0">
       <div class="flex items-center justify-between border-b border-white/10 pb-3 shrink-0">
-        <h3 class="font-extrabold text-base sm:text-lg">Manual Attendance Override</h3>
+        <h3 class="font-extrabold text-base sm:text-lg">Live Manual Override</h3>
         <button id="btn-close-manual" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       
       <div class="relative shrink-0">
         <i class="fa-solid fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
-        <input type="text" id="manual-search" placeholder="Search Roll No or Name..." class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-xs font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase">
+        <input type="text" id="manual-search" placeholder="Search Master List by Roll No or Name..." class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-xs font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase">
       </div>
 
       <div class="overflow-y-auto hide-scrollbar flex-grow space-y-2" id="manual-student-list">
       </div>
+    </div>
+  </div>
+
+  <!-- EDIT USER CREDENTIALS MODAL -->
+  <div id="modal-edit-user" class="fixed inset-0 z-[150] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-panel max-w-sm sm:max-w-md w-full rounded-3xl p-5 sm:p-6 border-indigo-500/50 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto mt-[-5vh] sm:mt-0 hide-scrollbar">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <h3 class="font-extrabold text-base sm:text-lg">Edit User Profile</h3>
+        <button id="btn-close-edit-user" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="form-edit-user" class="space-y-4">
+        <input type="hidden" id="edit-roll-no">
+        
+        <div>
+          <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Full Legal Name</label>
+          <input type="text" id="edit-name" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase">
+        </div>
+        
+        <div>
+          <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Email Address</label>
+          <input type="email" id="edit-email" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors lowercase">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Role</label>
+            <select id="edit-role" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-white">
+              <option value="student">Student</option>
+              <option value="faculty">Faculty</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Academic Year</label>
+            <select id="edit-year" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-white">
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+              <option value="FACULTY">Faculty</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Section</label>
+          <input type="text" id="edit-section" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase">
+        </div>
+
+        <button type="submit" class="w-full mt-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 sm:py-4 px-6 rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base">
+          <span>Save Changes</span>
+          <i class="fa-solid fa-floppy-disk"></i>
+        </button>
+      </form>
     </div>
   </div>
 
@@ -755,10 +872,10 @@
       </div>
 
       <div class="flex gap-2.5 sm:gap-3">
-        <button id="btn-retake-selfie" class="hidden flex-1 chip bg-slate-800 border-white/20 hover:bg-slate-700 py-3 sm:py-3 text-center font-bold text-sm">
+        <button id="btn-retake-selfie" class="hidden flex-1 chip bg-slate-800 border-white/20 hover:bg-slate-700 py-3 text-center font-bold text-sm">
           <i class="fa-solid fa-rotate-left mr-1.5"></i> Retake
         </button>
-        <button id="btn-snap-selfie" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3 sm:py-3 px-4 sm:px-6 rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base">
+        <button id="btn-snap-selfie" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-3 px-4 sm:px-6 rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base">
           <i class="fa-solid fa-camera mr-1.5"></i>
           <span>Snap & Submit</span>
         </button>
@@ -777,7 +894,7 @@
         <video id="reg-video" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
         <canvas id="reg-canvas" class="hidden"></canvas>
       </div>
-      <button id="btn-snap-reg" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition-all text-sm sm:text-base flex items-center justify-center">
+      <button id="btn-snap-reg" class="w-full py-3 sm:py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition-all text-sm sm:text-base flex items-center justify-center">
         <i class="fa-solid fa-camera mr-2"></i> Compress & Save
       </button>
     </div>
@@ -810,12 +927,13 @@
     let app, db, auth, useMockStorage = false;
     let isAuthReady = false;
 
-    // --- INITIALIZE FIREBASE & AUTHENTICATION ---
     try {
       app = initializeApp(firebaseConfig);
       db = getFirestore(app);
       auth = getAuth(app);
+      console.log("[System] Connected to Firebase v10 Backend.");
     } catch (err) {
+      console.warn("[System Notice] Offline fallback active.", err);
       useMockStorage = true;
       isAuthReady = true; 
       document.getElementById('view-onboarding').classList.remove('hidden');
@@ -828,11 +946,9 @@
         isAuthReady = true;
         document.getElementById('btn-show-login').innerHTML = `<i class="fa-solid fa-user-lock mr-1.5"></i> Portal`;
         document.getElementById('btn-show-login').disabled = false;
-        
-        if(!STATE.currentUser) {
-            document.getElementById('view-onboarding').classList.remove('hidden');
-        }
+        if(!STATE.currentUser) document.getElementById('view-onboarding').classList.remove('hidden');
       }).catch((error) => {
+        showToast("Backend auth failed. Operating in offline cache mode.", "error");
         useMockStorage = true;
         isAuthReady = true;
         document.getElementById('view-onboarding').classList.remove('hidden');
@@ -854,7 +970,7 @@
       activeSession: null,      
       sessionListener: null,    
       selectedRole: 'student',  
-      facSubject: 'CVIP',
+      facSubject: 'ADVANCED DATABASE SYSTEMS',
       facYear: '1',
       facSection: 'A',
       facRadius: 25,
@@ -871,8 +987,9 @@
       reportFilterSec: 'ALL',
       dirFilterYear: 'ALL',
       dirFilterSec: 'ALL',
-      wlFilterYear: 'ALL',      // NEW: Whitelist Year Filter
-      wlFilterSec: 'ALL',       // NEW: Whitelist Section Filter
+      userFilterRole: 'ALL',
+      userFilterYear: 'ALL',
+      userFilterSec: 'ALL',
       activeWhitelist: [] 
     };
 
@@ -946,6 +1063,7 @@
       selfiePreview: document.getElementById('selfie-preview'),
       btnSnapSelfie: document.getElementById('btn-snap-selfie'),
       btnRetakeSelfie: document.getElementById('btn-retake-selfie'),
+      btnCloseSelfieModal: document.getElementById('btn-close-selfie-modal'),
       
       modalRegCamera: document.getElementById('modal-reg-camera'),
       regVideo: document.getElementById('reg-video'),
@@ -954,6 +1072,7 @@
       csvInput: document.getElementById('whitelist-csv-input'),
       btnUploadCsv: document.getElementById('btn-upload-csv'),
       btnClearWhitelist: document.getElementById('btn-clear-whitelist'),
+      btnExportCsv: document.getElementById('btn-export-csv'), // <--- ADDED MISSING EXPORT ELEMENT
       whitelistCount: document.getElementById('whitelist-count'),
       whitelistPreview: document.getElementById('whitelist-preview'),
 
@@ -961,7 +1080,19 @@
       modalManual: document.getElementById('modal-manual'),
       btnCloseManual: document.getElementById('btn-close-manual'),
       manualStudentList: document.getElementById('manual-student-list'),
-      manualSearch: document.getElementById('manual-search')
+      manualSearch: document.getElementById('manual-search'),
+
+      // Edit User Modals
+      modalEditUser: document.getElementById('modal-edit-user'),
+      btnCloseEditUser: document.getElementById('btn-close-edit-user'),
+      formEditUser: document.getElementById('form-edit-user'),
+      editRollNo: document.getElementById('edit-roll-no'),
+      editName: document.getElementById('edit-name'),
+      editEmail: document.getElementById('edit-email'),
+      editRole: document.getElementById('edit-role'),
+      editYear: document.getElementById('edit-year'),
+      editSection: document.getElementById('edit-section'),
+      usersTableBody: document.getElementById('users-table-body')
     };
 
     // --- CRYPTO HASHING ENGINE (SHA-256) ---
@@ -983,7 +1114,6 @@
     }
     const CURRENT_DEVICE_ID = getHardwareDeviceId();
 
-    // --- TOAST NOTIFICATIONS ---
     function showToast(message, type = 'info') {
       const toast = document.createElement('div');
       let border = 'border-indigo-500/40', bg = 'bg-slate-900/95', icon = 'fa-circle-info text-indigo-400';
@@ -1042,46 +1172,32 @@
     }
 
     // ==========================================
-    // 🧠 CLOUD-FIRST DB ENGINE (SINGLE SOURCE OF TRUTH)
+    // 🧠 CLOUD-FIRST DB ENGINE
     // ==========================================
     const SYNC_QUEUE = {
       getQueue: () => JSON.parse(localStorage.getItem('acoustix_sync_queue') || '[]'),
-      
       pushOperation: (action, collectionName, docId, data) => {
         const queue = SYNC_QUEUE.getQueue();
         queue.push({ id: Date.now(), action, collectionName, docId, data });
         localStorage.setItem('acoustix_sync_queue', JSON.stringify(queue));
       },
-
       removeOperation: (opId) => {
         let queue = SYNC_QUEUE.getQueue();
         queue = queue.filter(op => op.id !== opId);
         localStorage.setItem('acoustix_sync_queue', JSON.stringify(queue));
       },
-
       async flushToCloud() {
         if (useMockStorage || !navigator.onLine || !isAuthReady) return;
-
         const queue = SYNC_QUEUE.getQueue();
-        if (queue.length === 0) {
-          DOM.syncIndicator.classList.add('hidden');
-          return;
-        }
-
+        if (queue.length === 0) { DOM.syncIndicator.classList.add('hidden'); return; }
         DOM.syncIndicator.classList.remove('hidden'); 
-        
         for (const op of queue) {
           try {
             const docRef = getDocRef(op.collectionName, op.docId);
-            if (op.action === 'SET') {
-              await setDoc(docRef, op.data);
-            } else if (op.action === 'UPDATE') {
-              await updateDoc(docRef, op.data);
-            }
+            if (op.action === 'SET') await setDoc(docRef, op.data);
+            else if (op.action === 'UPDATE') await updateDoc(docRef, op.data);
             SYNC_QUEUE.removeOperation(op.id);
-          } catch (err) {
-            console.error("Sync failed for operation:", op, err);
-          }
+          } catch (err) {}
         }
         DOM.syncIndicator.classList.add('hidden');
       }
@@ -1093,193 +1209,39 @@
       async getWhitelist() {
         if (!useMockStorage && navigator.onLine && isAuthReady) {
            try {
-               const docRef = getDocRef('config', 'whitelist');
-               const snap = await getDoc(docRef);
+               const snap = await getDoc(getDocRef('config', 'whitelist'));
                if (snap.exists()) {
                    const list = snap.data().list || [];
-                   localStorage.setItem('acoustix_whitelist', JSON.stringify(list)); // Cache it
+                   localStorage.setItem('acoustix_whitelist', JSON.stringify(list)); 
                    return list;
                }
-           } catch(e) { console.error("Whitelist cloud fetch failed", e); }
+           } catch(e) {}
         }
         return JSON.parse(localStorage.getItem('acoustix_whitelist') || '[]');
       },
-
       async saveWhitelist(listArray) {
         localStorage.setItem('acoustix_whitelist', JSON.stringify(listArray)); 
         if (!useMockStorage && navigator.onLine && isAuthReady) {
-            try {
-                await setDoc(getDocRef('config', 'whitelist'), { list: listArray });
-                return;
-            } catch(e) { console.error("Cloud write failed", e); }
+            try { await setDoc(getDocRef('config', 'whitelist'), { list: listArray }); return; } catch(e) {}
         }
         SYNC_QUEUE.pushOperation('SET', 'config', 'whitelist', { list: listArray }); 
       },
-      
       async getUserByEmail(email) {
         if (!useMockStorage && navigator.onLine && isAuthReady) {
            try {
-             const q = query(getColRef('users'), where("email", "==", email));
-             const snap = await getDocs(q);
+             const snap = await getDocs(query(getColRef('users'), where("email", "==", email)));
              if (!snap.empty) {
                  const cloudUser = snap.docs[0].data();
                  const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
                  users[cloudUser.rollNo] = cloudUser; 
-                 localStorage.setItem('acoustix_users', JSON.stringify(users)); // Cache it
+                 localStorage.setItem('acoustix_users', JSON.stringify(users));
                  return cloudUser;
              }
-           } catch(e) { console.error("User cloud fetch failed", e); }
+           } catch(e) {}
         }
         const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
         return Object.values(users).find(u => u.email === email) || null;
       },
-
-      async saveUser(userData) {
-        const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
-        users[userData.rollNo] = userData;
-        localStorage.setItem('acoustix_users', JSON.stringify(users)); 
-        
-        if (!useMockStorage && navigator.onLine && isAuthReady) {
-            try {
-                await setDoc(getDocRef('users', userData.rollNo), userData);
-                return;
-            } catch(e) { console.error("Cloud user write failed", e); }
-        }
-        SYNC_QUEUE.pushOperation('SET', 'users', userData.rollNo, userData); 
-      },
-      
-      async createSession(sessionData) {
-        localStorage.setItem('acoustix_active_session', JSON.stringify(sessionData));
-        const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
-        all.push(sessionData);
-        localStorage.setItem('acoustix_all_sessions', JSON.stringify(all)); 
-        
-        if (!useMockStorage && navigator.onLine && isAuthReady) {
-            try {
-                await setDoc(getDocRef('sessions', sessionData.sessionId), sessionData);
-                return sessionData.sessionId;
-            } catch(e) {}
-        }
-        SYNC_QUEUE.pushOperation('SET', 'sessions', sessionData.sessionId, sessionData); 
-        return sessionData.sessionId;
-      },
-      
-      async updateSessionAttendees(sessionId, studentId, attendeeRecord) {
-        const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
-        if (session && session.sessionId === sessionId) {
-          session.attendees = session.attendees || {};
-          session.attendees[studentId] = attendeeRecord;
-          session.attendeeCount = Object.keys(session.attendees).length;
-          localStorage.setItem('acoustix_active_session', JSON.stringify(session));
-          
-          const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
-          const idx = all.findIndex(s => s.sessionId === sessionId);
-          if (idx !== -1) all[idx] = session;
-          localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
-        }
-
-        const updatePayload = {
-          [`attendees.${studentId}`]: attendeeRecord
-        };
-
-        if (!useMockStorage && navigator.onLine && isAuthReady) {
-           try {
-               await updateDoc(getDocRef('sessions', sessionId), updatePayload);
-               return;
-           } catch(e) { console.error("Cloud DB Update Failed", e); }
-        }
-        SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, updatePayload);
-      },
-
-      async removeSessionAttendee(sessionId, studentId) {
-        // Local removal
-        const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
-        if (session && session.sessionId === sessionId && session.attendees && session.attendees[studentId]) {
-          delete session.attendees[studentId];
-          session.attendeeCount = Object.keys(session.attendees).length;
-          localStorage.setItem('acoustix_active_session', JSON.stringify(session));
-        }
-        
-        if (!useMockStorage && navigator.onLine && isAuthReady) {
-           try {
-               const docRef = getDocRef('sessions', sessionId);
-               const attendeesObj = STATE.activeSession.attendees || {};
-               delete attendeesObj[studentId];
-               await updateDoc(docRef, { attendees: attendeesObj });
-           } catch(e) {}
-        }
-      },
-      
-      async endSession(sessionId) {
-        const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
-        if (session) { 
-          session.isActive = false; 
-          
-          // Proactive Engine: Auto-fill absentees from Master List
-          const whitelist = JSON.parse(localStorage.getItem('acoustix_whitelist') || '[]');
-          const expected = whitelist.filter(s => s.year === session.year && s.section === session.section);
-          
-          session.attendees = session.attendees || {};
-          expected.forEach(stu => {
-            if (!session.attendees[stu.rollNo]) {
-               session.attendees[stu.rollNo] = {
-                 name: stu.name,
-                 rollNo: stu.rollNo,
-                 profilePicUrl: 'https://placehold.co/100x100/333/666?text=ABSENT',
-                 selfieUrl: null,
-                 checkInTime: session.timestamp,
-                 status: "ABSENT"
-               };
-            }
-          });
-          session.attendeeCount = Object.keys(session.attendees).length;
-
-          localStorage.setItem('acoustix_active_session', JSON.stringify(session)); 
-          
-          const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
-          const idx = all.findIndex(s => s.sessionId === sessionId);
-          if (idx !== -1) all[idx] = session;
-          localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
-        }
-
-        if (!useMockStorage && navigator.onLine && isAuthReady) {
-           try {
-               await updateDoc(getDocRef('sessions', sessionId), { 
-                   isActive: false,
-                   attendees: session.attendees,
-                   attendeeCount: session.attendeeCount
-               });
-               return;
-           } catch(e) {}
-        }
-        SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, { 
-            isActive: false,
-            attendees: session.attendees,
-            attendeeCount: session.attendeeCount
-        });
-      },
-
-      async updateHistoricalAttendance(sessionId, rollNo, newStatus) {
-         const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
-         const session = all.find(s => s.sessionId === sessionId);
-         if (session && session.attendees && session.attendees[rollNo]) {
-             session.attendees[rollNo].status = newStatus;
-             localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
-
-             const updatePayload = {
-               [`attendees.${rollNo}.status`]: newStatus
-             };
-             
-             if (!useMockStorage && navigator.onLine && isAuthReady) {
-                 try {
-                     await updateDoc(getDocRef('sessions', sessionId), updatePayload);
-                     return;
-                 } catch(e) {}
-             }
-             SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, updatePayload);
-         }
-      },
-      
       async getStudentDirectory() {
         if (!useMockStorage && navigator.onLine && isAuthReady) {
             try {
@@ -1291,7 +1253,117 @@
         const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
         return Object.values(users).filter(u => u.role === 'student');
       },
-      
+      async getAllUsers() {
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+            try {
+                const snap = await getDocs(getColRef("users"));
+                const allUsers = snap.docs.map(d => d.data());
+                return allUsers;
+            } catch(e) { console.error("Cloud users fetch failed", e); }
+        }
+        const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
+        return Object.values(users);
+      },
+      async updateUser(rollNo, updatedData) {
+        const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
+        if(users[rollNo]) {
+            users[rollNo] = { ...users[rollNo], ...updatedData };
+            localStorage.setItem('acoustix_users', JSON.stringify(users));
+        }
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+           try {
+               await updateDoc(getDocRef('users', rollNo), updatedData);
+               return;
+           } catch(e) { console.error("Cloud User Update Failed", e); }
+        }
+        SYNC_QUEUE.pushOperation('UPDATE', 'users', rollNo, updatedData);
+      },
+      async saveUser(userData) {
+        const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
+        users[userData.rollNo] = userData;
+        localStorage.setItem('acoustix_users', JSON.stringify(users)); 
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+            try { await setDoc(getDocRef('users', userData.rollNo), userData); return; } catch(e) {}
+        }
+        SYNC_QUEUE.pushOperation('SET', 'users', userData.rollNo, userData); 
+      },
+      async createSession(sessionData) {
+        localStorage.setItem('acoustix_active_session', JSON.stringify(sessionData));
+        const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
+        all.push(sessionData);
+        localStorage.setItem('acoustix_all_sessions', JSON.stringify(all)); 
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+            try { await setDoc(getDocRef('sessions', sessionData.sessionId), sessionData); return sessionData.sessionId; } catch(e) {}
+        }
+        SYNC_QUEUE.pushOperation('SET', 'sessions', sessionData.sessionId, sessionData); 
+        return sessionData.sessionId;
+      },
+      async updateSessionAttendees(sessionId, studentId, attendeeRecord) {
+        const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
+        if (session && session.sessionId === sessionId) {
+          session.attendees = session.attendees || {};
+          session.attendees[studentId] = attendeeRecord;
+          session.attendeeCount = Object.keys(session.attendees).length;
+          localStorage.setItem('acoustix_active_session', JSON.stringify(session));
+        }
+        const updatePayload = { [`attendees.${studentId}`]: attendeeRecord };
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+           try { await updateDoc(getDocRef('sessions', sessionId), updatePayload); return; } catch(e) {}
+        }
+        SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, updatePayload);
+      },
+      async removeSessionAttendee(sessionId, studentId) {
+        const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
+        if (session && session.sessionId === sessionId && session.attendees && session.attendees[studentId]) {
+          delete session.attendees[studentId];
+          session.attendeeCount = Object.keys(session.attendees).length;
+          localStorage.setItem('acoustix_active_session', JSON.stringify(session));
+        }
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+           try {
+               const docRef = getDocRef('sessions', sessionId);
+               const attendeesObj = STATE.activeSession.attendees || {};
+               delete attendeesObj[studentId];
+               await updateDoc(docRef, { attendees: attendeesObj });
+           } catch(e) {}
+        }
+      },
+      async updateDocDirectly(collection, docId, data) {
+         if (!useMockStorage && navigator.onLine && isAuthReady) {
+             try { await updateDoc(getDocRef(collection, docId), data); return; } catch(e){}
+         }
+         SYNC_QUEUE.pushOperation('UPDATE', collection, docId, data);
+      },
+      async updateHistoricalRecord(sessionId, studentId, newStatus) {
+         // Update all local
+         const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
+         const idx = all.findIndex(s => s.sessionId === sessionId);
+         if(idx !== -1 && all[idx].attendees[studentId]) {
+             all[idx].attendees[studentId].status = newStatus;
+             localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
+         }
+         // Update Cloud
+         const updatePayload = { [`attendees.${studentId}.status`]: newStatus };
+         if (!useMockStorage && navigator.onLine && isAuthReady) {
+            try { await updateDoc(getDocRef('sessions', sessionId), updatePayload); return; } catch(e){}
+         }
+         SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, updatePayload);
+      },
+      async endSession(sessionId) {
+        const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
+        if (session) { 
+          session.isActive = false; 
+          localStorage.setItem('acoustix_active_session', JSON.stringify(session)); 
+          const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
+          const idx = all.findIndex(s => s.sessionId === sessionId);
+          if (idx !== -1) all[idx] = session;
+          localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
+        }
+        if (!useMockStorage && navigator.onLine && isAuthReady) {
+           try { await updateDoc(getDocRef('sessions', sessionId), { isActive: false }); return; } catch(e) {}
+        }
+        SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, { isActive: false });
+      },
       async getAllSessions() {
         if (!useMockStorage && navigator.onLine && isAuthReady) {
             try {
@@ -1303,27 +1375,21 @@
         }
         return JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
       },
-      
       subscribeToActiveSession(year, section, callback) {
         if (!useMockStorage && navigator.onLine && isAuthReady) {
           const q = query(getColRef("sessions"), where("isActive", "==", true), where("year", "==", year), where("section", "==", section));
           return onSnapshot(q, (snap) => {
             if (!snap.empty) {
               const cloudData = snap.docs[0].data();
-              localStorage.setItem('acoustix_active_session', JSON.stringify(cloudData)); // Sync cloud directly down to local instantly
+              localStorage.setItem('acoustix_active_session', JSON.stringify(cloudData)); 
               callback(cloudData);
-            } else {
-              callback(null);
-            }
+            } else callback(null);
           });
         } else {
           const interval = setInterval(() => {
             const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
-            if (session && session.isActive && session.year === year && session.section === section) {
-                callback(session);
-            } else if (session && (!session.isActive || session.year !== year || session.section !== section)) {
-                callback(null);
-            }
+            if (session && session.isActive && session.year === year && session.section === section) callback(session);
+            else if (session && (!session.isActive || session.year !== year || session.section !== section)) callback(null);
           }, 1500);
           return () => clearInterval(interval);
         }
@@ -1332,7 +1398,7 @@
 
 
     // --- STRICT CAPITALIZATION ENFORCEMENT ---
-    [DOM.signupName, DOM.signupRoll, DOM.signupSection].forEach(el => {
+    [DOM.signupName, DOM.signupRoll].forEach(el => {
       if (el) el.addEventListener('input', (e) => e.target.value = e.target.value.toUpperCase());
     });
 
@@ -1363,16 +1429,24 @@
           DOM.wrapperStudentDetails.classList.add('hidden'); 
           DOM.wrapperMasterKey.classList.remove('hidden');
           DOM.signupRoll.required = false;
-          DOM.signupSection.required = false;
           DOM.signupMasterKey.required = true;
         } else {
           DOM.wrapperStudentDetails.classList.remove('hidden');
           DOM.wrapperMasterKey.classList.add('hidden');
           DOM.signupRoll.required = true;
-          DOM.signupSection.required = true;
           DOM.signupMasterKey.required = false;
           DOM.signupRoll.value = "";
         }
+      });
+    });
+
+    // --- SIGNUP SECTION CHIPS LOGIC ---
+    document.querySelectorAll('#signup-chip-group-section button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('#signup-chip-group-section button').forEach(b => b.classList.remove('active'));
+        const target = e.currentTarget;
+        target.classList.add('active');
+        DOM.signupSection.value = target.dataset.val;
       });
     });
 
@@ -1418,10 +1492,7 @@
       const email = DOM.loginEmail.value.trim().toLowerCase();
       const pin = DOM.loginPin.value.trim();
 
-      if (pin.length !== 6) {
-         showToast("PIN must be exactly 6 digits.", "error");
-         return;
-      }
+      if (pin.length !== 6) { showToast("PIN must be exactly 6 digits.", "error"); return; }
 
       DOM.btnShowLogin.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i>`;
       showToast("Authenticating profile securely...", "info");
@@ -1429,21 +1500,21 @@
       const user = await DB_ENGINE.getUserByEmail(email);
       
       if (!user) {
-         showToast("No account found with this email. Please sign up.", "error");
+         showToast("No account found with this email.", "error");
          DOM.btnShowLogin.innerHTML = `<i class="fa-solid fa-user-lock mr-1.5"></i> Portal`;
          return;
       }
 
       const hashedAttempt = await hashString(pin);
       if (user.pinHash !== hashedAttempt) {
-         showToast("Incorrect 6-Digit PIN. Access Denied.", "error");
+         showToast("Incorrect PIN. Access Denied.", "error");
          DOM.btnShowLogin.innerHTML = `<i class="fa-solid fa-user-lock mr-1.5"></i> Portal`;
          return;
       }
 
       if (user.role === 'student') {
          if (user.deviceId && user.deviceId !== CURRENT_DEVICE_ID) {
-             showToast("SECURITY LOCK: This account is permanently bound to another device.", "error");
+             showToast("SECURITY LOCK: Account bound to another device.", "error");
              DOM.btnShowLogin.innerHTML = `<i class="fa-solid fa-user-lock mr-1.5"></i> Portal`;
              return;
          }
@@ -1469,10 +1540,7 @@
       let year = DOM.signupYear ? DOM.signupYear.value : "1";
       let section = DOM.signupSection.value.trim().toUpperCase() || "N/A";
 
-      if (pin.length !== 6) {
-         showToast("PIN must be exactly 6 digits.", "error");
-         return;
-      }
+      if (pin.length !== 6) { showToast("PIN must be exactly 6 digits.", "error"); return; }
 
       if (STATE.selectedRole === 'faculty') {
         const masterKeyInput = DOM.signupMasterKey.value;
@@ -1480,7 +1548,7 @@
         const expectedMasterHash = "b47c94a28f8fdb9e09d1b64cf2330a6c0c2bc0ecb20b22a07c1b52e391b10a26"; // MKy@2239
 
         if (hashedMasterAttempt !== expectedMasterHash) {
-            showToast("Invalid Faculty Master Key. Unauthorized access.", "error");
+            showToast("Invalid Faculty Master Key.", "error");
             return;
         }
 
@@ -1497,10 +1565,7 @@
       showToast("Verifying identity metrics...", "info");
       
       const existingUser = await DB_ENGINE.getUserByEmail(email);
-      if (existingUser) {
-          showToast("This email is already registered. Please login.", "error");
-          return;
-      }
+      if (existingUser) { showToast("Email already registered.", "error"); return; }
 
       const activeWhitelist = await DB_ENGINE.getWhitelist();
       let isApproved = false;
@@ -1508,7 +1573,6 @@
       if (STATE.selectedRole === 'faculty') {
         isApproved = true; 
       } else if (STATE.selectedRole === 'student') {
-        // Find matching object in Master List
         const match = activeWhitelist.find(s => s.rollNo === rollNo);
         if (match) isApproved = true; 
       }
@@ -1598,7 +1662,7 @@
         document.querySelectorAll('#faculty-tabs button').forEach(b => b.classList.remove('active'));
         e.currentTarget.classList.add('active');
         const tabId = e.currentTarget.dataset.tab;
-        ['tab-fac-broadcast', 'tab-fac-grid', 'tab-fac-directory', 'tab-fac-whitelist', 'tab-fac-reports'].forEach(id => {
+        ['tab-fac-broadcast', 'tab-fac-grid', 'tab-fac-directory', 'tab-fac-whitelist', 'tab-fac-reports', 'tab-fac-users'].forEach(id => {
           document.getElementById(id).classList.add('hidden');
         });
         document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -1608,6 +1672,7 @@
         if (tabId === 'fac-directory') renderStudentDirectory();
         if (tabId === 'fac-reports') renderReportsTable();
         if (tabId === 'fac-whitelist') loadAndRenderWhitelist();
+        if (tabId === 'fac-users') renderUsersTable();
       });
     });
 
@@ -1631,10 +1696,7 @@
           const cols = row.split(',').map(c => c.trim().toUpperCase());
           if (cols.length >= 4) {
              masterList.push({
-                rollNo: cols[0],
-                name: cols[1],
-                year: cols[2],
-                section: cols[3]
+                rollNo: cols[0], name: cols[1], year: cols[2], section: cols[3]
              });
           }
         });
@@ -1647,7 +1709,7 @@
         await DB_ENGINE.saveWhitelist(masterList);
         STATE.activeWhitelist = masterList;
         renderActiveWhitelistUI();
-        showToast(`Imported ${masterList.length} students to Master List!`, "success");
+        showToast(`Imported ${masterList.length} expected students!`, "success");
       };
       reader.readAsText(file);
       e.target.value = '';
@@ -1665,39 +1727,37 @@
       renderActiveWhitelistUI();
     }
 
-    // --- NEW: Attach Event Listeners to Whitelist Chips ---
-    function setupWhitelistFilters(containerId, stateKey) {
-      document.querySelectorAll(`#${containerId} button`).forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          document.querySelectorAll(`#${containerId} button`).forEach(b => b.classList.remove('active'));
+    let masterFilterYear = 'ALL';
+    let masterFilterSec = 'ALL';
+    document.querySelectorAll('#master-year-filters button').forEach(btn => {
+       btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#master-year-filters button').forEach(b => b.classList.remove('active'));
           e.currentTarget.classList.add('active');
-          STATE[stateKey] = e.currentTarget.dataset.val;
+          masterFilterYear = e.currentTarget.dataset.yr;
           renderActiveWhitelistUI();
-        });
-      });
-    }
-    setupWhitelistFilters('wl-filter-year', 'wlFilterYear');
-    setupWhitelistFilters('wl-filter-section', 'wlFilterSec');
+       });
+    });
+    document.querySelectorAll('#master-section-filters button').forEach(btn => {
+       btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#master-section-filters button').forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          masterFilterSec = e.currentTarget.dataset.sec;
+          renderActiveWhitelistUI();
+       });
+    });
 
     function renderActiveWhitelistUI() {
-      // NEW: Apply Filters before mapping
-      let filteredList = STATE.activeWhitelist;
-      
-      if (STATE.wlFilterYear !== 'ALL') {
-        filteredList = filteredList.filter(s => s.year === STATE.wlFilterYear);
-      }
-      if (STATE.wlFilterSec !== 'ALL') {
-        filteredList = filteredList.filter(s => s.section === STATE.wlFilterSec);
-      }
+      let filtered = STATE.activeWhitelist;
+      if (masterFilterYear !== 'ALL') filtered = filtered.filter(s => s.year === masterFilterYear);
+      if (masterFilterSec !== 'ALL') filtered = filtered.filter(s => s.section === masterFilterSec);
 
-      DOM.whitelistCount.textContent = filteredList.length;
-      
-      if (filteredList.length === 0) {
-        DOM.whitelistPreview.innerHTML = `<div class="text-slate-500 text-[10px] sm:text-xs italic">No Master List records match criteria or list is empty.</div>`;
+      DOM.whitelistCount.textContent = filtered.length;
+      if (filtered.length === 0) {
+        DOM.whitelistPreview.innerHTML = `<div class="text-slate-500 text-[10px] sm:text-xs italic">No matching students in Master List.</div>`;
       } else {
         DOM.whitelistPreview.innerHTML = `
-          <div class="overflow-x-auto hide-scrollbar">
-            <table class="w-full text-left text-[10px] sm:text-xs whitespace-nowrap">
+          <div class="overflow-x-auto hide-scrollbar w-full">
+            <table class="w-full text-left text-[10px] sm:text-xs whitespace-nowrap min-w-[300px]">
               <thead class="bg-white/5 border-b border-white/10 text-slate-300">
                 <tr>
                   <th class="py-2 px-3">Roll No</th>
@@ -1707,7 +1767,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-white/5 text-slate-400">
-                ${filteredList.map(s => `
+                ${filtered.map(s => `
                   <tr>
                     <td class="py-2 px-3 font-mono text-indigo-300">${s.rollNo}</td>
                     <td class="py-2 px-3 text-white font-semibold">${s.name}</td>
@@ -1775,10 +1835,7 @@
     }
 
     DOM.btnStartBroadcast.addEventListener('click', async () => {
-      if (!STATE.facGps) {
-        showToast("Wait for GPS anchor coordinates.", "error");
-        return;
-      }
+      if (!STATE.facGps) { showToast("Wait for GPS anchor coordinates.", "error"); return; }
 
       const sessionId = `SES_${Date.now()}`;
       const sessionData = {
@@ -1821,8 +1878,32 @@
       showToast(`Broadcast live! Airwaves active (18.5kHz) for YR ${STATE.facYear} SEC ${STATE.facSection}.`, "success");
     });
 
+    // --- AUTO ABSENTEE TAGGING ON SESSION END ---
     DOM.btnStopBroadcast.addEventListener('click', async () => {
       if (STATE.activeSession) {
+        const session = STATE.activeSession;
+        const expectedStudents = STATE.activeWhitelist.filter(s => s.year === session.year && s.section === session.section);
+        const attendees = session.attendees || {};
+        let hasUpdates = false;
+
+        expectedStudents.forEach(stu => {
+            if (!attendees[stu.rollNo]) {
+                attendees[stu.rollNo] = {
+                    name: stu.name,
+                    rollNo: stu.rollNo,
+                    profilePicUrl: 'https://placehold.co/150x150/7f1d1d/fca5a5?text=ABSENT',
+                    selfieUrl: '',
+                    checkInTime: session.timestamp,
+                    status: 'ABSENT'
+                };
+                hasUpdates = true;
+            }
+        });
+
+        if (hasUpdates) {
+            await DB_ENGINE.updateDocDirectly('sessions', session.sessionId, { attendees: attendees });
+            showToast("Auto-tagging missing expected students as ABSENT...", "info");
+        }
         await DB_ENGINE.endSession(STATE.activeSession.sessionId);
       }
       stopUltrasoundBroadcast();
@@ -1833,7 +1914,7 @@
       DOM.btnStopBroadcast.classList.add('hidden');
       DOM.btnStartBroadcast.classList.remove('hidden');
       STATE.activeSession = null;
-      showToast("Session terminated. Absentees finalized.", "info");
+      showToast("Session ended. Absentees permanently recorded.", "success");
     });
 
     function initFacultyPortal() {
@@ -1850,9 +1931,7 @@
         if (!session) return;
         STATE.activeSession = session;
         const attendees = session.attendees || {};
-        
-        // Count only present/manual students (exclude auto-absent)
-        const presentCount = Object.values(attendees).filter(a => a.status !== 'ABSENT').length;
+        const presentCount = Object.keys(attendees).length;
         
         const expectedStudents = STATE.activeWhitelist.filter(s => s.year === session.year && s.section === session.section);
         const totalExpected = expectedStudents.length > 0 ? expectedStudents.length : presentCount;
@@ -1873,7 +1952,7 @@
         expectedStudents.forEach(stu => {
           renderedRolls.add(stu.rollNo);
           const att = attendees[stu.rollNo];
-          const isPresent = att && att.status !== 'ABSENT';
+          const isPresent = !!att && att.status !== 'ABSENT';
           const isManual = att && att.status === 'MANUAL';
           
           const card = document.createElement('div');
@@ -1920,18 +1999,12 @@
 
     // --- MANUAL OVERRIDE (FACULTY ONLY) ---
     DOM.btnManualOverride.addEventListener('click', async () => {
-      if (!STATE.activeSession) {
-        showToast("You must initiate a broadcast session first.", "error");
-        return;
-      }
+      if (!STATE.activeSession) { showToast("Initiate a broadcast first.", "error"); return; }
       DOM.modalManual.classList.remove('hidden');
       renderManualList();
     });
 
-    DOM.btnCloseManual.addEventListener('click', () => {
-      DOM.modalManual.classList.add('hidden');
-    });
-
+    DOM.btnCloseManual.addEventListener('click', () => DOM.modalManual.classList.add('hidden'));
     DOM.manualSearch.addEventListener('input', () => renderManualList());
 
     async function renderManualList() {
@@ -1942,9 +2015,7 @@
       students = students.filter(s => s.year === STATE.activeSession.year && s.section === STATE.activeSession.section);
       
       const query = DOM.manualSearch.value.trim().toUpperCase();
-      if (query) {
-         students = students.filter(s => s.rollNo.includes(query) || s.name.includes(query));
-      }
+      if (query) students = students.filter(s => s.rollNo.includes(query) || s.name.includes(query));
 
       students.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
@@ -1955,9 +2026,7 @@
       }
 
       students.forEach(stu => {
-        const att = STATE.activeSession.attendees && STATE.activeSession.attendees[stu.rollNo];
-        const isPresent = att && att.status !== 'ABSENT';
-
+        const isPresent = STATE.activeSession.attendees && STATE.activeSession.attendees[stu.rollNo] && STATE.activeSession.attendees[stu.rollNo].status !== 'ABSENT';
         const item = document.createElement('div');
         item.className = "flex items-center justify-between bg-white/5 p-2.5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors";
         item.innerHTML = `
@@ -1982,12 +2051,9 @@
          showToast(`Attendance revoked for ${rollNo}`, "info");
       } else {
          const record = {
-           name: name,
-           rollNo: rollNo,
-           profilePicUrl: picUrl,
+           name: name, rollNo: rollNo, profilePicUrl: picUrl,
            selfieUrl: 'https://placehold.co/400x300/1e1b4b/a5b4fc?text=MANUAL+OVERRIDE',
-           checkInTime: Date.now(),
-           status: "MANUAL"
+           checkInTime: Date.now(), status: "MANUAL"
          };
          await DB_ENGINE.updateSessionAttendees(STATE.activeSession.sessionId, rollNo, record);
          showToast(`${name} marked PRESENT (Manual)`, "success");
@@ -2019,12 +2085,8 @@
       tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Loading Directory...</td></tr>`;
       
       let students = await DB_ENGINE.getStudentDirectory();
-      if (STATE.dirFilterYear !== 'ALL') {
-        students = students.filter(s => s.year === STATE.dirFilterYear);
-      }
-      if (STATE.dirFilterSec !== 'ALL') {
-        students = students.filter(s => s.section === STATE.dirFilterSec);
-      }
+      if (STATE.dirFilterYear !== 'ALL') students = students.filter(s => s.year === STATE.dirFilterYear);
+      if (STATE.dirFilterSec !== 'ALL') students = students.filter(s => s.section === STATE.dirFilterSec);
 
       students.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
@@ -2043,13 +2105,13 @@
           <td class="py-2 sm:py-3 px-3 sm:px-4 font-extrabold text-white text-[11px] sm:text-sm">${stu.name}</td>
           <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">Yr ${stu.year} | SEC ${stu.section}</span></td>
           <td class="py-2 sm:py-3 px-3 sm:px-4 text-[9px] sm:text-[10px] uppercase text-slate-400">${stu.role}</td>
-          <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="text-emerald-400 text-[9px] sm:text-[10px] flex items-center"><i class="fa-solid fa-check-circle mr-1 sm:mr-1.5"></i>Verified Identity</span></td>
+          <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="text-emerald-400 text-[9px] sm:text-[10px] flex items-center"><i class="fa-solid fa-check-circle mr-1 sm:mr-1.5"></i>Verified</span></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // --- FACULTY PORTAL: ANALYTICS WITH HISTORICAL OVERRIDE ---
+    // --- FACULTY PORTAL: ANALYTICS & HISTORICAL EDIT ---
     function setupReportFilters(containerId, stateKey) {
       document.querySelectorAll(`#${containerId} button`).forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -2107,13 +2169,13 @@
       }
 
       currentFilteredRecords.forEach(rec => {
-        const isManual = rec.status === 'MANUAL';
         const isAbsent = rec.status === 'ABSENT';
-        
+        const isManual = rec.status === 'MANUAL';
         let statusBadge = '';
-        if (isManual) statusBadge = '<span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-user-pen mr-1"></i>Manual</span>';
-        else if (isAbsent) statusBadge = '<span class="bg-red-500/10 text-red-300 border border-red-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-xmark mr-1"></i>Absent</span>';
-        else statusBadge = '<span class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-wave-square mr-1"></i>Verified</span>';
+        
+        if (isAbsent) statusBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-user-xmark mr-1"></i>Absent</span>`;
+        else if (isManual) statusBadge = `<span class="bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-user-pen mr-1"></i>Manual</span>`;
+        else statusBadge = `<span class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded text-[9px] font-bold uppercase"><i class="fa-solid fa-wave-square mr-1"></i>Verified</span>`;
 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-white/5 transition-colors";
@@ -2125,33 +2187,28 @@
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-[9px] sm:text-[11px] text-slate-300">${rec.subject}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4">${statusBadge}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-center">
-             <button onclick="toggleHistoricalAttendance('${rec.sessionId}', '${rec.rollNo}', '${rec.status}')" class="chip bg-slate-800 border-white/10 hover:bg-slate-700 text-[9px] px-2 py-1" title="Toggle Manual Override">
-                 <i class="fa-solid fa-pencil"></i> Edit
-             </button>
+            <button onclick="editHistoricalRecord('${rec.sessionId}', '${rec.rollNo}', '${rec.status}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1 text-[9px] sm:text-[10px]">
+              <i class="fa-solid fa-pen"></i> Edit
+            </button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
-    
-    window.toggleHistoricalAttendance = async function(sessionId, rollNo, currentStatus) {
-        let newStatus = currentStatus === 'ABSENT' ? 'MANUAL' : 'ABSENT';
-        await DB_ENGINE.updateHistoricalAttendance(sessionId, rollNo, newStatus);
-        showToast(`Attendance for ${rollNo} manually updated to ${newStatus}.`, 'success');
-        renderReportsTable();
+
+    window.editHistoricalRecord = async function(sessionId, rollNo, currentStatus) {
+       const newStatus = currentStatus === 'ABSENT' ? 'MANUAL' : 'ABSENT';
+       await DB_ENGINE.updateHistoricalRecord(sessionId, rollNo, newStatus);
+       showToast(`Record updated to ${newStatus} for ${rollNo}`, "success");
+       setTimeout(() => renderReportsTable(), 200);
     };
 
-    // --- CSV EXPORT ---
-    document.getElementById('btn-export-csv').addEventListener('click', () => {
-      if (currentFilteredRecords.length === 0) {
-        showToast("No records to export.", "warn");
-        return;
-      }
-      const headers = ["Date & Time", "Roll Number", "Student Name", "Year", "Section", "Course Subject", "Verification Method"];
+    DOM.btnExportCsv.addEventListener('click', () => {
+      if (currentFilteredRecords.length === 0) { showToast("No records to export.", "warn"); return; }
+      const headers = ["Date & Time", "Roll Number", "Student Name", "Year", "Section", "Course Subject", "Verification Status"];
       const rows = currentFilteredRecords.map(r => [
         `"${r.dateStr}"`, `"${r.rollNo}"`, `"${r.name}"`, `"${r.year}"`, `"${r.section}"`, `"${r.subject}"`, `"${r.status}"`
       ]);
-      
       const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
@@ -2161,6 +2218,96 @@
       link.click();
       document.body.removeChild(link);
       showToast("CSV downloaded.", "success");
+    });
+
+    // --- FACULTY PORTAL: LOGIN CREDS (USER MANAGEMENT) ---
+    function setupUserFilters(containerId, stateKey) {
+      document.querySelectorAll(`#${containerId} button`).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll(`#${containerId} button`).forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          STATE[stateKey] = e.currentTarget.dataset.val;
+          renderUsersTable();
+        });
+      });
+    }
+    setupUserFilters('user-filter-role', 'userFilterRole');
+    setupUserFilters('user-filter-year', 'userFilterYear');
+    setupUserFilters('user-filter-section', 'userFilterSec');
+
+    async function renderUsersTable() {
+      const tbody = DOM.usersTableBody;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Loading Users...</td></tr>`;
+      
+      let allUsers = await DB_ENGINE.getAllUsers();
+      
+      if (STATE.userFilterRole !== 'ALL') allUsers = allUsers.filter(u => u.role === STATE.userFilterRole);
+      if (STATE.userFilterYear !== 'ALL') allUsers = allUsers.filter(u => u.year === STATE.userFilterYear);
+      if (STATE.userFilterSec !== 'ALL') allUsers = allUsers.filter(u => u.section === STATE.userFilterSec);
+
+      allUsers.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
+
+      tbody.innerHTML = '';
+      if (allUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 sm:py-8 text-slate-500 text-[10px] sm:text-xs">No users found.</td></tr>`;
+        return;
+      }
+
+      window._usersMap = window._usersMap || {};
+
+      allUsers.forEach(u => {
+        window._usersMap[u.rollNo] = u; 
+        const isFaculty = u.role === 'faculty';
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-white/5 transition-colors";
+        tr.innerHTML = `
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4"><img src="${u.profilePicUrl}" class="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover border border-white/20"></td>
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4 font-mono font-bold text-indigo-300 text-[10px] sm:text-xs">${u.rollNo}</td>
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4 font-extrabold text-white text-[11px] sm:text-sm">${u.name}</td>
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-[9px] sm:text-[10px] uppercase font-bold ${isFaculty ? 'text-amber-400' : 'text-emerald-400'}">${u.role}</td>
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">Yr ${u.year} | SEC ${u.section}</span></td>
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-[10px] sm:text-xs text-slate-300">${u.email}</td>
+          <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-center">
+            <button onclick="openEditUserModal('${u.rollNo}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 text-[9px] sm:text-[10px]">
+              <i class="fa-solid fa-pen"></i> Edit
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.openEditUserModal = function(rollNo) {
+      const u = window._usersMap[rollNo];
+      if (!u) return;
+      DOM.editRollNo.value = u.rollNo;
+      DOM.editName.value = u.name;
+      DOM.editEmail.value = u.email;
+      DOM.editRole.value = u.role;
+      DOM.editYear.value = u.year;
+      DOM.editSection.value = u.section;
+      DOM.modalEditUser.classList.remove('hidden');
+    }
+
+    DOM.btnCloseEditUser.addEventListener('click', () => DOM.modalEditUser.classList.add('hidden'));
+
+    DOM.formEditUser.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const rollNo = DOM.editRollNo.value;
+      const updatedData = {
+        name: DOM.editName.value.trim().toUpperCase(),
+        email: DOM.editEmail.value.trim().toLowerCase(),
+        role: DOM.editRole.value,
+        year: DOM.editYear.value,
+        section: DOM.editSection.value.trim().toUpperCase()
+      };
+      
+      showToast("Updating user credentials...", "info");
+      await DB_ENGINE.updateUser(rollNo, updatedData);
+      
+      DOM.modalEditUser.classList.add('hidden');
+      showToast("Profile details updated successfully.", "success");
+      renderUsersTable();
     });
 
     // --- STUDENT PORTAL ---
@@ -2306,7 +2453,6 @@
       }
     }
 
-    DOM.btnCloseSelfieModal = document.getElementById('btn-close-selfie-modal');
     DOM.btnCloseSelfieModal.addEventListener('click', () => {
       if (selfieStream) selfieStream.getTracks().forEach(t => t.stop());
       DOM.modalSelfie.classList.add('hidden');
@@ -2335,8 +2481,15 @@
       }, 1000);
     });
 
+    DOM.btnRetakeSelfie.addEventListener('click', () => {
+      DOM.selfiePreview.classList.add('hidden');
+      DOM.selfieVideo.classList.remove('hidden');
+      DOM.btnSnapSelfie.classList.remove('hidden');
+      DOM.btnRetakeSelfie.classList.add('hidden');
+    });
+
     async function submitAttendanceRecord() {
-      showToast("Data saved locally! Committing to Cloud sync queue...", "info");
+      showToast("Uploading to DB...", "info");
       
       const attendeeRecord = {
         name: STATE.currentUser.name,
@@ -2386,7 +2539,7 @@
 
       container.innerHTML = '';
       if (myRecords.length === 0) {
-        container.innerHTML = `<div class="glass-panel p-6 sm:p-8 rounded-2xl text-center text-slate-500 text-[11px] sm:text-xs font-semibold">No attendance records in the past 7 days.</div>`;
+        container.innerHTML = `<div class="glass-panel p-6 sm:p-8 rounded-2xl text-center text-slate-500 text-[11px] sm:text-xs font-semibold">No verified attendance records in the past 7 days.</div>`;
         return;
       }
 
@@ -2394,15 +2547,22 @@
         const isManual = rec.status === 'MANUAL';
         const isAbsent = rec.status === 'ABSENT';
         
-        let borderColor = isAbsent ? 'border-l-red-500' : (isManual ? 'border-l-amber-500' : 'border-l-emerald-500');
+        let borderClass = 'border-l-emerald-500';
+        let chipClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+        let iconHtml = '<i class="fa-solid fa-check sm:mr-1"></i> <span class="hidden sm:inline">Verified</span>';
         
-        let statusChip = '';
-        if (isAbsent) statusChip = '<span class="chip bg-red-500/20 text-red-300 border-red-500/40 text-[8px] sm:text-[9px] font-extrabold uppercase py-1 px-2"><i class="fa-solid fa-xmark sm:mr-1"></i> <span class="hidden sm:inline">Absent</span></span>';
-        else if (isManual) statusChip = '<span class="chip bg-amber-500/20 text-amber-300 border-amber-500/40 text-[8px] sm:text-[9px] font-extrabold uppercase py-1 px-2"><i class="fa-solid fa-user-pen sm:mr-1"></i> <span class="hidden sm:inline">Manual</span></span>';
-        else statusChip = '<span class="chip bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[8px] sm:text-[9px] font-extrabold uppercase py-1 px-2"><i class="fa-solid fa-check sm:mr-1"></i> <span class="hidden sm:inline">Verified</span></span>';
+        if (isManual) {
+           borderClass = 'border-l-amber-500';
+           chipClass = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+           iconHtml = '<i class="fa-solid fa-user-pen sm:mr-1"></i> <span class="hidden sm:inline">Manual</span>';
+        } else if (isAbsent) {
+           borderClass = 'border-l-red-500';
+           chipClass = 'bg-red-500/20 text-red-400 border-red-500/40';
+           iconHtml = '<i class="fa-solid fa-user-xmark sm:mr-1"></i> <span class="hidden sm:inline">Absent</span>';
+        }
 
         const item = document.createElement('div');
-        item.className = `glass-panel p-3 sm:p-4 rounded-2xl flex items-center justify-between border-l-[3px] sm:border-l-4 ${borderColor} hover:bg-white/5 transition-all w-full`;
+        item.className = `glass-panel p-3 sm:p-4 rounded-2xl flex items-center justify-between border-l-[3px] sm:border-l-4 ${borderClass} hover:bg-white/5 transition-all w-full`;
         item.innerHTML = `
           <div class="flex items-center space-x-3 sm:space-x-4 overflow-hidden">
             <img src="${rec.selfieUrl || rec.profilePicUrl}" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border border-white/20 shadow shrink-0">
@@ -2412,7 +2572,7 @@
             </div>
           </div>
           <div class="text-right flex flex-col items-end shrink-0 ml-2">
-            ${statusChip}
+            <span class="chip ${chipClass} text-[8px] sm:text-[9px] font-extrabold uppercase py-1 px-2">${iconHtml}</span>
             <span class="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 sm:mt-1.5">Yr ${rec.year} | SEC ${rec.section}</span>
           </div>
         `;
@@ -2420,5 +2580,10 @@
       });
     }
   </script>
+  <script>
+		  	document.addEventListener('contextmenu', function(event) {
+				event.preventDefault(); // Prevents the default context menu
+		  	});
+	</script>
 </body>
 </html>
