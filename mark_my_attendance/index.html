@@ -72,7 +72,6 @@
 </head>
 <body class="flex flex-col min-h-screen text-slate-100">
 
-  <!-- TOP NAVIGATION -->
   <header class="glass-panel sticky top-0 z-40 border-b border-white/10 px-4 lg:px-8 py-3.5 flex items-center justify-between">
     <div class="flex items-center space-x-3 truncate">
       <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 font-extrabold text-base sm:text-lg shrink-0">
@@ -103,7 +102,6 @@
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
   <main class="flex-grow w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
 
     <!-- LANDING / ONBOARDING VIEW -->
@@ -252,7 +250,6 @@
       </div>
     </section>
 
-    <!-- FACULTY DASHBOARD VIEW -->
     <section id="view-faculty" class="hidden space-y-4 sm:space-y-6">
       
       <!-- Faculty Navigation Tabs -->
@@ -408,7 +405,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-4 rounded-2xl">
           <div>
             <h3 class="text-base sm:text-lg font-bold">Student Directory</h3>
-            <p class="text-[10px] sm:text-xs text-slate-400">Registered students sorted ASC by Roll Number.</p>
+            <p class="text-[10px] sm:text-xs text-slate-400">Registered students strictly sorted ASC by Roll Number.</p>
           </div>
           <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
             <div class="flex items-center space-x-2 w-full sm:w-auto">
@@ -597,7 +594,7 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Manage Login Credentials</h3>
-              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">View and update registered student and faculty details.</p>
+              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">View and update registered student and faculty details. Wipe device bindings.</p>
             </div>
           </div>
 
@@ -658,7 +655,6 @@
 
     </section>
 
-    <!-- STUDENT DASHBOARD VIEW -->
     <section id="view-student" class="hidden space-y-4 sm:space-y-6">
       
       <!-- Student Navigation Tabs -->
@@ -841,6 +837,14 @@
         <div>
           <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Section</label>
           <input type="text" id="edit-section" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase">
+        </div>
+
+        <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-3 mt-2 flex items-start space-x-3">
+            <i class="fa-solid fa-mobile-screen-button text-red-400 mt-0.5"></i>
+            <div class="text-[10px] sm:text-xs text-red-200/90 leading-relaxed">
+              <span class="font-bold text-red-300">Device Lock Reset:</span> 
+              <button type="button" id="btn-wipe-device" class="block w-full mt-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-300 py-1.5 rounded-lg transition-colors font-bold tracking-wider uppercase text-[10px]">Wipe Hardware Binding</button>
+            </div>
         </div>
 
         <button type="submit" class="w-full mt-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 sm:py-4 px-6 rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 text-sm sm:text-base">
@@ -1072,7 +1076,7 @@
       csvInput: document.getElementById('whitelist-csv-input'),
       btnUploadCsv: document.getElementById('btn-upload-csv'),
       btnClearWhitelist: document.getElementById('btn-clear-whitelist'),
-      btnExportCsv: document.getElementById('btn-export-csv'), // <--- ADDED MISSING EXPORT ELEMENT
+      btnExportCsv: document.getElementById('btn-export-csv'), 
       whitelistCount: document.getElementById('whitelist-count'),
       whitelistPreview: document.getElementById('whitelist-preview'),
 
@@ -1082,7 +1086,6 @@
       manualStudentList: document.getElementById('manual-student-list'),
       manualSearch: document.getElementById('manual-search'),
 
-      // Edit User Modals
       modalEditUser: document.getElementById('modal-edit-user'),
       btnCloseEditUser: document.getElementById('btn-close-edit-user'),
       formEditUser: document.getElementById('form-edit-user'),
@@ -1092,9 +1095,11 @@
       editRole: document.getElementById('edit-role'),
       editYear: document.getElementById('edit-year'),
       editSection: document.getElementById('edit-section'),
+      btnWipeDevice: document.getElementById('btn-wipe-device'), 
       usersTableBody: document.getElementById('users-table-body')
     };
 
+    // --- STREAMING_CHUNK:Defining Utility Functions ---
     // --- CRYPTO HASHING ENGINE (SHA-256) ---
     async function hashString(message) {
       const msgBuffer = new TextEncoder().encode(message);
@@ -1103,7 +1108,6 @@
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // --- HARDWARE DEVICE BINDING INIT ---
     function getHardwareDeviceId() {
       let dId = localStorage.getItem('acoustix_hardware_id');
       if (!dId) {
@@ -1133,7 +1137,7 @@
       }, 4000);
     }
 
-    function compressImage(canvas, maxWidth = 350, quality = 0.65) {
+    function compressImage(canvas, maxWidth = 150, quality = 0.5) {
       const scale = maxWidth / canvas.width;
       const offscreen = document.createElement('canvas');
       offscreen.width = maxWidth;
@@ -1171,6 +1175,7 @@
       return true;
     }
 
+    // --- STREAMING_CHUNK:Configuring Database Engine ---
     // ==========================================
     // 🧠 CLOUD-FIRST DB ENGINE
     // ==========================================
@@ -1214,6 +1219,8 @@
                    const list = snap.data().list || [];
                    localStorage.setItem('acoustix_whitelist', JSON.stringify(list)); 
                    return list;
+               } else {
+                   return [];
                }
            } catch(e) {}
         }
@@ -1236,6 +1243,8 @@
                  users[cloudUser.rollNo] = cloudUser; 
                  localStorage.setItem('acoustix_users', JSON.stringify(users));
                  return cloudUser;
+             } else {
+                 return null;
              }
            } catch(e) {}
         }
@@ -1298,17 +1307,19 @@
         SYNC_QUEUE.pushOperation('SET', 'sessions', sessionData.sessionId, sessionData); 
         return sessionData.sessionId;
       },
-      async updateSessionAttendees(sessionId, studentId, attendeeRecord) {
+      updateSessionAttendees(sessionId, studentId, attendeeRecord) {
         const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
         if (session && session.sessionId === sessionId) {
           session.attendees = session.attendees || {};
           session.attendees[studentId] = attendeeRecord;
-          session.attendeeCount = Object.keys(session.attendees).length;
           localStorage.setItem('acoustix_active_session', JSON.stringify(session));
         }
         const updatePayload = { [`attendees.${studentId}`]: attendeeRecord };
         if (!useMockStorage && navigator.onLine && isAuthReady) {
-           try { await updateDoc(getDocRef('sessions', sessionId), updatePayload); return; } catch(e) {}
+           updateDoc(getDocRef('sessions', sessionId), updatePayload).catch(e => {
+               SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, updatePayload);
+           });
+           return; 
         }
         SYNC_QUEUE.pushOperation('UPDATE', 'sessions', sessionId, updatePayload);
       },
@@ -1316,7 +1327,6 @@
         const session = JSON.parse(localStorage.getItem('acoustix_active_session'));
         if (session && session.sessionId === sessionId && session.attendees && session.attendees[studentId]) {
           delete session.attendees[studentId];
-          session.attendeeCount = Object.keys(session.attendees).length;
           localStorage.setItem('acoustix_active_session', JSON.stringify(session));
         }
         if (!useMockStorage && navigator.onLine && isAuthReady) {
@@ -1328,21 +1338,22 @@
            } catch(e) {}
         }
       },
-      async updateDocDirectly(collection, docId, data) {
+      updateDocDirectly(collection, docId, data) {
          if (!useMockStorage && navigator.onLine && isAuthReady) {
-             try { await updateDoc(getDocRef(collection, docId), data); return; } catch(e){}
+             updateDoc(getDocRef(collection, docId), data).catch(e => {
+                 SYNC_QUEUE.pushOperation('UPDATE', collection, docId, data);
+             });
+             return;
          }
          SYNC_QUEUE.pushOperation('UPDATE', collection, docId, data);
       },
       async updateHistoricalRecord(sessionId, studentId, newStatus) {
-         // Update all local
          const all = JSON.parse(localStorage.getItem('acoustix_all_sessions') || '[]');
          const idx = all.findIndex(s => s.sessionId === sessionId);
          if(idx !== -1 && all[idx].attendees[studentId]) {
              all[idx].attendees[studentId].status = newStatus;
              localStorage.setItem('acoustix_all_sessions', JSON.stringify(all));
          }
-         // Update Cloud
          const updatePayload = { [`attendees.${studentId}.status`]: newStatus };
          if (!useMockStorage && navigator.onLine && isAuthReady) {
             try { await updateDoc(getDocRef('sessions', sessionId), updatePayload); return; } catch(e){}
@@ -1396,13 +1407,11 @@
       }
     };
 
-
-    // --- STRICT CAPITALIZATION ENFORCEMENT ---
+    // --- STREAMING_CHUNK:Setting up Event Listeners ---
     [DOM.signupName, DOM.signupRoll].forEach(el => {
       if (el) el.addEventListener('input', (e) => e.target.value = e.target.value.toUpperCase());
     });
 
-    // --- AUTH TOGGLE TABS ---
     DOM.tabLogin.addEventListener('click', () => {
       DOM.tabLogin.className = "flex-1 py-2.5 rounded-lg bg-indigo-600 text-white font-bold text-sm shadow-md transition-all";
       DOM.tabSignup.className = "flex-1 py-2.5 rounded-lg text-slate-400 font-bold text-sm hover:text-white transition-all";
@@ -1417,7 +1426,6 @@
       DOM.formLogin.classList.add('hidden');
     });
 
-    // --- ROLE SELECTOR CHIPS LOGIC ---
     document.querySelectorAll('#role-selector button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('#role-selector button').forEach(b => b.classList.remove('active'));
@@ -1440,7 +1448,6 @@
       });
     });
 
-    // --- SIGNUP SECTION CHIPS LOGIC ---
     document.querySelectorAll('#signup-chip-group-section button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('#signup-chip-group-section button').forEach(b => b.classList.remove('active'));
@@ -1450,7 +1457,6 @@
       });
     });
 
-    // --- WEBRTC CAMERA ENGINE ---
     let regMediaStream = null;
     document.getElementById('btn-open-camera').addEventListener('click', async () => {
       try {
@@ -1473,7 +1479,7 @@
       canvas.height = DOM.regVideo.videoHeight || 400;
       canvas.getContext('2d').drawImage(DOM.regVideo, 0, 0, canvas.width, canvas.height);
       
-      STATE.capturedRegPhoto = compressImage(canvas, 300, 0.7);
+      STATE.capturedRegPhoto = compressImage(canvas, 150, 0.5); 
       
       DOM.regPhotoPreview.src = STATE.capturedRegPhoto;
       DOM.regPhotoPreview.classList.remove('hidden');
@@ -1484,7 +1490,7 @@
       showToast("Biometric photo successfully captured.", "success");
     });
 
-    // --- SECURE LOGIN SUBMISSION ---
+    // --- STREAMING_CHUNK:Implementing Auth Logic ---
     DOM.formLogin.addEventListener('submit', async (e) => {
       e.preventDefault();
       if(!isAuthReady) { showToast("System connecting. Please wait.", "warn"); return; }
@@ -1528,7 +1534,6 @@
       loginUserToApp(user);
     });
 
-    // --- NEW REGISTRATION FORM SUBMISSION ---
     DOM.formSignup.addEventListener('submit', async (e) => {
       e.preventDefault();
       if(!isAuthReady) { showToast("System connecting. Please wait.", "warn"); return; }
@@ -1640,7 +1645,7 @@
       }
     });
 
-    // --- FACULTY PORTAL: CHIP SELECTORS ---
+    // --- STREAMING_CHUNK:Implementing Faculty Portals (Chips, Whitelist) ---
     function setupChipGroup(containerId, stateKey) {
       document.querySelectorAll(`#${containerId} button`).forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1676,7 +1681,6 @@
       });
     });
 
-    // --- FACULTY PORTAL: MASTER LIST ENGINE (CSV PARSER) ---
     DOM.btnUploadCsv.addEventListener('click', () => DOM.csvInput.click());
 
     DOM.csvInput.addEventListener('change', (e) => {
@@ -1705,6 +1709,9 @@
           showToast("CSV Error: Format must be 'RollNo, Name, Year, Section'", "error");
           return;
         }
+
+        // STRICT SORT BY ROLL NO ASC BEFORE SAVING
+        masterList.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
         await DB_ENGINE.saveWhitelist(masterList);
         STATE.activeWhitelist = masterList;
@@ -1747,9 +1754,12 @@
     });
 
     function renderActiveWhitelistUI() {
-      let filtered = STATE.activeWhitelist;
+      let filtered = [...STATE.activeWhitelist];
       if (masterFilterYear !== 'ALL') filtered = filtered.filter(s => s.year === masterFilterYear);
       if (masterFilterSec !== 'ALL') filtered = filtered.filter(s => s.section === masterFilterSec);
+
+      // ENSURE ALWAYS SORTED BY ROLL NO ASC
+      filtered.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       DOM.whitelistCount.textContent = filtered.length;
       if (filtered.length === 0) {
@@ -1782,8 +1792,7 @@
       }
     }
 
-
-    // --- FACULTY PORTAL: GPS & ULTRASOUND BROADCAST ENGINE ---
+    // --- STREAMING_CHUNK:Implementing Broadcast & Live Grid ---
     function acquireFacultyGPS() {
       if (!navigator.geolocation) {
         DOM.facGpsStatus.textContent = "Unavailable";
@@ -1835,6 +1844,10 @@
     }
 
     DOM.btnStartBroadcast.addEventListener('click', async () => {
+      if (!useMockStorage && !navigator.onLine) {
+        showToast("You must be online to initiate a broadcast.", "error");
+        return;
+      }
       if (!STATE.facGps) { showToast("Wait for GPS anchor coordinates.", "error"); return; }
 
       const sessionId = `SES_${Date.now()}`;
@@ -1849,7 +1862,6 @@
         gps: { ...STATE.facGps, radiusMeters: STATE.facRadius },
         ultrasoundFreq: 18500,
         isActive: true,
-        attendeeCount: 0,
         attendees: {} 
       };
 
@@ -1878,7 +1890,6 @@
       showToast(`Broadcast live! Airwaves active (18.5kHz) for YR ${STATE.facYear} SEC ${STATE.facSection}.`, "success");
     });
 
-    // --- AUTO ABSENTEE TAGGING ON SESSION END ---
     DOM.btnStopBroadcast.addEventListener('click', async () => {
       if (STATE.activeSession) {
         const session = STATE.activeSession;
@@ -1901,7 +1912,7 @@
         });
 
         if (hasUpdates) {
-            await DB_ENGINE.updateDocDirectly('sessions', session.sessionId, { attendees: attendees });
+            DB_ENGINE.updateDocDirectly('sessions', session.sessionId, { attendees: attendees });
             showToast("Auto-tagging missing expected students as ABSENT...", "info");
         }
         await DB_ENGINE.endSession(STATE.activeSession.sessionId);
@@ -1923,7 +1934,6 @@
       renderStudentDirectory();
     }
 
-    // --- FACULTY PORTAL: LIVE ATTENDANCE GRID (PRESENT VS ABSENT) ---
     function listenToLiveGrid(sessionId) {
       if (STATE.sessionListener) STATE.sessionListener();
       
@@ -1931,7 +1941,7 @@
         if (!session) return;
         STATE.activeSession = session;
         const attendees = session.attendees || {};
-        const presentCount = Object.keys(attendees).length;
+        const presentCount = Object.keys(attendees).filter(k => attendees[k].status !== 'ABSENT').length;
         
         const expectedStudents = STATE.activeWhitelist.filter(s => s.year === session.year && s.section === session.section);
         const totalExpected = expectedStudents.length > 0 ? expectedStudents.length : presentCount;
@@ -1948,6 +1958,9 @@
 
         DOM.liveGrid.querySelectorAll('.student-card').forEach(c => c.remove());
         const renderedRolls = new Set();
+
+        // STRICT SORT EXPECTED STUDENTS BY ROLL NO ASC
+        expectedStudents.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
         expectedStudents.forEach(stu => {
           renderedRolls.add(stu.rollNo);
@@ -1980,24 +1993,27 @@
           DOM.liveGrid.appendChild(card);
         });
 
-        Object.values(attendees).forEach(att => {
-          if (!renderedRolls.has(att.rollNo) && att.status !== 'ABSENT') {
-             const card = document.createElement('div');
-             card.className = `student-card glass-card p-2 sm:p-3 rounded-xl sm:rounded-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-300 relative overflow-hidden border-indigo-500/40`;
-             card.innerHTML = `
-               <div class="absolute top-1.5 right-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-indigo-400 shadow-lg shadow-indigo-400"></div>
-               <img src="${att.profilePicUrl}" alt="" class="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-indigo-400 shadow-md mb-1.5 sm:mb-2">
-               <span class="text-[10px] sm:text-xs font-extrabold text-white truncate w-full px-1">${att.name}</span>
-               <span class="text-[9px] sm:text-[10px] font-mono bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded mt-0.5 sm:mt-1">${att.rollNo}</span>
-               <span class="text-[8px] sm:text-[9px] text-indigo-400 mt-1 sm:mt-2 font-bold"><i class="fa-solid fa-clock mr-1"></i>Extra Join</span>
-             `;
-             DOM.liveGrid.appendChild(card);
-          }
+        const extraStudents = Object.values(attendees).filter(att => !renderedRolls.has(att.rollNo) && att.status !== 'ABSENT');
+        
+        // STRICT SORT EXTRA STUDENTS BY ROLL NO ASC
+        extraStudents.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
+        
+        extraStudents.forEach(att => {
+          const card = document.createElement('div');
+          card.className = `student-card glass-card p-2 sm:p-3 rounded-xl sm:rounded-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-300 relative overflow-hidden border-indigo-500/40`;
+          card.innerHTML = `
+            <div class="absolute top-1.5 right-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-indigo-400 shadow-lg shadow-indigo-400"></div>
+            <img src="${att.profilePicUrl}" alt="" class="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-indigo-400 shadow-md mb-1.5 sm:mb-2">
+            <span class="text-[10px] sm:text-xs font-extrabold text-white truncate w-full px-1">${att.name}</span>
+            <span class="text-[9px] sm:text-[10px] font-mono bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded mt-0.5 sm:mt-1">${att.rollNo}</span>
+            <span class="text-[8px] sm:text-[9px] text-indigo-400 mt-1 sm:mt-2 font-bold"><i class="fa-solid fa-clock mr-1"></i>Extra Join</span>
+          `;
+          DOM.liveGrid.appendChild(card);
         });
       });
     }
 
-    // --- MANUAL OVERRIDE (FACULTY ONLY) ---
+    // --- MANUAL OVERRIDE LOGIC ---
     DOM.btnManualOverride.addEventListener('click', async () => {
       if (!STATE.activeSession) { showToast("Initiate a broadcast first.", "error"); return; }
       DOM.modalManual.classList.remove('hidden');
@@ -2017,6 +2033,7 @@
       const query = DOM.manualSearch.value.trim().toUpperCase();
       if (query) students = students.filter(s => s.rollNo.includes(query) || s.name.includes(query));
 
+      // STRICT SORT
       students.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       container.innerHTML = '';
@@ -2052,16 +2069,16 @@
       } else {
          const record = {
            name: name, rollNo: rollNo, profilePicUrl: picUrl,
-           selfieUrl: 'https://placehold.co/400x300/1e1b4b/a5b4fc?text=MANUAL+OVERRIDE',
+           selfieUrl: 'https://placehold.co/150x150/1e1b4b/a5b4fc?text=MANUAL',
            checkInTime: Date.now(), status: "MANUAL"
          };
-         await DB_ENGINE.updateSessionAttendees(STATE.activeSession.sessionId, rollNo, record);
+         DB_ENGINE.updateSessionAttendees(STATE.activeSession.sessionId, rollNo, record);
          showToast(`${name} marked PRESENT (Manual)`, "success");
       }
       setTimeout(() => renderManualList(), 150); 
     };
 
-    // --- FACULTY PORTAL: STUDENT DIRECTORY ---
+    // --- STREAMING_CHUNK:Implementing Reports & User Management ---
     document.querySelectorAll('#dir-year-filters button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('#dir-year-filters button').forEach(b => b.classList.remove('active'));
@@ -2088,6 +2105,7 @@
       if (STATE.dirFilterYear !== 'ALL') students = students.filter(s => s.year === STATE.dirFilterYear);
       if (STATE.dirFilterSec !== 'ALL') students = students.filter(s => s.section === STATE.dirFilterSec);
 
+      // STRICT SORT
       students.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       tbody.innerHTML = '';
@@ -2111,7 +2129,6 @@
       });
     }
 
-    // --- FACULTY PORTAL: ANALYTICS & HISTORICAL EDIT ---
     function setupReportFilters(containerId, stateKey) {
       document.querySelectorAll(`#${containerId} button`).forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -2160,7 +2177,12 @@
         });
       });
 
-      currentFilteredRecords.sort((a, b) => b.timestamp - a.timestamp);
+      // STRICT SORT: Group by Session (Newest First), then Sort Students by Roll No ASC
+      currentFilteredRecords.sort((a, b) => {
+        const sessionDiff = (b.sessionId || "").localeCompare(a.sessionId || "");
+        if (sessionDiff !== 0) return sessionDiff;
+        return a.rollNo.localeCompare(b.rollNo);
+      });
 
       tbody.innerHTML = '';
       if (currentFilteredRecords.length === 0) {
@@ -2198,7 +2220,7 @@
 
     window.editHistoricalRecord = async function(sessionId, rollNo, currentStatus) {
        const newStatus = currentStatus === 'ABSENT' ? 'MANUAL' : 'ABSENT';
-       await DB_ENGINE.updateHistoricalRecord(sessionId, rollNo, newStatus);
+       DB_ENGINE.updateHistoricalRecord(sessionId, rollNo, newStatus);
        showToast(`Record updated to ${newStatus} for ${rollNo}`, "success");
        setTimeout(() => renderReportsTable(), 200);
     };
@@ -2220,7 +2242,6 @@
       showToast("CSV downloaded.", "success");
     });
 
-    // --- FACULTY PORTAL: LOGIN CREDS (USER MANAGEMENT) ---
     function setupUserFilters(containerId, stateKey) {
       document.querySelectorAll(`#${containerId} button`).forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -2245,6 +2266,7 @@
       if (STATE.userFilterYear !== 'ALL') allUsers = allUsers.filter(u => u.year === STATE.userFilterYear);
       if (STATE.userFilterSec !== 'ALL') allUsers = allUsers.filter(u => u.section === STATE.userFilterSec);
 
+      // STRICT SORT
       allUsers.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       tbody.innerHTML = '';
@@ -2286,6 +2308,12 @@
       DOM.editRole.value = u.role;
       DOM.editYear.value = u.year;
       DOM.editSection.value = u.section;
+      
+      DOM.btnWipeDevice.onclick = async () => {
+          await DB_ENGINE.updateUser(rollNo, { deviceId: null });
+          showToast(`Device binding wiped for ${rollNo}. They can now login on a new device.`, "success");
+      };
+      
       DOM.modalEditUser.classList.remove('hidden');
     }
 
@@ -2302,15 +2330,15 @@
         section: DOM.editSection.value.trim().toUpperCase()
       };
       
-      showToast("Updating user credentials...", "info");
+      showToast("Updating credentials...", "info");
       await DB_ENGINE.updateUser(rollNo, updatedData);
       
       DOM.modalEditUser.classList.add('hidden');
-      showToast("Profile details updated successfully.", "success");
-      renderUsersTable();
+      showToast("Profile updated successfully.", "success");
+      setTimeout(() => renderUsersTable(), 200);
     });
 
-    // --- STUDENT PORTAL ---
+    // --- STREAMING_CHUNK:Implementing Student Dashboard ---
     function initStudentPortal() {
       DOM.stuMySection.textContent = `YR ${STATE.currentUser.year} | SEC ${STATE.currentUser.section}`;
       DOM.hintSection.textContent = `${STATE.currentUser.year}-${STATE.currentUser.section}`;
@@ -2353,13 +2381,11 @@
       });
     }
 
-    // --- STUDENT PORTAL: HANDSHAKE ---
     DOM.btnJoinClass.addEventListener('click', async () => {
       if (!STATE.activeSession) return;
       DOM.btnJoinClass.disabled = true;
       DOM.btnJoinClass.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-lg sm:text-xl"></i><span>Verifying...</span>`;
 
-      // 1. GPS
       DOM.indGpsText.textContent = "Acquiring...";
       let gpsVerified = false;
       try {
@@ -2378,7 +2404,6 @@
         DOM.indGpsIcon.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs sm:text-sm shrink-0";
       }
 
-      // 2. Audio
       DOM.indAudioText.textContent = "Listening...";
       let audioVerified = false;
       try {
@@ -2435,7 +2460,6 @@
       }
     });
 
-    // --- STUDENT PORTAL: SELFIE MODAL ---
     let selfieStream = null;
     async function openSelfieModal() {
       DOM.modalSelfie.classList.remove('hidden');
@@ -2460,27 +2484,6 @@
       DOM.btnJoinClass.innerHTML = `<i class="fa-solid fa-fingerprint text-lg sm:text-xl"></i><span>Join Class</span>`;
     });
 
-    DOM.btnSnapSelfie.addEventListener('click', () => {
-      const canvas = DOM.selfieCanvas;
-      canvas.width = DOM.selfieVideo.videoWidth || 400;
-      canvas.height = DOM.selfieVideo.videoHeight || 300;
-      canvas.getContext('2d').drawImage(DOM.selfieVideo, 0, 0, canvas.width, canvas.height);
-      
-      STATE.capturedSelfie = compressImage(canvas, 350, 0.65);
-      
-      DOM.selfiePreview.src = STATE.capturedSelfie;
-      DOM.selfieVideo.classList.add('hidden');
-      DOM.selfiePreview.classList.remove('hidden');
-      DOM.btnSnapSelfie.classList.add('hidden');
-      DOM.btnRetakeSelfie.classList.remove('hidden');
-
-      setTimeout(async () => {
-        if (selfieStream) selfieStream.getTracks().forEach(t => t.stop());
-        DOM.modalSelfie.classList.add('hidden');
-        await submitAttendanceRecord();
-      }, 1000);
-    });
-
     DOM.btnRetakeSelfie.addEventListener('click', () => {
       DOM.selfiePreview.classList.add('hidden');
       DOM.selfieVideo.classList.remove('hidden');
@@ -2488,9 +2491,26 @@
       DOM.btnRetakeSelfie.classList.add('hidden');
     });
 
-    async function submitAttendanceRecord() {
-      showToast("Uploading to DB...", "info");
+    DOM.btnSnapSelfie.addEventListener('click', () => {
+      const canvas = DOM.selfieCanvas;
+      canvas.width = DOM.selfieVideo.videoWidth || 400;
+      canvas.height = DOM.selfieVideo.videoHeight || 300;
+      canvas.getContext('2d').drawImage(DOM.selfieVideo, 0, 0, canvas.width, canvas.height);
       
+      STATE.capturedSelfie = compressImage(canvas, 150, 0.5); 
+      
+      DOM.selfiePreview.src = STATE.capturedSelfie;
+      DOM.selfieVideo.classList.add('hidden');
+      DOM.selfiePreview.classList.remove('hidden');
+      DOM.btnSnapSelfie.classList.add('hidden');
+      DOM.btnRetakeSelfie.classList.remove('hidden');
+
+      if (selfieStream) selfieStream.getTracks().forEach(t => t.stop());
+      DOM.modalSelfie.classList.add('hidden');
+      submitAttendanceRecord();
+    });
+
+    function submitAttendanceRecord() {
       const attendeeRecord = {
         name: STATE.currentUser.name,
         rollNo: STATE.currentUser.rollNo,
@@ -2500,7 +2520,7 @@
         status: "verified"
       };
 
-      await DB_ENGINE.updateSessionAttendees(STATE.activeSession.sessionId, STATE.currentUser.rollNo, attendeeRecord);
+      DB_ENGINE.updateSessionAttendees(STATE.activeSession.sessionId, STATE.currentUser.rollNo, attendeeRecord);
 
       DOM.indSelfieText.textContent = "Synced";
       DOM.indSelfieText.className = "text-[11px] sm:text-xs font-bold text-emerald-400 truncate";
@@ -2513,7 +2533,6 @@
       showToast("Success! PRESENT for today's session.", "success");
     }
 
-    // --- STUDENT PORTAL: TIMELINE ---
     async function renderStudentHistory() {
       const container = document.getElementById('stu-timeline-container');
       container.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs sm:text-sm"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Loading History...</div>`;
