@@ -104,7 +104,6 @@
 
   <main class="flex-grow w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
 
-    <!-- LANDING / ONBOARDING VIEW -->
     <section id="view-onboarding" class="max-w-xl mx-auto mt-2 sm:mt-8 hidden">
       <div class="glass-panel rounded-[2rem] p-5 sm:p-8 shadow-2xl relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -115,13 +114,11 @@
           <p class="text-[11px] sm:text-xs text-slate-400 mt-1">Authenticate or register your secure device profile.</p>
         </div>
 
-        <!-- AUTH MODE TOGGLE -->
         <div class="flex bg-slate-900/50 p-1.5 rounded-xl mb-6 relative z-10">
           <button type="button" id="tab-login" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white font-bold text-sm shadow-md transition-all">Secure Login</button>
           <button type="button" id="tab-signup" class="flex-1 py-2.5 rounded-lg text-slate-400 font-bold text-sm hover:text-white transition-all">New Registration</button>
         </div>
 
-        <!-- LOGIN FORM -->
         <form id="form-login" class="space-y-4">
           <div>
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Registered Email</label>
@@ -151,14 +148,12 @@
           </button>
         </form>
 
-        <!-- SIGN UP FORM -->
         <form id="form-signup" class="space-y-4 hidden">
           <div class="flex justify-center gap-2.5 sm:gap-3 mb-5" id="role-selector">
             <button type="button" class="chip active py-2 sm:py-2.5 flex-1" data-role="student"><i class="fa-solid fa-user-graduate mr-2"></i> Student</button>
             <button type="button" class="chip py-2 sm:py-2.5 flex-1" data-role="faculty"><i class="fa-solid fa-chalkboard-user mr-2"></i> Faculty</button>
           </div>
 
-          <!-- Master Key (Hidden by default) -->
           <div id="wrapper-masterkey" class="hidden">
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-amber-300 mb-1.5">Faculty Master Key</label>
             <div class="relative">
@@ -225,7 +220,6 @@
             </div>
           </div>
 
-          <!-- Camera Capture Section -->
           <div class="pt-2">
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Biometric Profile Photo (Required)</label>
             <div class="flex items-center space-x-3 sm:space-x-4 bg-slate-900/50 p-2.5 sm:p-3 rounded-2xl border border-white/5">
@@ -252,7 +246,6 @@
 
     <section id="view-faculty" class="hidden space-y-4 sm:space-y-6">
       
-      <!-- Faculty Navigation Tabs -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-2 rounded-2xl w-full overflow-hidden">
         <div class="flex gap-2 overflow-x-auto hide-scrollbar snap-x w-full sm:w-auto pb-1 sm:pb-0" id="faculty-tabs">
           <button class="chip active py-2.5 px-4 sm:px-5 shrink-0 snap-start" data-tab="fac-broadcast"><i class="fa-solid fa-tower-broadcast mr-1.5"></i>Broadcast</button>
@@ -268,10 +261,8 @@
         </div>
       </div>
 
-      <!-- Tab 1: Session Broadcast -->
       <div id="tab-fac-broadcast" class="glass-panel rounded-3xl p-5 sm:p-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
-          
           <div class="lg:col-span-7 space-y-5 sm:space-y-6">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Configure Broadcast</h3>
@@ -369,11 +360,9 @@
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
-      <!-- Tab 2: Live Attendance Grid -->
       <div id="tab-fac-grid" class="hidden space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 glass-panel p-4 rounded-2xl">
           <div>
@@ -391,7 +380,6 @@
         </div>
 
         <div id="live-attendance-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 sm:gap-4 min-h-[200px] sm:min-h-[250px]">
-          <!-- Empty State -->
           <div id="grid-empty-state" class="col-span-full glass-panel rounded-2xl p-8 sm:p-12 text-center text-slate-500">
             <i class="fa-solid fa-user-clock text-3xl sm:text-4xl mb-3 opacity-50"></i>
             <p class="text-xs sm:text-sm font-semibold">No active session.</p>
@@ -400,12 +388,11 @@
         </div>
       </div>
 
-      <!-- Tab 3: Student Directory -->
       <div id="tab-fac-directory" class="hidden space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-4 rounded-2xl">
           <div>
             <h3 class="text-base sm:text-lg font-bold">Student Directory</h3>
-            <p class="text-[10px] sm:text-xs text-slate-400">Registered students strictly sorted ASC by Roll Number.</p>
+            <p class="text-[10px] sm:text-xs text-slate-400">Registered students sorted ASC by Roll Number.</p>
           </div>
           <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
             <div class="flex items-center space-x-2 w-full sm:w-auto">
@@ -451,7 +438,6 @@
         </div>
       </div>
 
-      <!-- Tab 4: MANAGE MASTER LIST -->
       <div id="tab-fac-whitelist" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-8 space-y-5 sm:space-y-6">
           <div>
@@ -508,7 +494,6 @@
         </div>
       </div>
 
-      <!-- Tab 5: Analytics & Reports (Historical Editing) -->
       <div id="tab-fac-reports" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-5 sm:space-y-6 w-full overflow-hidden">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
@@ -588,7 +573,6 @@
         </div>
       </div>
 
-      <!-- Tab 6: Manage Login Credentials -->
       <div id="tab-fac-users" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-5 sm:space-y-6 w-full overflow-hidden">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
@@ -657,7 +641,6 @@
 
     <section id="view-student" class="hidden space-y-4 sm:space-y-6">
       
-      <!-- Student Navigation Tabs -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 glass-panel p-2 rounded-2xl">
         <div class="flex gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar" id="student-tabs">
           <button class="chip active py-2 sm:py-2.5 px-4 sm:px-5 shrink-0" data-tab="stu-live"><i class="fa-solid fa-satellite-dish mr-1.5"></i>Live Class</button>
@@ -668,7 +651,6 @@
         </div>
       </div>
 
-      <!-- Tab 1: Live Class Verification -->
       <div id="tab-stu-live" class="space-y-4 sm:space-y-6">
         
         <div id="stu-session-banner" class="glass-panel rounded-3xl p-5 sm:p-6 lg:p-8 relative overflow-hidden border-indigo-500/30">
@@ -755,7 +737,6 @@
 
       </div>
 
-      <!-- Tab 2: 7-Day History -->
       <div id="tab-stu-history" class="hidden space-y-4 sm:space-y-4 w-full">
         <div class="glass-panel p-3 sm:p-4 rounded-2xl flex items-center justify-between">
           <div>
@@ -904,18 +885,13 @@
     </div>
   </div>
 
-  <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
   <div id="toast-container" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-[200] flex flex-col space-y-2.5 sm:max-w-sm pointer-events-none"></div>
 
-  <!-- ========================================== -->
-  <!-- COMPLETE APPLICATION JAVASCRIPT ENGINE     -->
-  <!-- ========================================== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
       apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
       authDomain: "stuattnd.firebaseapp.com",
@@ -928,8 +904,9 @@
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'uvlog_att_app';
 
-    let app, db, auth, useMockStorage = false;
+    let app, db, auth;
     let isAuthReady = false;
+    let useMockStorage = false;
 
     try {
       app = initializeApp(firebaseConfig);
@@ -937,7 +914,7 @@
       auth = getAuth(app);
       console.log("[System] Connected to Firebase v10 Backend.");
     } catch (err) {
-      console.warn("[System Notice] Offline fallback active.", err);
+      console.error("[System Error] Database connection failed. Running completely offline.", err);
       useMockStorage = true;
       isAuthReady = true; 
       document.getElementById('view-onboarding').classList.remove('hidden');
@@ -952,7 +929,7 @@
         document.getElementById('btn-show-login').disabled = false;
         if(!STATE.currentUser) document.getElementById('view-onboarding').classList.remove('hidden');
       }).catch((error) => {
-        showToast("Backend auth failed. Operating in offline cache mode.", "error");
+        showToast("Backend auth failed. Operating in offline mode.", "error");
         useMockStorage = true;
         isAuthReady = true;
         document.getElementById('view-onboarding').classList.remove('hidden');
@@ -968,7 +945,6 @@
         return collection(db, 'artifacts', appId, 'public', 'data', collectionName);
     }
 
-    // --- GLOBAL APPLICATION STATE ---
     const STATE = {
       currentUser: null,        
       activeSession: null,      
@@ -997,7 +973,6 @@
       activeWhitelist: [] 
     };
 
-    // --- DOM ELEMENT CACHE ---
     const DOM = {
       navUserSection: document.getElementById('nav-user-section'),
       userBadge: document.getElementById('user-badge'),
@@ -1100,7 +1075,6 @@
     };
 
     // --- STREAMING_CHUNK:Defining Utility Functions ---
-    // --- CRYPTO HASHING ENGINE (SHA-256) ---
     async function hashString(message) {
       const msgBuffer = new TextEncoder().encode(message);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -1176,9 +1150,6 @@
     }
 
     // --- STREAMING_CHUNK:Configuring Database Engine ---
-    // ==========================================
-    // 🧠 CLOUD-FIRST DB ENGINE
-    // ==========================================
     const SYNC_QUEUE = {
       getQueue: () => JSON.parse(localStorage.getItem('acoustix_sync_queue') || '[]'),
       pushOperation: (action, collectionName, docId, data) => {
@@ -1257,7 +1228,7 @@
                 const q = query(getColRef("users"), where("role", "==", "student"));
                 const snap = await getDocs(q);
                 return snap.docs.map(d => d.data());
-            } catch(e) { console.error("Cloud directory fail", e); }
+            } catch(e) {}
         }
         const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
         return Object.values(users).filter(u => u.role === 'student');
@@ -1268,7 +1239,7 @@
                 const snap = await getDocs(getColRef("users"));
                 const allUsers = snap.docs.map(d => d.data());
                 return allUsers;
-            } catch(e) { console.error("Cloud users fetch failed", e); }
+            } catch(e) {}
         }
         const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
         return Object.values(users);
@@ -1283,7 +1254,7 @@
            try {
                await updateDoc(getDocRef('users', rollNo), updatedData);
                return;
-           } catch(e) { console.error("Cloud User Update Failed", e); }
+           } catch(e) {}
         }
         SYNC_QUEUE.pushOperation('UPDATE', 'users', rollNo, updatedData);
       },
@@ -1710,7 +1681,6 @@
           return;
         }
 
-        // STRICT SORT BY ROLL NO ASC BEFORE SAVING
         masterList.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
         await DB_ENGINE.saveWhitelist(masterList);
@@ -1758,7 +1728,6 @@
       if (masterFilterYear !== 'ALL') filtered = filtered.filter(s => s.year === masterFilterYear);
       if (masterFilterSec !== 'ALL') filtered = filtered.filter(s => s.section === masterFilterSec);
 
-      // ENSURE ALWAYS SORTED BY ROLL NO ASC
       filtered.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       DOM.whitelistCount.textContent = filtered.length;
@@ -1805,10 +1774,10 @@
           DOM.activeCoords.textContent = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
         },
         (err) => {
-          STATE.facGps = { lat: 15.1394, lng: 78.5081 };
-          DOM.facGpsStatus.textContent = "15.1394, 78.5081 (Sim)";
-          DOM.activeCoords.textContent = "15.1394, 78.5081 (Sim)";
-          showToast("Using simulated GPS anchor.", "warn");
+          // STRICT ENFORCEMENT: No fallbacks.
+          showToast("GPS Error: You must enable Location Services to broadcast.", "error");
+          DOM.facGpsStatus.textContent = "Failed";
+          STATE.facGps = null;
         },
         { enableHighAccuracy: true }
       );
@@ -1849,6 +1818,11 @@
         return;
       }
       if (!STATE.facGps) { showToast("Wait for GPS anchor coordinates.", "error"); return; }
+
+      // AudioContext requires user interaction to resume
+      if (STATE.audioContext && STATE.audioContext.state === 'suspended') {
+        await STATE.audioContext.resume();
+      }
 
       const sessionId = `SES_${Date.now()}`;
       const sessionData = {
@@ -1959,7 +1933,6 @@
         DOM.liveGrid.querySelectorAll('.student-card').forEach(c => c.remove());
         const renderedRolls = new Set();
 
-        // STRICT SORT EXPECTED STUDENTS BY ROLL NO ASC
         expectedStudents.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
         expectedStudents.forEach(stu => {
@@ -1994,8 +1967,6 @@
         });
 
         const extraStudents = Object.values(attendees).filter(att => !renderedRolls.has(att.rollNo) && att.status !== 'ABSENT');
-        
-        // STRICT SORT EXTRA STUDENTS BY ROLL NO ASC
         extraStudents.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
         
         extraStudents.forEach(att => {
@@ -2033,7 +2004,6 @@
       const query = DOM.manualSearch.value.trim().toUpperCase();
       if (query) students = students.filter(s => s.rollNo.includes(query) || s.name.includes(query));
 
-      // STRICT SORT
       students.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       container.innerHTML = '';
@@ -2105,7 +2075,6 @@
       if (STATE.dirFilterYear !== 'ALL') students = students.filter(s => s.year === STATE.dirFilterYear);
       if (STATE.dirFilterSec !== 'ALL') students = students.filter(s => s.section === STATE.dirFilterSec);
 
-      // STRICT SORT
       students.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       tbody.innerHTML = '';
@@ -2177,7 +2146,6 @@
         });
       });
 
-      // STRICT SORT: Group by Session (Newest First), then Sort Students by Roll No ASC
       currentFilteredRecords.sort((a, b) => {
         const sessionDiff = (b.sessionId || "").localeCompare(a.sessionId || "");
         if (sessionDiff !== 0) return sessionDiff;
@@ -2266,7 +2234,6 @@
       if (STATE.userFilterYear !== 'ALL') allUsers = allUsers.filter(u => u.year === STATE.userFilterYear);
       if (STATE.userFilterSec !== 'ALL') allUsers = allUsers.filter(u => u.section === STATE.userFilterSec);
 
-      // STRICT SORT
       allUsers.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       tbody.innerHTML = '';
@@ -2389,7 +2356,7 @@
       DOM.indGpsText.textContent = "Acquiring...";
       let gpsVerified = false;
       try {
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, {timeout: 5000, enableHighAccuracy: true}));
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, {timeout: 10000, enableHighAccuracy: true}));
         const dist = calculateHaversine(pos.coords.latitude, pos.coords.longitude, STATE.activeSession.gps.lat, STATE.activeSession.gps.lng);
         if (dist <= STATE.activeSession.gps.radiusMeters) {
           gpsVerified = true;
@@ -2398,18 +2365,25 @@
           DOM.indGpsIcon.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs sm:text-sm shrink-0";
         } else throw new Error(`Out of bounds`);
       } catch (err) {
-        gpsVerified = true;
-        DOM.indGpsText.textContent = "Verified (Sim)";
-        DOM.indGpsText.className = "text-[11px] sm:text-xs font-bold text-emerald-400 truncate";
-        DOM.indGpsIcon.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs sm:text-sm shrink-0";
+        // STRICT ENFORCEMENT: No fallbacks.
+        showToast("GPS Verification Failed. Move closer to the classroom.", "error");
+        gpsVerified = false;
+        DOM.indGpsText.textContent = "Failed";
+        DOM.indGpsText.className = "text-[11px] sm:text-xs font-bold text-red-400 truncate";
       }
 
       DOM.indAudioText.textContent = "Listening...";
       let audioVerified = false;
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        // Ensure AudioContext is properly resumed to bypass strict browser autoplay policies
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         const actx = new AudioCtx();
+        if (actx.state === 'suspended') {
+            await actx.resume();
+        }
+
         const source = actx.createMediaStreamSource(stream);
         const analyser = actx.createAnalyser();
         analyser.fftSize = 2048;
@@ -2430,11 +2404,11 @@
           const checkFFT = () => {
             analyser.getFloatFrequencyData(dataArray);
             const decibels = dataArray[binIndex];
-            if (decibels > -65 || attempts++ > 25) {
+            if (decibels > -65 || attempts++ > 40) {
               clearInterval(visInterval);
               stream.getTracks().forEach(t => t.stop());
               actx.close();
-              resolve(true); 
+              resolve(decibels > -65); // Only true if the physical hardware captured the specific frequency energy
             } else setTimeout(checkFFT, 100);
           };
           checkFFT();
@@ -2444,17 +2418,21 @@
           DOM.indAudioText.textContent = "Verified (Tone)";
           DOM.indAudioText.className = "text-[11px] sm:text-xs font-bold text-emerald-400 truncate";
           DOM.indAudioIcon.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs sm:text-sm shrink-0";
+        } else {
+          throw new Error("Ultrasound threshold not met");
         }
       } catch (err) {
-        showToast("Mic denied. Visual fallback.", "warn");
-        audioVerified = true;
+        // STRICT ENFORCEMENT: No fallbacks.
+        showToast("Audio Verification Failed. Beacon not detected.", "error");
+        audioVerified = false;
+        DOM.indAudioText.textContent = "Failed";
+        DOM.indAudioText.className = "text-[11px] sm:text-xs font-bold text-red-400 truncate";
       }
 
       if (gpsVerified && audioVerified) {
         showToast("Handshake Confirmed! Launching Selfie...", "success");
         setTimeout(() => openSelfieModal(), 600);
       } else {
-        showToast("Verification failed. Move closer.", "error");
         DOM.btnJoinClass.disabled = false;
         DOM.btnJoinClass.innerHTML = `<i class="fa-solid fa-fingerprint text-lg sm:text-xl"></i><span>Retry</span>`;
       }
