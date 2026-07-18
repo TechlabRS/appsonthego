@@ -33,6 +33,7 @@
       transform: translateY(-3px);
       border-color: rgba(99, 102, 241, 0.5);
     }
+    /* Legacy Chips used only for Broadcast Wizard */
     .chip {
       padding: 0.4rem 1rem;
       border-radius: 9999px;
@@ -72,6 +73,7 @@
 </head>
 <body class="flex flex-col min-h-screen text-slate-100">
 
+  <!-- TOP NAVIGATION -->
   <header class="glass-panel sticky top-0 z-40 border-b border-white/10 px-4 lg:px-8 py-3.5 flex items-center justify-between">
     <div class="flex items-center space-x-3 truncate">
       <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 font-extrabold text-base sm:text-lg shrink-0">
@@ -86,7 +88,6 @@
       </div>
     </div>
 
-    <!-- User Profile Dropdown -->
     <div class="flex items-center space-x-3 shrink-0" id="nav-user-section">
       <div id="user-badge" class="hidden items-center space-x-2.5 bg-white/5 border border-white/10 px-2 sm:px-3 py-1.5 rounded-full">
         <img id="nav-profile-pic" src="" alt="Profile" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-indigo-400 shrink-0">
@@ -102,8 +103,10 @@
     </div>
   </header>
 
+  <!-- MAIN CONTAINER -->
   <main class="flex-grow w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
 
+    <!-- LANDING / ONBOARDING VIEW -->
     <section id="view-onboarding" class="max-w-xl mx-auto mt-2 sm:mt-8 hidden">
       <div class="glass-panel rounded-[2rem] p-5 sm:p-8 shadow-2xl relative overflow-hidden">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -183,7 +186,7 @@
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Full Legal Name</label>
             <div class="relative">
               <i class="fa-solid fa-user absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
-              <input type="text" id="signup-name" required placeholder="EX: VEERA RAGH" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase placeholder:normal-case placeholder:text-slate-600">
+              <input type="text" id="signup-name" required placeholder="EX: ALEX MERCER" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase placeholder:normal-case placeholder:text-slate-600">
             </div>
           </div>
 
@@ -192,7 +195,7 @@
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Roll No (CSV Validated)</label>
               <div class="relative">
                 <i class="fa-solid fa-id-card absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
-                <input type="text" id="signup-roll" required placeholder="EX: 24091A3300" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase placeholder:normal-case placeholder:text-slate-600">
+                <input type="text" id="signup-roll" required placeholder="EX: 101A" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase placeholder:normal-case placeholder:text-slate-600">
               </div>
             </div>
             <div>
@@ -211,10 +214,10 @@
             <div>
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Section / Branch</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-1.5" id="signup-chip-group-section">
-                <button type="button" class="chip active shrink-0 flex-1 py-3 text-xs" data-val="A">Sec A</button>
-                <button type="button" class="chip shrink-0 flex-1 py-3 text-xs" data-val="B">Sec B</button>
-                <button type="button" class="chip shrink-0 flex-1 py-3 text-xs" data-val="C">Sec C</button>
-                <button type="button" class="chip shrink-0 flex-1 py-3 text-xs" data-val="D">Sec D</button>
+                <button type="button" class="chip active shrink-0 flex-1 py-2.5 text-sm" data-val="A">A</button>
+                <button type="button" class="chip shrink-0 flex-1 py-2.5 text-sm" data-val="B">B</button>
+                <button type="button" class="chip shrink-0 flex-1 py-2.5 text-sm" data-val="C">C</button>
+                <button type="button" class="chip shrink-0 flex-1 py-2.5 text-sm" data-val="D">D</button>
               </div>
               <input type="hidden" id="signup-section" value="A">
             </div>
@@ -244,8 +247,10 @@
       </div>
     </section>
 
+    <!-- FACULTY DASHBOARD VIEW -->
     <section id="view-faculty" class="hidden space-y-4 sm:space-y-6">
       
+      <!-- Faculty Navigation Tabs -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-2 rounded-2xl w-full overflow-hidden">
         <div class="flex gap-2 overflow-x-auto hide-scrollbar snap-x w-full sm:w-auto pb-1 sm:pb-0" id="faculty-tabs">
           <button class="chip active py-2.5 px-4 sm:px-5 shrink-0 snap-start" data-tab="fac-broadcast"><i class="fa-solid fa-tower-broadcast mr-1.5"></i>Broadcast</button>
@@ -261,8 +266,10 @@
         </div>
       </div>
 
+      <!-- Tab 1: Session Broadcast (Keeps Chips for Wizard-like flow) -->
       <div id="tab-fac-broadcast" class="glass-panel rounded-3xl p-5 sm:p-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+          
           <div class="lg:col-span-7 space-y-5 sm:space-y-6">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Configure Broadcast</h3>
@@ -360,9 +367,11 @@
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
+      <!-- Tab 2: Live Attendance Grid -->
       <div id="tab-fac-grid" class="hidden space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 glass-panel p-4 rounded-2xl">
           <div>
@@ -380,6 +389,7 @@
         </div>
 
         <div id="live-attendance-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 sm:gap-4 min-h-[200px] sm:min-h-[250px]">
+          <!-- Empty State -->
           <div id="grid-empty-state" class="col-span-full glass-panel rounded-2xl p-8 sm:p-12 text-center text-slate-500">
             <i class="fa-solid fa-user-clock text-3xl sm:text-4xl mb-3 opacity-50"></i>
             <p class="text-xs sm:text-sm font-semibold">No active session.</p>
@@ -388,32 +398,34 @@
         </div>
       </div>
 
+      <!-- Tab 3: Student Directory (MODERNIZED FILTERS) -->
       <div id="tab-fac-directory" class="hidden space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-4 rounded-2xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 sm:p-5 rounded-2xl">
           <div>
             <h3 class="text-base sm:text-lg font-bold">Student Directory</h3>
             <p class="text-[10px] sm:text-xs text-slate-400">Registered students sorted ASC by Roll Number.</p>
           </div>
-          <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-            <div class="flex items-center space-x-2 w-full sm:w-auto">
-              <span class="text-[10px] sm:text-xs font-semibold text-slate-300 shrink-0">Year:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="dir-year-filters">
-                <button class="chip active py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="ALL">ALL</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="1">1st</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="2">2nd</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="3">3rd</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="4">4th</button>
-              </div>
+          <!-- Modern Action Bar -->
+          <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <div class="relative min-w-[120px]">
+              <select id="dir-filter-year" class="w-full bg-slate-900/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                <option value="ALL">All Years</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
+              <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
             </div>
-            <div class="flex items-center space-x-2 w-full sm:w-auto">
-              <span class="text-[10px] sm:text-xs font-semibold text-slate-300 shrink-0">Section:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="dir-section-filters">
-                <button class="chip active py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="ALL">ALL</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="A">Sec A</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="B">Sec B</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="C">Sec C</button>
-                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="D">Sec D</button>
-              </div>
+            <div class="relative min-w-[120px]">
+              <select id="dir-filter-sec" class="w-full bg-slate-900/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                <option value="ALL">All Sections</option>
+                <option value="A">Section A</option>
+                <option value="B">Section B</option>
+                <option value="C">Section C</option>
+                <option value="D">Section D</option>
+              </select>
+              <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
             </div>
           </div>
         </div>
@@ -429,6 +441,7 @@
                   <th class="py-3 px-4">Yr & Sec</th>
                   <th class="py-3 px-4">Role</th>
                   <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-center">Action</th>
                 </tr>
               </thead>
               <tbody id="directory-table-body" class="divide-y divide-white/5 text-slate-300 font-medium">
@@ -438,55 +451,57 @@
         </div>
       </div>
 
+      <!-- Tab 4: MANAGE MASTER LIST (MODERNIZED FILTERS) -->
       <div id="tab-fac-whitelist" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-8 space-y-5 sm:space-y-6">
-          <div>
-            <h3 class="text-lg sm:text-xl font-bold text-white">Master Attendance List</h3>
-            <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Upload a CSV containing: <strong>RollNo, Name, Year, Section</strong>. This generates expected cards in the Live Grid.</p>
-          </div>
-          
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-y border-white/10 py-4 sm:py-5">
-            <div class="flex flex-col sm:flex-row gap-3">
-              <input type="file" id="whitelist-csv-input" accept=".csv" class="hidden">
-              <button id="btn-upload-csv" class="chip bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30 py-2.5 sm:py-3 px-4 sm:px-6 font-bold flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-file-arrow-up text-base sm:text-lg"></i>
-                <span>Import Master CSV</span>
-              </button>
-              <button id="btn-clear-whitelist" class="chip bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30 py-2.5 sm:py-3 px-4 sm:px-6 font-bold flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-trash text-base sm:text-lg"></i>
-                <span>Wipe List</span>
-              </button>
+          <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+            <div>
+              <h3 class="text-lg sm:text-xl font-bold text-white">Master Attendance List</h3>
+              <p class="text-[10px] sm:text-xs text-slate-400 mt-1 max-w-lg">Upload a CSV containing: <strong>RollNo, Name, Year, Section</strong>. This generates expected cards in the Live Grid.</p>
             </div>
-            
-            <div class="flex flex-col gap-2 w-full sm:w-auto mt-3 sm:mt-0">
-               <div class="flex items-center space-x-2">
-                 <span class="text-[10px] text-slate-400 shrink-0 w-10">Year:</span>
-                 <div class="flex overflow-x-auto hide-scrollbar gap-1" id="master-year-filters">
-                   <button class="chip active py-1 px-2 text-[9px]" data-yr="ALL">ALL</button>
-                   <button class="chip py-1 px-2 text-[9px]" data-yr="1">1st</button>
-                   <button class="chip py-1 px-2 text-[9px]" data-yr="2">2nd</button>
-                   <button class="chip py-1 px-2 text-[9px]" data-yr="3">3rd</button>
-                   <button class="chip py-1 px-2 text-[9px]" data-yr="4">4th</button>
-                 </div>
-               </div>
-               <div class="flex items-center space-x-2">
-                 <span class="text-[10px] text-slate-400 shrink-0 w-10">Sec:</span>
-                 <div class="flex overflow-x-auto hide-scrollbar gap-1" id="master-section-filters">
-                   <button class="chip active py-1 px-2 text-[9px]" data-sec="ALL">ALL</button>
-                   <button class="chip py-1 px-2 text-[9px]" data-sec="A">A</button>
-                   <button class="chip py-1 px-2 text-[9px]" data-sec="B">B</button>
-                   <button class="chip py-1 px-2 text-[9px]" data-sec="C">C</button>
-                   <button class="chip py-1 px-2 text-[9px]" data-sec="D">D</button>
-                 </div>
-               </div>
+            <!-- Upload Actions -->
+            <div class="flex flex-wrap gap-3 shrink-0">
+              <input type="file" id="whitelist-csv-input" accept=".csv" class="hidden">
+              <button id="btn-upload-csv" class="chip bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30 py-2.5 px-4 font-bold text-xs flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-file-arrow-up text-sm"></i><span>Import CSV</span>
+              </button>
+              <button id="btn-clear-whitelist" class="chip bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30 py-2.5 px-4 font-bold text-xs flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-trash text-sm"></i><span>Wipe List</span>
+              </button>
             </div>
           </div>
           
           <div class="bg-slate-900/60 border border-white/5 p-4 sm:p-6 rounded-2xl w-full overflow-hidden">
-            <div class="flex justify-between items-center mb-3 sm:mb-4 border-b border-white/10 pb-2 sm:pb-3">
-              <span class="text-xs sm:text-sm font-bold text-slate-300">Expected Student Records</span>
-              <span class="text-[10px] sm:text-xs font-mono bg-emerald-500/20 text-emerald-300 px-2 sm:px-3 py-1 rounded-full">Total: <strong id="whitelist-count">0</strong></span>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b border-white/10 pb-3 gap-3">
+              <div class="flex items-center space-x-3">
+                <span class="text-xs sm:text-sm font-bold text-slate-300">Expected Student Records</span>
+                <span class="text-[10px] sm:text-xs font-mono bg-emerald-500/20 text-emerald-300 px-2 sm:px-3 py-0.5 rounded-full">Total: <strong id="whitelist-count">0</strong></span>
+              </div>
+              <!-- Modern Action Bar -->
+              <div class="flex items-center gap-2">
+                <div class="relative w-24">
+                  <select id="master-filter-year" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-lg py-1.5 pl-2 pr-6 text-[10px] font-semibold text-slate-300 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                    <option value="ALL">All Yrs</option>
+                    <option value="1">1st Yr</option>
+                    <option value="2">2nd Yr</option>
+                    <option value="3">3rd Yr</option>
+                    <option value="4">4th Yr</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-500 text-[8px] pointer-events-none"></i>
+                </div>
+                <div class="relative w-24">
+                  <select id="master-filter-sec" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-lg py-1.5 pl-2 pr-6 text-[10px] font-semibold text-slate-300 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                    <option value="ALL">All Sec</option>
+                    <option value="A">Sec A</option>
+                    <option value="B">Sec B</option>
+                    <option value="C">Sec C</option>
+                    <option value="D">Sec D</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-500 text-[8px] pointer-events-none"></i>
+                </div>
+              </div>
             </div>
+            
             <div id="whitelist-preview" class="max-h-48 sm:max-h-64 overflow-y-auto pr-1 sm:pr-2 hide-scrollbar w-full">
               <div class="text-slate-500 text-[10px] sm:text-xs italic">No Master List loaded. System is blocking student registrations.</div>
             </div>
@@ -494,65 +509,107 @@
         </div>
       </div>
 
+      <!-- Tab 5: Analytics & Reports (MODERNIZED FILTERS) -->
       <div id="tab-fac-reports" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-5 sm:space-y-6 w-full overflow-hidden">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Attendance Analytics</h3>
-              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Filter and Edit historical records dynamically. Export to CSV.</p>
+              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Filter, review, and export historical attendance records.</p>
             </div>
-            <button id="btn-export-csv" class="chip bg-emerald-500/20 border-emerald-500/40 hover:bg-emerald-500/30 text-emerald-300 py-2 sm:py-2.5 px-4 sm:px-5 font-bold flex items-center justify-center space-x-2 w-full sm:w-auto">
-              <i class="fa-solid fa-file-csv text-sm sm:text-base"></i>
+            <button id="btn-export-csv" class="chip bg-emerald-500/20 border-emerald-500/40 hover:bg-emerald-500/30 text-emerald-300 py-2 sm:py-2.5 px-4 font-bold flex items-center justify-center space-x-2 w-full md:w-auto shrink-0">
+              <i class="fa-solid fa-file-csv text-sm"></i>
               <span>Export to CSV</span>
             </button>
           </div>
 
-          <div class="space-y-3 sm:space-y-4 border-y border-white/10 py-4 sm:py-5 w-full">
-            <div class="flex items-center gap-2 w-full overflow-hidden">
-              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Time:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-time">
-                <button class="chip active shrink-0" data-val="ALL">All Time</button>
-                <button class="chip shrink-0" data-val="TODAY">Today</button>
-                <button class="chip shrink-0" data-val="YESTERDAY">Yesterday</button>
-                <button class="chip shrink-0" data-val="WEEK">Week</button>
-                <button class="chip shrink-0" data-val="MONTH">Month</button>
+          <!-- The Modern SaaS Filter Bar -->
+          <div class="bg-slate-900/40 border border-white/5 p-3 sm:p-4 rounded-2xl w-full">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 items-end">
+              <!-- Time Filter -->
+              <div class="flex flex-col space-y-1.5 lg:col-span-1">
+                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Timeframe</label>
+                <div class="relative">
+                  <select id="report-filter-time" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                    <option value="ALL">All Time</option>
+                    <option value="TODAY">Today</option>
+                    <option value="YESTERDAY">Yesterday</option>
+                    <option value="WEEK">This Week</option>
+                    <option value="MONTH">This Month</option>
+                    <option value="CUSTOM">Custom Date...</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+                </div>
               </div>
-            </div>
 
-            <div class="flex items-center gap-2 w-full overflow-hidden">
-              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Subject:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-subject">
-                <button class="chip active shrink-0" data-val="ALL">All Subjects</button>
-                <button class="chip shrink-0" data-val="CVIP">CVIP</button>
-                <button class="chip shrink-0" data-val="CVIP-LAB">CVIP-LAB</button>
-                <button class="chip shrink-0" data-val="PE-AIML">PE-AIML</button>
-                <button class="chip shrink-0" data-val="PE-BS">PE-BS</button>
+              <!-- Custom Date Picker (Hidden by default) -->
+              <div id="wrapper-custom-date" class="flex flex-col space-y-1.5 hidden lg:col-span-1">
+                <label class="text-[9px] sm:text-[10px] font-bold text-indigo-400 uppercase tracking-wider pl-1">Select Date</label>
+                <input type="date" id="report-custom-date-picker" class="w-full bg-slate-800/80 border border-indigo-500/50 rounded-xl px-3 py-[7px] text-xs font-semibold text-slate-200 focus:outline-none transition-all" style="color-scheme: dark;">
               </div>
-            </div>
 
-            <div class="flex items-center gap-2 w-full overflow-hidden">
-              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Year:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-year">
-                <button class="chip active shrink-0" data-val="ALL">All Years</button>
-                <button class="chip shrink-0" data-val="1">1st Yr</button>
-                <button class="chip shrink-0" data-val="2">2nd Yr</button>
-                <button class="chip shrink-0" data-val="3">3rd Yr</button>
-                <button class="chip shrink-0" data-val="4">4th Yr</button>
+              <!-- Subject Filter -->
+              <div class="flex flex-col space-y-1.5 lg:col-span-1">
+                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Subject</label>
+                <div class="relative">
+                  <select id="report-filter-subject" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                    <option value="ALL">All Subjects</option>
+                    <option value="CVIP">CVIP</option>
+                    <option value="CVIP-LAB">CVIP-LAB</option>
+                    <option value="PE-AIML">PE-AIML</option>
+                    <option value="PE-BS">PE-BS</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+                </div>
               </div>
-            </div>
 
-            <div class="flex items-center gap-2 w-full overflow-hidden">
-              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Section:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-section">
-                <button class="chip active shrink-0" data-val="ALL">All Sections</button>
-                <button class="chip shrink-0" data-val="A">Sec A</button>
-                <button class="chip shrink-0" data-val="B">Sec B</button>
-                <button class="chip shrink-0" data-val="C">Sec C</button>
-                <button class="chip shrink-0" data-val="D">Sec D</button>
+              <!-- Year Filter -->
+              <div class="flex flex-col space-y-1.5 lg:col-span-1">
+                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Year</label>
+                <div class="relative">
+                  <select id="report-filter-year" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                    <option value="ALL">All Years</option>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+                </div>
+              </div>
+
+              <!-- Section Filter -->
+              <div class="flex flex-col space-y-1.5 lg:col-span-1">
+                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Section</label>
+                <div class="relative">
+                  <select id="report-filter-section" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                    <option value="ALL">All Sections</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+                </div>
+              </div>
+
+              <!-- Status Filter -->
+              <div class="flex flex-col space-y-1.5 lg:col-span-1">
+                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Status</label>
+                <div class="relative">
+                  <select id="report-filter-status" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                    <option value="ALL">All Statuses</option>
+                    <option value="verified">Verified</option>
+                    <option value="MANUAL">Manual Override</option>
+                    <option value="ABSENT">Absent</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+                </div>
               </div>
             </div>
           </div>
 
+          <!-- Table Container -->
           <div class="overflow-x-auto hide-scrollbar w-full -mx-5 px-5 sm:mx-0 sm:px-0">
             <table class="w-full text-left text-[11px] sm:text-sm whitespace-nowrap min-w-[750px]">
               <thead class="bg-white/5 text-[10px] sm:text-xs uppercase tracking-wider text-slate-300 font-semibold border-b border-white/10">
@@ -573,46 +630,62 @@
         </div>
       </div>
 
+      <!-- Tab 6: Manage Login Credentials (MODERNIZED FILTERS) -->
       <div id="tab-fac-users" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-5 sm:space-y-6 w-full overflow-hidden">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Manage Login Credentials</h3>
-              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">View and update registered student and faculty details. Wipe device bindings.</p>
+              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">View and update registered student and faculty details.</p>
             </div>
           </div>
 
-          <div class="space-y-3 sm:space-y-4 border-y border-white/10 py-4 sm:py-5 w-full">
-            <div class="flex items-center gap-2 w-full overflow-hidden">
-              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Role:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="user-filter-role">
-                <button class="chip active shrink-0" data-val="ALL">All Roles</button>
-                <button class="chip shrink-0" data-val="student">Students</button>
-                <button class="chip shrink-0" data-val="faculty">Faculty / Staff</button>
+          <!-- Modern Action Bar -->
+          <div class="bg-slate-900/40 border border-white/5 p-3 sm:p-4 rounded-2xl w-full">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 items-end">
+              <!-- Role Filter -->
+              <div class="flex flex-col space-y-1.5">
+                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Role Type</label>
+                <div class="relative">
+                  <select id="user-filter-role" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                    <option value="ALL">All Roles</option>
+                    <option value="student">Students</option>
+                    <option value="faculty">Faculty</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+                </div>
               </div>
-            </div>
 
-            <div class="flex items-center gap-2 w-full overflow-hidden">
-              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Year:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="user-filter-year">
-                <button class="chip active shrink-0" data-val="ALL">All Years</button>
-                <button class="chip shrink-0" data-val="1">1st Yr</button>
-                <button class="chip shrink-0" data-val="2">2nd Yr</button>
-                <button class="chip shrink-0" data-val="3">3rd Yr</button>
-                <button class="chip shrink-0" data-val="4">4th Yr</button>
-                <button class="chip shrink-0" data-val="FACULTY">Faculty</button>
+              <!-- Year Filter -->
+              <div class="flex flex-col space-y-1.5">
+                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Year</label>
+                <div class="relative">
+                  <select id="user-filter-year" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                    <option value="ALL">All Years</option>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                    <option value="FACULTY">Faculty</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+                </div>
               </div>
-            </div>
 
-            <div class="flex items-center gap-2 w-full overflow-hidden">
-              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Section:</span>
-              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="user-filter-section">
-                <button class="chip active shrink-0" data-val="ALL">All Sections</button>
-                <button class="chip shrink-0" data-val="A">Sec A</button>
-                <button class="chip shrink-0" data-val="B">Sec B</button>
-                <button class="chip shrink-0" data-val="C">Sec C</button>
-                <button class="chip shrink-0" data-val="D">Sec D</button>
-                <button class="chip shrink-0" data-val="FACULTY">Faculty</button>
+              <!-- Section Filter -->
+              <div class="flex flex-col space-y-1.5">
+                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Section</label>
+                <div class="relative">
+                  <select id="user-filter-section" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
+                    <option value="ALL">All Sections</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
+                    <option value="FACULTY">Faculty</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+                </div>
               </div>
             </div>
           </div>
@@ -639,8 +712,10 @@
 
     </section>
 
+    <!-- STUDENT DASHBOARD VIEW -->
     <section id="view-student" class="hidden space-y-4 sm:space-y-6">
       
+      <!-- Student Navigation Tabs -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 glass-panel p-2 rounded-2xl">
         <div class="flex gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar" id="student-tabs">
           <button class="chip active py-2 sm:py-2.5 px-4 sm:px-5 shrink-0" data-tab="stu-live"><i class="fa-solid fa-satellite-dish mr-1.5"></i>Live Class</button>
@@ -651,6 +726,7 @@
         </div>
       </div>
 
+      <!-- Tab 1: Live Class Verification -->
       <div id="tab-stu-live" class="space-y-4 sm:space-y-6">
         
         <div id="stu-session-banner" class="glass-panel rounded-3xl p-5 sm:p-6 lg:p-8 relative overflow-hidden border-indigo-500/30">
@@ -737,6 +813,7 @@
 
       </div>
 
+      <!-- Tab 2: 7-Day History -->
       <div id="tab-stu-history" class="hidden space-y-4 sm:space-y-4 w-full">
         <div class="glass-panel p-3 sm:p-4 rounded-2xl flex items-center justify-between">
           <div>
@@ -798,14 +875,14 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Role</label>
-            <select id="edit-role" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-white">
+            <select id="edit-role" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-white appearance-none">
               <option value="student">Student</option>
               <option value="faculty">Faculty</option>
             </select>
           </div>
           <div>
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Academic Year</label>
-            <select id="edit-year" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-white">
+            <select id="edit-year" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-white appearance-none">
               <option value="1">1st Year</option>
               <option value="2">2nd Year</option>
               <option value="3">3rd Year</option>
@@ -885,13 +962,18 @@
     </div>
   </div>
 
+  <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
   <div id="toast-container" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-[200] flex flex-col space-y-2.5 sm:max-w-sm pointer-events-none"></div>
 
+  <!-- ========================================== -->
+  <!-- COMPLETE APPLICATION JAVASCRIPT ENGINE     -->
+  <!-- ========================================== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, getDoc, getDocs, onSnapshot, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+    // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
       apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
       authDomain: "stuattnd.firebaseapp.com",
@@ -904,9 +986,8 @@
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'uvlog_att_app';
 
-    let app, db, auth;
+    let app, db, auth, useMockStorage = false;
     let isAuthReady = false;
-    let useMockStorage = false;
 
     try {
       app = initializeApp(firebaseConfig);
@@ -914,7 +995,7 @@
       auth = getAuth(app);
       console.log("[System] Connected to Firebase v10 Backend.");
     } catch (err) {
-      console.error("[System Error] Database connection failed. Running completely offline.", err);
+      console.warn("[System Notice] Offline fallback active.", err);
       useMockStorage = true;
       isAuthReady = true; 
       document.getElementById('view-onboarding').classList.remove('hidden');
@@ -929,7 +1010,7 @@
         document.getElementById('btn-show-login').disabled = false;
         if(!STATE.currentUser) document.getElementById('view-onboarding').classList.remove('hidden');
       }).catch((error) => {
-        showToast("Backend auth failed. Operating in offline mode.", "error");
+        showToast("Backend auth failed. Operating in offline cache mode.", "error");
         useMockStorage = true;
         isAuthReady = true;
         document.getElementById('view-onboarding').classList.remove('hidden');
@@ -945,6 +1026,7 @@
         return collection(db, 'artifacts', appId, 'public', 'data', collectionName);
     }
 
+    // --- GLOBAL APPLICATION STATE ---
     const STATE = {
       currentUser: null,        
       activeSession: null,      
@@ -965,14 +1047,19 @@
       reportFilterSubj: 'ALL',
       reportFilterYear: 'ALL',
       reportFilterSec: 'ALL',
+      reportFilterStatus: 'ALL',
+      reportCustomDate: null,
       dirFilterYear: 'ALL',
       dirFilterSec: 'ALL',
       userFilterRole: 'ALL',
       userFilterYear: 'ALL',
       userFilterSec: 'ALL',
+      masterFilterYear: 'ALL',
+      masterFilterSec: 'ALL',
       activeWhitelist: [] 
     };
 
+    // --- DOM ELEMENT CACHE ---
     const DOM = {
       navUserSection: document.getElementById('nav-user-section'),
       userBadge: document.getElementById('user-badge'),
@@ -1051,7 +1138,7 @@
       csvInput: document.getElementById('whitelist-csv-input'),
       btnUploadCsv: document.getElementById('btn-upload-csv'),
       btnClearWhitelist: document.getElementById('btn-clear-whitelist'),
-      btnExportCsv: document.getElementById('btn-export-csv'), 
+      btnExportCsv: document.getElementById('btn-export-csv'),
       whitelistCount: document.getElementById('whitelist-count'),
       whitelistPreview: document.getElementById('whitelist-preview'),
 
@@ -1074,7 +1161,7 @@
       usersTableBody: document.getElementById('users-table-body')
     };
 
-    // --- STREAMING_CHUNK:Defining Utility Functions ---
+    // --- CRYPTO HASHING ENGINE (SHA-256) ---
     async function hashString(message) {
       const msgBuffer = new TextEncoder().encode(message);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -1082,6 +1169,7 @@
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
+    // --- HARDWARE DEVICE BINDING INIT ---
     function getHardwareDeviceId() {
       let dId = localStorage.getItem('acoustix_hardware_id');
       if (!dId) {
@@ -1129,7 +1217,7 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
-    function isWithinTimeframe(timestampMs, filterType) {
+    function isWithinTimeframe(timestampMs, filterType, customDateStr = null) {
       if (filterType === 'ALL') return true;
       const date = new Date(timestampMs);
       const now = new Date();
@@ -1146,10 +1234,18 @@
         return timestampMs >= mon.getTime() && timestampMs <= sat.getTime();
       }
       if (filterType === 'MONTH') return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+      if (filterType === 'CUSTOM' && customDateStr) {
+        const offsetDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+        const recordDateStr = offsetDate.toISOString().split('T')[0];
+        return recordDateStr === customDateStr;
+      }
+      if (filterType === 'CUSTOM' && !customDateStr) return true;
       return true;
     }
 
-    // --- STREAMING_CHUNK:Configuring Database Engine ---
+    // ==========================================
+    // 🧠 CLOUD-FIRST DB ENGINE
+    // ==========================================
     const SYNC_QUEUE = {
       getQueue: () => JSON.parse(localStorage.getItem('acoustix_sync_queue') || '[]'),
       pushOperation: (action, collectionName, docId, data) => {
@@ -1191,7 +1287,7 @@
                    localStorage.setItem('acoustix_whitelist', JSON.stringify(list)); 
                    return list;
                } else {
-                   return [];
+                   return []; // Stop falling through if empty on cloud
                }
            } catch(e) {}
         }
@@ -1215,7 +1311,7 @@
                  localStorage.setItem('acoustix_users', JSON.stringify(users));
                  return cloudUser;
              } else {
-                 return null;
+                 return null; // Prevents "Ghost Cache" leak
              }
            } catch(e) {}
         }
@@ -1378,11 +1474,12 @@
       }
     };
 
-    // --- STREAMING_CHUNK:Setting up Event Listeners ---
+    // --- STRICT CAPITALIZATION ENFORCEMENT ---
     [DOM.signupName, DOM.signupRoll].forEach(el => {
       if (el) el.addEventListener('input', (e) => e.target.value = e.target.value.toUpperCase());
     });
 
+    // --- AUTH TOGGLE TABS ---
     DOM.tabLogin.addEventListener('click', () => {
       DOM.tabLogin.className = "flex-1 py-2.5 rounded-lg bg-indigo-600 text-white font-bold text-sm shadow-md transition-all";
       DOM.tabSignup.className = "flex-1 py-2.5 rounded-lg text-slate-400 font-bold text-sm hover:text-white transition-all";
@@ -1397,6 +1494,7 @@
       DOM.formLogin.classList.add('hidden');
     });
 
+    // --- ROLE SELECTOR CHIPS LOGIC ---
     document.querySelectorAll('#role-selector button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('#role-selector button').forEach(b => b.classList.remove('active'));
@@ -1419,6 +1517,7 @@
       });
     });
 
+    // --- SIGNUP SECTION CHIPS LOGIC ---
     document.querySelectorAll('#signup-chip-group-section button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('#signup-chip-group-section button').forEach(b => b.classList.remove('active'));
@@ -1428,6 +1527,7 @@
       });
     });
 
+    // --- WEBRTC CAMERA ENGINE ---
     let regMediaStream = null;
     document.getElementById('btn-open-camera').addEventListener('click', async () => {
       try {
@@ -1450,6 +1550,7 @@
       canvas.height = DOM.regVideo.videoHeight || 400;
       canvas.getContext('2d').drawImage(DOM.regVideo, 0, 0, canvas.width, canvas.height);
       
+      // ULTRA COMPRESSION V1.0.1
       STATE.capturedRegPhoto = compressImage(canvas, 150, 0.5); 
       
       DOM.regPhotoPreview.src = STATE.capturedRegPhoto;
@@ -1461,7 +1562,7 @@
       showToast("Biometric photo successfully captured.", "success");
     });
 
-    // --- STREAMING_CHUNK:Implementing Auth Logic ---
+    // --- SECURE LOGIN SUBMISSION ---
     DOM.formLogin.addEventListener('submit', async (e) => {
       e.preventDefault();
       if(!isAuthReady) { showToast("System connecting. Please wait.", "warn"); return; }
@@ -1505,6 +1606,7 @@
       loginUserToApp(user);
     });
 
+    // --- NEW REGISTRATION FORM SUBMISSION ---
     DOM.formSignup.addEventListener('submit', async (e) => {
       e.preventDefault();
       if(!isAuthReady) { showToast("System connecting. Please wait.", "warn"); return; }
@@ -1521,7 +1623,7 @@
       if (STATE.selectedRole === 'faculty') {
         const masterKeyInput = DOM.signupMasterKey.value;
         const hashedMasterAttempt = await hashString(masterKeyInput);
-        const expectedMasterHash = "d2e1d7cca2d80c9eb7c1b212b2622da33f59047a23a2161b53305b8fe037321d";
+        const expectedMasterHash = "4229722a5b00213afb1afba6aeaef76819feb8314ccf039531444cc7e6ed8e0e";
 
         if (hashedMasterAttempt !== expectedMasterHash) {
             showToast("Invalid Faculty Master Key.", "error");
@@ -1616,7 +1718,7 @@
       }
     });
 
-    // --- STREAMING_CHUNK:Implementing Faculty Portals (Chips, Whitelist) ---
+    // --- FACULTY PORTAL: NAVIGATION & BROADCAST CHIPS ---
     function setupChipGroup(containerId, stateKey) {
       document.querySelectorAll(`#${containerId} button`).forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1628,6 +1730,7 @@
         });
       });
     }
+    // Only used for the active creation wizard now
     setupChipGroup('chip-group-subject', 'facSubject');
     setupChipGroup('chip-group-year', 'facYear');
     setupChipGroup('chip-group-section', 'facSection');
@@ -1652,6 +1755,18 @@
       });
     });
 
+    // --- MODERN SELECT FILTER ENGINE ---
+    function setupDropdownFilter(selectId, stateKey, callback) {
+      const el = document.getElementById(selectId);
+      if(el) {
+          el.addEventListener('change', (e) => {
+              STATE[stateKey] = e.target.value;
+              if (callback) callback();
+          });
+      }
+    }
+
+    // --- FACULTY PORTAL: MASTER LIST ENGINE (CSV PARSER) ---
     DOM.btnUploadCsv.addEventListener('click', () => DOM.csvInput.click());
 
     DOM.csvInput.addEventListener('change', (e) => {
@@ -1704,52 +1819,36 @@
       renderActiveWhitelistUI();
     }
 
-    let masterFilterYear = 'ALL';
-    let masterFilterSec = 'ALL';
-    document.querySelectorAll('#master-year-filters button').forEach(btn => {
-       btn.addEventListener('click', (e) => {
-          document.querySelectorAll('#master-year-filters button').forEach(b => b.classList.remove('active'));
-          e.currentTarget.classList.add('active');
-          masterFilterYear = e.currentTarget.dataset.yr;
-          renderActiveWhitelistUI();
-       });
-    });
-    document.querySelectorAll('#master-section-filters button').forEach(btn => {
-       btn.addEventListener('click', (e) => {
-          document.querySelectorAll('#master-section-filters button').forEach(b => b.classList.remove('active'));
-          e.currentTarget.classList.add('active');
-          masterFilterSec = e.currentTarget.dataset.sec;
-          renderActiveWhitelistUI();
-       });
-    });
+    setupDropdownFilter('master-filter-year', 'masterFilterYear', renderActiveWhitelistUI);
+    setupDropdownFilter('master-filter-sec', 'masterFilterSec', renderActiveWhitelistUI);
 
     function renderActiveWhitelistUI() {
       let filtered = [...STATE.activeWhitelist];
-      if (masterFilterYear !== 'ALL') filtered = filtered.filter(s => s.year === masterFilterYear);
-      if (masterFilterSec !== 'ALL') filtered = filtered.filter(s => s.section === masterFilterSec);
+      if (STATE.masterFilterYear !== 'ALL') filtered = filtered.filter(s => s.year === STATE.masterFilterYear);
+      if (STATE.masterFilterSec !== 'ALL') filtered = filtered.filter(s => s.section === STATE.masterFilterSec);
 
       filtered.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       DOM.whitelistCount.textContent = filtered.length;
       if (filtered.length === 0) {
-        DOM.whitelistPreview.innerHTML = `<div class="text-slate-500 text-[10px] sm:text-xs italic">No matching students in Master List.</div>`;
+        DOM.whitelistPreview.innerHTML = `<div class="text-slate-500 text-[10px] sm:text-xs italic py-2">No matching students in Master List.</div>`;
       } else {
         DOM.whitelistPreview.innerHTML = `
           <div class="overflow-x-auto hide-scrollbar w-full">
             <table class="w-full text-left text-[10px] sm:text-xs whitespace-nowrap min-w-[300px]">
               <thead class="bg-white/5 border-b border-white/10 text-slate-300">
                 <tr>
-                  <th class="py-2 px-3">Roll No</th>
-                  <th class="py-2 px-3">Name</th>
-                  <th class="py-2 px-3">Year</th>
-                  <th class="py-2 px-3">Section</th>
+                  <th class="py-2.5 px-3">Roll No</th>
+                  <th class="py-2.5 px-3">Name</th>
+                  <th class="py-2.5 px-3">Year</th>
+                  <th class="py-2.5 px-3">Section</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-white/5 text-slate-400">
                 ${filtered.map(s => `
-                  <tr>
-                    <td class="py-2 px-3 font-mono text-indigo-300">${s.rollNo}</td>
-                    <td class="py-2 px-3 text-white font-semibold">${s.name}</td>
+                  <tr class="hover:bg-white/5">
+                    <td class="py-2 px-3 font-mono text-indigo-300 font-semibold">${s.rollNo}</td>
+                    <td class="py-2 px-3 text-white">${s.name}</td>
                     <td class="py-2 px-3">${s.year}</td>
                     <td class="py-2 px-3">${s.section}</td>
                   </tr>
@@ -1761,7 +1860,8 @@
       }
     }
 
-    // --- STREAMING_CHUNK:Implementing Broadcast & Live Grid ---
+
+    // --- FACULTY PORTAL: GPS & ULTRASOUND BROADCAST ENGINE ---
     function acquireFacultyGPS() {
       if (!navigator.geolocation) {
         DOM.facGpsStatus.textContent = "Unavailable";
@@ -1774,7 +1874,6 @@
           DOM.activeCoords.textContent = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
         },
         (err) => {
-          // STRICT ENFORCEMENT: No fallbacks.
           showToast("GPS Error: You must enable Location Services to broadcast.", "error");
           DOM.facGpsStatus.textContent = "Failed";
           STATE.facGps = null;
@@ -1819,7 +1918,6 @@
       }
       if (!STATE.facGps) { showToast("Wait for GPS anchor coordinates.", "error"); return; }
 
-      // AudioContext requires user interaction to resume
       if (STATE.audioContext && STATE.audioContext.state === 'suspended') {
         await STATE.audioContext.resume();
       }
@@ -1864,6 +1962,7 @@
       showToast(`Broadcast live! Airwaves active (18.5kHz) for YR ${STATE.facYear} SEC ${STATE.facSection}.`, "success");
     });
 
+    // --- AUTO ABSENTEE TAGGING ON SESSION END ---
     DOM.btnStopBroadcast.addEventListener('click', async () => {
       if (STATE.activeSession) {
         const session = STATE.activeSession;
@@ -1908,6 +2007,7 @@
       renderStudentDirectory();
     }
 
+    // --- FACULTY PORTAL: LIVE ATTENDANCE GRID ---
     function listenToLiveGrid(sessionId) {
       if (STATE.sessionListener) STATE.sessionListener();
       
@@ -1984,7 +2084,7 @@
       });
     }
 
-    // --- MANUAL OVERRIDE LOGIC ---
+    // --- MANUAL OVERRIDE (FACULTY ONLY) ---
     DOM.btnManualOverride.addEventListener('click', async () => {
       if (!STATE.activeSession) { showToast("Initiate a broadcast first.", "error"); return; }
       DOM.modalManual.classList.remove('hidden');
@@ -2024,7 +2124,7 @@
               <p class="text-[10px] text-indigo-300 font-mono">${stu.rollNo}</p>
             </div>
           </div>
-          <button class="shrink-0 chip ${isPresent ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'} px-3 py-1.5 text-[10px]" onclick="toggleManualAttendance('${stu.rollNo}', '${stu.name.replace(/'/g, "\\'")}', '${stu.profilePicUrl}', ${!!isPresent})">
+          <button class="shrink-0 chip ${isPresent ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'} px-3 py-1.5 text-[10px]" onclick="window.toggleManualAttendance('${stu.rollNo}', '${stu.name.replace(/'/g, "\\'")}', '${stu.profilePicUrl}', ${!!isPresent})">
             ${isPresent ? '<i class="fa-solid fa-xmark mr-1"></i> Revoke' : '<i class="fa-solid fa-check mr-1"></i> Mark Present'}
           </button>
         `;
@@ -2048,28 +2148,13 @@
       setTimeout(() => renderManualList(), 150); 
     };
 
-    // --- STREAMING_CHUNK:Implementing Reports & User Management ---
-    document.querySelectorAll('#dir-year-filters button').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('#dir-year-filters button').forEach(b => b.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        STATE.dirFilterYear = e.currentTarget.dataset.yr;
-        renderStudentDirectory();
-      });
-    });
-
-    document.querySelectorAll('#dir-section-filters button').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('#dir-section-filters button').forEach(b => b.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        STATE.dirFilterSec = e.currentTarget.dataset.sec;
-        renderStudentDirectory();
-      });
-    });
+    // --- FACULTY PORTAL: STUDENT DIRECTORY ---
+    setupDropdownFilter('dir-filter-year', 'dirFilterYear', renderStudentDirectory);
+    setupDropdownFilter('dir-filter-sec', 'dirFilterSec', renderStudentDirectory);
 
     async function renderStudentDirectory() {
       const tbody = document.getElementById('directory-table-body');
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Loading Directory...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Loading Directory...</td></tr>`;
       
       let students = await DB_ENGINE.getStudentDirectory();
       if (STATE.dirFilterYear !== 'ALL') students = students.filter(s => s.year === STATE.dirFilterYear);
@@ -2079,11 +2164,14 @@
 
       tbody.innerHTML = '';
       if (students.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 sm:py-8 text-slate-500 text-[10px] sm:text-xs">No students found matching criteria.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 sm:py-8 text-slate-500 text-[10px] sm:text-xs">No students found matching criteria.</td></tr>`;
         return;
       }
 
+      window._usersMap = window._usersMap || {};
+
       students.forEach(stu => {
+        window._usersMap[stu.rollNo] = stu; 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-white/5 transition-colors";
         tr.innerHTML = `
@@ -2093,25 +2181,41 @@
           <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">Yr ${stu.year} | SEC ${stu.section}</span></td>
           <td class="py-2 sm:py-3 px-3 sm:px-4 text-[9px] sm:text-[10px] uppercase text-slate-400">${stu.role}</td>
           <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="text-emerald-400 text-[9px] sm:text-[10px] flex items-center"><i class="fa-solid fa-check-circle mr-1 sm:mr-1.5"></i>Verified</span></td>
+          <td class="py-2 sm:py-3 px-3 sm:px-4 text-center">
+            <button onclick="window.openEditUserModal('${stu.rollNo}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 text-[9px] sm:text-[10px]">
+              <i class="fa-solid fa-pen"></i> Edit
+            </button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function setupReportFilters(containerId, stateKey) {
-      document.querySelectorAll(`#${containerId} button`).forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          document.querySelectorAll(`#${containerId} button`).forEach(b => b.classList.remove('active'));
-          e.currentTarget.classList.add('active');
-          STATE[stateKey] = e.currentTarget.dataset.val;
-          renderReportsTable();
-        });
+    // --- FACULTY PORTAL: ANALYTICS & HISTORICAL EDIT ---
+    
+    const timeSelect = document.getElementById('report-filter-time');
+    if (timeSelect) {
+      timeSelect.addEventListener('change', (e) => {
+        STATE.reportFilterTime = e.target.value;
+        const customPicker = document.getElementById('wrapper-custom-date');
+        if (e.target.value === 'CUSTOM') customPicker.classList.remove('hidden');
+        else customPicker.classList.add('hidden');
+        renderReportsTable();
       });
     }
-    setupReportFilters('report-filter-time', 'reportFilterTime');
-    setupReportFilters('report-filter-subject', 'reportFilterSubj');
-    setupReportFilters('report-filter-year', 'reportFilterYear');
-    setupReportFilters('report-filter-section', 'reportFilterSec');
+
+    setupDropdownFilter('report-filter-subject', 'reportFilterSubj', renderReportsTable);
+    setupDropdownFilter('report-filter-year', 'reportFilterYear', renderReportsTable);
+    setupDropdownFilter('report-filter-section', 'reportFilterSec', renderReportsTable);
+    setupDropdownFilter('report-filter-status', 'reportFilterStatus', renderReportsTable);
+
+    const customDatePicker = document.getElementById('report-custom-date-picker');
+    if (customDatePicker) {
+        customDatePicker.addEventListener('change', (e) => {
+           STATE.reportCustomDate = e.target.value;
+           renderReportsTable();
+        });
+    }
 
     let currentFilteredRecords = [];
     async function renderReportsTable() {
@@ -2140,7 +2244,8 @@
           if (STATE.reportFilterSubj !== 'ALL' && record.subject !== STATE.reportFilterSubj) return;
           if (STATE.reportFilterYear !== 'ALL' && record.year !== STATE.reportFilterYear) return;
           if (STATE.reportFilterSec !== 'ALL' && record.section !== STATE.reportFilterSec) return;
-          if (!isWithinTimeframe(record.timestamp, STATE.reportFilterTime)) return;
+          if (STATE.reportFilterStatus !== 'ALL' && record.status !== STATE.reportFilterStatus) return;
+          if (!isWithinTimeframe(record.timestamp, STATE.reportFilterTime, STATE.reportCustomDate)) return;
 
           currentFilteredRecords.push(record);
         });
@@ -2177,7 +2282,7 @@
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-[9px] sm:text-[11px] text-slate-300">${rec.subject}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4">${statusBadge}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-center">
-            <button onclick="editHistoricalRecord('${rec.sessionId}', '${rec.rollNo}', '${rec.status}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1 text-[9px] sm:text-[10px]">
+            <button onclick="window.editHistoricalRecord('${rec.sessionId}', '${rec.rollNo}', '${rec.status}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1 text-[9px] sm:text-[10px]">
               <i class="fa-solid fa-pen"></i> Edit
             </button>
           </td>
@@ -2210,19 +2315,10 @@
       showToast("CSV downloaded.", "success");
     });
 
-    function setupUserFilters(containerId, stateKey) {
-      document.querySelectorAll(`#${containerId} button`).forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          document.querySelectorAll(`#${containerId} button`).forEach(b => b.classList.remove('active'));
-          e.currentTarget.classList.add('active');
-          STATE[stateKey] = e.currentTarget.dataset.val;
-          renderUsersTable();
-        });
-      });
-    }
-    setupUserFilters('user-filter-role', 'userFilterRole');
-    setupUserFilters('user-filter-year', 'userFilterYear');
-    setupUserFilters('user-filter-section', 'userFilterSec');
+    // --- FACULTY PORTAL: LOGIN CREDS (USER MANAGEMENT) ---
+    setupDropdownFilter('user-filter-role', 'userFilterRole', renderUsersTable);
+    setupDropdownFilter('user-filter-year', 'userFilterYear', renderUsersTable);
+    setupDropdownFilter('user-filter-section', 'userFilterSec', renderUsersTable);
 
     async function renderUsersTable() {
       const tbody = DOM.usersTableBody;
@@ -2257,7 +2353,7 @@
           <td class="py-2.5 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">Yr ${u.year} | SEC ${u.section}</span></td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-[10px] sm:text-xs text-slate-300">${u.email}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-center">
-            <button onclick="openEditUserModal('${u.rollNo}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 text-[9px] sm:text-[10px]">
+            <button onclick="window.openEditUserModal('${u.rollNo}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 text-[9px] sm:text-[10px]">
               <i class="fa-solid fa-pen"></i> Edit
             </button>
           </td>
@@ -2305,7 +2401,7 @@
       setTimeout(() => renderUsersTable(), 200);
     });
 
-    // --- STREAMING_CHUNK:Implementing Student Dashboard ---
+    // --- STUDENT PORTAL ---
     function initStudentPortal() {
       DOM.stuMySection.textContent = `YR ${STATE.currentUser.year} | SEC ${STATE.currentUser.section}`;
       DOM.hintSection.textContent = `${STATE.currentUser.year}-${STATE.currentUser.section}`;
@@ -2365,7 +2461,6 @@
           DOM.indGpsIcon.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs sm:text-sm shrink-0";
         } else throw new Error(`Out of bounds`);
       } catch (err) {
-        // STRICT ENFORCEMENT: No fallbacks.
         showToast("GPS Verification Failed. Move closer to the classroom.", "error");
         gpsVerified = false;
         DOM.indGpsText.textContent = "Failed";
@@ -2377,7 +2472,6 @@
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         
-        // Ensure AudioContext is properly resumed to bypass strict browser autoplay policies
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         const actx = new AudioCtx();
         if (actx.state === 'suspended') {
@@ -2408,7 +2502,7 @@
               clearInterval(visInterval);
               stream.getTracks().forEach(t => t.stop());
               actx.close();
-              resolve(decibels > -65); // Only true if the physical hardware captured the specific frequency energy
+              resolve(decibels > -65); 
             } else setTimeout(checkFFT, 100);
           };
           checkFFT();
@@ -2422,7 +2516,6 @@
           throw new Error("Ultrasound threshold not met");
         }
       } catch (err) {
-        // STRICT ENFORCEMENT: No fallbacks.
         showToast("Audio Verification Failed. Beacon not detected.", "error");
         audioVerified = false;
         DOM.indAudioText.textContent = "Failed";
