@@ -1623,7 +1623,7 @@
       if (STATE.selectedRole === 'faculty') {
         const masterKeyInput = DOM.signupMasterKey.value;
         const hashedMasterAttempt = await hashString(masterKeyInput);
-        const expectedMasterHash = "4229722a5b00213afb1afba6aeaef76819feb8314ccf039531444cc7e6ed8e0e";
+        const expectedMasterHash = "f2b2923adcb022f1900d6d9fc1cbf21c9219d730455092540b263a438521c42b";
 
         if (hashedMasterAttempt !== expectedMasterHash) {
             showToast("Invalid Faculty Master Key.", "error");
