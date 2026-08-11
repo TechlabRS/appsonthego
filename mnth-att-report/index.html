@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Attendance & Faculty Management System - RGMCET</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+    <style>
+        @media print {
+            header, footer, nav, .no-print, #toast-container {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .print-card {
+                border: none !important;
+                box-shadow: none !important;
+            }
+        }
+        
+        /* Toast Animations */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+        .toast-enter {
+            animation: slideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        .toast-exit {
+            animation: fadeOut 0.3s forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between relative">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none w-80 max-w-[calc(100vw-2rem)]"></div>
+
+    <!-- Header & Navigation Bar -->
+    <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-30 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-graduation-cap text-2xl text-indigo-300"></i>
+                    <div>
+                        <h1 class="text-base font-bold leading-tight">Faculty Attendance & Reporting Engine</h1>
+                        <p class="text-xs text-indigo-200">RGMCET • Multi-Faculty & Elective Allocation System</p>
+                    </div>
+                </div>
+                <span class="text-xs bg-indigo-800 text-indigo-200 font-medium px-2.5 py-1 rounded-full border border-indigo-700 sm:hidden">
+                    Active Session
+                </span>
+            </div>
+
+            <!-- View Navigation Tabs -->
+            <div class="flex bg-indigo-950 p-1 rounded-xl w-full sm:w-auto pointer-events-auto flex-wrap gap-1">
+                <button id="tabBtnFaculty" onclick="switchTab('faculty')" class="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow-sm flex items-center justify-center">
+                    <i class="fa-solid fa-pen-to-square mr-1.5"></i> Daily Input
+                </button>
+                <button id="tabBtnBReport" onclick="switchTab('breport')" class="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition text-indigo-200 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-calendar-days mr-1.5"></i> Daily B-Report
+                </button>
+                <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition text-indigo-200 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Dashboard
+                </button>
+                <button id="tabBtnReports" onclick="switchTab('reports')" class="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition text-indigo-200 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-file-invoice mr-1.5"></i> Exports
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
+
+        <!-- ================================================================= -->
+        <!-- VIEW 1: FACULTY DAILY INPUT SCREEN -->
+        <!-- ================================================================= -->
+        <div id="viewFaculty" class="space-y-6 max-w-4xl mx-auto">
+            
+            <!-- Session Setup -->
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
+                        <i class="fa-solid fa-sliders text-indigo-600 mr-2"></i> Session Setup & Faculty Allocation
+                    </h2>
+                    
+                    <label class="cursor-pointer inline-flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2.5 py-1.5 rounded border border-indigo-200 transition">
+                        <i class="fa-solid fa-file-import mr-1.5"></i> Sync Master Faculty/Subject CSV
+                        <input type="file" id="facultyMappingCsvInput" accept=".csv" class="hidden" onchange="handleFacultyMappingCSV(event)">
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Faculty Dropdown -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Faculty Member</label>
+                        <select id="facultySelect" onchange="onFacultyChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Subject Dropdown -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Subject / Elective Batch</label>
+                        <select id="subjectSelect" onchange="onSubjectChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium disabled:opacity-75" disabled>
+                            <!-- Populated dynamically and auto-synced -->
+                        </select>
+                    </div>
+
+                    <!-- Date Selection -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Date</label>
+                        <input type="date" id="attendanceDate" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                    </div>
+
+                    <!-- Class Hours Selection -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Class Hours Conducted</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button type="button" onclick="setSessionHours(1)" id="btn-hr-1" class="hour-btn py-2 text-xs font-bold rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-sm transition">1 Hr</button>
+                            <button type="button" onclick="setSessionHours(2)" id="btn-hr-2" class="hour-btn py-2 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition">2 Hrs</button>
+                            <button type="button" onclick="setSessionHours(3)" id="btn-hr-3" class="hour-btn py-2 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition">3 Hrs</button>
+                            <button type="button" onclick="setSessionHours(4)" id="btn-hr-4" class="hour-btn py-2 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition">4 Hrs</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Allocation Guard Note -->
+                <div class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100 flex items-center space-x-3 text-xs text-indigo-900">
+                    <i class="fa-solid fa-shield-halved text-indigo-600 text-base"></i>
+                    <p>
+                        <strong>Dynamic Presence Logic:</strong> Roster filters dynamically. A single faculty member can manage multiple subjects. Roster reflects <span id="allocationNoticeText" class="font-bold underline">Selected Faculty/Subject</span>.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Student Roster & Quick Action Section -->
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+                    <div>
+                        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
+                            <i class="fa-solid fa-users-gear text-indigo-600 mr-2"></i> Allocated Batch Roster
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Toggle status or mark individual students from dropdown</p>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <label class="cursor-pointer inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-300 transition">
+                            <i class="fa-solid fa-file-csv text-emerald-600 mr-1.5"></i> Assign Batch via CSV
+                            <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
+                        </label>
+                        <button onclick="downloadFacultyRosterCSV()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-200 transition flex items-center">
+                            <i class="fa-solid fa-download mr-1.5"></i> Export Batch CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Add / Filter Individual Student Dropdown -->
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                    <div class="w-full sm:w-2/3">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Quick Select / Find Student in Batch</label>
+                        <select id="singleStudentDropdown" onchange="highlightOrSelectStudent()" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                        <button onclick="markSelectedDropdownStudent(true)" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition">Mark Present</button>
+                        <button onclick="markSelectedDropdownStudent(false)" class="px-3 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-bold hover:bg-rose-700 transition">Mark Absent</button>
+                    </div>
+                </div>
+
+                <!-- Global Action Controls -->
+                <div class="flex items-center justify-between border-t border-b border-slate-100 py-3 mb-4 text-xs">
+                    <span id="rosterCountText" class="font-semibold text-slate-600">Showing Allocated Students</span>
+                    <div class="flex gap-2">
+                        <button onclick="toggleAllFaculty(true)" class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded font-bold hover:bg-emerald-100 transition">Mark All Present</button>
+                        <button onclick="toggleAllFaculty(false)" class="px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded font-bold hover:bg-rose-100 transition">Mark All Absent</button>
+                    </div>
+                </div>
+
+                <!-- Student List -->
+                <div id="studentListContainer" class="space-y-2">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- Submit Attendance Card -->
+            <section class="bg-indigo-900 text-white rounded-xl shadow-lg p-4 md:p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-6 text-center sm:text-left">
+                    <div>
+                        <p class="text-xs text-indigo-300 font-medium uppercase">Present</p>
+                        <p id="presentCountDisplay" class="text-2xl font-bold text-emerald-400">0</p>
+                    </div>
+                    <div class="h-8 w-px bg-indigo-700"></div>
+                    <div>
+                        <p class="text-xs text-indigo-300 font-medium uppercase">Absent</p>
+                        <p id="absentCountDisplay" class="text-2xl font-bold text-rose-400">0</p>
+                    </div>
+                    <div class="h-8 w-px bg-indigo-700"></div>
+                    <div>
+                        <p class="text-xs text-indigo-300 font-medium uppercase">Hours</p>
+                        <p id="sessionHourDisplay" class="text-2xl font-bold text-indigo-100">1 Hr</p>
+                    </div>
+                </div>
+
+                <button id="submitAttendanceBtn" onclick="submitDailyAttendance()" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-sm px-6 py-3 rounded-lg shadow transition flex items-center justify-center">
+                    <i class="fa-solid fa-paper-plane mr-2"></i> Submit Attendance & Sync Records
+                </button>
+            </section>
+        </div>
+
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2: DAILY B-REPORT (BATCH REPORT) -->
+        <!-- ================================================================= -->
+        <div id="viewBReport" class="space-y-6 hidden max-w-5xl mx-auto">
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center">
+                    <i class="fa-solid fa-calendar-days text-indigo-600 mr-2"></i> Faculty Daily Batch Report
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Faculty</label>
+                        <select id="bReportFacultySelect" onchange="onBReportFacultyChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Subject</label>
+                        <select id="bReportSubjectSelect" onchange="renderBReport()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium disabled:opacity-75">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Notice if no dates exist -->
+                <div id="bReportEmptyState" class="hidden p-4 bg-amber-50 rounded-lg border border-amber-200 text-amber-800 text-sm font-medium flex items-center justify-center">
+                    <i class="fa-solid fa-circle-info mr-2"></i> No daily attendance logs have been recorded for this subject yet.
+                </div>
+
+                <!-- Dynamic B-Report Table -->
+                <div id="bReportTableContainer" class="overflow-x-auto border border-slate-200 rounded-lg shadow-sm">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                            <tr id="bReportTheadRow">
+                                <!-- Dynamic Dates Go Here -->
+                            </tr>
+                        </thead>
+                        <tbody id="bReportTbody" class="divide-y divide-slate-100 bg-white">
+                            <!-- Dynamic Rows Go Here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+
+        <!-- ================================================================= -->
+        <!-- VIEW 3: MONTHLY DASHBOARD & IRREGULARITY MONITOR -->
+        <!-- ================================================================= -->
+        <div id="viewDashboard" class="space-y-6 hidden">
+            <!-- Filters Toolbar -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Month</label>
+                        <input type="month" id="monthPicker" value="2026-08" onchange="renderDashboard()" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div class="w-full sm:w-auto">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Search Student / Roll No</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchInput" placeholder="Search Roll or Name..." onkeyup="renderDashboard()" class="bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-48">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="switchTab('reports')" class="px-3.5 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-xs font-bold transition flex items-center">
+                    <i class="fa-solid fa-sliders mr-1.5"></i> Advanced Custom Report Builder
+                </button>
+            </div>
+
+            <!-- KPI Summary Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    <p class="text-xs text-slate-500 font-semibold uppercase">Total Class Hours Held</p>
+                    <h3 id="statTotalHeld" class="text-2xl font-bold text-slate-800 mt-1">0 Hrs</h3>
+                    <p class="text-xs text-slate-400 mt-1">Across All Faculty Batches</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    <p class="text-xs text-slate-500 font-semibold uppercase">Overall Class Average</p>
+                    <h3 id="statClassAvg" class="text-2xl font-bold text-indigo-600 mt-1">0.0%</h3>
+                    <p class="text-xs text-emerald-600 mt-1"><i class="fa-solid fa-chart-line text-xs mr-1"></i>Live Aggregate</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 border-l-4 border-l-rose-500">
+                    <p class="text-xs text-rose-600 font-bold uppercase">Irregular Students (&lt;75%)</p>
+                    <h3 id="statShortage" class="text-2xl font-bold text-rose-600 mt-1">0 Students</h3>
+                    <p class="text-xs text-rose-500 mt-1">Immediate Notice Required</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    <p class="text-xs text-slate-500 font-semibold uppercase">Registered Students</p>
+                    <h3 id="statTotalStudents" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+                    <p class="text-xs text-slate-400 mt-1">Active Batch Database</p>
+                </div>
+            </div>
+
+            <!-- IRREGULAR / CHRONIC ABSENTEE MONITOR PANEL -->
+            <div class="bg-rose-50/60 rounded-xl shadow-sm border border-rose-200 p-4 md:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-600 text-lg"></i>
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-rose-900">
+                            Irregular & Chronic Absentee Monitor
+                        </h2>
+                    </div>
+                    <span class="text-xs font-bold bg-rose-100 text-rose-800 px-2.5 py-1 rounded-full border border-rose-200">
+                        Attendance Shortage Alert
+                    </span>
+                </div>
+                <div id="irregularListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Subject-wise Total Conducted Hours -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center">
+                    <i class="fa-solid fa-book-open text-indigo-600 mr-2"></i> Subject Class Hours Conducted by Faculty
+                </h2>
+                <div id="subjectHoursGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                    <!-- Dynamic rendering -->
+                </div>
+            </div>
+
+            <!-- Consolidated Matrix Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
+                        <i class="fa-solid fa-table text-indigo-600 mr-2"></i> Consolidated Attendance Matrix
+                    </h2>
+                    <span class="text-xs text-slate-400">Format: Attended Hours / Total Held Hours (Only active batches calculated)</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead id="dashboardTableHeader">
+                            <!-- Populated Dynamically -->
+                        </thead>
+                        <tbody id="dashboardTableBody" class="divide-y divide-slate-100">
+                            <!-- Dynamic rendering -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ================================================================= -->
+        <!-- VIEW 4: REPORTS & EXPORT CENTER MODULE -->
+        <!-- ================================================================= -->
+        <div id="viewReports" class="space-y-6 hidden">
+            
+            <!-- Report Builder Controls -->
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 no-print">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center">
+                    <i class="fa-solid fa-file-invoice text-indigo-600 mr-2"></i> Custom Report Builder
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Report Type Selector -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Report Type</label>
+                        <select id="reportTypeSelect" onchange="generateCustomReport()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="FULL_MONTHLY">Consolidated Monthly Attendance Report</option>
+                            <option value="IRREGULAR_SHORTAGE">Irregular & Shortage Notice List (<75%)</option>
+                            <option value="FACULTY_SUBJECT">Faculty-Subject Wise Summary</option>
+                            <option value="INDIVIDUAL">Individual Student Transcript</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter Threshold -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Attendance Threshold Filter</label>
+                        <select id="reportThreshold" onchange="generateCustomReport()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="ALL">All Students</option>
+                            <option value="BELOW_75">Below 75% Only (Irregular)</option>
+                            <option value="ABOVE_75">75% & Above (Eligible)</option>
+                        </select>
+                    </div>
+
+                    <!-- Target Student Selector -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Student</label>
+                        <select id="reportStudentSelect" onchange="generateCustomReport()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <!-- Dynamic -->
+                        </select>
+                    </div>
+
+                    <!-- Export Actions -->
+                    <div class="flex items-end space-x-2">
+                        <button onclick="downloadCSVReport()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center shadow-sm">
+                            <i class="fa-solid fa-file-csv mr-1.5"></i> Export CSV
+                        </button>
+                        <button onclick="printReport()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center shadow-sm">
+                            <i class="fa-solid fa-print mr-1.5"></i> Print / Save PDF
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Printable Institutional Header -->
+            <div class="hidden print-only text-center mb-6 border-b pb-4">
+                <h1 class="text-xl font-bold uppercase tracking-wide">Rajeev Gandhi Memorial College of Engineering & Technology</h1>
+                <p class="text-xs text-slate-600">Autonomous • Accredited by NAAC & NBA • Nandyal, AP</p>
+                <h2 id="printReportTitle" class="text-sm font-bold mt-2 uppercase text-indigo-900">Monthly Academic Attendance Report</h2>
+            </div>
+
+            <!-- Report Output Canvas -->
+            <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 print-card">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
+                    <div>
+                        <h3 id="reportTitleHeader" class="text-sm font-bold text-slate-800 uppercase">Consolidated Monthly Report</h3>
+                        <p class="text-xs text-slate-500" id="reportSubtitle">Generated for Active Semester Sessions</p>
+                    </div>
+                    <span class="text-xs font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full no-print">
+                        Verified Institutional Record
+                    </span>
+                </div>
+
+                <!-- Report Render Area -->
+                <div id="reportRenderArea">
+                    <!-- Dynamic rendering -->
+                </div>
+            </section>
+
+            <!-- DANGER ZONE: Reset Database -->
+            <section class="bg-rose-50 rounded-xl shadow-sm border border-rose-200 p-4 md:p-6 mt-6 no-print">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-rose-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-triangle-exclamation mr-2 text-rose-600"></i> System Administration: Danger Zone
+                </h2>
+                
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-lg border border-rose-100">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Factory Reset Database</h3>
+                        <p class="text-xs text-slate-500 mt-1">Permanently delete all students, attendance records, and faculty mappings from the cloud.</p>
+                    </div>
+                    <button id="resetDbBtn" onclick="factoryResetDatabase()" class="relative overflow-hidden group bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-bold text-xs px-5 py-2.5 rounded-lg shadow-[0_0_15px_rgba(225,29,72,0.4)] transition-all duration-300 hover:shadow-[0_0_25px_rgba(225,29,72,0.6)] transform hover:-translate-y-0.5 flex items-center justify-center whitespace-nowrap pointer-events-auto">
+                        <span class="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-10 rotate-12 group-hover:-translate-x-40 ease"></span>
+                        <i class="fa-solid fa-skull-crossbones mr-2 animate-pulse"></i> ERASE ALL DATA
+                    </button>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- Footer Signature -->
+    <footer class="py-4 text-center text-xs text-slate-500 border-t border-slate-200 bg-white no-print">
+        Regards from RGMCET • Academic Attendance & Faculty Engine v2.0
+    </footer>
+
+    <!-- Shared Application State & JavaScript Logic -->
+    <script>
+        // =================================================================
+        // TOAST NOTIFICATION SYSTEM
+        // =================================================================
+        function showToast(message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast-enter pointer-events-auto flex items-center p-3 sm:p-4 mb-2 text-sm font-medium rounded-xl shadow-lg border backdrop-blur-sm transition-all duration-300 transform`;
+
+            let icon, colorClasses;
+            
+            switch (type) {
+                case 'success':
+                    icon = '<i class="fa-solid fa-circle-check text-lg"></i>';
+                    colorClasses = 'bg-emerald-50/95 border-emerald-200 text-emerald-800 shadow-emerald-500/10';
+                    break;
+                case 'error':
+                    icon = '<i class="fa-solid fa-triangle-exclamation text-lg"></i>';
+                    colorClasses = 'bg-rose-50/95 border-rose-200 text-rose-800 shadow-rose-500/10';
+                    break;
+                case 'info':
+                    icon = '<i class="fa-solid fa-circle-info text-lg"></i>';
+                    colorClasses = 'bg-indigo-50/95 border-indigo-200 text-indigo-800 shadow-indigo-500/10';
+                    break;
+            }
+
+            toast.classList.add(...colorClasses.split(' '));
+            
+            toast.innerHTML = `
+                <div class="mr-3 flex-shrink-0">${icon}</div>
+                <div class="flex-grow whitespace-pre-wrap leading-tight text-xs sm:text-sm pr-4">${message}</div>
+                <button class="flex-shrink-0 ml-auto text-slate-400 hover:text-slate-600 transition p-1" onclick="this.parentElement.remove()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    toast.classList.remove('toast-enter');
+                    toast.classList.add('toast-exit');
+                    setTimeout(() => {
+                        if (document.body.contains(toast)) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }
+            }, duration);
+        }
+
+        // =================================================================
+        // FIREBASE INITIALIZATION & DYNAMIC DATA SCHEMA
+        // =================================================================
+       const firebaseConfig = {
+      apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+      authDomain: "stuattnd.firebaseapp.com",
+      projectId: "stuattnd",
+      storageBucket: "stuattnd.firebasestorage.app",
+      messagingSenderId: "511533506488",
+      appId: "1:511533506488:web:aca4de3d513915d012f94d",
+      measurementId: "G-9PZZM5LFKX"
+    };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'a-mp-report';
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth(); 
+
+        // Central State & Configuration
+        let selectedHours = 1;
+        let subjectHoursHeld = {};
+        
+        // NEW: Store DATE-WISE subject hours held in the master records
+        // Format: { 'CVIP': { '2026-08-04': 2, '2026-08-06': 1 } }
+        let subjectDailyHoursHeld = {}; 
+        
+        let facultyBatchAllocations = {}; 
+        let studentMasterList = [];
+        let activeFacultyRoster = [];
+
+        // Application Load Initialization
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('attendanceDate').valueAsDate = new Date();
+            
+            try {
+                await auth.signInAnonymously();
+                console.log("Authenticated securely as Anonymous User.");
+
+                await loadFirestoreData();
+                
+                renderDashboard();
+                generateCustomReport();
+            } catch (error) {
+                console.error("Firebase Authentication Error:", error);
+                showToast("Failed to authenticate with Firebase. Check your network or Security Rules.", "error");
+            }
+        });
+
+        function getSafeDocId(rollString) {
+            if (!rollString) return 'UNKNOWN_ROLL_' + Math.floor(Math.random()*1000);
+            return String(rollString).trim().replace(/\//g, '-');
+        }
+
+        // Async Database Fetcher
+        async function loadFirestoreData() {
+            try {
+                // 1. Fetch Dynamic Faculty Mappings
+                const allocDoc = await db.collection('metadata').doc('facultyAllocations').get();
+                if (allocDoc.exists) {
+                    facultyBatchAllocations = allocDoc.data();
+                } else {
+                    facultyBatchAllocations = {
+                        'F1': { 
+                            name: 'Dr. Raghavendra V', 
+                            subjects: {
+                                'CVIP': ['R1', 'R2', 'R3', 'R4'],
+                                'CN': ['R1', 'R2'] 
+                            }
+                        },
+                        'F2': { 
+                            name: 'Prof. Ananya Sharma', 
+                            subjects: {
+                                'DBMS': ['R3', 'R4']
+                            }
+                        }
+                    };
+                    await db.collection('metadata').doc('facultyAllocations').set(facultyBatchAllocations, { merge: true });
+                }
+
+                renderFacultyDropdowns();
+
+                // 2. Fetch Master Metadata (Total Aggregates)
+                const metaDoc = await db.collection('metadata').doc('subjectHours').get();
+                if (metaDoc.exists) {
+                    subjectHoursHeld = metaDoc.data();
+                } else {
+                    subjectHoursHeld = { CVIP: 30, DBMS: 32, CN: 28 };
+                    await db.collection('metadata').doc('subjectHours').set(subjectHoursHeld, { merge: true });
+                }
+
+                // 3. Fetch Master Metadata (Daily Day-by-Day tracking)
+                const dailyMetaDoc = await db.collection('metadata').doc('subjectDailyHours').get();
+                if (dailyMetaDoc.exists) {
+                    subjectDailyHoursHeld = dailyMetaDoc.data();
+                } else {
+                    subjectDailyHoursHeld = {};
+                    await db.collection('metadata').doc('subjectDailyHours').set(subjectDailyHoursHeld, { merge: true });
+                }
+
+                // 4. Fetch Master Student Directory
+                const studentsSnapshot = await db.collection('students').get();
+                if (!studentsSnapshot.empty) {
+                    studentMasterList = [];
+                    studentsSnapshot.forEach(doc => {
+                        studentMasterList.push(doc.data());
+                    });
+                } else {
+                    studentMasterList = [
+                        { roll: 'R1', name: 'Aarav Sharma', attendance: { CVIP: 28, DBMS: 30, CN: 26 }, dailyLogs: {} },
+                        { roll: 'R2', name: 'Bhavya Reddy', attendance: { CVIP: 27, DBMS: 28, CN: 25 }, dailyLogs: {} },
+                        { roll: 'R3', name: 'Chaitanya Kumar', attendance: { CVIP: 14, DBMS: 16, CN: 12 }, dailyLogs: {} },
+                        { roll: 'R4', name: 'Divya Teja', attendance: { CVIP: 29, DBMS: 31, CN: 27 }, dailyLogs: {} }
+                    ];
+                    const batch = db.batch();
+                    studentMasterList.forEach(s => {
+                        const ref = db.collection('students').doc(getSafeDocId(s.roll));
+                        batch.set(ref, s, { merge: true });
+                    });
+                    await batch.commit();
+                }
+
+                populateStudentDropdowns();
+            } catch (error) {
+                console.error("Firebase sync error:", error);
+            }
+        }
+
+        // =================================================================
+        // DYNAMIC FACULTY MAPPING UPLOAD
+        // =================================================================
+        async function handleFacultyMappingCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const lines = e.target.result.split('\n');
+                const newAllocations = {};
+
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const parts = line.split(',');
+                    if (parts.length >= 4) {
+                        const facId = parts[0].trim();
+                        if (!facId) continue; 
+                        
+                        const facName = parts[1].trim();
+                        const subject = parts[2].trim();
+                        const rolls = parts[3].trim().split(/\s+/).filter(r => r);
+
+                        if (!newAllocations[facId]) {
+                            newAllocations[facId] = {
+                                name: facName,
+                                subjects: {}
+                            };
+                        }
+                        
+                        newAllocations[facId].subjects[subject] = rolls;
+                    }
+                }
+
+                if (Object.keys(newAllocations).length > 0) {
+                    try {
+                        await db.collection('metadata').doc('facultyAllocations').set(newAllocations, { merge: true });
+                        
+                        for (const [fId, data] of Object.entries(newAllocations)) {
+                            if (!facultyBatchAllocations[fId]) {
+                                facultyBatchAllocations[fId] = data;
+                            } else {
+                                facultyBatchAllocations[fId].name = data.name;
+                                facultyBatchAllocations[fId].subjects = {
+                                    ...facultyBatchAllocations[fId].subjects,
+                                    ...data.subjects
+                                };
+                            }
+                        }
+
+                        renderFacultyDropdowns();
+                        showToast(`Successfully synced dynamic faculty-subject mappings to Firebase!`, "success");
+                    } catch (error) {
+                        console.error("Firebase sync error:", error);
+                        showToast("Failed to save mappings to Firebase cloud.", "error");
+                    }
+                } else {
+                    showToast("Invalid CSV format. Please ensure your CSV header is:\nFacultyID,FacultyName,SubjectCode,StudentRolls(SpaceSeparated)", "error", 6000);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // =================================================================
+        // DYNAMIC DROPDOWN RENDERING (Cascading)
+        // =================================================================
+        function renderFacultyDropdowns() {
+            // Update Daily Input Selectors
+            const facSelect = document.getElementById('facultySelect');
+            facSelect.innerHTML = '';
+            
+            // Update B-Report Selectors
+            const bReportFacSelect = document.getElementById('bReportFacultySelect');
+            bReportFacSelect.innerHTML = '';
+
+            Object.keys(facultyBatchAllocations).forEach(key => {
+                const alloc = facultyBatchAllocations[key];
+                
+                const opt1 = document.createElement('option');
+                opt1.value = key;
+                opt1.innerText = `${alloc.name}`;
+                facSelect.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = key;
+                opt2.innerText = `${alloc.name}`;
+                bReportFacSelect.appendChild(opt2);
+            });
+            
+            onFacultyChange(); 
+            onBReportFacultyChange();
+        }
+
+        function onFacultyChange() {
+            const facultyKey = document.getElementById('facultySelect').value;
+            const subSelect = document.getElementById('subjectSelect');
+            subSelect.innerHTML = '';
+
+            const alloc = facultyBatchAllocations[facultyKey];
+            if (!alloc || !alloc.subjects) {
+                subSelect.disabled = true;
+                return;
+            }
+
+            subSelect.disabled = false;
+            Object.keys(alloc.subjects).forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.innerText = sub;
+                subSelect.appendChild(opt);
+            });
+
+            onSubjectChange(); 
+        }
+
+        function onSubjectChange() {
+            const facultyKey = document.getElementById('facultySelect').value;
+            const subjectKey = document.getElementById('subjectSelect').value;
+            
+            const alloc = facultyBatchAllocations[facultyKey];
+            if (!alloc || !alloc.subjects || !alloc.subjects[subjectKey]) {
+                document.getElementById('studentListContainer').innerHTML = '';
+                return;
+            }
+
+            document.getElementById('allocationNoticeText').innerText = `${alloc.name} for ${subjectKey}`;
+
+            const safeAllocRolls = (alloc.subjects[subjectKey] || []).map(r => getSafeDocId(r));
+
+            activeFacultyRoster = studentMasterList
+                .filter(s => safeAllocRolls.includes(getSafeDocId(s.roll)))
+                .map(s => ({
+                    roll: s.roll,
+                    name: s.name,
+                    status: true
+                }));
+
+            populateBatchStudentDropdown();
+            renderFacultyRoster();
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabName) {
+            const views = {
+                'faculty': document.getElementById('viewFaculty'),
+                'breport': document.getElementById('viewBReport'),
+                'dashboard': document.getElementById('viewDashboard'),
+                'reports': document.getElementById('viewReports')
+            };
+            
+            const btns = {
+                'faculty': document.getElementById('tabBtnFaculty'),
+                'breport': document.getElementById('tabBtnBReport'),
+                'dashboard': document.getElementById('tabBtnDashboard'),
+                'reports': document.getElementById('tabBtnReports')
+            };
+
+            Object.values(views).forEach(v => v.classList.add('hidden'));
+            Object.values(btns).forEach(b => {
+                b.className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition text-indigo-200 hover:text-white flex items-center justify-center";
+            });
+
+            if (views[tabName]) {
+                views[tabName].classList.remove('hidden');
+                btns[tabName].className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow-sm flex items-center justify-center";
+            }
+
+            if (tabName === 'dashboard') renderDashboard();
+            if (tabName === 'reports') {
+                populateStudentDropdowns();
+                generateCustomReport();
+            }
+            if (tabName === 'breport') {
+                renderBReport();
+            }
+        }
+
+        // =================================================================
+        // FACULTY SESSION & ALLOCATION LOGIC
+        // =================================================================
+        function setSessionHours(hrs) {
+            selectedHours = Number(hrs); 
+            document.querySelectorAll('.hour-btn').forEach((btn, idx) => {
+                btn.className = (idx + 1 === hrs)
+                    ? "hour-btn py-2 text-xs font-bold rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-sm transition"
+                    : "hour-btn py-2 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition";
+            });
+            document.getElementById('sessionHourDisplay').innerText = `${hrs} ${hrs === 1 ? 'Hr' : 'Hrs'}`;
+        }
+
+        function populateBatchStudentDropdown() {
+            const dropdown = document.getElementById('singleStudentDropdown');
+            dropdown.innerHTML = '<option value="">-- Select Student from Batch --</option>';
+            activeFacultyRoster.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.roll;
+                opt.innerText = `${s.roll} - ${s.name}`;
+                dropdown.appendChild(opt);
+            });
+        }
+
+        function renderFacultyRoster() {
+            const container = document.getElementById('studentListContainer');
+            container.innerHTML = '';
+
+            activeFacultyRoster.forEach((student, idx) => {
+                const isPresent = student.status;
+                const card = document.createElement('div');
+                card.id = `roster-card-${getSafeDocId(student.roll)}`; 
+                card.className = `flex items-center justify-between p-3 rounded-lg border transition ${
+                    isPresent ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-mono font-bold px-2 py-1 rounded ${isPresent ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                            ${student.roll || 'N/A'}
+                        </span>
+                        <p class="text-sm font-semibold text-slate-800">${student.name || 'Unknown'}</p>
+                    </div>
+                    <button onclick="toggleStudentStatus(${idx})" class="px-4 py-1.5 rounded-lg text-xs font-bold transition ${
+                        isPresent ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm' : 'bg-rose-600 text-white hover:bg-rose-700 shadow-sm'
+                    }">
+                        ${isPresent ? '<i class="fa-solid fa-check mr-1"></i> PRESENT' : '<i class="fa-solid fa-xmark mr-1"></i> ABSENT'}
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+
+            updateFacultyCounters();
+        }
+
+        function toggleStudentStatus(idx) {
+            activeFacultyRoster[idx].status = !activeFacultyRoster[idx].status;
+            renderFacultyRoster();
+        }
+
+        function toggleAllFaculty(status) {
+            activeFacultyRoster.forEach(s => s.status = status);
+            renderFacultyRoster();
+        }
+
+        function markSelectedDropdownStudent(status) {
+            const roll = document.getElementById('singleStudentDropdown').value;
+            if (!roll) {
+                showToast("Please select a student from the dropdown first.", "info");
+                return;
+            }
+            const student = activeFacultyRoster.find(s => s.roll === roll);
+            if (student) {
+                student.status = status;
+                renderFacultyRoster();
+            }
+        }
+
+        function highlightOrSelectStudent() {
+            const roll = document.getElementById('singleStudentDropdown').value;
+            if (!roll) return;
+            const el = document.getElementById(`roster-card-${getSafeDocId(roll)}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('ring-2', 'ring-indigo-500');
+                setTimeout(() => el.classList.remove('ring-2', 'ring-indigo-500'), 2000);
+            }
+        }
+
+        function updateFacultyCounters() {
+            const present = activeFacultyRoster.filter(s => s.status).length;
+            const absent = activeFacultyRoster.length - present;
+
+            document.getElementById('presentCountDisplay').innerText = present;
+            document.getElementById('absentCountDisplay').innerText = absent;
+            document.getElementById('rosterCountText').innerText = `Showing ${activeFacultyRoster.length} Allocated Students`;
+        }
+
+        function downloadFacultyRosterCSV() {
+            const facultyKey = document.getElementById('facultySelect').value;
+            const subject = document.getElementById('subjectSelect').value;
+            const alloc = facultyBatchAllocations[facultyKey] || { name: 'Faculty' };
+
+            let csv = `Roll No,Student Name,Subject,Faculty,Status\n`;
+            activeFacultyRoster.forEach(s => {
+                csv += `"${s.roll}","${s.name}","${subject}","${alloc.name}","${s.status ? 'PRESENT' : 'ABSENT'}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `Batch_Roster_${facultyKey}_${subject}.csv`);
+            a.click();
+        }
+
+        // =================================================================
+        // ASSIGN BATCH VIA CSV (TIES STUDENTS TO SELECTED FACULTY + SUBJECT)
+        // =================================================================
+        async function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const facultyKey = document.getElementById('facultySelect').value;
+            const subjectKey = document.getElementById('subjectSelect').value;
+            
+            if (!facultyKey || !subjectKey) {
+                showToast("Please select a faculty member and subject first.", "error");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const lines = e.target.result.split('\n');
+                const parsed = [];
+                const newRollsForBatch = [];
+
+                lines.forEach(line => {
+                    const parts = line.split(',');
+                    if (parts.length >= 2) {
+                        const roll = parts[0].trim();
+                        const name = parts[1].trim();
+                        if (roll && name && roll.toLowerCase() !== 'roll' && roll.toLowerCase() !== 'roll no') {
+                            parsed.push({ roll, name, status: true });
+                            newRollsForBatch.push(roll); 
+                        }
+                    }
+                });
+
+                if (parsed.length > 0) {
+                    const batch = db.batch(); 
+                    activeFacultyRoster = parsed;
+
+                    // 1. Process Master Students (Create if not exist)
+                    parsed.forEach(p => {
+                        const safeId = getSafeDocId(p.roll);
+                        let existing = studentMasterList.find(s => getSafeDocId(s.roll) === safeId);
+                        
+                        if (!existing) {
+                            const newStudent = {
+                                roll: p.roll,
+                                name: p.name,
+                                attendance: {},
+                                dailyLogs: {}
+                            };
+                            studentMasterList.push(newStudent);
+                            
+                            const ref = db.collection('students').doc(safeId);
+                            batch.set(ref, newStudent, { merge: true });
+                        }
+                    });
+
+                    // 2. Map this new batch specifically to the currently selected Faculty AND Subject
+                    if (facultyBatchAllocations[facultyKey]) {
+                        if(!facultyBatchAllocations[facultyKey].subjects) {
+                            facultyBatchAllocations[facultyKey].subjects = {};
+                        }
+                        facultyBatchAllocations[facultyKey].subjects[subjectKey] = newRollsForBatch;
+                        
+                        const allocRef = db.collection('metadata').doc('facultyAllocations');
+                        batch.set(allocRef, {
+                            [facultyKey]: facultyBatchAllocations[facultyKey]
+                        }, { merge: true });
+                    }
+
+                    try {
+                        await batch.commit();
+                        showToast(`Successfully imported ${parsed.length} students and assigned them to ${facultyBatchAllocations[facultyKey].name} for ${subjectKey}!`, "success");
+                        
+                        onSubjectChange();
+                        populateStudentDropdowns();
+                        renderDashboard();
+                    } catch (err) {
+                        console.error("CSV sync failed", err);
+                        showToast("Failed to sync assigned batch to the database.", "error");
+                    }
+                } else {
+                    showToast('Invalid CSV format. Expected: Roll, Name', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
+        async function submitDailyAttendance() {
+            const btn = document.getElementById('submitAttendanceBtn');
+            let subject = document.getElementById('subjectSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+
+            if (!date || !subject) {
+                showToast("Please ensure a date and subject are selected.", "info");
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Syncing...';
+
+                const batch = db.batch(); 
+
+                // 1. Update Global Aggregate metadata
+                if (subjectHoursHeld[subject] === undefined) subjectHoursHeld[subject] = 0;
+                subjectHoursHeld[subject] = Number(subjectHoursHeld[subject]) + selectedHours;
+
+                const metaRef = db.collection('metadata').doc('subjectHours');
+                batch.set(metaRef, { [subject]: subjectHoursHeld[subject] }, { merge: true });
+
+                // 2. Update Daily Session Metadata Tracker
+                if (subjectDailyHoursHeld[subject] === undefined) subjectDailyHoursHeld[subject] = {};
+                subjectDailyHoursHeld[subject][date] = Number(subjectDailyHoursHeld[subject][date] || 0) + selectedHours;
+                
+                const dailyMetaRef = db.collection('metadata').doc('subjectDailyHours');
+                batch.set(dailyMetaRef, { [subject]: subjectDailyHoursHeld[subject] }, { merge: true });
+
+                // 3. Update Student individual records (Both aggregate and daily nested paths)
+                activeFacultyRoster.forEach(fStudent => {
+                    let masterStudent = studentMasterList.find(m => getSafeDocId(m.roll) === getSafeDocId(fStudent.roll));
+                    
+                    if (masterStudent) {
+                        if(masterStudent.attendance === undefined) masterStudent.attendance = {};
+                        if(masterStudent.dailyLogs === undefined) masterStudent.dailyLogs = {};
+                        if(masterStudent.dailyLogs[subject] === undefined) masterStudent.dailyLogs[subject] = {};
+                        
+                        // Only add attendance hours if present
+                        const attendedHours = fStudent.status ? selectedHours : 0;
+
+                        masterStudent.attendance[subject] = Number(masterStudent.attendance[subject] || 0) + attendedHours;
+                        masterStudent.dailyLogs[subject][date] = Number(masterStudent.dailyLogs[subject][date] || 0) + attendedHours;
+                        
+                        const safeId = getSafeDocId(masterStudent.roll);
+                        const studentRef = db.collection('students').doc(safeId);
+                        
+                        // We use dot notation for robust nested object merging in Firebase
+                        batch.update(studentRef, {
+                            [`attendance.${subject}`]: masterStudent.attendance[subject],
+                            [`dailyLogs.${subject}.${date}`]: masterStudent.dailyLogs[subject][date]
+                        });
+                    }
+                });
+
+                await batch.commit();
+
+                showToast(`Attendance Logged Successfully!\nSubject: ${subject}\nAdded Hours: ${selectedHours}`, "success");
+                renderDashboard();
+
+            } catch (error) {
+                console.error("Database save failed: ", error);
+                showToast("Failed to sync attendance to the cloud database. Check your network or Firebase permissions.", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Submit Attendance & Sync Records';
+            }
+        }
+
+        // =================================================================
+        // VIEW 2: DAILY B-REPORT LOGIC
+        // =================================================================
+        function onBReportFacultyChange() {
+            const facKey = document.getElementById('bReportFacultySelect').value;
+            const subSelect = document.getElementById('bReportSubjectSelect');
+            subSelect.innerHTML = '';
+
+            const alloc = facultyBatchAllocations[facKey];
+            if (!alloc || !alloc.subjects) {
+                subSelect.disabled = true;
+                renderBReport();
+                return;
+            }
+
+            subSelect.disabled = false;
+            Object.keys(alloc.subjects).forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.innerText = sub;
+                subSelect.appendChild(opt);
+            });
+
+            renderBReport();
+        }
+
+        function renderBReport() {
+            const facKey = document.getElementById('bReportFacultySelect').value;
+            const subKey = document.getElementById('bReportSubjectSelect').value;
+            
+            const tableContainer = document.getElementById('bReportTableContainer');
+            const emptyState = document.getElementById('bReportEmptyState');
+            const theadRow = document.getElementById('bReportTheadRow');
+            const tbody = document.getElementById('bReportTbody');
+            
+            theadRow.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (!facKey || !subKey) {
+                emptyState.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+                return;
+            }
+
+            const alloc = facultyBatchAllocations[facKey];
+            const safeAllocRolls = (alloc.subjects[subKey] || []).map(r => getSafeDocId(r));
+            
+            let students = studentMasterList.filter(s => safeAllocRolls.includes(getSafeDocId(s.roll)));
+            // Sort students alphanumerically by roll
+            students.sort((a, b) => String(a.roll).localeCompare(String(b.roll)));
+
+            const subjectDailyMeta = subjectDailyHoursHeld[subKey] || {};
+            const availableDates = Object.keys(subjectDailyMeta).sort();
+
+            if (availableDates.length === 0) {
+                emptyState.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+            }
+
+            // Render Header
+            let theadHTML = `<th class="p-3 sticky left-0 bg-slate-100 z-10 w-24 border-r">Roll No</th>
+                             <th class="p-3 sticky left-24 bg-slate-100 z-10 whitespace-nowrap border-r">Name</th>`;
+            
+            availableDates.forEach(dateStr => {
+                // Convert YYYY-MM-DD to DD/MM
+                const parts = dateStr.split('-');
+                const shortDate = parts.length === 3 ? `${parts[2]}/${parts[1]}` : dateStr;
+                // Include total hours held on that day in header
+                const hrsHeld = subjectDailyMeta[dateStr];
+                theadHTML += `<th class="p-3 text-center border-r min-w-[60px]">${shortDate}<br><span class="text-[10px] font-normal text-slate-500">(${hrsHeld}h)</span></th>`;
+            });
+            theadHTML += `<th class="p-3 text-center bg-indigo-50/50 border-r min-w-[80px]">Total<br><span class="text-[10px] font-normal text-slate-500">Att / Held</span></th>
+                          <th class="p-3 text-center bg-indigo-50/50 min-w-[60px]">%</th>`;
+            theadRow.innerHTML = weadHTML = theadHTML;
+
+            // Render Body
+            students.forEach(s => {
+                const sLogs = (s.dailyLogs && s.dailyLogs[subKey]) ? s.dailyLogs[subKey] : {};
+                let studentTotalAtt = 0;
+                let studentTotalHeld = 0;
+
+                let rowHTML = `
+                    <td class="p-3 font-mono font-bold text-slate-700 sticky left-0 bg-white border-r">${s.roll || 'N/A'}</td>
+                    <td class="p-3 font-medium text-slate-800 whitespace-nowrap sticky left-24 bg-white border-r">${s.name || 'Unknown'}</td>
+                `;
+
+                availableDates.forEach(dateStr => {
+                    const held = Number(subjectDailyMeta[dateStr] || 0);
+                    // If student wasn't in DB or missed session, defaults to 0 attended.
+                    const att = sLogs[dateStr] !== undefined ? Number(sLogs[dateStr]) : 0; 
+                    
+                    studentTotalAtt += att;
+                    studentTotalHeld += held;
+
+                    const isAbsent = att === 0 && held > 0;
+                    const cellColor = isAbsent ? 'text-rose-600 font-bold bg-rose-50/30' : 'text-slate-700';
+                    
+                    rowHTML += `<td class="p-3 text-center border-r ${cellColor}">${att}</td>`;
+                });
+
+                const pct = studentTotalHeld > 0 ? ((studentTotalAtt / studentTotalHeld) * 100).toFixed(1) : "0.0";
+                const isIrregular = parseFloat(pct) < 75 && studentTotalHeld > 0;
+
+                rowHTML += `
+                    <td class="p-3 text-center font-bold border-r bg-indigo-50/30">${studentTotalAtt}/${studentTotalHeld}</td>
+                    <td class="p-3 text-center font-bold bg-indigo-50/30 ${isIrregular ? 'text-rose-600' : 'text-emerald-600'}">${pct}%</td>
+                `;
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-slate-50 transition";
+                row.innerHTML = rowHTML;
+                tbody.appendChild(row);
+            });
+        }
+
+
+        // =================================================================
+        // MONTHLY DASHBOARD & IRREGULARITY MONITOR LOGIC (DYNAMIC EXCLUSION)
+        // =================================================================
+        function getEnrolledSubjectsMap() {
+            const studentEnrolledSubjects = {};
+            studentMasterList.forEach(s => {
+                studentEnrolledSubjects[getSafeDocId(s.roll)] = new Set();
+            });
+
+            Object.values(facultyBatchAllocations).forEach(alloc => {
+                if(alloc.subjects) {
+                    Object.entries(alloc.subjects).forEach(([sub, rolls]) => {
+                        (rolls || []).forEach(roll => {
+                            const safeId = getSafeDocId(roll);
+                            if (studentEnrolledSubjects[safeId]) {
+                                studentEnrolledSubjects[safeId].add(sub);
+                            }
+                        });
+                    });
+                }
+            });
+            return studentEnrolledSubjects;
+        }
+
+        function renderDashboard() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filtered = studentMasterList.filter(s => {
+                const safeRoll = s.roll ? String(s.roll).toLowerCase() : '';
+                const safeName = s.name ? String(s.name).toLowerCase() : '';
+                return safeRoll.includes(query) || safeName.includes(query);
+            });
+
+            const dynamicSubjectKeys = Object.keys(subjectHoursHeld);
+            const studentEnrolledSubjects = getEnrolledSubjectsMap();
+
+            const globalTotalHoursHeld = dynamicSubjectKeys.reduce((a, b) => a + Number(subjectHoursHeld[b] || 0), 0);
+            document.getElementById('statTotalHeld').innerText = `${globalTotalHoursHeld} Hrs`;
+            document.getElementById('statTotalStudents').innerText = studentMasterList.length;
+
+            const subjectGrid = document.getElementById('subjectHoursGrid');
+            subjectGrid.innerHTML = '';
+            dynamicSubjectKeys.forEach(subKey => {
+                subjectGrid.innerHTML += `
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
+                        <span class="text-[10px] font-bold uppercase bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">Subject</span>
+                        <h4 class="font-bold text-slate-800 mt-1">${subKey}</h4>
+                        <p class="text-xs text-slate-500">${subjectHoursHeld[subKey]} Hrs Held</p>
+                    </div>
+                `;
+            });
+
+            let theadHTML = `
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
+                    <th class="p-3 sticky left-0 bg-slate-50 z-10">Roll No</th>
+                    <th class="p-3 sticky left-16 bg-slate-50 z-10 whitespace-nowrap">Student Name</th>
+            `;
+            dynamicSubjectKeys.forEach(subKey => {
+                theadHTML += `<th class="p-3 text-center border-l border-slate-200">${subKey}</th>`;
+            });
+            theadHTML += `
+                    <th class="p-3 text-center border-l border-slate-200 bg-indigo-50/50">Total Attended</th>
+                    <th class="p-3 text-center bg-indigo-50/50">Overall %</th>
+                    <th class="p-3 text-center">Irregularity Status</th>
+                </tr>
+            `;
+            document.getElementById('dashboardTableHeader').innerHTML = theadHTML;
+
+            const tbody = document.getElementById('dashboardTableBody');
+            const irregularContainer = document.getElementById('irregularListContainer');
+            tbody.innerHTML = '';
+            irregularContainer.innerHTML = '';
+
+            let shortageCount = 0;
+            let totalPctSum = 0;
+            let validStudentsCount = 0;
+
+            filtered.forEach(s => {
+                const safeId = getSafeDocId(s.roll);
+                const safeAttendance = s.attendance || {};
+                const enrolledSubjects = studentEnrolledSubjects[safeId] || new Set();
+                
+                if(enrolledSubjects.size === 0) return;
+                
+                let studentTotalAttended = 0;
+                let studentTotalHeldTarget = 0;
+
+                enrolledSubjects.forEach(sub => {
+                    studentTotalAttended += Number(safeAttendance[sub] || 0);
+                    studentTotalHeldTarget += Number(subjectHoursHeld[sub] || 0);
+                });
+
+                const pct = studentTotalHeldTarget > 0 ? ((studentTotalAttended / studentTotalHeldTarget) * 100).toFixed(1) : "0.0";
+                totalPctSum += parseFloat(pct);
+                validStudentsCount++;
+
+                const isIrregular = parseFloat(pct) < 75 && studentTotalHeldTarget > 0;
+                
+                if (isIrregular) {
+                    shortageCount++;
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-3 rounded-lg border border-rose-200 shadow-sm flex items-center justify-between";
+                    card.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xs font-mono font-bold bg-rose-100 text-rose-800 px-2 py-1 rounded">
+                                ${s.roll || 'N/A'}
+                            </span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">${s.name || 'Unknown'}</p>
+                                <p class="text-[10px] text-slate-500">Missed ${studentTotalHeldTarget - studentTotalAttended} Class Hours</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-extrabold text-rose-600">${pct}%</span>
+                            <p class="text-[10px] font-bold text-rose-500 uppercase">Defaulter</p>
+                        </div>
+                    `;
+                    irregularContainer.appendChild(card);
+                }
+
+                let rowHTML = `
+                    <td class="p-3 font-mono font-bold text-slate-700 sticky left-0 bg-white">${s.roll || 'N/A'}</td>
+                    <td class="p-3 font-medium text-slate-800 whitespace-nowrap sticky left-16 bg-white">${s.name || 'Unknown'}</td>
+                `;
+                
+                dynamicSubjectKeys.forEach(subKey => {
+                    if (enrolledSubjects.has(subKey)) {
+                        const att = Number(safeAttendance[subKey] || 0);
+                        rowHTML += `<td class="p-3 text-center border-l border-slate-100">${att}/${subjectHoursHeld[subKey] || 0}</td>`;
+                    } else {
+                        rowHTML += `<td class="p-3 text-center border-l border-slate-100 text-slate-300">-</td>`;
+                    }
+                });
+
+                rowHTML += `
+                    <td class="p-3 text-center font-bold border-l border-slate-100 bg-indigo-50/30">${studentTotalAttended}/${studentTotalHeldTarget}</td>
+                    <td class="p-3 text-center font-bold bg-indigo-50/30 ${isIrregular ? 'text-rose-600' : 'text-emerald-600'}">${pct}%</td>
+                    <td class="p-3 text-center">
+                        ${isIrregular 
+                            ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 rounded-full border border-rose-200"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Irregular</span>' 
+                            : '<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200"><i class="fa-solid fa-circle-check mr-1"></i>Regular</span>'
+                        }
+                    </td>
+                `;
+                
+                const row = document.createElement('tr');
+                row.className = "hover:bg-slate-50 transition";
+                row.innerHTML = rowHTML;
+                tbody.appendChild(row);
+            });
+
+            if (shortageCount === 0) {
+                irregularContainer.innerHTML = `<p class="text-xs text-emerald-700 font-medium col-span-2"><i class="fa-solid fa-circle-check mr-1.5"></i>All active students meet the required 75% attendance threshold!</p>`;
+            }
+
+            const avg = validStudentsCount > 0 ? (totalPctSum / validStudentsCount).toFixed(1) : "0.0";
+            document.getElementById('statClassAvg').innerText = `${avg}%`;
+            document.getElementById('statShortage').innerText = `${shortageCount} ${shortageCount === 1 ? 'Student' : 'Students'}`;
+        }
+
+        // =================================================================
+        // REPORTS CENTER MODULE LOGIC 
+        // =================================================================
+        function populateStudentDropdowns() {
+            const select = document.getElementById('reportStudentSelect');
+            select.innerHTML = '';
+            studentMasterList.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.roll;
+                opt.innerText = `${s.roll || 'N/A'} - ${s.name || 'Unknown'}`;
+                select.appendChild(opt);
+            });
+        }
+
+        function generateCustomReport() {
+            const reportType = document.getElementById('reportTypeSelect').value;
+            const threshold = document.getElementById('reportThreshold').value;
+            const targetRoll = document.getElementById('reportStudentSelect').value;
+            const renderArea = document.getElementById('reportRenderArea');
+
+            const dynamicSubjectKeys = Object.keys(subjectHoursHeld);
+            const studentEnrolledSubjects = getEnrolledSubjectsMap();
+
+            let dataset = studentMasterList.filter(s => {
+                const safeId = getSafeDocId(s.roll);
+                const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                if(enrolled.size === 0) return false;
+
+                const safeAtt = s.attendance || {};
+                
+                let attSum = 0; let heldSum = 0;
+                enrolled.forEach(sub => {
+                    attSum += Number(safeAtt[sub] || 0);
+                    heldSum += Number(subjectHoursHeld[sub] || 0);
+                });
+                
+                const pct = heldSum > 0 ? (attSum / heldSum) * 100 : 0;
+                if (threshold === 'BELOW_75') return pct < 75;
+                if (threshold === 'ABOVE_75') return pct >= 75;
+                return true;
+            });
+
+            if (reportType === 'FULL_MONTHLY' || reportType === 'IRREGULAR_SHORTAGE') {
+                const isShortageOnly = reportType === 'IRREGULAR_SHORTAGE';
+                if (isShortageOnly) {
+                    dataset = dataset.filter(s => {
+                        const safeId = getSafeDocId(s.roll);
+                        const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                        const safeAtt = s.attendance || {};
+                        
+                        let attSum = 0; let heldSum = 0;
+                        enrolled.forEach(sub => {
+                            attSum += Number(safeAtt[sub] || 0);
+                            heldSum += Number(subjectHoursHeld[sub] || 0);
+                        });
+                        return ((attSum / heldSum) * 100) < 75;
+                    });
+                }
+
+                document.getElementById('reportTitleHeader').innerText = isShortageOnly ? "Official Irregular & Shortage Notice List (<75%)" : "Consolidated Monthly Attendance Report";
+                document.getElementById('printReportTitle').innerText = isShortageOnly ? "Irregular & Shortage Notice List" : "Consolidated Monthly Attendance Report";
+
+                let html = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse border border-slate-200">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                    <th class="p-2 border-r">Roll No</th>
+                                    <th class="p-2 border-r whitespace-nowrap">Student Name</th>
+                `;
+                
+                dynamicSubjectKeys.forEach(subKey => {
+                    html += `<th class="p-2 text-center border-r">${subKey} (${subjectHoursHeld[subKey] || 0}h)</th>`;
+                });
+
+                html += `
+                                    <th class="p-2 text-center border-r">Attended / Total</th>
+                                    <th class="p-2 text-center">Overall %</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                `;
+
+                dataset.forEach(s => {
+                    const safeId = getSafeDocId(s.roll);
+                    const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                    const safeAtt = s.attendance || {};
+                    
+                    let attSum = 0; let heldSum = 0;
+                    enrolled.forEach(sub => {
+                        attSum += Number(safeAtt[sub] || 0);
+                        heldSum += Number(subjectHoursHeld[sub] || 0);
+                    });
+                    const pct = heldSum > 0 ? ((attSum / heldSum) * 100).toFixed(1) : "0.0";
+                    
+                    html += `<tr>
+                                <td class="p-2 font-mono font-bold border-r">${s.roll || 'N/A'}</td>
+                                <td class="p-2 font-medium border-r">${s.name || 'Unknown'}</td>`;
+                    
+                    dynamicSubjectKeys.forEach(subKey => {
+                        if (enrolled.has(subKey)) {
+                            html += `<td class="p-2 text-center border-r">${safeAtt[subKey] || 0}</td>`;
+                        } else {
+                            html += `<td class="p-2 text-center border-r text-slate-300">-</td>`;
+                        }
+                    });
+
+                    html += `
+                                <td class="p-2 text-center font-bold border-r bg-slate-50">${attSum}/${heldSum}</td>
+                                <td class="p-2 text-center font-bold ${parseFloat(pct) < 75 ? 'text-rose-600' : 'text-emerald-600'}">${pct}%</td>
+                            </tr>
+                    `;
+                });
+
+                html += `</tbody></table></div>`;
+                renderArea.innerHTML = html;
+
+            } else if (reportType === 'INDIVIDUAL') {
+                const s = studentMasterList.find(st => getSafeDocId(st.roll) === getSafeDocId(targetRoll)) || studentMasterList[0];
+                if (!s) return; 
+                
+                const safeId = getSafeDocId(s.roll);
+                const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                const safeAtt = s.attendance || {};
+                
+                let attSum = 0; let heldSum = 0;
+                enrolled.forEach(sub => {
+                    attSum += Number(safeAtt[sub] || 0);
+                    heldSum += Number(subjectHoursHeld[sub] || 0);
+                });
+                const pct = heldSum > 0 ? ((attSum / heldSum) * 100).toFixed(1) : "0.0";
+
+                document.getElementById('reportTitleHeader').innerText = `Individual Transcript: ${s.name || 'Unknown'} (${s.roll || 'N/A'})`;
+                document.getElementById('printReportTitle').innerText = `Individual Attendance Transcript - ${s.roll || 'N/A'}`;
+
+                let html = `
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <div><p class="text-xs text-slate-500 uppercase">Roll Number</p><p class="font-bold text-sm font-mono">${s.roll || 'N/A'}</p></div>
+                            <div><p class="text-xs text-slate-500 uppercase">Student Name</p><p class="font-bold text-sm">${s.name || 'Unknown'}</p></div>
+                            <div><p class="text-xs text-slate-500 uppercase">Total Attended</p><p class="font-bold text-sm">${attSum} / ${heldSum} Hours</p></div>
+                            <div><p class="text-xs text-slate-500 uppercase">Status</p><p class="font-bold text-sm ${parseFloat(pct)<75?'text-rose-600':'text-emerald-600'}">${pct}% ${parseFloat(pct)<75?'(Irregular)':'(Eligible)'}</p></div>
+                        </div>
+
+                        <h4 class="text-xs font-bold uppercase text-slate-600 tracking-wider">Subject-Wise Breakdown</h4>
+                        <table class="w-full text-left text-xs border-collapse border border-slate-200">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                    <th class="p-2 border-r">Subject Code</th>
+                                    <th class="p-2 border-r">Subject Type</th>
+                                    <th class="p-2 text-center border-r">Hours Conducted</th>
+                                    <th class="p-2 text-center border-r">Hours Attended</th>
+                                    <th class="p-2 text-center">Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                `;
+
+                dynamicSubjectKeys.forEach(code => {
+                    if (enrolled.has(code)) {
+                        const held = Number(subjectHoursHeld[code] || 0);
+                        const att = Number(safeAtt[code] || 0);
+                        const subPct = held > 0 ? ((att / held) * 100).toFixed(1) : "0.0";
+                        html += `
+                            <tr>
+                                <td class="p-2 font-bold border-r">${code}</td>
+                                <td class="p-2 border-r">Active Batch Enrollment</td>
+                                <td class="p-2 text-center border-r">${held}</td>
+                                <td class="p-2 text-center border-r">${att}</td>
+                                <td class="p-2 text-center font-bold ${parseFloat(subPct)<75?'text-rose-600':'text-emerald-600'}">${subPct}%</td>
+                            </tr>
+                        `;
+                    }
+                });
+
+                html += `</tbody></table></div>`;
+                renderArea.innerHTML = html;
+
+            } else if (reportType === 'FACULTY_SUBJECT') {
+                document.getElementById('reportTitleHeader').innerText = "Faculty-Subject Attendance Summary";
+                document.getElementById('printReportTitle').innerText = "Faculty-Subject Attendance Summary";
+
+                let html = `
+                    <table class="w-full text-left text-xs border-collapse border border-slate-200">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                <th class="p-2 border-r">Faculty Name</th>
+                                <th class="p-2 border-r">Assigned Subject / Batch</th>
+                                <th class="p-2 text-center border-r">Hours Held</th>
+                                <th class="p-2 text-center border-r">Allocated Students</th>
+                                <th class="p-2 text-center">Batch Avg %</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                `;
+
+                Object.keys(facultyBatchAllocations).forEach(key => {
+                    const alloc = facultyBatchAllocations[key];
+                    
+                    if(alloc.subjects) {
+                        Object.entries(alloc.subjects).forEach(([subKey, rolls]) => {
+                            const held = Number(subjectHoursHeld[subKey] || 0);
+                            const safeAllocRolls = (rolls || []).map(r => getSafeDocId(r));
+                            
+                            const allocatedStudents = studentMasterList.filter(s => safeAllocRolls.includes(getSafeDocId(s.roll)));
+                            
+                            const totalAttendedSum = allocatedStudents.reduce((acc, s) => acc + Number((s.attendance && s.attendance[subKey]) || 0), 0);
+                            const maxPossible = held * allocatedStudents.length;
+                            const avg = maxPossible > 0 ? ((totalAttendedSum / maxPossible) * 100).toFixed(1) : "0.0";
+
+                            html += `
+                                <tr>
+                                    <td class="p-2 font-bold border-r">${alloc.name}</td>
+                                    <td class="p-2 border-r">${subKey}</td>
+                                    <td class="p-2 text-center border-r">${held} Hrs</td>
+                                    <td class="p-2 text-center border-r">${allocatedStudents.length} Students</td>
+                                    <td class="p-2 text-center font-bold text-indigo-600">${avg}%</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                });
+
+                html += `</tbody></table>`;
+                renderArea.innerHTML = html;
+            }
+        }
+
+        function downloadCSVReport() {
+            const dynamicSubjectKeys = Object.keys(subjectHoursHeld);
+            const studentEnrolledSubjects = getEnrolledSubjectsMap();
+            
+            let csv = "Roll No,Student Name,";
+            dynamicSubjectKeys.forEach(sub => { csv += `${sub},`; });
+            csv += "Total Enrolled Attended,Total Enrolled Held,Overall Percentage,Irregular Status\n";
+
+            studentMasterList.forEach(s => {
+                const safeId = getSafeDocId(s.roll);
+                const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                const safeAtt = s.attendance || {};
+                
+                if(enrolled.size === 0) return;
+
+                let attSum = 0; let heldSum = 0;
+                enrolled.forEach(sub => {
+                    attSum += Number(safeAtt[sub] || 0);
+                    heldSum += Number(subjectHoursHeld[sub] || 0);
+                });
+                const pct = heldSum > 0 ? ((attSum / heldSum) * 100).toFixed(1) : "0.0";
+                const isIrregular = parseFloat(pct) < 75;
+                
+                csv += `"${s.roll || 'N/A'}","${s.name || 'Unknown'}",`;
+                dynamicSubjectKeys.forEach(sub => { 
+                    if(enrolled.has(sub)) {
+                        csv += `${safeAtt[sub] || 0},`; 
+                    } else {
+                        csv += `-,`;
+                    }
+                });
+                csv += `${attSum},${heldSum},${pct}%,"${isIrregular ? 'IRREGULAR' : 'REGULAR'}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `Dynamic_Monthly_Attendance_Report_RGMCET.csv`);
+            a.click();
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        // =================================================================
+        // DANGER ZONE: FACTORY RESET DATABASE
+        // =================================================================
+        async function factoryResetDatabase() {
+            const confirmMsg = "CRITICAL WARNING:\n\nYou are about to PERMANENTLY DELETE all students, attendance records, and faculty mappings from the cloud database.\n\nThis action CANNOT be undone.\n\nType 'ERASE' below to confirm.";
+            const userInput = prompt(confirmMsg);
+
+            if (userInput !== 'ERASE') {
+                showToast("Reset cancelled. Your data is safe.", "info");
+                return;
+            }
+
+            try {
+                const btn = document.getElementById('resetDbBtn');
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Erasing Data...';
+                btn.disabled = true;
+
+                const studentsSnapshot = await db.collection('students').get();
+                const batch = db.batch();
+                
+                studentsSnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                const metaDocs = ['facultyAllocations', 'subjectHours', 'subjectDailyHours'];
+                metaDocs.forEach(docName => {
+                    const ref = db.collection('metadata').doc(docName);
+                    batch.delete(ref);
+                });
+
+                await batch.commit();
+
+                showToast("Database erased. Reloading application...", "success");
+                setTimeout(() => window.location.reload(), 2000);
+
+            } catch (error) {
+                console.error("Failed to reset database:", error);
+                showToast("An error occurred while resetting the database. Check console for details.", "error");
+                
+                const btn = document.getElementById('resetDbBtn');
+                btn.innerHTML = '<i class="fa-solid fa-skull-crossbones mr-2 animate-pulse"></i> ERASE ALL DATA';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
