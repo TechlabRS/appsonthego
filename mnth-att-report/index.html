@@ -28,7 +28,7 @@
 
     <div id="toast-container" class="fixed top-6 right-4 z-[100] flex flex-col gap-2 pointer-events-none w-80 max-w-[calc(100vw-2rem)]"></div>
 
-    <!-- MAIN APP CONTENT (Direct Access - No Login Modals) -->
+    <!-- MAIN APP CONTENT (Direct Access) -->
     <div id="appContent" class="flex-col min-h-screen">
         <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-30 no-print">
             <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
@@ -71,18 +71,16 @@
                             <i class="fa-solid fa-sliders text-indigo-600 mr-2"></i> Session Setup & Faculty Allocation
                         </h2>
                         
-                        <!-- DYNAMIC FACULTY CSV IMPORT BUTTON -->
                         <label class="cursor-pointer inline-flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2.5 py-1.5 rounded border border-indigo-200 transition">
                             <i class="fa-solid fa-file-import mr-1.5"></i> Sync Master Faculty/Subject CSV
                             <input type="file" id="facultyMappingCsvInput" accept=".csv" class="hidden" onchange="handleFacultyMappingCSV(event)">
                         </label>
                     </div>
 
-                    <!-- MODE TOGGLE -->
                     <div class="mb-5 pb-5 border-b border-slate-100 flex justify-center sm:justify-start">
                         <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-lg w-max border border-slate-200">
-                            <button type="button" id="modeDailyBtn" onclick="setInputMode('daily')" class="px-5 py-2 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition focus:outline-none">Daily Entry Mode</button>
                             <button type="button" id="modeMonthlyBtn" onclick="setInputMode('monthly')" class="px-5 py-2 rounded-md text-xs font-bold text-slate-500 hover:text-slate-800 transition focus:outline-none">Monthly Bulk Entry</button>
+							<button type="button" id="modeDailyBtn" onclick="setInputMode('daily')" class="px-5 py-2 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition focus:outline-none">Daily Entry Mode</button>
                         </div>
                     </div>
 
@@ -98,11 +96,10 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Record Date</label>
+                            <label id="dateLabel" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Record Date</label>
                             <input type="date" id="attendanceDate" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
                         </div>
 
-                        <!-- DYNAMIC HOURS WRAPPERS -->
                         <div id="dailyHoursWrapper">
                             <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Class Hours Conducted</label>
                             <div class="grid grid-cols-4 gap-2">
@@ -127,7 +124,6 @@
                     </div>
                 </section>
 
-                <!-- Student Roster Section -->
                 <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
                     <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
                         <div>
@@ -150,7 +146,6 @@
                         <div class="w-full sm:w-2/3">
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Quick Select / Find Student in Batch</label>
                             <select id="singleStudentDropdown" onchange="highlightOrSelectStudent()" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <!-- Populated dynamically -->
                             </select>
                         </div>
                         <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
@@ -167,9 +162,7 @@
                         </div>
                     </div>
 
-                    <div id="studentListContainer" class="space-y-2">
-                        <!-- Populated dynamically -->
-                    </div>
+                    <div id="studentListContainer" class="space-y-2"></div>
                 </section>
 
                 <section class="bg-indigo-900 text-white rounded-xl shadow-lg p-4 md:p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -241,11 +234,13 @@
                     </button>
                 </div>
 
+                <div id="subjectFilterChips" class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 no-print hidden"></div>
+
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                         <p class="text-xs text-slate-500 font-semibold uppercase">Total Class Hours Held</p>
                         <h3 id="statTotalHeld" class="text-2xl font-bold text-slate-800 mt-1">0 Hrs</h3>
-                        <p class="text-xs text-slate-400 mt-1">Across All Faculty Batches</p>
+                        <p class="text-xs text-slate-400 mt-1">Across Selected Batches</p>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                         <p class="text-xs text-slate-500 font-semibold uppercase">Overall Class Average</p>
@@ -270,6 +265,9 @@
                             <i class="fa-solid fa-triangle-exclamation text-rose-600 text-lg"></i>
                             <h2 class="text-xs font-bold uppercase tracking-wider text-rose-900">Irregular & Chronic Absentee Monitor</h2>
                         </div>
+                        <button onclick="toggleIrregularPanel()" id="irregularToggleBtn" class="text-xs font-bold bg-white text-rose-700 px-3 py-1.5 rounded-lg border border-rose-200 hover:bg-rose-100 transition focus:outline-none flex items-center shadow-sm">
+                            <i class="fa-solid fa-eye-slash mr-1.5"></i> Hide
+                        </button>
                     </div>
                     <div id="irregularListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                 </div>
@@ -286,7 +284,7 @@
                         <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
                             <i class="fa-solid fa-table text-indigo-600 mr-2"></i> Consolidated Attendance Matrix
                         </h2>
-                        <span class="text-xs text-slate-400">Format: Attended Hours / Total Held Hours (Only active batches calculated)</span>
+                        <span class="text-xs text-slate-400">Format: Attended Hours / Total Held Hours</span>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs border-collapse">
@@ -296,7 +294,6 @@
                     </div>
                 </div>
             </div>
-
 
             <!-- TAB 4: REPORTS & EXPORTS -->
             <div id="viewReports" class="space-y-6 hidden">
@@ -308,7 +305,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Report Type</label>
-                            <select id="reportTypeSelect" onchange="generateCustomReport()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <select id="reportTypeSelect" onchange="onReportTypeChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                 <option value="FULL_MONTHLY">Consolidated Monthly Attendance Report</option>
                                 <option value="IRREGULAR_SHORTAGE">Irregular & Shortage Notice List (<75%)</option>
                                 <option value="FACULTY_SUBJECT">Faculty-Subject Wise Summary</option>
@@ -357,7 +354,6 @@
                     <div id="reportRenderArea"></div>
                 </section>
 
-                <!-- DANGER ZONE: Reset Database -->
                 <section id="dangerZone" class="bg-rose-50 rounded-xl shadow-sm border border-rose-200 p-4 md:p-6 mt-6 no-print">
                     <h2 class="text-xs font-bold uppercase tracking-wider text-rose-800 mb-4 flex items-center">
                         <i class="fa-solid fa-triangle-exclamation mr-2 text-rose-600"></i> System Administration: Danger Zone
@@ -377,16 +373,11 @@
         </main>
     </div>
 
-    <!-- Footer Signature -->
     <footer class="py-4 text-center text-xs text-slate-500 border-t border-slate-200 bg-slate-100 no-print">
         Regards from RGMCET • Academic Attendance & Faculty Engine v3.0 (Direct)
     </footer>
 
-    <!-- Shared Application State & JavaScript Logic -->
     <script>
-        // =================================================================
-        // TOAST NOTIFICATION SYSTEM
-        // =================================================================
         function showToast(message, type = 'success', duration = 4000) {
             const container = document.getElementById('toast-container');
             if (!container) return;
@@ -431,19 +422,15 @@
             }, duration);
         }
 
-        // =================================================================
-        // FIREBASE INITIALIZATION 
-        // =================================================================
         const firebaseConfig = {
-      apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
-      authDomain: "stuattnd.firebaseapp.com",
-      projectId: "stuattnd",
-      storageBucket: "stuattnd.firebasestorage.app",
-      messagingSenderId: "511533506488",
-      appId: "1:511533506488:web:aca4de3d513915d012f94d",
-      measurementId: "G-9PZZM5LFKX"
-    };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'a-mp-report';
+		  apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+		  authDomain: "stuattnd.firebaseapp.com",
+		  projectId: "stuattnd",
+		  storageBucket: "stuattnd.firebasestorage.app",
+		  messagingSenderId: "511533506488",
+		  appId: "1:511533506488:web:aca4de3d513915d012f94d",
+		  measurementId: "G-9PZZM5LFKX"
+		};
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -457,30 +444,33 @@
         let facultyBatchAllocations = {}; 
         let studentMasterList = [];
         let activeFacultyRoster = [];
+        let activeDashboardSubjectFilters = new Set();
+        let filtersInitialized = false;
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const today = new Date();
-            const offset = today.getTimezoneOffset() * 60000;
-            const localISOTime = (new Date(today - offset)).toISOString().split('T')[0];
-            document.getElementById('attendanceDate').value = localISOTime;
-            
             try {
-                // Direct Access implicitly logs in Anonymously
                 await auth.signInAnonymously();
-                console.log("Direct Access: Logged in implicitly.");
-                
                 await loadFirestoreData();
                 renderDashboard();
-                generateCustomReport();
+                onReportTypeChange();
+                setInputMode('daily'); // Initialize default date settings
                 switchTab('faculty');
             } catch (error) {
-                showToast("Failed to authenticate with Firebase. Check your network or Security Rules.", "error");
+                showToast("Failed to authenticate with Firebase. Check network or Security Rules.", "error");
             }
         });
 
         function getSafeDocId(rollString) {
             if (!rollString) return 'UNKNOWN_ROLL_' + Math.floor(Math.random()*1000);
             return String(rollString).trim().replace(/\//g, '-');
+        }
+
+        function formatUniqueSub(uniqueSubKey) {
+            if (!uniqueSubKey.includes('_')) return { facName: '', subCode: uniqueSubKey };
+            const [facId, ...subParts] = uniqueSubKey.split('_');
+            const subCode = subParts.join('_');
+            const facName = facultyBatchAllocations[facId] ? facultyBatchAllocations[facId].name.split(' ')[0] : facId;
+            return { facName, subCode };
         }
 
         async function loadFirestoreData() {
@@ -506,7 +496,7 @@
                 populateStudentDropdowns();
 
                 if (Object.keys(facultyBatchAllocations).length === 0 && studentMasterList.length === 0) {
-                    showToast("Database is currently empty. Please use 'Sync Master Faculty/Subject CSV' to initialize data.", "info", 10000);
+                    showToast("Database is empty. Use 'Sync Master Faculty/Subject CSV' to initialize data.", "info", 10000);
                 }
 
             } catch (error) {
@@ -515,9 +505,6 @@
             }
         }
 
-        // =================================================================
-        // DYNAMIC FACULTY MAPPING UPLOAD
-        // =================================================================
         async function handleFacultyMappingCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -558,19 +545,16 @@
                         renderFacultyDropdowns();
                         showToast(`Successfully synced dynamic faculty-subject mappings!`, "success");
                     } catch (error) {
-                        showToast("Failed to save mappings to Firebase cloud.", "error");
+                        showToast("Failed to save mappings to cloud database.", "error");
                     }
                 } else {
-                    showToast("Invalid CSV format. Please ensure your CSV header is:\nFacultyID,FacultyName,SubjectCode,StudentRolls(SpaceSeparated)", "error", 6000);
+                    showToast("Invalid CSV format. Header required: FacultyID,FacultyName,SubjectCode,StudentRolls", "error", 6000);
                 }
             };
             reader.readAsText(file);
             event.target.value = '';
         }
 
-        // =================================================================
-        // INPUT MODE TOGGLE (DAILY VS MONTHLY BULK)
-        // =================================================================
         function setInputMode(mode) {
             inputMode = mode;
             
@@ -584,6 +568,22 @@
             
             document.getElementById('dailyHoursWrapper').classList.toggle('hidden', mode === 'monthly');
             document.getElementById('monthlyHoursWrapper').classList.toggle('hidden', mode === 'daily');
+            
+            const dateInput = document.getElementById('attendanceDate');
+            const dateLabel = document.getElementById('dateLabel');
+            const today = new Date();
+            const offset = today.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(today - offset)).toISOString();
+            
+            if (mode === 'monthly') {
+                dateLabel.innerText = 'Record Month';
+                dateInput.type = 'month';
+                dateInput.value = localISOTime.substring(0, 7); // Sets YYYY-MM
+            } else {
+                dateLabel.innerText = 'Record Date';
+                dateInput.type = 'date';
+                dateInput.value = localISOTime.split('T')[0]; // Sets YYYY-MM-DD
+            }
             
             const statBlocks = document.querySelectorAll('.stat-block');
             const dividers = document.querySelectorAll('.stat-divider');
@@ -623,13 +623,10 @@
             }
 
             if (tabName === 'dashboard') renderDashboard();
-            if (tabName === 'reports') { populateStudentDropdowns(); generateCustomReport(); }
+            if (tabName === 'reports') { populateStudentDropdowns(); onReportTypeChange(); }
             if (tabName === 'breport') renderBReport();
         }
 
-        // =================================================================
-        // FACULTY SESSION & ALLOCATION LOGIC
-        // =================================================================
         function renderFacultyDropdowns() {
             const facSelect = document.getElementById('facultySelect');
             const bReportFacSelect = document.getElementById('bReportFacultySelect');
@@ -793,9 +790,9 @@
         }
 
         function markSelectedDropdownStudent(status) {
-            if (inputMode === 'monthly') { showToast("Quick select actions are disabled in Monthly mode.", "info"); return; }
+            if (inputMode === 'monthly') { showToast("Quick select actions disabled in Monthly mode.", "info"); return; }
             const roll = document.getElementById('singleStudentDropdown').value;
-            if (!roll) { showToast("Please select a student from the dropdown first.", "info"); return; }
+            if (!roll) { showToast("Select a student from the dropdown first.", "info"); return; }
             const student = activeFacultyRoster.find(s => s.roll === roll);
             if (student) { student.status = status; renderFacultyRoster(); }
         }
@@ -897,8 +894,9 @@
                         await batch.commit();
                         showToast(`Imported ${parsed.length} students to ${subjectKey}!`, "success");
                         onSubjectChange();
-                        populateStudentDropdowns(); renderDashboard();
-                    } catch (err) { showToast("Failed to sync assigned batch to the database.", "error"); }
+                        populateStudentDropdowns(); 
+                        renderDashboard();
+                    } catch (err) { showToast("Failed to sync assigned batch to database.", "error"); }
                 } else {
                     showToast('Invalid CSV format. Expected: Roll, Name', 'error');
                 }
@@ -909,6 +907,7 @@
 
         async function submitDailyAttendance() {
             const btn = document.getElementById('submitAttendanceBtn');
+            const facKey = document.getElementById('facultySelect').value;
             let subject = document.getElementById('subjectSelect').value;
             const date = document.getElementById('attendanceDate').value;
 
@@ -918,14 +917,33 @@
             } else {
                 hrsConducted = Number(document.getElementById('monthlyBulkHours').value);
                 if (!hrsConducted || hrsConducted <= 0) {
-                    showToast("Please enter a valid number of Total Class Hours Conducted.", "error");
+                    showToast("Enter a valid number of Total Class Hours Conducted.", "error");
                     return;
                 }
             }
 
-            if (!date || !subject) {
-                showToast("Please ensure a date and subject are selected.", "info");
+            if (!date || !subject || !facKey) {
+                showToast("Ensure date and subject are selected.", "info");
                 return;
+            }
+
+            const uniqueSubKey = `${facKey}_${subject}`;
+
+            if (inputMode === 'monthly') {
+                for (let fStudent of activeFacultyRoster) {
+                    const safeId = getSafeDocId(fStudent.roll);
+                    const inputEl = document.getElementById(`bulk-input-${safeId}`);
+                    const attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
+                    
+                    if (attendedHours > hrsConducted) {
+                        showToast(`Error: ${fStudent.name} (${fStudent.roll}) marked for ${attendedHours} hrs, exceeding total ${hrsConducted} held hrs.`, "error", 7000);
+                        if(inputEl) {
+                            inputEl.classList.add('ring-2', 'ring-rose-500', 'bg-rose-50');
+                            setTimeout(() => inputEl.classList.remove('ring-2', 'ring-rose-500', 'bg-rose-50'), 3000);
+                        }
+                        return; 
+                    }
+                }
             }
 
             try {
@@ -934,17 +952,17 @@
 
                 const batch = db.batch(); 
 
-                if (subjectHoursHeld[subject] === undefined) subjectHoursHeld[subject] = 0;
-                subjectHoursHeld[subject] = Number(subjectHoursHeld[subject]) + hrsConducted;
+                if (subjectHoursHeld[uniqueSubKey] === undefined) subjectHoursHeld[uniqueSubKey] = 0;
+                subjectHoursHeld[uniqueSubKey] = Number(subjectHoursHeld[uniqueSubKey]) + hrsConducted;
 
                 const metaRef = db.collection('metadata').doc('subjectHours');
-                batch.set(metaRef, { [subject]: subjectHoursHeld[subject] }, { merge: true });
+                batch.set(metaRef, { [uniqueSubKey]: subjectHoursHeld[uniqueSubKey] }, { merge: true });
 
-                if (subjectDailyHoursHeld[subject] === undefined) subjectDailyHoursHeld[subject] = {};
-                subjectDailyHoursHeld[subject][date] = Number(subjectDailyHoursHeld[subject][date] || 0) + hrsConducted;
+                if (subjectDailyHoursHeld[uniqueSubKey] === undefined) subjectDailyHoursHeld[uniqueSubKey] = {};
+                subjectDailyHoursHeld[uniqueSubKey][date] = Number(subjectDailyHoursHeld[uniqueSubKey][date] || 0) + hrsConducted;
                 
                 const dailyMetaRef = db.collection('metadata').doc('subjectDailyHours');
-                batch.set(dailyMetaRef, { [subject]: subjectDailyHoursHeld[subject] }, { merge: true });
+                batch.set(dailyMetaRef, { [uniqueSubKey]: subjectDailyHoursHeld[uniqueSubKey] }, { merge: true });
 
                 activeFacultyRoster.forEach(fStudent => {
                     const safeId = getSafeDocId(fStudent.roll);
@@ -953,7 +971,7 @@
                     if (masterStudent) {
                         masterStudent.attendance = masterStudent.attendance || {};
                         masterStudent.dailyLogs = masterStudent.dailyLogs || {};
-                        masterStudent.dailyLogs[subject] = masterStudent.dailyLogs[subject] || {};
+                        masterStudent.dailyLogs[uniqueSubKey] = masterStudent.dailyLogs[uniqueSubKey] || {};
                         
                         let attendedHours = 0;
                         if (inputMode === 'daily') {
@@ -963,27 +981,31 @@
                             attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
                         }
 
-                        masterStudent.attendance[subject] = Number(masterStudent.attendance[subject] || 0) + attendedHours;
-                        masterStudent.dailyLogs[subject][date] = Number(masterStudent.dailyLogs[subject][date] || 0) + attendedHours;
+                        masterStudent.attendance[uniqueSubKey] = Number(masterStudent.attendance[uniqueSubKey] || 0) + attendedHours;
+                        masterStudent.dailyLogs[uniqueSubKey][date] = Number(masterStudent.dailyLogs[uniqueSubKey][date] || 0) + attendedHours;
                         
                         const studentRef = db.collection('students').doc(safeId);
                         batch.set(studentRef, {
-                            attendance: { [subject]: masterStudent.attendance[subject] },
-                            dailyLogs: { [subject]: { [date]: masterStudent.dailyLogs[subject][date] } }
+                            attendance: { [uniqueSubKey]: masterStudent.attendance[uniqueSubKey] },
+                            dailyLogs: { [uniqueSubKey]: { [date]: masterStudent.dailyLogs[uniqueSubKey][date] } }
                         }, { merge: true });
                     }
                 });
 
                 await batch.commit();
 
+                // Auto-sync newly recorded subject key to dashboard filters if initialized
+                if (filtersInitialized) {
+                    activeDashboardSubjectFilters.add(uniqueSubKey);
+                }
+
                 showToast(`Attendance Logged Successfully!\nSubject: ${subject}\nAdded Hours: ${hrsConducted}`, "success");
-                
                 renderDashboard();
                 switchTab('breport'); 
 
             } catch (error) {
                 console.error("Database save failed: ", error);
-                showToast("Failed to sync attendance to the cloud database.", "error");
+                showToast("Failed to sync attendance to cloud database.", "error");
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Submit & Sync Records';
@@ -1017,6 +1039,7 @@
         function renderBReport() {
             const facKey = document.getElementById('bReportFacultySelect').value;
             const subKey = document.getElementById('bReportSubjectSelect').value;
+            const uniqueSubKey = `${facKey}_${subKey}`;
             
             const tableContainer = document.getElementById('bReportTableContainer');
             const emptyState = document.getElementById('bReportEmptyState');
@@ -1036,7 +1059,7 @@
             let students = studentMasterList.filter(s => safeAllocRolls.includes(getSafeDocId(s.roll)));
             students.sort((a, b) => String(a.roll).localeCompare(String(b.roll)));
 
-            const subjectDailyMeta = subjectDailyHoursHeld[subKey] || {};
+            const subjectDailyMeta = subjectDailyHoursHeld[uniqueSubKey] || {};
             const availableDates = Object.keys(subjectDailyMeta).sort();
 
             if (availableDates.length === 0) {
@@ -1051,7 +1074,12 @@
             
             availableDates.forEach(dateStr => {
                 const parts = dateStr.split('-');
-                const shortDate = parts.length === 3 ? `${parts[2]}/${parts[1]}` : dateStr;
+                let shortDate = dateStr;
+                if (parts.length === 3) {
+                    shortDate = `${parts[2]}/${parts[1]}`;
+                } else if (parts.length === 2) {
+                    shortDate = `${parts[1]}/${parts[0].slice(2)}`;
+                }
                 const hrsHeld = subjectDailyMeta[dateStr] || 0;
                 theadHTML += `<th class="p-3 text-center border-r min-w-[60px]">${shortDate}<br><span class="text-[10px] font-normal text-slate-500">(${hrsHeld}h)</span></th>`;
             });
@@ -1060,7 +1088,7 @@
             theadRow.innerHTML = theadHTML;
 
             students.forEach(s => {
-                const sLogs = (s.dailyLogs && s.dailyLogs[subKey]) ? s.dailyLogs[subKey] : {};
+                const sLogs = (s.dailyLogs && s.dailyLogs[uniqueSubKey]) ? s.dailyLogs[uniqueSubKey] : {};
                 let studentTotalAtt = 0; let studentTotalHeld = 0;
 
                 let rowHTML = `
@@ -1094,23 +1122,91 @@
         }
 
         // =================================================================
-        // DASHBOARD & EXPORTS
+        // VIEW 3: DASHBOARD LOGIC 
         // =================================================================
+        let isIrregularVisible = true;
+        function toggleIrregularPanel() {
+            isIrregularVisible = !isIrregularVisible;
+            const container = document.getElementById('irregularListContainer');
+            const btn = document.getElementById('irregularToggleBtn');
+            
+            if (isIrregularVisible) {
+                container.classList.remove('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-eye-slash mr-1.5"></i> Hide';
+            } else {
+                container.classList.add('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-eye mr-1.5"></i> Show';
+            }
+        }
+
         function getEnrolledSubjectsMap() {
             const studentEnrolledSubjects = {};
             studentMasterList.forEach(s => { studentEnrolledSubjects[getSafeDocId(s.roll)] = new Set(); });
 
-            Object.values(facultyBatchAllocations).forEach(alloc => {
+            Object.keys(facultyBatchAllocations).forEach(facKey => {
+                const alloc = facultyBatchAllocations[facKey];
                 if(alloc.subjects) {
                     Object.entries(alloc.subjects).forEach(([sub, rolls]) => {
+                        const uniqueSubKey = `${facKey}_${sub}`;
                         (rolls || []).forEach(roll => {
                             const safeId = getSafeDocId(roll);
-                            if (studentEnrolledSubjects[safeId]) studentEnrolledSubjects[safeId].add(sub);
+                            if (studentEnrolledSubjects[safeId]) studentEnrolledSubjects[safeId].add(uniqueSubKey);
                         });
                     });
                 }
             });
             return studentEnrolledSubjects;
+        }
+
+        function renderDashboardSubjectChips(allKeys) {
+            const container = document.getElementById('subjectFilterChips');
+            if (!container) return;
+            
+            if (allKeys.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+
+            let html = `<div class="w-full flex items-center mb-2"><span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mr-3">Filter Dashboard By Subject:</span>
+            <button onclick="toggleAllDashboardSubjects(true)" class="text-[10px] font-bold text-indigo-600 hover:underline mr-2 focus:outline-none">Select All</button>
+            <button onclick="toggleAllDashboardSubjects(false)" class="text-[10px] font-bold text-slate-500 hover:underline focus:outline-none">Clear</button>
+            </div><div class="flex flex-wrap gap-2">`;
+
+            allKeys.forEach(key => {
+                const { facName, subCode } = formatUniqueSub(key);
+                const isActive = activeDashboardSubjectFilters.has(key);
+                const baseClass = "cursor-pointer px-3 py-1.5 rounded-full text-[10px] font-bold border transition-colors duration-200 flex items-center focus:outline-none select-none";
+                const colorClass = isActive 
+                    ? "bg-indigo-100 text-indigo-800 border-indigo-300 hover:bg-indigo-200" 
+                    : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50 shadow-sm";
+                
+                html += `<div onclick="toggleDashboardSubjectFilter('${key}')" class="${baseClass} ${colorClass}">
+                    <i class="fa-solid ${isActive ? 'fa-check' : 'fa-plus'} mr-1.5 opacity-70"></i>
+                    ${subCode} <span class="ml-1 opacity-75 font-normal">(${facName})</span>
+                </div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function toggleDashboardSubjectFilter(key) {
+            if (activeDashboardSubjectFilters.has(key)) {
+                activeDashboardSubjectFilters.delete(key);
+            } else {
+                activeDashboardSubjectFilters.add(key);
+            }
+            renderDashboard();
+        }
+
+        function toggleAllDashboardSubjects(selectAll) {
+            const allKeys = Object.keys(subjectHoursHeld);
+            if (selectAll) {
+                allKeys.forEach(k => activeDashboardSubjectFilters.add(k));
+            } else {
+                activeDashboardSubjectFilters.clear();
+            }
+            renderDashboard();
         }
 
         function renderDashboard() {
@@ -1121,33 +1217,58 @@
                 return safeRoll.includes(query) || safeName.includes(query);
             });
 
-            const dynamicSubjectKeys = Object.keys(subjectHoursHeld);
+            const allDynamicSubjectKeys = Object.keys(subjectHoursHeld);
             const studentEnrolledSubjects = getEnrolledSubjectsMap();
-            const globalTotalHoursHeld = dynamicSubjectKeys.reduce((a, b) => a + Number(subjectHoursHeld[b] || 0), 0);
-            
+
+            // Auto-sync initial filters and newly added subjects
+            if (!filtersInitialized && allDynamicSubjectKeys.length > 0) {
+                allDynamicSubjectKeys.forEach(k => activeDashboardSubjectFilters.add(k));
+                filtersInitialized = true;
+            } else if (filtersInitialized) {
+                allDynamicSubjectKeys.forEach(k => {
+                    if (!activeDashboardSubjectFilters.has(k) && !filtersInitialized) {
+                        activeDashboardSubjectFilters.add(k);
+                    }
+                });
+            }
+
+            const visibleSubjectKeys = allDynamicSubjectKeys.filter(k => activeDashboardSubjectFilters.has(k));
+            renderDashboardSubjectChips(allDynamicSubjectKeys);
+
+            const globalTotalHoursHeld = visibleSubjectKeys.reduce((a, b) => a + Number(subjectHoursHeld[b] || 0), 0);
             document.getElementById('statTotalHeld').innerText = `${globalTotalHoursHeld} Hrs`;
-            document.getElementById('statTotalStudents').innerText = studentMasterList.length;
 
             const subjectGrid = document.getElementById('subjectHoursGrid');
             subjectGrid.innerHTML = '';
-            dynamicSubjectKeys.forEach(subKey => {
+            visibleSubjectKeys.forEach(uniqueSubKey => {
+                const { facName, subCode } = formatUniqueSub(uniqueSubKey);
                 subjectGrid.innerHTML += `
                     <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
-                        <span class="text-[10px] font-bold uppercase bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">Subject</span>
-                        <h4 class="font-bold text-slate-800 mt-1">${subKey}</h4>
-                        <p class="text-xs text-slate-500">${subjectHoursHeld[subKey]} Hrs Held</p>
+                        <span class="text-[10px] font-bold uppercase bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">${facName || 'Subject'}</span>
+                        <h4 class="font-bold text-slate-800 mt-1">${subCode}</h4>
+                        <p class="text-xs text-slate-500">${subjectHoursHeld[uniqueSubKey]} Hrs Held</p>
                     </div>
                 `;
             });
 
+            if (visibleSubjectKeys.length === 0) {
+                subjectGrid.innerHTML = `<div class="col-span-full p-4 bg-slate-50 text-slate-500 rounded border text-center text-sm">Please select at least one subject chip above to view metrics.</div>`;
+            }
+
+            // GROUP COLUMNS BY SUBJECT CODE
+            const uniqueSubjectCodes = [...new Set(visibleSubjectKeys.map(k => formatUniqueSub(k).subCode))];
+
+            // Fixed header sticky background styling
             let theadHTML = `
                 <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
-                    <th class="p-3 sticky left-0 bg-slate-50 z-10">Roll No</th>
-                    <th class="p-3 sticky left-16 bg-slate-50 z-10 whitespace-nowrap">Student Name</th>
+                    <th class="p-3 sticky left-0 bg-slate-50 z-10 w-24 border-r border-slate-200">Roll No</th>
+                    <th class="p-3 sticky left-24 bg-slate-50 z-10 whitespace-nowrap border-r border-slate-200">Student Name</th>
             `;
-            dynamicSubjectKeys.forEach(subKey => { theadHTML += `<th class="p-3 text-center border-l border-slate-200">${subKey}</th>`; });
-            theadHTML += `<th class="p-3 text-center border-l border-slate-200 bg-indigo-50/50">Total Attended</th>
-                          <th class="p-3 text-center bg-indigo-50/50">Overall %</th>
+            uniqueSubjectCodes.forEach(subCode => { 
+                theadHTML += `<th class="p-3 text-center border-r border-slate-200">${subCode}</th>`; 
+            });
+            theadHTML += `<th class="p-3 text-center border-r border-slate-200 bg-indigo-50/50">Total Attended</th>
+                          <th class="p-3 text-center bg-indigo-50/50 border-r border-slate-200">Overall %</th>
                           <th class="p-3 text-center">Irregularity Status</th></tr>`;
             document.getElementById('dashboardTableHeader').innerHTML = theadHTML;
 
@@ -1161,14 +1282,21 @@
                 const safeId = getSafeDocId(s.roll);
                 const safeAttendance = s.attendance || {};
                 const enrolledSubjects = studentEnrolledSubjects[safeId] || new Set();
+                
                 if(enrolledSubjects.size === 0) return;
                 
                 let studentTotalAttended = 0; let studentTotalHeldTarget = 0;
+                let activeVisibleCount = 0;
 
                 enrolledSubjects.forEach(sub => {
-                    studentTotalAttended += Number(safeAttendance[sub] || 0);
-                    studentTotalHeldTarget += Number(subjectHoursHeld[sub] || 0);
+                    if (visibleSubjectKeys.includes(sub)) {
+                        studentTotalAttended += Number(safeAttendance[sub] || 0);
+                        studentTotalHeldTarget += Number(subjectHoursHeld[sub] || 0);
+                        activeVisibleCount++;
+                    }
                 });
+
+                if (activeVisibleCount === 0) return; 
 
                 const pct = studentTotalHeldTarget > 0 ? ((studentTotalAttended / studentTotalHeldTarget) * 100).toFixed(1) : "0.0";
                 totalPctSum += parseFloat(pct);
@@ -1196,20 +1324,28 @@
                     irregularContainer.appendChild(card);
                 }
 
-                let rowHTML = `<td class="p-3 font-mono font-bold text-slate-700 sticky left-0 bg-white">${s.roll || 'N/A'}</td>
-                               <td class="p-3 font-medium text-slate-800 whitespace-nowrap sticky left-16 bg-white">${s.name || 'Unknown'}</td>`;
+                // Fixed sticky column backgrounds (`bg-white`)
+                let rowHTML = `<td class="p-3 font-mono font-bold text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-100">${s.roll || 'N/A'}</td>
+                               <td class="p-3 font-medium text-slate-800 whitespace-nowrap sticky left-24 bg-white z-10 border-r border-slate-100">${s.name || 'Unknown'}</td>`;
                 
-                dynamicSubjectKeys.forEach(subKey => {
-                    if (enrolledSubjects.has(subKey)) {
-                        const att = Number(safeAttendance[subKey] || 0);
-                        rowHTML += `<td class="p-3 text-center border-l border-slate-100">${att}/${subjectHoursHeld[subKey] || 0}</td>`;
+                uniqueSubjectCodes.forEach(subCode => {
+                    // Match assigned faculty keys for this exact student for this grouped subject code
+                    const matchingKeys = Array.from(enrolledSubjects).filter(k => formatUniqueSub(k).subCode === subCode && visibleSubjectKeys.includes(k));
+                    
+                    if (matchingKeys.length > 0) {
+                        let subAtt = 0; let subHeld = 0;
+                        matchingKeys.forEach(mk => {
+                            subAtt += Number(safeAttendance[mk] || 0);
+                            subHeld += Number(subjectHoursHeld[mk] || 0);
+                        });
+                        rowHTML += `<td class="p-3 text-center border-r border-slate-100">${subAtt}/${subHeld}</td>`;
                     } else {
-                        rowHTML += `<td class="p-3 text-center border-l border-slate-100 text-slate-300">-</td>`;
+                        rowHTML += `<td class="p-3 text-center border-r border-slate-100 text-slate-300">-</td>`;
                     }
                 });
 
-                rowHTML += `<td class="p-3 text-center font-bold border-l border-slate-100 bg-indigo-50/30">${studentTotalAttended}/${studentTotalHeldTarget}</td>
-                            <td class="p-3 text-center font-bold bg-indigo-50/30 ${isIrregular ? 'text-rose-600' : 'text-emerald-600'}">${pct}%</td>
+                rowHTML += `<td class="p-3 text-center font-bold border-r border-slate-100 bg-indigo-50/30">${studentTotalAttended}/${studentTotalHeldTarget}</td>
+                            <td class="p-3 text-center font-bold border-r border-slate-100 bg-indigo-50/30 ${isIrregular ? 'text-rose-600' : 'text-emerald-600'}">${pct}%</td>
                             <td class="p-3 text-center">
                                 ${isIrregular ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 rounded-full border border-rose-200"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Irregular</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200"><i class="fa-solid fa-circle-check mr-1"></i>Regular</span>'}
                             </td>`;
@@ -1220,22 +1356,64 @@
                 tbody.appendChild(row);
             });
 
+            document.getElementById('statTotalStudents').innerText = validStudentsCount;
+
             if (shortageCount === 0 && validStudentsCount > 0) irregularContainer.innerHTML = `<p class="text-xs text-emerald-700 font-medium col-span-2"><i class="fa-solid fa-circle-check mr-1.5"></i>All active students meet the required 75% attendance threshold!</p>`;
-            else if (validStudentsCount === 0) irregularContainer.innerHTML = `<p class="text-xs text-slate-500 font-medium col-span-2"><i class="fa-solid fa-circle-info mr-1.5"></i>No active student enrollments found.</p>`;
+            else if (validStudentsCount === 0) irregularContainer.innerHTML = `<p class="text-xs text-slate-500 font-medium col-span-2"><i class="fa-solid fa-circle-info mr-1.5"></i>No records match current filters.</p>`;
 
             const avg = validStudentsCount > 0 ? (totalPctSum / validStudentsCount).toFixed(1) : "0.0";
             document.getElementById('statClassAvg').innerText = `${avg}%`;
             document.getElementById('statShortage').innerText = `${shortageCount} ${shortageCount === 1 ? 'Student' : 'Students'}`;
         }
 
+        // =================================================================
+        // VIEW 4: CUSTOM REPORTS ENGINE 
+        // =================================================================
         function populateStudentDropdowns() {
             const select = document.getElementById('reportStudentSelect');
+            const current = select.value;
             select.innerHTML = '';
             studentMasterList.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.roll; opt.innerText = `${s.roll || 'N/A'} - ${s.name || 'Unknown'}`;
                 select.appendChild(opt);
             });
+            if (current && studentMasterList.some(s => s.roll === current)) {
+                select.value = current;
+            }
+        }
+
+        function onReportTypeChange() {
+            updateReportControlStates();
+            generateCustomReport();
+        }
+
+        function updateReportControlStates() {
+            const reportType = document.getElementById('reportTypeSelect').value;
+            const thresholdSelect = document.getElementById('reportThreshold');
+            const studentSelect = document.getElementById('reportStudentSelect');
+
+            if (reportType === 'INDIVIDUAL') {
+                studentSelect.disabled = false;
+                studentSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+                thresholdSelect.disabled = true;
+                thresholdSelect.classList.add('opacity-50', 'cursor-not-allowed');
+            } else if (reportType === 'FACULTY_SUBJECT') {
+                studentSelect.disabled = true;
+                studentSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                thresholdSelect.disabled = true;
+                thresholdSelect.classList.add('opacity-50', 'cursor-not-allowed');
+            } else if (reportType === 'IRREGULAR_SHORTAGE') {
+                studentSelect.disabled = true;
+                studentSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                thresholdSelect.disabled = true;
+                thresholdSelect.classList.add('opacity-50', 'cursor-not-allowed');
+            } else { // FULL_MONTHLY
+                studentSelect.disabled = true;
+                studentSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                thresholdSelect.disabled = false;
+                thresholdSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         }
 
         function generateCustomReport() {
@@ -1246,6 +1424,8 @@
 
             const dynamicSubjectKeys = Object.keys(subjectHoursHeld);
             const studentEnrolledSubjects = getEnrolledSubjectsMap();
+            // GROUP BY SUBJECT CODE
+            const uniqueSubjectCodes = [...new Set(dynamicSubjectKeys.map(k => formatUniqueSub(k).subCode))];
 
             let dataset = studentMasterList.filter(s => {
                 const safeId = getSafeDocId(s.roll);
@@ -1291,7 +1471,9 @@
                                     <th class="p-2 border-r">Roll No</th>
                                     <th class="p-2 border-r whitespace-nowrap">Student Name</th>
                 `;
-                dynamicSubjectKeys.forEach(subKey => { html += `<th class="p-2 text-center border-r">${subKey} (${subjectHoursHeld[subKey] || 0}h)</th>`; });
+                uniqueSubjectCodes.forEach(subCode => { 
+                    html += `<th class="p-2 text-center border-r">${subCode}</th>`; 
+                });
                 html += `<th class="p-2 text-center border-r">Attended / Total</th><th class="p-2 text-center">Overall %</th></tr></thead><tbody class="divide-y divide-slate-200">`;
 
                 dataset.forEach(s => {
@@ -1305,9 +1487,18 @@
                     
                     html += `<tr><td class="p-2 font-mono font-bold border-r">${s.roll || 'N/A'}</td><td class="p-2 font-medium border-r">${s.name || 'Unknown'}</td>`;
                     
-                    dynamicSubjectKeys.forEach(subKey => {
-                        if (enrolled.has(subKey)) html += `<td class="p-2 text-center border-r">${safeAtt[subKey] || 0}</td>`;
-                        else html += `<td class="p-2 text-center border-r text-slate-300">-</td>`;
+                    uniqueSubjectCodes.forEach(subCode => {
+                        const matchingKeys = Array.from(enrolled).filter(k => formatUniqueSub(k).subCode === subCode);
+                        if (matchingKeys.length > 0) {
+                            let subAtt = 0; let subHeld = 0;
+                            matchingKeys.forEach(mk => {
+                                subAtt += Number(safeAtt[mk] || 0);
+                                subHeld += Number(subjectHoursHeld[mk] || 0);
+                            });
+                            html += `<td class="p-2 text-center border-r">${subAtt}/${subHeld}</td>`;
+                        } else {
+                            html += `<td class="p-2 text-center border-r text-slate-300">-</td>`;
+                        }
                     });
 
                     html += `<td class="p-2 text-center font-bold border-r bg-slate-50">${attSum}/${heldSum}</td><td class="p-2 text-center font-bold ${parseFloat(pct) < 75 ? 'text-rose-600' : 'text-emerald-600'}">${pct}%</td></tr>`;
@@ -1341,20 +1532,26 @@
                         <table class="w-full text-left text-xs border-collapse border border-slate-200">
                             <thead>
                                 <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                                    <th class="p-2 border-r">Subject Code</th><th class="p-2 border-r">Subject Type</th>
+                                    <th class="p-2 border-r">Subject Code</th><th class="p-2 border-r">Faculty Name</th>
                                     <th class="p-2 text-center border-r">Hours Conducted</th><th class="p-2 text-center border-r">Hours Attended</th>
                                     <th class="p-2 text-center">Percentage</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                 `;
-                dynamicSubjectKeys.forEach(code => {
-                    if (enrolled.has(code)) {
-                        const held = Number(subjectHoursHeld[code] || 0);
-                        const att = Number(safeAtt[code] || 0);
-                        const subPct = held > 0 ? ((att / held) * 100).toFixed(1) : "0.0";
-                        html += `<tr><td class="p-2 font-bold border-r">${code}</td><td class="p-2 border-r">Active Batch Enrollment</td>
-                                 <td class="p-2 text-center border-r">${held}</td><td class="p-2 text-center border-r">${att}</td>
+                uniqueSubjectCodes.forEach(subCode => {
+                    const matchingKeys = Array.from(enrolled).filter(k => formatUniqueSub(k).subCode === subCode);
+                    if (matchingKeys.length > 0) {
+                        let subAtt = 0; let subHeld = 0;
+                        let facNames = [...new Set(matchingKeys.map(mk => formatUniqueSub(mk).facName))].join(', ');
+                        
+                        matchingKeys.forEach(mk => {
+                            subAtt += Number(safeAtt[mk] || 0);
+                            subHeld += Number(subjectHoursHeld[mk] || 0);
+                        });
+                        const subPct = subHeld > 0 ? ((subAtt / subHeld) * 100).toFixed(1) : "0.0";
+                        html += `<tr><td class="p-2 font-bold border-r">${subCode}</td><td class="p-2 border-r text-slate-500 text-[10px]">${facNames}</td>
+                                 <td class="p-2 text-center border-r">${subHeld}</td><td class="p-2 text-center border-r">${subAtt}</td>
                                  <td class="p-2 text-center font-bold ${parseFloat(subPct)<75?'text-rose-600':'text-emerald-600'}">${subPct}%</td></tr>`;
                     }
                 });
@@ -1376,16 +1573,16 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                 `;
-
-                Object.keys(facultyBatchAllocations).forEach(key => {
-                    const alloc = facultyBatchAllocations[key];
+                Object.keys(facultyBatchAllocations).forEach(facKey => {
+                    const alloc = facultyBatchAllocations[facKey];
                     if(alloc.subjects) {
                         Object.entries(alloc.subjects).forEach(([subKey, rolls]) => {
-                            const held = Number(subjectHoursHeld[subKey] || 0);
+                            const uniqueSubKey = `${facKey}_${subKey}`;
+                            const held = Number(subjectHoursHeld[uniqueSubKey] || 0);
                             const safeAllocRolls = (rolls || []).map(r => getSafeDocId(r));
                             const allocatedStudents = studentMasterList.filter(s => safeAllocRolls.includes(getSafeDocId(s.roll)));
                             
-                            const totalAttendedSum = allocatedStudents.reduce((acc, s) => acc + Number((s.attendance && s.attendance[subKey]) || 0), 0);
+                            const totalAttendedSum = allocatedStudents.reduce((acc, s) => acc + Number((s.attendance && s.attendance[uniqueSubKey]) || 0), 0);
                             const maxPossible = held * allocatedStudents.length;
                             const avg = maxPossible > 0 ? ((totalAttendedSum / maxPossible) * 100).toFixed(1) : "0.0";
 
@@ -1401,68 +1598,184 @@
             }
         }
 
+        // Dynamic CSV export grouped by Subject
         function downloadCSVReport() {
+            const reportType = document.getElementById('reportTypeSelect').value;
+            const threshold = document.getElementById('reportThreshold').value;
+            const targetRoll = document.getElementById('reportStudentSelect').value;
             const dynamicSubjectKeys = Object.keys(subjectHoursHeld);
             const studentEnrolledSubjects = getEnrolledSubjectsMap();
-            
-            let csv = "Roll No,Student Name,";
-            dynamicSubjectKeys.forEach(sub => { csv += `${sub},`; });
-            csv += "Total Enrolled Attended,Total Enrolled Held,Overall Percentage,Irregular Status\n";
+            const uniqueSubjectCodes = [...new Set(dynamicSubjectKeys.map(k => formatUniqueSub(k).subCode))];
 
-            studentMasterList.forEach(s => {
+            let csv = "";
+            let fileName = `Attendance_Report_${reportType}.csv`;
+
+            if (reportType === 'FULL_MONTHLY' || reportType === 'IRREGULAR_SHORTAGE') {
+                const isShortageOnly = reportType === 'IRREGULAR_SHORTAGE';
+                let dataset = studentMasterList.filter(s => {
+                    const safeId = getSafeDocId(s.roll);
+                    const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                    if (enrolled.size === 0) return false;
+
+                    const safeAtt = s.attendance || {};
+                    let attSum = 0; let heldSum = 0;
+                    enrolled.forEach(sub => { attSum += Number(safeAtt[sub] || 0); heldSum += Number(subjectHoursHeld[sub] || 0); });
+
+                    const pct = heldSum > 0 ? (attSum / heldSum) * 100 : 0;
+                    if (isShortageOnly) return pct < 75;
+                    if (threshold === 'BELOW_75') return pct < 75;
+                    if (threshold === 'ABOVE_75') return pct >= 75;
+                    return true;
+                });
+
+                csv = "Roll No,Student Name,";
+                uniqueSubjectCodes.forEach(subCode => { 
+                    csv += `"${subCode}",`; 
+                });
+                csv += "Total Attended,Total Held,Overall Percentage,Status\n";
+
+                dataset.forEach(s => {
+                    const safeId = getSafeDocId(s.roll);
+                    const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                    const safeAtt = s.attendance || {};
+
+                    let attSum = 0; let heldSum = 0;
+                    enrolled.forEach(sub => { attSum += Number(safeAtt[sub] || 0); heldSum += Number(subjectHoursHeld[sub] || 0); });
+                    const pct = heldSum > 0 ? ((attSum / heldSum) * 100).toFixed(1) : "0.0";
+                    const status = parseFloat(pct) < 75 ? 'IRREGULAR' : 'REGULAR';
+
+                    csv += `"${s.roll || 'N/A'}","${s.name || 'Unknown'}",`;
+                    
+                    uniqueSubjectCodes.forEach(subCode => { 
+                        const matchingKeys = Array.from(enrolled).filter(k => formatUniqueSub(k).subCode === subCode);
+                        if (matchingKeys.length > 0) {
+                            let subAtt = 0; let subHeld = 0;
+                            matchingKeys.forEach(mk => {
+                                subAtt += Number(safeAtt[mk] || 0);
+                                subHeld += Number(subjectHoursHeld[mk] || 0);
+                            });
+                            csv += `"${subAtt}/${subHeld}",`;
+                        } else {
+                            csv += `-,`;
+                        }
+                    });
+                    csv += `${attSum},${heldSum},${pct}%,"${status}"\n`;
+                });
+
+            } else if (reportType === 'INDIVIDUAL') {
+                const s = studentMasterList.find(st => getSafeDocId(st.roll) === getSafeDocId(targetRoll)) || studentMasterList[0];
+                if (!s) { showToast("No student selected for CSV export.", "error"); return; }
+
                 const safeId = getSafeDocId(s.roll);
                 const enrolled = studentEnrolledSubjects[safeId] || new Set();
                 const safeAtt = s.attendance || {};
-                
-                if(enrolled.size === 0) return;
 
-                let attSum = 0; let heldSum = 0;
-                enrolled.forEach(sub => { attSum += Number(safeAtt[sub] || 0); heldSum += Number(subjectHoursHeld[sub] || 0); });
-                const pct = heldSum > 0 ? ((attSum / heldSum) * 100).toFixed(1) : "0.0";
-                const isIrregular = parseFloat(pct) < 75;
-                
-                csv += `"${s.roll || 'N/A'}","${s.name || 'Unknown'}",`;
-                dynamicSubjectKeys.forEach(sub => { 
-                    if(enrolled.has(sub)) csv += `${safeAtt[sub] || 0},`; 
-                    else csv += `-,`;
+                csv = `Individual Attendance Transcript\n`;
+                csv += `Roll No,"${s.roll || 'N/A'}"\n`;
+                csv += `Student Name,"${s.name || 'Unknown'}"\n\n`;
+                csv += `Subject Code,Faculty Name,Hours Conducted,Hours Attended,Percentage,Status\n`;
+
+                uniqueSubjectCodes.forEach(subCode => {
+                    const matchingKeys = Array.from(enrolled).filter(k => formatUniqueSub(k).subCode === subCode);
+                    if (matchingKeys.length > 0) {
+                        let subAtt = 0; let subHeld = 0;
+                        let facNames = [...new Set(matchingKeys.map(mk => formatUniqueSub(mk).facName))].join(', ');
+                        
+                        matchingKeys.forEach(mk => {
+                            subAtt += Number(safeAtt[mk] || 0);
+                            subHeld += Number(subjectHoursHeld[mk] || 0);
+                        });
+                        const subPct = subHeld > 0 ? ((subAtt / subHeld) * 100).toFixed(1) : "0.0";
+                        const status = parseFloat(subPct) < 75 ? 'IRREGULAR' : 'REGULAR';
+                        csv += `"${subCode}","${facNames}",${subHeld},${subAtt},${subPct}%,"${status}"\n`;
+                    }
                 });
-                csv += `${attSum},${heldSum},${pct}%,"${isIrregular ? 'IRREGULAR' : 'REGULAR'}"\n`;
-            });
+                fileName = `Transcript_${s.roll || 'N/A'}.csv`;
+
+            } else if (reportType === 'FACULTY_SUBJECT') {
+                csv = "Faculty Name,Assigned Subject / Batch,Hours Held,Allocated Students,Batch Avg %\n";
+                Object.keys(facultyBatchAllocations).forEach(facKey => {
+                    const alloc = facultyBatchAllocations[facKey];
+                    if(alloc.subjects) {
+                        Object.entries(alloc.subjects).forEach(([subKey, rolls]) => {
+                            const uniqueSubKey = `${facKey}_${subKey}`;
+                            const held = Number(subjectHoursHeld[uniqueSubKey] || 0);
+                            const safeAllocRolls = (rolls || []).map(r => getSafeDocId(r));
+                            const allocatedStudents = studentMasterList.filter(s => safeAllocRolls.includes(getSafeDocId(s.roll)));
+                            
+                            const totalAttendedSum = allocatedStudents.reduce((acc, s) => acc + Number((s.attendance && s.attendance[uniqueSubKey]) || 0), 0);
+                            const maxPossible = held * allocatedStudents.length;
+                            const avg = maxPossible > 0 ? ((totalAttendedSum / maxPossible) * 100).toFixed(1) : "0.0";
+
+                            csv += `"${alloc.name}","${subKey}",${held},${allocatedStudents.length},${avg}%\n`;
+                        });
+                    }
+                });
+            }
 
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.setAttribute('href', url);
-            a.setAttribute('download', `Dynamic_Monthly_Attendance_Report_RGMCET.csv`);
+            a.setAttribute('download', fileName);
             a.click();
         }
 
+        function printReport() {
+            window.print();
+        }
+
         async function factoryResetDatabase() {
-            const userInput = prompt("CRITICAL WARNING:\n\nYou are about to PERMANENTLY DELETE all students, attendance records, and faculty mappings from the cloud database.\n\nType 'ERASE' below to confirm.");
-            if (userInput !== 'ERASE') { showToast("Reset cancelled. Your data is safe.", "info"); return; }
+            if (!confirm("CRITICAL WARNING: This will permanently delete ALL students, attendance logs, metadata, and faculty mappings. This action CANNOT be undone. Are you absolutely sure?")) {
+                return;
+            }
+            if (prompt("Type 'ERASE' to confirm factory reset:") !== 'ERASE') {
+                showToast("Factory reset cancelled.", "info");
+                return;
+            }
+
+            const btn = document.getElementById('resetDbBtn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> ERASING...';
+            btn.disabled = true;
 
             try {
-                const btn = document.getElementById('resetDbBtn');
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Erasing Data...';
-                btn.disabled = true;
-
+                // Delete all students
                 const studentsSnapshot = await db.collection('students').get();
-                const batch = db.batch();
-                studentsSnapshot.forEach(doc => { batch.delete(doc.ref); });
-
-                ['facultyAllocations', 'subjectHours', 'subjectDailyHours'].forEach(docName => {
-                    batch.delete(db.collection('metadata').doc(docName));
+                const batch1 = db.batch();
+                studentsSnapshot.docs.forEach(doc => {
+                    batch1.delete(doc.ref);
                 });
+                await batch1.commit();
 
-                await batch.commit();
-                showToast("Database erased. Reloading application...", "success");
-                setTimeout(() => window.location.reload(), 2000);
+                // Delete metadata
+                const metaSnapshot = await db.collection('metadata').get();
+                const batch2 = db.batch();
+                metaSnapshot.docs.forEach(doc => {
+                    batch2.delete(doc.ref);
+                });
+                await batch2.commit();
 
+                // Reset local variables
+                subjectHoursHeld = {};
+                subjectDailyHoursHeld = {};
+                facultyBatchAllocations = {};
+                studentMasterList = [];
+                activeFacultyRoster = [];
+                activeDashboardSubjectFilters.clear();
+                filtersInitialized = false;
+
+                renderFacultyDropdowns();
+                populateStudentDropdowns();
+                renderDashboard();
+                switchTab('faculty');
+                
+                showToast("Database successfully factory reset. All data erased.", "success", 6000);
             } catch (error) {
-                console.error("Failed to reset database:", error);
-                showToast("An error occurred while resetting the database. Check console for details.", "error");
-                const btn = document.getElementById('resetDbBtn');
-                btn.innerHTML = '<i class="fa-solid fa-skull-crossbones mr-2 animate-pulse"></i> ERASE ALL DATA';
+                console.error("Reset error:", error);
+                showToast("Failed to completely erase database.", "error");
+            } finally {
+                btn.innerHTML = originalHtml;
                 btn.disabled = false;
             }
         }
