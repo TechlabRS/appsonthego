@@ -1,1 +1,88 @@
-<h2> We Will Back Soon</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centered Scroll Gradient Animation</title>
+    <style>
+        /* Reset and full page height */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 200vh; /* Extra height to enable scrolling animation */
+            background: linear-gradient(135deg, #0f172a, #1e1b4b, #311042);
+            background-attachment: fixed;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        /* Exact center layout using Flexbox */
+        .center-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Animated Gradient Text Styling */
+        h1.gradient-text {
+            font-size: clamp(3rem, 8vw, 7rem);
+            font-weight: 800;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            
+            /* Multicolor gradient background */
+            background: linear-gradient(90deg, #ff007f, #ff8c00, #4e0d9a, #8a2be2, #00ffff, #ff007f);
+            background-size: 300% auto;
+            
+            /* Clip background to text */
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            
+            /* Link animation to page scroll position */
+            animation: gradientScroll linear;
+            animation-timeline: scroll();
+        }
+
+        /* Keyframes moving the gradient across the text during scroll */
+        @keyframes gradientScroll {
+            to {
+                background-position: 300% center;
+            }
+        }
+
+        /* Visual hint to encourage scrolling */
+        .scroll-hint {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="center-container">
+        <h1 class="gradient-text">We Will Back Soon</h1>
+    </div>
+
+    <div class="scroll-hint">↓ Scroll Down ↓</div>
+
+</body>
+</html>
