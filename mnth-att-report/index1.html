@@ -1,0 +1,2389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Attendance & Faculty Management System v1.9.3</title>
+    <!-- Compiled Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* --- A4 LANDSCAPE AUTO-FIT PRINT ENGINE --- */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 5mm;
+            }
+
+            header, footer, nav, .no-print, #toast-container, .sticky, button, select, input { 
+                display: none !important; 
+            }
+
+            body { 
+                background: white !important; 
+                color: black !important; 
+                font-size: 8pt !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .print-only { 
+                display: block !important; 
+            }
+
+            .print-card { 
+                border: none !important; 
+                box-shadow: none !important; 
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            /* Force Complete Table to Fit Width without Truncation */
+            #reportRenderArea {
+                width: 100% !important;
+                overflow: visible !important;
+            }
+
+            #reportRenderArea table {
+                width: 100% !important;
+                table-layout: auto !important;
+                border-collapse: collapse !important;
+                font-size: 7pt !important;
+            }
+
+            #reportRenderArea th, 
+            #reportRenderArea td {
+                padding: 3px 2px !important;
+                border: 1px solid #000 !important;
+                text-align: center !important;
+                word-wrap: break-word !important;
+                white-space: normal !important;
+            }
+
+            #reportRenderArea th:nth-child(1),
+            #reportRenderArea td:nth-child(1) {
+                width: 12% !important;
+                text-align: left !important;
+                white-space: nowrap !important;
+            }
+
+            #reportRenderArea th:nth-child(2),
+            #reportRenderArea td:nth-child(2) {
+                width: 20% !important;
+                text-align: left !important;
+                white-space: nowrap !important;
+            }
+
+            #reportRenderArea th {
+                background-color: #f1f5f9 !important;
+                font-weight: bold !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .custom-scrollbar {
+                overflow: visible !important;
+            }
+        }
+
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+        .toast-enter { animation: slideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        .toast-exit { animation: fadeOut 0.3s forwards; }
+
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between relative">
+
+    <div id="toast-container" class="fixed top-4 right-2 sm:right-4 z-[100] flex flex-col gap-2 pointer-events-none w-[calc(100vw-1rem)] sm:w-80 max-w-full"></div>
+
+    <!-- MAIN APP CONTENT -->
+    <div id="appContent" class="flex-col min-h-screen flex">
+        <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-30 no-print">
+            <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row justify-between items-center gap-2.5 sm:gap-3">
+                <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
+                    <div class="flex items-center space-x-2.5 sm:space-x-3">
+                        <i class="fa-solid fa-graduation-cap text-xl sm:text-2xl text-indigo-300"></i>
+                        <div>
+                            <h1 class="text-sm sm:text-base font-bold leading-tight">Faculty Attendance Engine</h1>
+                            <p class="text-[10px] sm:text-xs text-indigo-200">RGMCET • CSE(AI&ML) • <span id="envBadge" class="uppercase font-bold text-amber-300">Test Mode</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <div class="flex bg-indigo-950 p-1 rounded-xl w-full sm:w-auto pointer-events-auto flex-wrap gap-1" id="mainNavigationTabs">
+                        <button id="tabBtnFaculty" onclick="switchTab('faculty')" class="flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow-sm flex items-center justify-center focus:outline-none">
+                            <i class="fa-solid fa-pen-to-square mr-1"></i> <span class="hidden min-[380px]:inline">Daily</span> Input
+                        </button>
+                        <button id="tabBtnBReport" onclick="switchTab('breport')" class="flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition text-indigo-200 hover:text-white flex items-center justify-center focus:outline-none">
+                            <i class="fa-solid fa-calendar-days mr-1"></i> B-Report
+                        </button>
+                        <button id="tabBtnDashboard" onclick="switchTab('dashboard')" class="flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition text-indigo-200 hover:text-white flex items-center justify-center focus:outline-none">
+                            <i class="fa-solid fa-chart-pie mr-1"></i> Dashboard
+                        </button>
+                        <button id="tabBtnReports" onclick="switchTab('reports')" class="flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition text-indigo-200 hover:text-white flex items-center justify-center focus:outline-none">
+                            <i class="fa-solid fa-file-invoice mr-1"></i> Exports
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto w-full px-2.5 sm:px-4 py-4 sm:py-6 flex-grow">
+
+            <!-- TAB 1: FACULTY INPUT -->
+            <div id="viewFaculty" class="space-y-4 sm:space-y-6 max-w-4xl mx-auto">
+                <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 mb-4">
+                        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
+                            <i class="fa-solid fa-sliders text-indigo-600 mr-2"></i> Session Setup & Faculty Allocation
+                        </h2>
+                        
+                        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                            <label class="cursor-pointer inline-flex w-full sm:w-auto items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] sm:text-xs font-bold px-2.5 py-1.5 rounded-lg border border-indigo-200 transition shadow-sm">
+                                <i class="fa-solid fa-file-import mr-1.5"></i> Sync Master Subject CSV
+                                <input type="file" id="facultyMappingCsvInput" accept=".csv" class="hidden" onchange="handleFacultyMappingCSV(event)">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 sm:mb-5 pb-4 sm:pb-5 border-b border-slate-100 flex justify-center sm:justify-start">
+                        <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-lg w-full sm:w-max border border-slate-200">
+                            <button type="button" id="modeDailyBtn" onclick="setInputMode('daily')" class="flex-1 sm:flex-none px-3 sm:px-5 py-2 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition focus:outline-none">Daily Entry</button>
+                            <button type="button" id="modeMonthlyBtn" onclick="setInputMode('monthly')" class="flex-1 sm:flex-none px-3 sm:px-5 py-2 rounded-md text-xs font-bold text-slate-500 hover:text-slate-800 transition focus:outline-none">Monthly Bulk</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                        <div class="relative">
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Faculty Member</label>
+                            <div class="relative">
+                                <input type="text" id="facultySearchInput" placeholder="Search Faculty Name..." onfocus="showFacultyDropdown()" onkeyup="filterFacultyList()" class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                                <i class="fa-solid fa-chevron-down absolute right-3 top-3 text-xs text-slate-400 pointer-events-none"></i>
+                            </div>
+                            <div id="facultyDropdownList" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto custom-scrollbar"></div>
+                            <input type="hidden" id="facultySelect" value="" onchange="onFacultyChange()">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Subject / Elective Batch</label>
+                            <select id="subjectSelect" onchange="onSubjectChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium disabled:opacity-75" disabled></select>
+                        </div>
+
+                        <div>
+                            <label id="dateLabel" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Record Date</label>
+                            <input type="date" id="attendanceDate" onchange="autoSaveDraft()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                        </div>
+
+                        <div id="dailyHoursWrapper">
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Class Hours Conducted</label>
+                            <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
+                                <button type="button" onclick="setSessionHours(1)" id="btn-hr-1" class="hour-btn py-2 text-xs font-bold rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-sm transition focus:outline-none">1 Hr</button>
+                                <button type="button" onclick="setSessionHours(2)" id="btn-hr-2" class="hour-btn py-2 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition focus:outline-none">2 Hrs</button>
+                                <button type="button" onclick="setSessionHours(3)" id="btn-hr-3" class="hour-btn py-2 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition focus:outline-none">3 Hrs</button>
+                                <button type="button" onclick="setSessionHours(4)" id="btn-hr-4" class="hour-btn py-2 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition focus:outline-none">4 Hrs</button>
+                            </div>
+                        </div>
+
+                        <div id="monthlyHoursWrapper" class="hidden">
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1 text-indigo-700"><i class="fa-solid fa-cubes-stacked mr-1"></i> Total Hrs Conducted (Bulk Add)</label>
+                            <input type="number" id="monthlyBulkHours" min="1" placeholder="e.g., 24" oninput="autoSaveDraft()" class="w-full bg-indigo-50 border border-indigo-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-indigo-900 placeholder-indigo-300" onwheel="event.preventDefault()">
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-2.5 sm:p-3 bg-indigo-50 rounded-lg border border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-indigo-900 gap-2">
+                        <div class="flex items-center space-x-2.5 sm:space-x-3">
+                            <i class="fa-solid fa-shield-halved text-indigo-600 text-base flex-shrink-0"></i>
+                            <p id="rosterDynamicLogicText" class="leading-tight">
+                                <strong>Dynamic Presence Logic:</strong> Roster reflects <span id="allocationNoticeText" class="font-bold underline">None Selected</span>.
+                            </p>
+                        </div>
+                        <span id="autoSaveIndicator" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 sm:py-1 rounded-full items-center flex-shrink-0 self-end sm:self-auto">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i> Saved locally
+                        </span>
+                    </div>
+                </section>
+
+                <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+                        <div>
+                            <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
+                                <i class="fa-solid fa-users-gear text-indigo-600 mr-2"></i> Allocated Batch Roster
+                            </h2>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <label class="cursor-pointer inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-300 transition">
+                                <i class="fa-solid fa-file-csv text-emerald-600 mr-1.5"></i> Assign Batch via CSV
+                                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
+                            </label>
+                            <button onclick="downloadFacultyRosterCSV()" class="w-full sm:w-auto bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-200 transition flex items-center justify-center focus:outline-none">
+                                <i class="fa-solid fa-download mr-1.5"></i> Export Batch
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-2.5 sm:p-3 rounded-lg border border-slate-200 mb-4 flex flex-col sm:flex-row gap-2.5 sm:gap-3 items-center justify-between">
+                        <div class="w-full sm:w-2/3">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Quick Select / Find Student in Batch</label>
+                            <select id="singleStudentDropdown" onchange="highlightOrSelectStudent()" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                            <button onclick="markSelectedDropdownStudent(true)" class="flex-1 sm:flex-none px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition focus:outline-none">Mark Present</button>
+                            <button onclick="markSelectedDropdownStudent(false)" class="flex-1 sm:flex-none px-3 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-bold hover:bg-rose-700 transition focus:outline-none">Mark Absent</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-b border-slate-100 py-2.5 sm:py-3 mb-4 text-xs gap-2">
+                        <span id="rosterCountText" class="font-semibold text-slate-600">Showing 0 Allocated Students</span>
+                        <div class="flex gap-2 w-full sm:w-auto justify-end" id="rosterActionButtons">
+                            <button onclick="toggleAllFaculty(true)" class="flex-1 sm:flex-none px-2.5 py-1.5 sm:py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded font-bold hover:bg-emerald-100 transition focus:outline-none text-[11px] sm:text-xs">Mark All Present</button>
+                            <button onclick="toggleAllFaculty(false)" class="flex-1 sm:flex-none px-2.5 py-1.5 sm:py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded font-bold hover:bg-rose-100 transition focus:outline-none text-[11px] sm:text-xs">Mark All Absent</button>
+                        </div>
+                    </div>
+
+                    <div id="studentListContainer" class="space-y-2"></div>
+                </section>
+
+                <section class="bg-indigo-900 text-white rounded-xl shadow-lg p-3.5 sm:p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center justify-around sm:justify-start w-full sm:w-auto space-x-2 sm:space-x-6 text-center sm:text-left" id="summaryStatsContainer">
+                        <div class="stat-block">
+                            <p class="text-[10px] sm:text-xs text-indigo-300 font-medium uppercase">Present</p>
+                            <p id="presentCountDisplay" class="text-xl sm:text-2xl font-bold text-emerald-400">0</p>
+                        </div>
+                        <div class="h-8 w-px bg-indigo-700 stat-divider"></div>
+                        <div class="stat-block">
+                            <p class="text-[10px] sm:text-xs text-indigo-300 font-medium uppercase">Absent</p>
+                            <p id="absentCountDisplay" class="text-xl sm:text-2xl font-bold text-rose-400">0</p>
+                        </div>
+                        <div class="h-8 w-px bg-indigo-700 stat-divider"></div>
+                        <div>
+                            <p class="text-[10px] sm:text-xs text-indigo-300 font-medium uppercase">Hours</p>
+                            <p id="sessionHourDisplay" class="text-xl sm:text-2xl font-bold text-indigo-100">1 Hr</p>
+                        </div>
+                    </div>
+
+                    <button id="submitAttendanceBtn" onclick="submitDailyAttendance()" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-sm px-6 py-3 rounded-lg shadow transition flex items-center justify-center focus:outline-none">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> Submit & Sync Records
+                    </button>
+                </section>
+            </div>
+
+            <!-- TAB 2: DAILY B-REPORT -->
+            <div id="viewBReport" class="space-y-6 hidden max-w-5xl mx-auto">
+                <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6">
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center">
+                        <i class="fa-solid fa-calendar-days text-indigo-600 mr-2"></i> Faculty Daily Batch Report
+                    </h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 mb-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Faculty</label>
+                            <select id="bReportFacultySelect" onchange="onBReportFacultyChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Select Subject</label>
+                            <select id="bReportSubjectSelect" onchange="renderBReport()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium disabled:opacity-75"></select>
+                        </div>
+                    </div>
+                    <div id="bReportEmptyState" class="hidden p-4 bg-amber-50 rounded-lg border border-amber-200 text-amber-800 text-xs sm:text-sm font-medium flex items-center justify-center">
+                        <i class="fa-solid fa-circle-info mr-2"></i> No attendance logs recorded for this subject yet.
+                    </div>
+                    <div id="bReportTableContainer" class="overflow-x-auto border border-slate-200 rounded-lg shadow-sm custom-scrollbar">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200"><tr id="bReportTheadRow"></tr></thead>
+                            <tbody id="bReportTbody" class="divide-y divide-slate-100 bg-white"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB 3: DASHBOARD -->
+            <div id="viewDashboard" class="space-y-4 sm:space-y-6 hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto flex-grow">
+                        <div class="w-full sm:w-auto">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Search Student / Roll</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+                                <input type="text" id="searchInput" placeholder="Search..." onkeyup="renderDashboard()" class="bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-40">
+                            </div>
+                        </div>
+                        <div class="w-full sm:w-auto">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Academic Year</label>
+                            <select id="dashboardYearFilter" onchange="renderDashboard()" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto">
+                                <option value="ALL">All Years</option>
+                                <option value="26">1st Year (2026)</option>
+                                <option value="25">2nd Year (2025)</option>
+                                <option value="24">3rd Year (2024)</option>
+                                <option value="23">Final Year (2023)</option>
+                            </select>
+                        </div>
+                        <div class="w-full sm:w-auto">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Month Period</label>
+                            <select id="dashboardMonthFilter" onchange="renderDashboard()" class="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto">
+                                <option value="ALL">All Months (Cumulative)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="switchTab('reports')" class="px-3.5 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-xs font-bold transition flex items-center justify-center focus:outline-none whitespace-nowrap w-full md:w-auto">
+                        <i class="fa-solid fa-sliders mr-1.5"></i> Custom Report Builder
+                    </button>
+                </div>
+
+                <!-- 1. Subject Filter Chips (Hidden by Default) -->
+                <div id="subjectFilterChips" class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 no-print hidden"></div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4">
+                        <p class="text-[10px] sm:text-xs text-slate-500 font-semibold uppercase">Total Hours Held</p>
+                        <h3 id="statTotalHeld" class="text-xl sm:text-2xl font-bold text-slate-800 mt-0.5 sm:mt-1">0 Hrs</h3>
+                        <p class="text-[10px] text-slate-400 mt-1 hidden sm:block">Across Selected Batches</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4">
+                        <p class="text-[10px] sm:text-xs text-slate-500 font-semibold uppercase">Class Average</p>
+                        <h3 id="statClassAvg" class="text-xl sm:text-2xl font-bold text-indigo-600 mt-0.5 sm:mt-1">0.0%</h3>
+                        <p class="text-[10px] text-emerald-600 mt-1"><i class="fa-solid fa-chart-line mr-0.5"></i> Live Aggregate</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 border-l-4 border-l-rose-500">
+                        <p class="text-[10px] sm:text-xs text-rose-600 font-bold uppercase">Irregular (&lt;75%)</p>
+                        <h3 id="statShortage" class="text-xl sm:text-2xl font-bold text-rose-600 mt-0.5 sm:mt-1">0</h3>
+                        <p class="text-[10px] text-rose-500 mt-1 hidden sm:block">Notice Required</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4">
+                        <p class="text-[10px] sm:text-xs text-slate-500 font-semibold uppercase">Registered</p>
+                        <h3 id="statTotalStudents" class="text-xl sm:text-2xl font-bold text-slate-800 mt-0.5 sm:mt-1">0</h3>
+                        <p class="text-[10px] text-slate-400 mt-1 hidden sm:block">Matching Filters</p>
+                    </div>
+                </div>
+
+                <!-- 2. Irregular Monitor (Hidden by Default) -->
+                <div class="bg-rose-50/60 rounded-xl shadow-sm border border-rose-200 p-3.5 sm:p-6">
+                    <div class="flex items-center justify-between mb-3.5 sm:mb-4">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base sm:text-lg"></i>
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-rose-900">Irregular Monitor (&lt;75%)</h2>
+                        </div>
+                        <button onclick="toggleIrregularPanel()" id="irregularToggleBtn" class="text-xs font-bold bg-white text-rose-700 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg border border-rose-200 hover:bg-rose-100 transition focus:outline-none flex items-center shadow-sm">
+                            <i class="fa-solid fa-toggle-off text-slate-400 text-base mr-1.5"></i> Show Defaulters
+                        </button>
+                    </div>
+                    <div id="irregularListContainer" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3"></div>
+                </div>
+
+                <!-- 3. Subject Class Hours Conducted by Faculty (Hidden by Default) -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-book-open text-indigo-600 text-xs"></i>
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-600">
+                                Subject Class Hours Conducted by Faculty
+                            </h2>
+                        </div>
+                        <button onclick="toggleSubjectHoursPanel()" id="subjectHoursToggleBtn" class="focus:outline-none flex items-center">
+                            <i class="fa-solid fa-toggle-off text-slate-400 text-base mr-1.5"></i> <span class="text-xs font-bold text-slate-500">Show Hours</span>
+                        </button>
+                    </div>
+
+                    <div id="subjectHoursGrid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 sm:gap-3"></div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-3.5 sm:p-4 border-b border-slate-100 flex justify-between items-center">
+                        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
+                            <i class="fa-solid fa-table text-indigo-600 mr-2"></i> Attendance Matrix
+                        </h2>
+                        <span class="text-[10px] sm:text-xs text-slate-400">Attended / Total Held</span>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead id="dashboardTableHeader"></thead>
+                            <tbody id="dashboardTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: REPORTS & EXPORTS -->
+            <div id="viewReports" class="space-y-6 hidden">
+                <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6 no-print">
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center">
+                        <i class="fa-solid fa-file-invoice text-indigo-600 mr-2"></i> Custom Report Builder
+                    </h2>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5 sm:gap-4">
+                        <div class="lg:col-span-1">
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Report Type</label>
+                            <select id="reportTypeSelect" onchange="onReportTypeChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="FULL_MONTHLY">Consolidated Monthly Attendance Report</option>
+                                <option value="IRREGULAR_SHORTAGE">Irregular & Shortage Notice List (<75%)</option>
+                                <option value="FACULTY_SUBJECT">Faculty-Subject Wise Summary</option>
+                                <option value="INDIVIDUAL">Individual Student Transcript</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Academic Year</label>
+                            <select id="reportYearFilter" onchange="generateCustomReport()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="ALL">All Years</option>
+                                <option value="26">1st Year (2026)</option>
+                                <option value="25">2nd Year (2025)</option>
+                                <option value="24">3rd Year (2024)</option>
+                                <option value="23">Final Year (2023)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Month Period</label>
+                            <select id="reportMonthFilter" onchange="generateCustomReport()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="ALL">All Months (Cumulative)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Attendance Filter</label>
+                            <select id="reportThreshold" onchange="generateCustomReport()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="ALL">All Students</option>
+                                <option value="BELOW_75">Below 75% Only (Irregular)</option>
+                                <option value="ABOVE_75">75% & Above (Eligible)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Target Student</label>
+                            <select id="reportStudentSelect" onchange="generateCustomReport()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                        </div>
+                        <div class="flex items-end space-x-2 sm:col-span-2 lg:col-span-1">
+                            <button onclick="downloadCSVReport()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center shadow-sm focus:outline-none">
+                                <i class="fa-solid fa-file-csv mr-1.5"></i> Export CSV
+                            </button>
+                            <button onclick="printReport()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center shadow-sm focus:outline-none">
+                                <i class="fa-solid fa-print mr-1.5"></i> Print
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="hidden print-only text-center mb-6 border-b pb-4">
+                    <h1 class="text-xl font-bold uppercase tracking-wide">Rajeev Gandhi Memorial College of Engineering & Technology</h1>
+                    <p class="text-xs text-slate-600">Autonomous • Accredited by NAAC & NBA • Nandyal, AP</p>
+                    <h2 id="printReportTitle" class="text-sm font-bold mt-2 uppercase text-indigo-900">Monthly Academic Attendance Report</h2>
+                </div>
+
+                <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 print-card">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 mb-4 gap-2">
+                        <div>
+                            <h3 id="reportTitleHeader" class="text-xs sm:text-sm font-bold text-slate-800 uppercase">Consolidated Monthly Report</h3>
+                            <p class="text-[10px] sm:text-xs text-slate-500" id="reportSubtitle">Generated for Active Semester Sessions</p>
+                        </div>
+                        <span class="text-[10px] sm:text-xs font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 sm:py-1 rounded-full no-print">
+                            Verified Institutional Record
+                        </span>
+                    </div>
+                    <div id="reportRenderArea"></div>
+                </section>
+
+                <section id="dangerZone" class="bg-rose-50 rounded-xl shadow-sm border border-rose-200 p-3.5 sm:p-6 mt-6 no-print">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-rose-800 mb-3 flex items-center">
+                        <i class="fa-solid fa-triangle-exclamation mr-2 text-rose-600"></i> System Administration: Danger Zone
+                    </h2>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-3.5 rounded-lg border border-rose-100">
+                        <div>
+                            <h3 class="text-xs sm:text-sm font-bold text-slate-800">Factory Reset Database</h3>
+                            <p class="text-[10px] sm:text-xs text-slate-500 mt-0.5">Permanently delete all students, attendance records, and faculty mappings.</p>
+                        </div>
+                        <button id="resetDbBtn" onclick="factoryResetDatabase()" class="w-full sm:w-auto relative overflow-hidden group bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition-all duration-300 flex items-center justify-center whitespace-nowrap focus:outline-none">
+                            <i class="fa-solid fa-skull-crossbones mr-2 animate-pulse"></i> ERASE ALL DATA
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Complete Unchanged Backend Engine (v1.9.3) -->
+    <script>
+        function showToast(message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast-enter pointer-events-auto flex items-center p-3 sm:p-4 mb-2 text-xs sm:text-sm font-medium rounded-xl shadow-lg border backdrop-blur-sm transition-all duration-300 transform`;
+
+            let icon, colorClasses;
+            switch (type) {
+                case 'success':
+                    icon = '<i class="fa-solid fa-circle-check text-base sm:text-lg"></i>';
+                    colorClasses = 'bg-emerald-50/95 border-emerald-200 text-emerald-800 shadow-emerald-500/10';
+                    break;
+                case 'error':
+                    icon = '<i class="fa-solid fa-triangle-exclamation text-base sm:text-lg"></i>';
+                    colorClasses = 'bg-rose-50/95 border-rose-200 text-rose-800 shadow-rose-500/10';
+                    break;
+                case 'info':
+                    icon = '<i class="fa-solid fa-circle-info text-base sm:text-lg"></i>';
+                    colorClasses = 'bg-indigo-50/95 border-indigo-200 text-indigo-800 shadow-indigo-500/10';
+                    break;
+            }
+
+            toast.classList.add(...colorClasses.split(' '));
+            toast.innerHTML = `
+                <div class="mr-2.5 sm:mr-3 flex-shrink-0">${icon}</div>
+                <div class="flex-grow whitespace-pre-wrap leading-tight text-xs sm:text-sm pr-2">${message}</div>
+                <button class="flex-shrink-0 ml-auto text-slate-400 hover:text-slate-600 transition p-1 focus:outline-none" onclick="this.parentElement.remove()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    toast.classList.remove('toast-enter');
+                    toast.classList.add('toast-exit');
+                    setTimeout(() => { if (document.body.contains(toast)) toast.remove(); }, 300);
+                }
+            }, duration);
+        }
+
+        //const APP_PATH = 'artifacts/a-report';
+        
+        const APP_PATH = 'base';
+
+        /*function getCollectionName(baseCollectionName) {
+            return `${APP_PATH}/${baseCollectionName}`;
+        }*/
+        
+        function getCollectionName(base) {
+            return base
+        }
+
+        const firebaseConfig = {
+		  apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+		  authDomain: "stuattnd.firebaseapp.com",
+		  projectId: "stuattnd",
+		  storageBucket: "stuattnd.firebasestorage.app",
+		  messagingSenderId: "511533506488",
+		  appId: "1:511533506488:web:aca4de3d513915d012f94d",
+		  measurementId: "G-9PZZM5LFKX"
+		};
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let inputMode = 'daily'; 
+        let selectedHours = 1;
+        
+        let subjectHoursHeld = {};
+        let subjectDailyHoursHeld = {}; 
+        let facultyBatchAllocations = {}; 
+        let studentMasterList = [];
+        let activeFacultyRoster = [];
+        let activeDashboardSubjectFilters = new Set();
+        let filtersInitialized = false;
+
+        // Dynamic Toggle States (Hidden by Default)
+        let isSubjectFilterVisible = false;
+        let isSubjectHoursVisible = false;
+        let isIrregularVisible = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const badge = document.getElementById('envBadge');
+            if (badge) {
+                badge.innerText = APP_PATH.includes('test') ? 'v1.9.3 Test Mode' : 'v1.9.3 Production';
+                badge.className = APP_PATH.includes('test') ? 'uppercase font-bold text-amber-300' : 'uppercase font-bold text-emerald-300';
+            }
+
+            const today = new Date();
+            const offset = today.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(today - offset)).toISOString().split('T')[0];
+            document.getElementById('attendanceDate').value = localISOTime;
+
+            document.addEventListener('click', (e) => {
+                const list = document.getElementById('facultyDropdownList');
+                const input = document.getElementById('facultySearchInput');
+                if (list && input && !input.contains(e.target) && !list.contains(e.target)) {
+                    list.classList.add('hidden');
+                }
+            });
+
+            window.addEventListener('online', () => {
+                showToast("Internet restored! Syncing offline queue...", "info");
+                syncOfflineQueue();
+            });
+
+            await loadFirestoreData();
+            populateMonthFilters();
+            renderDashboard();
+            onReportTypeChange();
+            setInputMode('daily'); 
+            switchTab('faculty');
+
+            syncOfflineQueue();
+        });
+
+        function toggleSubjectFilterPanel() {
+            isSubjectFilterVisible = !isSubjectFilterVisible;
+            const content = document.getElementById('subjectFilterContent');
+            const toggleBtn = document.getElementById('subjectFilterToggleBtn');
+            
+            if (isSubjectFilterVisible) {
+                if (content) content.classList.remove('hidden');
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<i class="fa-solid fa-toggle-on text-indigo-600 text-base mr-1.5"></i> <span class="text-xs font-bold text-indigo-700">Hide Filters</span>';
+                }
+            } else {
+                if (content) content.classList.add('hidden');
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<i class="fa-solid fa-toggle-off text-slate-400 text-base mr-1.5"></i> <span class="text-xs font-bold text-slate-500">Show Filters</span>';
+                }
+            }
+        }
+
+        function toggleSubjectHoursPanel() {
+            isSubjectHoursVisible = !isSubjectHoursVisible;
+            const content = document.getElementById('subjectHoursGrid');
+            const toggleBtn = document.getElementById('subjectHoursToggleBtn');
+
+            if (isSubjectHoursVisible) {
+                if (content) content.classList.remove('hidden');
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<i class="fa-solid fa-toggle-on text-indigo-600 text-base mr-1.5"></i> <span class="text-xs font-bold text-indigo-700">Hide Hours</span>';
+                }
+            } else {
+                if (content) content.classList.add('hidden');
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<i class="fa-solid fa-toggle-off text-slate-400 text-base mr-1.5"></i> <span class="text-xs font-bold text-slate-500">Show Hours</span>';
+                }
+            }
+        }
+
+        function toggleIrregularPanel() {
+            isIrregularVisible = !isIrregularVisible;
+            const container = document.getElementById('irregularListContainer');
+            const btn = document.getElementById('irregularToggleBtn');
+            
+            if (isIrregularVisible) {
+                if (container) container.classList.remove('hidden');
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-toggle-on text-rose-600 text-base mr-1.5"></i> <span class="text-xs font-bold text-rose-700">Hide Defaulters</span>';
+            } else {
+                if (container) container.classList.add('hidden');
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-toggle-off text-slate-400 text-base mr-1.5"></i> <span class="text-xs font-bold text-slate-500">Show Defaulters</span>';
+            }
+        }
+
+        function populateMonthFilters() {
+            const months = new Set();
+            Object.values(subjectDailyHoursHeld).forEach(subMeta => {
+                Object.keys(subMeta).forEach(dateStr => {
+                    const parts = dateStr.split('-');
+                    if (parts.length >= 2) {
+                        months.add(`${parts[0]}-${parts[1]}`); 
+                    }
+                });
+            });
+
+            const sortedMonths = Array.from(months).sort().reverse();
+            const dFilter = document.getElementById('dashboardMonthFilter');
+            const rFilter = document.getElementById('reportMonthFilter');
+
+            let optionsHtml = '<option value="ALL">All Months (Cumulative)</option>';
+            sortedMonths.forEach(mStr => {
+                const [y, m] = mStr.split('-');
+                const dateObj = new Date(y, Number(m) - 1, 1);
+                const monthName = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+                optionsHtml += `<option value="${mStr}">${monthName}</option>`;
+            });
+
+            if (dFilter) dFilter.innerHTML = optionsHtml;
+            if (rFilter) rFilter.innerHTML = optionsHtml;
+        }
+
+        function getStudentSubjectStats(student, uniqueSubKey, monthFilter = 'ALL') {
+            const logs = (student.dailyLogs && student.dailyLogs[uniqueSubKey]) ? student.dailyLogs[uniqueSubKey] : {};
+            const dailyMeta = subjectDailyHoursHeld[uniqueSubKey] || {};
+
+            if (monthFilter === 'ALL') {
+                const att = Number((student.attendance && student.attendance[uniqueSubKey]) || 0);
+                const held = Math.max(Number(subjectHoursHeld[uniqueSubKey] || 0), att);
+                return { att, held };
+            }
+
+            let att = 0;
+            let held = 0;
+            Object.keys(dailyMeta).forEach(dateStr => {
+                if (dateStr.startsWith(monthFilter)) {
+                    const dayHeld = Number(dailyMeta[dateStr] || 0);
+                    const dayAtt = Number(logs[dateStr] || 0);
+                    att += dayAtt;
+                    held += Math.max(dayHeld, dayAtt);
+                }
+            });
+
+            return { att, held };
+        }
+
+        function getDraftStorageKey() {
+            const fac = document.getElementById('facultySelect').value;
+            const sub = document.getElementById('subjectSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+            if (!fac || !sub || !date) return null;
+            return `attendance_draft_${APP_PATH}_${fac}_${sub}_${date}_${inputMode}`;
+        }
+
+        function autoSaveDraft() {
+            const key = getDraftStorageKey();
+            if (!key) return;
+
+            const draftData = {
+                mode: inputMode,
+                date: document.getElementById('attendanceDate').value,
+                facultyKey: document.getElementById('facultySelect').value,
+                subjectKey: document.getElementById('subjectSelect').value,
+                hoursConducted: inputMode === 'daily' ? selectedHours : Number(document.getElementById('monthlyBulkHours').value || 0),
+                rosterState: activeFacultyRoster.map(s => {
+                    const safeId = getSafeDocId(s.roll);
+                    let attended = s.status ? selectedHours : 0;
+                    if (inputMode === 'monthly') {
+                        const el = document.getElementById(`bulk-input-${safeId}`);
+                        attended = el ? Number(el.value || 0) : 0;
+                    }
+                    return { roll: s.roll, status: s.status, attended };
+                })
+            };
+
+            localStorage.setItem(key, JSON.stringify(draftData));
+
+            const indicator = document.getElementById('autoSaveIndicator');
+            if (indicator) {
+                indicator.classList.remove('hidden');
+                indicator.classList.add('flex');
+            }
+        }
+
+        function restoreDraftIfAvailable() {
+            const key = getDraftStorageKey();
+            const indicator = document.getElementById('autoSaveIndicator');
+
+            if (!key) {
+                if (indicator) { indicator.classList.add('hidden'); indicator.classList.remove('flex'); }
+                return;
+            }
+
+            const saved = localStorage.getItem(key);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.mode === inputMode) {
+                        if (inputMode === 'monthly') {
+                            document.getElementById('monthlyBulkHours').value = parsed.hoursConducted || '';
+                        } else {
+                            setSessionHours(parsed.hoursConducted || 1);
+                        }
+
+                        parsed.rosterState.forEach(item => {
+                            const student = activeFacultyRoster.find(s => s.roll === item.roll);
+                            if (student) student.status = item.status;
+
+                            const safeId = getSafeDocId(item.roll);
+                            if (inputMode === 'monthly') {
+                                setTimeout(() => {
+                                    const inputEl = document.getElementById(`bulk-input-${safeId}`);
+                                    if (inputEl) inputEl.value = item.attended || '';
+                                }, 50);
+                            }
+                        });
+
+                        updateFacultyCounters();
+                        showToast("Restored unsaved draft from local storage.", "info", 3000);
+                        if (indicator) { indicator.classList.remove('hidden'); indicator.classList.add('flex'); }
+                    }
+                } catch (e) { console.error("Error restoring draft", e); }
+            } else {
+                if (indicator) { indicator.classList.add('hidden'); indicator.classList.remove('flex'); }
+            }
+        }
+
+        function clearCurrentDraft() {
+            const key = getDraftStorageKey();
+            if (key) localStorage.removeItem(key);
+            const indicator = document.getElementById('autoSaveIndicator');
+            if (indicator) { indicator.classList.add('hidden'); indicator.classList.remove('flex'); }
+        }
+
+        async function syncOfflineQueue() {
+            const queueKey = `attendance_offline_queue_${APP_PATH}`;
+            const queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+            if (queue.length === 0) return;
+
+            if (!navigator.onLine) return;
+
+            showToast(`Syncing ${queue.length} offline record(s) to cloud...`, "info");
+            
+            try {
+                const batch = db.batch();
+                
+                queue.forEach(item => {
+                    const uniqueSubKey = `${item.facKey}_${item.subject}`;
+                    
+                    if (subjectHoursHeld[uniqueSubKey] === undefined) subjectHoursHeld[uniqueSubKey] = 0;
+                    subjectHoursHeld[uniqueSubKey] = Number(subjectHoursHeld[uniqueSubKey]) + item.hrsConducted;
+
+                    const metaRef = db.collection(getCollectionName('metadata')).doc('subjectHours');
+                    batch.set(metaRef, { [uniqueSubKey]: subjectHoursHeld[uniqueSubKey] }, { merge: true });
+
+                    if (subjectDailyHoursHeld[uniqueSubKey] === undefined) subjectDailyHoursHeld[uniqueSubKey] = {};
+                    subjectDailyHoursHeld[uniqueSubKey][item.date] = Number(subjectDailyHoursHeld[uniqueSubKey][item.date] || 0) + item.hrsConducted;
+                    
+                    const dailyMetaRef = db.collection(getCollectionName('metadata')).doc('subjectDailyHours');
+                    batch.set(dailyMetaRef, { [uniqueSubKey]: subjectDailyHoursHeld[uniqueSubKey] }, { merge: true });
+
+                    item.records.forEach(r => {
+                        const safeId = getSafeDocId(r.roll);
+                        let masterStudent = studentMasterList.find(m => getSafeDocId(m.roll) === safeId);
+                        
+                        if (masterStudent) {
+                            masterStudent.attendance = masterStudent.attendance || {};
+                            masterStudent.dailyLogs = masterStudent.dailyLogs || {};
+                            masterStudent.dailyLogs[uniqueSubKey] = masterStudent.dailyLogs[uniqueSubKey] || {};
+                            
+                            masterStudent.attendance[uniqueSubKey] = Number(masterStudent.attendance[uniqueSubKey] || 0) + r.attended;
+                            masterStudent.dailyLogs[uniqueSubKey][item.date] = Number(masterStudent.dailyLogs[uniqueSubKey][item.date] || 0) + r.attended;
+                            
+                            const studentRef = db.collection(getCollectionName('students')).doc(safeId);
+                            batch.set(studentRef, {
+                                attendance: { [uniqueSubKey]: masterStudent.attendance[uniqueSubKey] },
+                                dailyLogs: { [uniqueSubKey]: { [item.date]: masterStudent.dailyLogs[uniqueSubKey][item.date] } }
+                            }, { merge: true });
+                        }
+                    });
+                });
+
+                await batch.commit();
+                localStorage.removeItem(queueKey);
+                showToast("All offline attendance records synced successfully!", "success");
+                populateMonthFilters();
+                renderDashboard();
+            } catch (err) {
+                console.error("Offline sync failed:", err);
+            }
+        }
+
+        function getSafeDocId(rollString) {
+            if (!rollString) return 'UNKNOWN_ROLL_' + Math.floor(Math.random()*1000);
+            return String(rollString).trim().replace(/\//g, '-');
+        }
+
+        function formatUniqueSub(uniqueSubKey) {
+            if (!uniqueSubKey.includes('_')) return { facName: '', subCode: uniqueSubKey };
+            const [facId, ...subParts] = uniqueSubKey.split('_');
+            const subCode = subParts.join('_');
+            const facName = facultyBatchAllocations[facId] ? facultyBatchAllocations[facId].name.split(' ')[0] : facId;
+            return { facName, subCode };
+        }
+
+        async function loadFirestoreData() {
+            try {
+                const allocDoc = await db.collection(getCollectionName('metadata')).doc('facultyAllocations').get();
+                facultyBatchAllocations = allocDoc.exists ? allocDoc.data() : {};
+
+                const metaDoc = await db.collection(getCollectionName('metadata')).doc('subjectHours').get();
+                subjectHoursHeld = metaDoc.exists ? metaDoc.data() : {};
+
+                const dailyMetaDoc = await db.collection(getCollectionName('metadata')).doc('subjectDailyHours').get();
+                subjectDailyHoursHeld = dailyMetaDoc.exists ? dailyMetaDoc.data() : {};
+
+                const studentsSnapshot = await db.collection(getCollectionName('students')).get();
+                studentMasterList = [];
+                if (!studentsSnapshot.empty) {
+                    studentsSnapshot.forEach(doc => {
+                        studentMasterList.push(doc.data());
+                    });
+                }
+
+                renderFacultyDropdowns();
+                populateStudentDropdowns();
+                populateMonthFilters();
+
+            } catch (error) {
+                console.error("Firebase sync error:", error);
+                showToast("Failed to connect to database.", "error");
+            }
+        }
+
+        async function handleFacultyMappingCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const lines = e.target.result.split('\n');
+                const newAllocations = {};
+
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const parts = line.split(',');
+                    if (parts.length >= 4) {
+                        const facId = parts[0].trim();
+                        if (!facId) continue; 
+                        const facName = parts[1].trim();
+                        const subject = parts[2].trim();
+                        const rolls = parts[3].trim().split(/\s+/).filter(r => r);
+
+                        if (!newAllocations[facId]) newAllocations[facId] = { name: facName, subjects: {} };
+                        newAllocations[facId].subjects[subject] = rolls;
+                    }
+                }
+
+                if (Object.keys(newAllocations).length > 0) {
+                    try {
+                        await db.collection(getCollectionName('metadata')).doc('facultyAllocations').set(newAllocations, { merge: true });
+                        for (const [fId, data] of Object.entries(newAllocations)) {
+                            if (!facultyBatchAllocations[fId]) {
+                                facultyBatchAllocations[fId] = data;
+                            } else {
+                                facultyBatchAllocations[fId].name = data.name;
+                                facultyBatchAllocations[fId].subjects = { ...facultyBatchAllocations[fId].subjects, ...data.subjects };
+                            }
+                        }
+                        renderFacultyDropdowns();
+                        showToast(`Successfully synced dynamic faculty-subject mappings!`, "success");
+                    } catch (error) {
+                        showToast("Failed to save mappings to cloud database.", "error");
+                    }
+                } else {
+                    showToast("Invalid CSV format. Header required: FacultyID,FacultyName,SubjectCode,StudentRolls", "error", 6000);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        async function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const facultyKey = document.getElementById('facultySelect').value;
+            const subjectKey = document.getElementById('subjectSelect').value;
+            
+            if (!facultyKey || !subjectKey) {
+                showToast("Please select a faculty member and subject first.", "error");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const lines = e.target.result.split('\n');
+                const parsed = [];
+                const newRollsForBatch = [];
+
+                lines.forEach(line => {
+                    const parts = line.split(',');
+                    if (parts.length >= 2) {
+                        const roll = parts[0].trim();
+                        const name = parts[1].trim();
+                        if (roll && name && roll.toLowerCase() !== 'roll' && roll.toLowerCase() !== 'roll no') {
+                            parsed.push({ roll, name, status: true });
+                            newRollsForBatch.push(roll); 
+                        }
+                    }
+                });
+
+                if (parsed.length > 0) {
+                    const batch = db.batch(); 
+                    activeFacultyRoster = parsed;
+
+                    parsed.forEach(p => {
+                        const safeId = getSafeDocId(p.roll);
+                        let existing = studentMasterList.find(s => getSafeDocId(s.roll) === safeId);
+                        
+                        if (!existing) {
+                            const newStudent = { roll: p.roll, name: p.name, attendance: {}, dailyLogs: {} };
+                            studentMasterList.push(newStudent);
+                            const ref = db.collection(getCollectionName('students')).doc(safeId);
+                            batch.set(ref, newStudent, { merge: true });
+                        }
+                    });
+
+                    if (facultyBatchAllocations[facultyKey]) {
+                        if(!facultyBatchAllocations[facultyKey].subjects) facultyBatchAllocations[facultyKey].subjects = {};
+                        facultyBatchAllocations[facultyKey].subjects[subjectKey] = newRollsForBatch;
+                        
+                        const allocRef = db.collection(getCollectionName('metadata')).doc('facultyAllocations');
+                        batch.set(allocRef, { [facultyKey]: facultyBatchAllocations[facultyKey] }, { merge: true });
+                    }
+
+                    try {
+                        await batch.commit();
+                        showToast(`Imported ${parsed.length} students to ${subjectKey}!`, "success");
+                        onSubjectChange();
+                        populateStudentDropdowns(); 
+                        renderDashboard();
+                    } catch (err) { showToast("Failed to sync assigned batch to database.", "error"); }
+                } else {
+                    showToast('Invalid CSV format. Expected: Roll, Name', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
+        function renderFacultyDropdowns() {
+            const list = document.getElementById('facultyDropdownList');
+            const bReportFacSelect = document.getElementById('bReportFacultySelect');
+            
+            list.innerHTML = '';
+            bReportFacSelect.innerHTML = '';
+
+            const sortedKeys = Object.keys(facultyBatchAllocations).sort((a, b) => {
+                const nameA = (facultyBatchAllocations[a].name || a).toLowerCase();
+                const nameB = (facultyBatchAllocations[b].name || b).toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+
+            sortedKeys.forEach(key => {
+                const alloc = facultyBatchAllocations[key];
+                
+                const item = document.createElement('div');
+                item.className = "px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 cursor-pointer border-b border-slate-100 transition flex justify-between items-center";
+                item.setAttribute('data-key', key);
+                item.setAttribute('data-search', `${alloc.name}`.toLowerCase());
+                item.innerHTML = `<span>${alloc.name}</span>`;
+                
+                item.onclick = () => selectFaculty(key, alloc.name);
+                list.appendChild(item);
+
+                const opt = document.createElement('option');
+                opt.value = key; 
+                opt.innerText = `${alloc.name}`;
+                bReportFacSelect.appendChild(opt);
+            });
+
+            if (sortedKeys.length === 0) {
+                list.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center font-medium">No faculty allocated. Sync CSV.</div>';
+                bReportFacSelect.innerHTML = '<option value="">-- No Faculty Found --</option>';
+            } else if (!document.getElementById('facultySelect').value) {
+                selectFaculty(sortedKeys[0], facultyBatchAllocations[sortedKeys[0]].name);
+            }
+        }
+
+        function showFacultyDropdown() {
+            const list = document.getElementById('facultyDropdownList');
+            filterFacultyList();
+            list.classList.remove('hidden');
+        }
+
+        function filterFacultyList() {
+            const query = document.getElementById('facultySearchInput').value.toLowerCase();
+            const items = document.getElementById('facultyDropdownList').querySelectorAll('div[data-search]');
+
+            items.forEach(item => {
+                const text = item.getAttribute('data-search');
+                if (text.includes(query)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
+
+        function selectFaculty(key, name) {
+            document.getElementById('facultySelect').value = key;
+            document.getElementById('facultySearchInput').value = `${name}`;
+            document.getElementById('facultyDropdownList').classList.add('hidden');
+            
+            const bSelect = document.getElementById('bReportFacultySelect');
+            if (bSelect) bSelect.value = key;
+
+            onFacultyChange();
+        }
+
+        function handleEnterKey(event, currentInput) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); 
+                const inputs = Array.from(document.querySelectorAll('.roster-bulk-input'));
+                const currentIndex = inputs.indexOf(currentInput);
+                if (currentIndex > -1 && currentIndex < inputs.length - 1) {
+                    inputs[currentIndex + 1].focus();
+                    inputs[currentIndex + 1].select(); 
+                }
+            }
+        }
+
+        function setInputMode(mode) {
+            inputMode = mode;
+            
+            document.getElementById('modeDailyBtn').className = mode === 'daily' 
+                ? 'px-5 py-2 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition focus:outline-none' 
+                : 'px-5 py-2 rounded-md text-xs font-bold text-slate-500 hover:text-slate-800 transition focus:outline-none';
+            
+            document.getElementById('modeMonthlyBtn').className = mode === 'monthly' 
+                ? 'px-5 py-2 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition focus:outline-none' 
+                : 'px-5 py-2 rounded-md text-xs font-bold text-slate-500 hover:text-slate-800 transition focus:outline-none';
+            
+            document.getElementById('dailyHoursWrapper').classList.toggle('hidden', mode === 'monthly');
+            document.getElementById('monthlyHoursWrapper').classList.toggle('hidden', mode === 'daily');
+            
+            const dateInput = document.getElementById('attendanceDate');
+            const dateLabel = document.getElementById('dateLabel');
+            const today = new Date();
+            const offset = today.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(today - offset)).toISOString();
+            
+            if (mode === 'monthly') {
+                dateLabel.innerText = 'Record Month';
+                dateInput.type = 'month';
+                dateInput.value = localISOTime.substring(0, 7); 
+            } else {
+                dateLabel.innerText = 'Record Date';
+                dateInput.type = 'date';
+                dateInput.value = localISOTime.split('T')[0]; 
+            }
+            
+            const statBlocks = document.querySelectorAll('.stat-block');
+            const dividers = document.querySelectorAll('.stat-divider');
+            
+            if (mode === 'monthly') {
+                statBlocks.forEach(el => el.classList.add('hidden'));
+                dividers.forEach(el => el.classList.add('hidden'));
+                document.getElementById('sessionHourDisplay').innerText = 'Bulk';
+                
+                document.getElementById('rosterActionButtons').innerHTML = `
+                    <button onclick="toggleAllFaculty(true)" class="flex-1 sm:flex-none px-2.5 py-1.5 sm:py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded font-bold hover:bg-indigo-100 transition focus:outline-none text-[11px] sm:text-xs">Set All Max</button>
+                    <button onclick="toggleAllFaculty(false)" class="flex-1 sm:flex-none px-2.5 py-1.5 sm:py-1 bg-slate-50 text-slate-700 border border-slate-200 rounded font-bold hover:bg-slate-100 transition focus:outline-none text-[11px] sm:text-xs">Clear All</button>
+                `;
+            } else {
+                statBlocks.forEach(el => el.classList.remove('hidden'));
+                dividers.forEach(el => el.classList.remove('hidden'));
+                document.getElementById('sessionHourDisplay').innerText = `${selectedHours} Hr${selectedHours>1?'s':''}`;
+                
+                document.getElementById('rosterActionButtons').innerHTML = `
+                    <button onclick="toggleAllFaculty(true)" class="flex-1 sm:flex-none px-2.5 py-1.5 sm:py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded font-bold hover:bg-emerald-100 transition focus:outline-none text-[11px] sm:text-xs">Mark All Present</button>
+                    <button onclick="toggleAllFaculty(false)" class="flex-1 sm:flex-none px-2.5 py-1.5 sm:py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded font-bold hover:bg-rose-100 transition focus:outline-none text-[11px] sm:text-xs">Mark All Absent</button>
+                `;
+            }
+            renderFacultyRoster();
+            restoreDraftIfAvailable();
+        }
+
+        function switchTab(tabName) {
+            const views = { 'faculty': document.getElementById('viewFaculty'), 'breport': document.getElementById('viewBReport'), 'dashboard': document.getElementById('viewDashboard'), 'reports': document.getElementById('viewReports') };
+            const btns = { 'faculty': document.getElementById('tabBtnFaculty'), 'breport': document.getElementById('tabBtnBReport'), 'dashboard': document.getElementById('tabBtnDashboard'), 'reports': document.getElementById('tabBtnReports') };
+
+            Object.values(views).forEach(v => v.classList.add('hidden'));
+            Object.values(btns).forEach(b => { 
+                if(b) b.className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition text-indigo-200 hover:text-white flex items-center justify-center focus:outline-none"; 
+            });
+
+            if (views[tabName]) {
+                views[tabName].classList.remove('hidden');
+                if(btns[tabName]) btns[tabName].className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow-sm flex items-center justify-center focus:outline-none";
+            }
+
+            if (tabName === 'dashboard') renderDashboard();
+            if (tabName === 'reports') { populateStudentDropdowns(); onReportTypeChange(); }
+            if (tabName === 'breport') renderBReport();
+        }
+
+        function onFacultyChange() {
+            const facultyKey = document.getElementById('facultySelect').value;
+            const subSelect = document.getElementById('subjectSelect');
+            subSelect.innerHTML = '';
+
+            if (!facultyKey) {
+                subSelect.disabled = true;
+                onSubjectChange();
+                return;
+            }
+
+            const alloc = facultyBatchAllocations[facultyKey];
+            if (!alloc || !alloc.subjects) {
+                subSelect.disabled = true;
+                onSubjectChange();
+                return;
+            }
+
+            subSelect.disabled = false;
+            Object.keys(alloc.subjects).sort().forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub; opt.innerText = sub;
+                subSelect.appendChild(opt);
+            });
+            onSubjectChange(); 
+        }
+
+        function onSubjectChange() {
+            const facultyKey = document.getElementById('facultySelect').value;
+            const subjectKey = document.getElementById('subjectSelect').value;
+            const noticeEl = document.getElementById('allocationNoticeText');
+            
+            if (!facultyKey || !subjectKey) {
+                document.getElementById('studentListContainer').innerHTML = '';
+                if (noticeEl) noticeEl.innerText = `None Selected`;
+                activeFacultyRoster = [];
+                updateFacultyCounters();
+                return;
+            }
+
+            const alloc = facultyBatchAllocations[facultyKey];
+            if (!alloc || !alloc.subjects || !alloc.subjects[subjectKey]) {
+                document.getElementById('studentListContainer').innerHTML = '';
+                if (noticeEl) noticeEl.innerText = `None Selected`;
+                activeFacultyRoster = [];
+                updateFacultyCounters();
+                return;
+            }
+
+            if (noticeEl) {
+                noticeEl.innerText = `${alloc.name} for ${subjectKey}`;
+            }
+
+            const safeAllocRolls = (alloc.subjects[subjectKey] || []).map(r => getSafeDocId(r));
+
+            activeFacultyRoster = studentMasterList
+                .filter(s => safeAllocRolls.includes(getSafeDocId(s.roll)))
+                .map(s => ({ roll: s.roll, name: s.name, status: true }));
+
+            activeFacultyRoster.sort((a,b) => String(a.roll).localeCompare(String(b.roll)));
+
+            populateBatchStudentDropdown();
+            renderFacultyRoster();
+            restoreDraftIfAvailable();
+        }
+
+        function setSessionHours(hrs) {
+            selectedHours = Number(hrs); 
+            document.querySelectorAll('.hour-btn').forEach((btn, idx) => {
+                btn.className = (idx + 1 === hrs)
+                    ? "hour-btn py-2 text-xs font-bold rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-sm transition focus:outline-none"
+                    : "hour-btn py-2 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition focus:outline-none";
+            });
+            if (inputMode === 'daily') {
+                document.getElementById('sessionHourDisplay').innerText = `${hrs} ${hrs === 1 ? 'Hr' : 'Hrs'}`;
+            }
+            autoSaveDraft();
+        }
+
+        function populateBatchStudentDropdown() {
+            const dropdown = document.getElementById('singleStudentDropdown');
+            dropdown.innerHTML = '<option value="">-- Select Student from Batch --</option>';
+            activeFacultyRoster.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.roll; opt.innerText = `${s.roll} - ${s.name}`;
+                dropdown.appendChild(opt);
+            });
+        }
+
+        function renderFacultyRoster() {
+            const container = document.getElementById('studentListContainer');
+            container.innerHTML = '';
+
+            activeFacultyRoster.forEach((student, idx) => {
+                const isPresent = student.status;
+                const safeId = getSafeDocId(student.roll);
+                const card = document.createElement('div');
+                card.id = `roster-card-${safeId}`; 
+                
+                card.className = `flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 rounded-xl sm:rounded-lg border transition gap-2.5 sm:gap-0 ${
+                    inputMode === 'daily' 
+                        ? (isPresent ? 'bg-emerald-50/60 border-emerald-200' : 'bg-rose-50/60 border-rose-200')
+                        : 'bg-white border-slate-200 hover:border-indigo-300 shadow-sm'
+                }`;
+
+                let controlsHTML = '';
+                if (inputMode === 'daily') {
+                    controlsHTML = `
+                        <button onclick="toggleStudentStatus(${idx})" class="w-full sm:w-auto px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition focus:outline-none ${
+                            isPresent ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm' : 'bg-rose-600 text-white hover:bg-rose-700 shadow-sm'
+                        }">
+                            ${isPresent ? '<i class="fa-solid fa-check mr-1"></i> PRESENT' : '<i class="fa-solid fa-xmark mr-1"></i> ABSENT'}
+                        </button>
+                    `;
+                } else {
+                    controlsHTML = `
+                        <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Attended:</label>
+                            <input type="number" min="0" id="bulk-input-${safeId}" oninput="autoSaveDraft()" class="roster-bulk-input w-20 sm:w-16 px-2 py-1.5 sm:py-1 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-center text-indigo-700 bg-slate-50" placeholder="0" onwheel="event.preventDefault()" onkeydown="handleEnterKey(event, this)">
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-mono font-bold px-2 py-1 rounded-md ${inputMode === 'daily' ? (isPresent ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800') : 'bg-slate-100 text-slate-700'}">
+                            ${student.roll || 'N/A'}
+                        </span>
+                        <p class="text-sm font-semibold text-slate-800">${student.name || 'Unknown'}</p>
+                    </div>
+                    ${controlsHTML}
+                `;
+                container.appendChild(card);
+            });
+            updateFacultyCounters();
+        }
+
+        function toggleStudentStatus(idx) {
+            if (inputMode === 'daily') {
+                activeFacultyRoster[idx].status = !activeFacultyRoster[idx].status;
+                renderFacultyRoster();
+                autoSaveDraft();
+            }
+        }
+
+        function toggleAllFaculty(status) {
+            if (inputMode === 'daily') {
+                activeFacultyRoster.forEach(s => s.status = status);
+                renderFacultyRoster();
+            } else {
+                const maxHrs = Number(document.getElementById('monthlyBulkHours').value) || 0;
+                activeFacultyRoster.forEach(s => {
+                    const el = document.getElementById(`bulk-input-${getSafeDocId(s.roll)}`);
+                    if (el) el.value = status ? maxHrs : '';
+                });
+            }
+            autoSaveDraft();
+        }
+
+        function markSelectedDropdownStudent(status) {
+            if (inputMode === 'monthly') { showToast("Quick select actions disabled in Monthly mode.", "info"); return; }
+            const roll = document.getElementById('singleStudentDropdown').value;
+            if (!roll) { showToast("Select a student from the dropdown first.", "info"); return; }
+            const student = activeFacultyRoster.find(s => s.roll === roll);
+            if (student) { 
+                student.status = status; 
+                renderFacultyRoster(); 
+                autoSaveDraft();
+            }
+        }
+
+        function highlightOrSelectStudent() {
+            const roll = document.getElementById('singleStudentDropdown').value;
+            if (!roll) return;
+            const el = document.getElementById(`roster-card-${getSafeDocId(roll)}`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('ring-2', 'ring-indigo-500');
+                setTimeout(() => el.classList.remove('ring-2', 'ring-indigo-500'), 2000);
+            }
+        }
+
+        function updateFacultyCounters() {
+            if (inputMode === 'daily') {
+                const present = activeFacultyRoster.filter(s => s.status).length;
+                const absent = activeFacultyRoster.length - present;
+                document.getElementById('presentCountDisplay').innerText = present;
+                document.getElementById('absentCountDisplay').innerText = absent;
+            }
+            document.getElementById('rosterCountText').innerText = `Showing ${activeFacultyRoster.length} Allocated Students`;
+        }
+
+        function downloadFacultyRosterCSV() {
+            const facultyKey = document.getElementById('facultySelect').value;
+            const subject = document.getElementById('subjectSelect').value;
+            if(!facultyKey || !subject) return;
+
+            const alloc = facultyBatchAllocations[facultyKey];
+
+            let csv = `Roll No,Student Name,Subject,Faculty,Status\n`;
+            activeFacultyRoster.forEach(s => {
+                csv += `"${s.roll}","${s.name}","${subject}","${alloc.name}","${s.status ? 'PRESENT' : 'ABSENT'}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `Batch_Roster_${facultyKey}_${subject}.csv`);
+            a.click();
+        }
+
+        async function submitDailyAttendance() {
+            const btn = document.getElementById('submitAttendanceBtn');
+            const facKey = document.getElementById('facultySelect').value;
+            let subject = document.getElementById('subjectSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+
+            let hrsConducted = 0;
+            if (inputMode === 'daily') {
+                hrsConducted = selectedHours;
+            } else {
+                hrsConducted = Number(document.getElementById('monthlyBulkHours').value);
+                if (!hrsConducted || hrsConducted <= 0) {
+                    showToast("Enter a valid number of Total Class Hours Conducted.", "error");
+                    return;
+                }
+            }
+
+            if (!date || !subject || !facKey) {
+                showToast("Ensure date and subject are selected.", "info");
+                return;
+            }
+
+            const uniqueSubKey = `${facKey}_${subject}`;
+            const studentPayload = activeFacultyRoster.map(fStudent => {
+                const safeId = getSafeDocId(fStudent.roll);
+                let attendedHours = 0;
+                if (inputMode === 'daily') {
+                    attendedHours = fStudent.status ? hrsConducted : 0;
+                } else {
+                    const inputEl = document.getElementById(`bulk-input-${safeId}`);
+                    attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
+                }
+                return { roll: fStudent.roll, attended: attendedHours };
+            });
+
+            if (inputMode === 'monthly') {
+                for (let fStudent of activeFacultyRoster) {
+                    const safeId = getSafeDocId(fStudent.roll);
+                    const inputEl = document.getElementById(`bulk-input-${safeId}`);
+                    const attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
+                    
+                    if (attendedHours > hrsConducted) {
+                        showToast(`Error: ${fStudent.name} (${fStudent.roll}) marked for ${attendedHours} hrs, exceeding total ${hrsConducted} held hrs.`, "error", 7000);
+                        if(inputEl) {
+                            inputEl.classList.add('ring-2', 'ring-rose-500', 'bg-rose-50');
+                            setTimeout(() => inputEl.classList.remove('ring-2', 'ring-rose-500', 'bg-rose-50'), 3000);
+                        }
+                        return; 
+                    }
+                }
+            }
+
+            if (!navigator.onLine) {
+                const queueKey = `attendance_offline_queue_${APP_PATH}`;
+                const queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+                queue.push({
+                    facKey, subject, date, hrsConducted, records: studentPayload
+                });
+                localStorage.setItem(queueKey, JSON.stringify(queue));
+                
+                clearCurrentDraft();
+                showToast("Offline Mode: Saved locally! Will auto-sync when connected.", "info", 8000);
+                switchTab('breport');
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Syncing...';
+
+                const batch = db.batch(); 
+
+                if (subjectHoursHeld[uniqueSubKey] === undefined) subjectHoursHeld[uniqueSubKey] = 0;
+                subjectHoursHeld[uniqueSubKey] = Number(subjectHoursHeld[uniqueSubKey]) + hrsConducted;
+
+                const metaRef = db.collection(getCollectionName('metadata')).doc('subjectHours');
+                batch.set(metaRef, { [uniqueSubKey]: subjectHoursHeld[uniqueSubKey] }, { merge: true });
+
+                if (subjectDailyHoursHeld[uniqueSubKey] === undefined) subjectDailyHoursHeld[uniqueSubKey] = {};
+                subjectDailyHoursHeld[uniqueSubKey][date] = Number(subjectDailyHoursHeld[uniqueSubKey][date] || 0) + hrsConducted;
+                
+                const dailyMetaRef = db.collection(getCollectionName('metadata')).doc('subjectDailyHours');
+                batch.set(dailyMetaRef, { [uniqueSubKey]: subjectDailyHoursHeld[uniqueSubKey] }, { merge: true });
+
+                studentPayload.forEach(item => {
+                    const safeId = getSafeDocId(item.roll);
+                    let masterStudent = studentMasterList.find(m => getSafeDocId(m.roll) === safeId);
+                    
+                    if (masterStudent) {
+                        masterStudent.attendance = masterStudent.attendance || {};
+                        masterStudent.dailyLogs = masterStudent.dailyLogs || {};
+                        masterStudent.dailyLogs[uniqueSubKey] = masterStudent.dailyLogs[uniqueSubKey] || {};
+                        
+                        masterStudent.attendance[uniqueSubKey] = Number(masterStudent.attendance[uniqueSubKey] || 0) + item.attended;
+                        masterStudent.dailyLogs[uniqueSubKey][date] = Number(masterStudent.dailyLogs[uniqueSubKey][date] || 0) + item.attended;
+                        
+                        const studentRef = db.collection(getCollectionName('students')).doc(safeId);
+                        batch.set(studentRef, {
+                            attendance: { [uniqueSubKey]: masterStudent.attendance[uniqueSubKey] },
+                            dailyLogs: { [uniqueSubKey]: { [date]: masterStudent.dailyLogs[uniqueSubKey][date] } }
+                        }, { merge: true });
+                    }
+                });
+
+                await batch.commit();
+
+                if (filtersInitialized) {
+                    activeDashboardSubjectFilters.add(uniqueSubKey);
+                }
+
+                clearCurrentDraft();
+                showToast(`Attendance Logged Successfully!\nSubject: ${subject}\nAdded Hours: ${hrsConducted}`, "success");
+                populateMonthFilters();
+                renderDashboard();
+                switchTab('breport'); 
+
+            } catch (error) {
+                console.error("Database save failed: ", error);
+                showToast("Failed to sync attendance to cloud database.", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Submit & Sync Records';
+            }
+        }
+
+        function onBReportFacultyChange() {
+            const facKey = document.getElementById('bReportFacultySelect').value;
+            const subSelect = document.getElementById('bReportSubjectSelect');
+            subSelect.innerHTML = '';
+
+            if(!facKey) { subSelect.disabled = true; renderBReport(); return; }
+
+            const alloc = facultyBatchAllocations[facKey];
+            if (!alloc || !alloc.subjects) {
+                subSelect.disabled = true;
+                renderBReport();
+                return;
+            }
+
+            subSelect.disabled = false;
+            Object.keys(alloc.subjects).sort().forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub; opt.innerText = sub;
+                subSelect.appendChild(opt);
+            });
+            renderBReport();
+        }
+
+        function renderBReport() {
+            const facKey = document.getElementById('bReportFacultySelect').value;
+            const subKey = document.getElementById('bReportSubjectSelect').value;
+            
+            const tableContainer = document.getElementById('bReportTableContainer');
+            const emptyState = document.getElementById('bReportEmptyState');
+            const theadRow = document.getElementById('bReportTheadRow');
+            const tbody = document.getElementById('bReportTbody');
+            
+            theadRow.innerHTML = ''; tbody.innerHTML = '';
+
+            if (!facKey || !subKey) {
+                emptyState.classList.remove('hidden'); tableContainer.classList.add('hidden');
+                return;
+            }
+
+            const uniqueSubKey = `${facKey}_${subKey}`;
+            const alloc = facultyBatchAllocations[facKey];
+            const safeAllocRolls = (alloc.subjects[subKey] || []).map(r => getSafeDocId(r));
+            
+            let students = studentMasterList.filter(s => safeAllocRolls.includes(getSafeDocId(s.roll)));
+            students.sort((a, b) => String(a.roll).localeCompare(String(b.roll)));
+
+            const subjectDailyMeta = subjectDailyHoursHeld[uniqueSubKey] || {};
+            const availableDates = Object.keys(subjectDailyMeta).sort();
+
+            if (availableDates.length === 0) {
+                emptyState.classList.remove('hidden'); tableContainer.classList.add('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden'); tableContainer.classList.remove('hidden');
+            }
+
+            let theadHTML = `<th class="p-3 sticky left-0 bg-slate-100 z-10 w-24 border-r">Roll No</th>
+                             <th class="p-3 sticky left-24 bg-slate-100 z-10 whitespace-nowrap border-r">Name</th>`;
+            
+            availableDates.forEach(dateStr => {
+                const parts = dateStr.split('-');
+                let shortDate = dateStr;
+                if (parts.length === 3) shortDate = `${parts[2]}/${parts[1]}`;
+                else if (parts.length === 2) shortDate = `${parts[1]}/${parts[0].slice(2)}`;
+                
+                const hrsHeld = subjectDailyMeta[dateStr] || 0;
+                theadHTML += `<th class="p-3 text-center border-r min-w-[60px]">${shortDate}<br><span class="text-[10px] font-normal text-slate-500">(${hrsHeld}h)</span></th>`;
+            });
+            theadHTML += `<th class="p-3 text-center bg-indigo-50/50 border-r min-w-[80px]">Total<br><span class="text-[10px] font-normal text-slate-500">Att / Held</span></th>
+                          <th class="p-3 text-center bg-indigo-50/50 min-w-[60px]">%</th>`;
+            theadRow.innerHTML = theadHTML;
+
+            students.forEach(s => {
+                const sLogs = (s.dailyLogs && s.dailyLogs[uniqueSubKey]) ? s.dailyLogs[uniqueSubKey] : {};
+                let studentTotalAtt = 0; let studentTotalHeld = 0;
+
+                let rowHTML = `
+                    <td class="p-3 font-mono font-bold text-slate-700 sticky left-0 bg-white border-r">${s.roll || 'N/A'}</td>
+                    <td class="p-3 font-medium text-slate-800 whitespace-nowrap sticky left-24 bg-white border-r">${s.name || 'Unknown'}</td>
+                `;
+
+                availableDates.forEach(dateStr => {
+                    const held = Number(subjectDailyMeta[dateStr] || 0);
+                    const att = sLogs[dateStr] !== undefined ? Number(sLogs[dateStr]) : 0; 
+                    
+                    studentTotalAtt += att; studentTotalHeld += held;
+                    const isAbsent = att === 0 && held > 0;
+                    const cellColor = isAbsent ? 'text-rose-600 font-bold bg-rose-50/30' : 'text-slate-700';
+                    rowHTML += `<td class="p-3 text-center border-r ${cellColor}">${att}</td>`;
+                });
+
+                const pct = studentTotalHeld > 0 ? ((studentTotalAtt / studentTotalHeld) * 100).toFixed(1) : "0.0";
+                const isIrregular = parseFloat(pct) < 75 && studentTotalHeld > 0;
+
+                rowHTML += `
+                    <td class="p-3 text-center font-bold border-r bg-indigo-50/30">${studentTotalAtt}/${studentTotalHeld}</td>
+                    <td class="p-3 text-center font-bold bg-indigo-50/30 ${isIrregular ? 'text-rose-600' : 'text-emerald-600'}">${pct}%</td>
+                `;
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-slate-50 transition";
+                row.innerHTML = rowHTML;
+                tbody.appendChild(row);
+            });
+        }
+
+        function getEnrolledSubjectsMap() {
+            const studentEnrolledSubjects = {};
+            studentMasterList.forEach(s => { studentEnrolledSubjects[getSafeDocId(s.roll)] = new Set(); });
+
+            Object.keys(facultyBatchAllocations).forEach(facKey => {
+                const alloc = facultyBatchAllocations[facKey];
+                if(alloc.subjects) {
+                    Object.entries(alloc.subjects).forEach(([sub, rolls]) => {
+                        const uniqueSubKey = `${facKey}_${sub}`;
+                        (rolls || []).forEach(roll => {
+                            const safeId = getSafeDocId(roll);
+                            if (studentEnrolledSubjects[safeId]) studentEnrolledSubjects[safeId].add(uniqueSubKey);
+                        });
+                    });
+                }
+            });
+            return studentEnrolledSubjects;
+        }
+
+        function renderDashboardSubjectChips(allKeys) {
+            const container = document.getElementById('subjectFilterChips');
+            if (!container) return;
+            
+            if (allKeys.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+
+            let html = `
+                <div class="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-filter text-indigo-600 text-xs"></i>
+                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Filter Dashboard By Subject</span>
+                    </div>
+                    <button onclick="toggleSubjectFilterPanel()" id="subjectFilterToggleBtn" class="focus:outline-none flex items-center">
+                        ${isSubjectFilterVisible 
+                            ? '<i class="fa-solid fa-toggle-on text-indigo-600 text-base mr-1.5"></i> <span class="text-xs font-bold text-indigo-700">Hide Filters</span>'
+                            : '<i class="fa-solid fa-toggle-off text-slate-400 text-base mr-1.5"></i> <span class="text-xs font-bold text-slate-500">Show Filters</span>'}
+                    </button>
+                </div>
+
+                <div id="subjectFilterContent" class="${isSubjectFilterVisible ? '' : 'hidden'} space-y-3">
+                    <div class="flex flex-col sm:flex-row gap-2.5 items-start sm:items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-200">
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" id="chipSearchInput" placeholder="Filter subject chips..." onkeyup="filterSubjectChips()" class="w-full bg-white border border-slate-300 rounded-lg pl-8 pr-3 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                            <button onclick="toggleAllDashboardSubjects(true)" class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded text-xs font-bold transition">Select All</button>
+                            <button onclick="toggleAllDashboardSubjects(false)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-300 rounded text-xs font-bold transition">Clear All</button>
+                        </div>
+                    </div>
+
+                    <div id="chipsContainer" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar p-1">
+            `;
+
+            allKeys.forEach(key => {
+                const { facName, subCode } = formatUniqueSub(key);
+                const isActive = activeDashboardSubjectFilters.has(key);
+                const baseClass = "chip-item cursor-pointer px-3 py-1 rounded-full text-xs font-bold border transition-all duration-150 flex items-center select-none shadow-sm";
+                const colorClass = isActive 
+                    ? "bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700" 
+                    : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50";
+                
+                html += `<div data-chip-text="${subCode} ${facName}".toLowerCase() onclick="toggleDashboardSubjectFilter('${key}')" class="${baseClass} ${colorClass}">
+                    <i class="fa-solid ${isActive ? 'fa-circle-check mr-1.5' : 'fa-plus mr-1.5 opacity-60'}"></i>
+                    ${subCode} <span class="ml-1 text-[10px] opacity-80 font-normal">(${facName})</span>
+                </div>`;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        function filterSubjectChips() {
+            const query = (document.getElementById('chipSearchInput')?.value || '').toLowerCase();
+            const chips = document.querySelectorAll('.chip-item');
+            chips.forEach(chip => {
+                const text = chip.getAttribute('data-chip-text') || '';
+                chip.style.display = text.includes(query) ? 'inline-flex' : 'none';
+            });
+        }
+
+        function toggleDashboardSubjectFilter(key) {
+            if (activeDashboardSubjectFilters.has(key)) {
+                activeDashboardSubjectFilters.delete(key);
+            } else {
+                activeDashboardSubjectFilters.add(key);
+            }
+            renderDashboard();
+        }
+
+        function toggleAllDashboardSubjects(selectAll) {
+            const allKeys = Object.keys(subjectHoursHeld);
+            if (selectAll) {
+                allKeys.forEach(k => activeDashboardSubjectFilters.add(k));
+            } else {
+                activeDashboardSubjectFilters.clear();
+            }
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const yearFilter = document.getElementById('dashboardYearFilter').value; 
+            const monthFilter = document.getElementById('dashboardMonthFilter') ? document.getElementById('dashboardMonthFilter').value : 'ALL';
+            
+            const filtered = studentMasterList.filter(s => {
+                const safeRoll = s.roll ? String(s.roll).toLowerCase() : '';
+                const safeName = s.name ? String(s.name).toLowerCase() : '';
+                const matchesQuery = safeRoll.includes(query) || safeName.includes(query);
+                
+                let matchesYear = true;
+                if (yearFilter !== 'ALL') {
+                    const rollPrefix = s.roll ? String(s.roll).trim().substring(0, 2) : '';
+                    matchesYear = (rollPrefix === yearFilter);
+                }
+                
+                return matchesQuery && matchesYear;
+            });
+
+            const allDynamicSubjectKeys = Object.keys(subjectHoursHeld);
+            const studentEnrolledSubjects = getEnrolledSubjectsMap();
+
+            if (!filtersInitialized && allDynamicSubjectKeys.length > 0) {
+                allDynamicSubjectKeys.forEach(k => activeDashboardSubjectFilters.add(k));
+                filtersInitialized = true;
+            } else if (filtersInitialized) {
+                allDynamicSubjectKeys.forEach(k => {
+                    if (!activeDashboardSubjectFilters.has(k) && !filtersInitialized) {
+                        activeDashboardSubjectFilters.add(k);
+                    }
+                });
+            }
+
+            const visibleSubjectKeys = allDynamicSubjectKeys.filter(k => activeDashboardSubjectFilters.has(k));
+            renderDashboardSubjectChips(allDynamicSubjectKeys);
+
+            const globalTotalHoursHeld = visibleSubjectKeys.reduce((a, b) => a + Number(subjectHoursHeld[b] || 0), 0);
+            document.getElementById('statTotalHeld').innerText = `${globalTotalHoursHeld} Hrs`;
+
+            const subjectGrid = document.getElementById('subjectHoursGrid');
+            subjectGrid.innerHTML = '';
+            visibleSubjectKeys.forEach(uniqueSubKey => {
+                const { facName, subCode } = formatUniqueSub(uniqueSubKey);
+                subjectGrid.innerHTML += `
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
+                        <span class="text-[10px] font-bold uppercase bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">${facName || 'Subject'}</span>
+                        <h4 class="font-bold text-slate-800 mt-1">${subCode}</h4>
+                        <p class="text-xs text-slate-500">${subjectHoursHeld[uniqueSubKey]} Hrs Held</p>
+                    </div>
+                `;
+            });
+
+            if (visibleSubjectKeys.length === 0) {
+                subjectGrid.innerHTML = `<div class="col-span-full p-4 bg-slate-50 text-slate-500 rounded border text-center text-sm">Please select at least one subject chip above to view metrics.</div>`;
+            }
+
+            const uniqueSubjectCodes = [...new Set(visibleSubjectKeys.map(k => formatUniqueSub(k).subCode))];
+
+            let theadHTML = `
+                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
+                    <th class="p-3 sticky left-0 bg-slate-50 z-10 w-24 border-r border-slate-200">Roll No</th>
+                    <th class="p-3 sticky left-24 bg-slate-50 z-10 whitespace-nowrap border-r border-slate-200">Student Name</th>
+            `;
+            uniqueSubjectCodes.forEach(subCode => { 
+                theadHTML += `<th class="p-3 text-center border-r border-slate-200">${subCode}</th>`; 
+            });
+            theadHTML += `<th class="p-3 text-center border-r border-slate-200 bg-indigo-50/50">Total Attended</th>
+                          <th class="p-3 text-center bg-indigo-50/50 border-r border-slate-200">Overall %</th>
+                          <th class="p-3 text-center">Irregularity Status</th></tr>`;
+            document.getElementById('dashboardTableHeader').innerHTML = theadHTML;
+
+            const tbody = document.getElementById('dashboardTableBody');
+            const irregularContainer = document.getElementById('irregularListContainer');
+            tbody.innerHTML = ''; irregularContainer.innerHTML = '';
+
+            let shortageCount = 0; let totalPctSum = 0; let validStudentsCount = 0;
+
+            filtered.forEach(s => {
+                const safeId = getSafeDocId(s.roll);
+                const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                
+                if(enrolled.size === 0) return;
+                
+                let studentTotalAttended = 0; let studentTotalHeldTarget = 0;
+                let activeVisibleCount = 0;
+
+                enrolled.forEach(sub => {
+                    if (visibleSubjectKeys.includes(sub)) {
+                        const stats = getStudentSubjectStats(s, sub, monthFilter);
+                        studentTotalAttended += stats.att;
+                        studentTotalHeldTarget += stats.held;
+                        activeVisibleCount++;
+                    }
+                });
+
+                if (activeVisibleCount === 0) return; 
+
+                const pct = studentTotalHeldTarget > 0 ? ((studentTotalAttended / studentTotalHeldTarget) * 100).toFixed(1) : "0.0";
+                totalPctSum += parseFloat(pct);
+                validStudentsCount++;
+
+                const isIrregular = parseFloat(pct) < 75 && studentTotalHeldTarget > 0;
+                
+                if (isIrregular) {
+                    shortageCount++;
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-3 rounded-lg border border-rose-200 shadow-sm flex items-center justify-between";
+                    card.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xs font-mono font-bold bg-rose-100 text-rose-800 px-2 py-1 rounded">${s.roll || 'N/A'}</span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">${s.name || 'Unknown'}</p>
+                                <p class="text-[10px] text-slate-500">Missed ${studentTotalHeldTarget - studentTotalAttended} Class Hours</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-extrabold text-rose-600">${pct}%</span>
+                            <p class="text-[10px] font-bold text-rose-500 uppercase">Defaulter</p>
+                        </div>
+                    `;
+                    irregularContainer.appendChild(card);
+                }
+
+                let rowHTML = `<td class="p-3 font-mono font-bold text-slate-700 sticky left-0 bg-white z-10 border-r border-slate-100">${s.roll || 'N/A'}</td>
+                               <td class="p-3 font-medium text-slate-800 whitespace-nowrap sticky left-24 bg-white z-10 border-r border-slate-100">${s.name || 'Unknown'}</td>`;
+                
+                uniqueSubjectCodes.forEach(subCode => {
+                    const matchingKeys = Array.from(enrolled).filter(k => formatUniqueSub(k).subCode === subCode && visibleSubjectKeys.includes(k));
+                    
+                    if (matchingKeys.length > 0) {
+                        let subAtt = 0; let subHeld = 0;
+                        matchingKeys.forEach(mk => {
+                            const stats = getStudentSubjectStats(s, mk, monthFilter);
+                            subAtt += stats.att;
+                            subHeld += stats.held;
+                        });
+                        rowHTML += `<td class="p-3 text-center border-r border-slate-100">${subAtt}/${subHeld}</td>`;
+                    } else {
+                        rowHTML += `<td class="p-3 text-center border-r border-slate-100 text-slate-300">-</td>`;
+                    }
+                });
+
+                rowHTML += `<td class="p-3 text-center font-bold border-r border-slate-100 bg-indigo-50/30">${studentTotalAttended}/${studentTotalHeldTarget}</td>
+                            <td class="p-3 text-center font-bold border-r border-slate-100 bg-indigo-50/30 ${isIrregular ? 'text-rose-600' : 'text-emerald-600'}">${pct}%</td>
+                            <td class="p-3 text-center">
+                                ${isIrregular ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 rounded-full border border-rose-200"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Irregular</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200"><i class="fa-solid fa-circle-check mr-1"></i>Regular</span>'}
+                            </td>`;
+                
+                const row = document.createElement('tr');
+                row.className = "hover:bg-slate-50 transition";
+                row.innerHTML = rowHTML;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('statTotalStudents').innerText = validStudentsCount;
+
+            if (shortageCount === 0 && validStudentsCount > 0) irregularContainer.innerHTML = `<p class="text-xs text-emerald-700 font-medium col-span-2"><i class="fa-solid fa-circle-check mr-1.5"></i>All active students meet the required 75% attendance threshold!</p>`;
+            else if (validStudentsCount === 0) irregularContainer.innerHTML = `<p class="text-xs text-slate-500 font-medium col-span-2"><i class="fa-solid fa-circle-info mr-1.5"></i>No records match current filters.</p>`;
+
+            const avg = validStudentsCount > 0 ? (totalPctSum / validStudentsCount).toFixed(1) : "0.0";
+            document.getElementById('statClassAvg').innerText = `${avg}%`;
+            document.getElementById('statShortage').innerText = `${shortageCount}`;
+        }
+
+        function populateStudentDropdowns() {
+            const select = document.getElementById('reportStudentSelect');
+            const current = select.value;
+            select.innerHTML = '';
+            studentMasterList.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.roll; opt.innerText = `${s.roll || 'N/A'} - ${s.name || 'Unknown'}`;
+                select.appendChild(opt);
+            });
+            if (current && studentMasterList.some(s => s.roll === current)) {
+                select.value = current;
+            }
+        }
+
+        function onReportTypeChange() {
+            updateReportControlStates();
+            generateCustomReport();
+        }
+
+        function updateReportControlStates() {
+            const reportType = document.getElementById('reportTypeSelect').value;
+            const thresholdSelect = document.getElementById('reportThreshold');
+            const studentSelect = document.getElementById('reportStudentSelect');
+            const yearSelect = document.getElementById('reportYearFilter');
+            const monthSelect = document.getElementById('reportMonthFilter');
+
+            if (reportType === 'INDIVIDUAL') {
+                studentSelect.disabled = false;
+                studentSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+                thresholdSelect.disabled = true;
+                thresholdSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                yearSelect.disabled = true;
+                yearSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                monthSelect.disabled = false;
+                monthSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else if (reportType === 'FACULTY_SUBJECT') {
+                studentSelect.disabled = true;
+                studentSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                thresholdSelect.disabled = true;
+                thresholdSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                yearSelect.disabled = true;
+                yearSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                monthSelect.disabled = true;
+                monthSelect.classList.add('opacity-50', 'cursor-not-allowed');
+            } else if (reportType === 'IRREGULAR_SHORTAGE') {
+                studentSelect.disabled = true;
+                studentSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                thresholdSelect.disabled = true;
+                thresholdSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                yearSelect.disabled = false;
+                yearSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+                monthSelect.disabled = false;
+                monthSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else { 
+                studentSelect.disabled = true;
+                studentSelect.classList.add('opacity-50', 'cursor-not-allowed');
+                thresholdSelect.disabled = false;
+                thresholdSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+                yearSelect.disabled = false;
+                yearSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+                monthSelect.disabled = false;
+                monthSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function generateCustomReport() {
+            const reportType = document.getElementById('reportTypeSelect').value;
+            const threshold = document.getElementById('reportThreshold').value;
+            const targetRoll = document.getElementById('reportStudentSelect').value;
+            const yearFilter = document.getElementById('reportYearFilter').value; 
+            const monthFilter = document.getElementById('reportMonthFilter') ? document.getElementById('reportMonthFilter').value : 'ALL';
+            const renderArea = document.getElementById('reportRenderArea');
+
+            const dynamicSubjectKeys = Object.keys(subjectHoursHeld);
+            const studentEnrolledSubjects = getEnrolledSubjectsMap();
+            const uniqueSubjectCodes = [...new Set(dynamicSubjectKeys.map(k => formatUniqueSub(k).subCode))];
+
+            let dataset = studentMasterList.filter(s => {
+                const safeId = getSafeDocId(s.roll);
+                const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                if(enrolled.size === 0) return false;
+
+                if (yearFilter !== 'ALL') {
+                    const rollPrefix = s.roll ? String(s.roll).trim().substring(0, 2) : '';
+                    if (rollPrefix !== yearFilter) return false;
+                }
+
+                let attSum = 0; let heldSum = 0;
+                enrolled.forEach(sub => { 
+                    const stats = getStudentSubjectStats(s, sub, monthFilter);
+                    attSum += stats.att; 
+                    heldSum += stats.held; 
+                });
+                
+                const pct = heldSum > 0 ? (attSum / heldSum) * 100 : 0;
+                if (threshold === 'BELOW_75') return pct < 75;
+                if (threshold === 'ABOVE_75') return pct >= 75;
+                return true;
+            });
+
+            if (reportType === 'FULL_MONTHLY' || reportType === 'IRREGULAR_SHORTAGE') {
+                const isShortageOnly = reportType === 'IRREGULAR_SHORTAGE';
+                if (isShortageOnly) {
+                    dataset = dataset.filter(s => {
+                        const safeId = getSafeDocId(s.roll);
+                        const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                        let attSum = 0; let heldSum = 0;
+                        enrolled.forEach(sub => { 
+                            const stats = getStudentSubjectStats(s, sub, monthFilter);
+                            attSum += stats.att; 
+                            heldSum += stats.held; 
+                        });
+                        return ((attSum / heldSum) * 100) < 75;
+                    });
+                }
+
+                document.getElementById('reportTitleHeader').innerText = isShortageOnly ? "Official Irregular & Shortage Notice List (<75%)" : "Consolidated Monthly Attendance Report";
+                document.getElementById('printReportTitle').innerText = isShortageOnly ? "Irregular & Shortage Notice List" : "Consolidated Monthly Attendance Report";
+
+                if (dataset.length === 0) {
+                    renderArea.innerHTML = `<div class="p-4 bg-slate-50 text-slate-500 rounded border text-center text-sm">No students match this criteria.</div>`;
+                    return;
+                }
+
+                let html = `
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs border-collapse border border-slate-200">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                    <th class="p-2 border-r">Roll No</th>
+                                    <th class="p-2 border-r whitespace-nowrap">Student Name</th>
+                `;
+                uniqueSubjectCodes.forEach(subCode => { 
+                    html += `<th class="p-2 text-center border-r min-w-[90px]">${subCode}</th>`; 
+                });
+                html += `<th class="p-2 text-center border-r min-w-[100px]">Attended / Total</th><th class="p-2 text-center min-w-[70px]">Overall %</th></tr></thead><tbody class="divide-y divide-slate-200">`;
+
+                dataset.forEach(s => {
+                    const safeId = getSafeDocId(s.roll);
+                    const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                    
+                    let attSum = 0; let heldSum = 0;
+                    enrolled.forEach(sub => { 
+                        const stats = getStudentSubjectStats(s, sub, monthFilter);
+                        attSum += stats.att; 
+                        heldSum += stats.held; 
+                    });
+                    const pct = heldSum > 0 ? ((attSum / heldSum) * 100).toFixed(1) : "0.0";
+                    
+                    html += `<tr><td class="p-2 font-mono font-bold border-r whitespace-nowrap">${s.roll || 'N/A'}</td><td class="p-2 font-medium border-r whitespace-nowrap">${s.name || 'Unknown'}</td>`;
+                    
+                    uniqueSubjectCodes.forEach(subCode => {
+                        const matchingKeys = Array.from(enrolled).filter(k => formatUniqueSub(k).subCode === subCode);
+                        if (matchingKeys.length > 0) {
+                            let subAtt = 0; let subHeld = 0;
+                            matchingKeys.forEach(mk => {
+                                const stats = getStudentSubjectStats(s, mk, monthFilter);
+                                subAtt += stats.att;
+                                subHeld += stats.held;
+                            });
+                            html += `<td class="p-2 text-center border-r font-medium">${subAtt}/${subHeld}</td>`;
+                        } else {
+                            html += `<td class="p-2 text-center border-r text-slate-300">-</td>`;
+                        }
+                    });
+
+                    html += `<td class="p-2 text-center font-bold border-r bg-slate-50">${attSum}/${heldSum}</td><td class="p-2 text-center font-bold ${parseFloat(pct) < 75 ? 'text-rose-600' : 'text-emerald-600'}">${pct}%</td></tr>`;
+                });
+                html += `</tbody></table></div>`;
+                renderArea.innerHTML = html;
+
+            } else if (reportType === 'INDIVIDUAL') {
+                const s = studentMasterList.find(st => getSafeDocId(st.roll) === getSafeDocId(targetRoll)) || studentMasterList[0];
+                if (!s) { renderArea.innerHTML = `<div class="p-4 bg-slate-50 text-slate-500 rounded border text-center text-sm">Please assign students to generate transcript.</div>`; return; }
+                const safeId = getSafeDocId(s.roll);
+                const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                
+                let attSum = 0; let heldSum = 0;
+                enrolled.forEach(sub => { 
+                    const stats = getStudentSubjectStats(s, sub, monthFilter);
+                    attSum += stats.att; 
+                    heldSum += stats.held; 
+                });
+                const pct = heldSum > 0 ? ((attSum / heldSum) * 100).toFixed(1) : "0.0";
+
+                document.getElementById('reportTitleHeader').innerText = `Individual Transcript: ${s.name || 'Unknown'} (${s.roll || 'N/A'})`;
+                document.getElementById('printReportTitle').innerText = `Individual Attendance Transcript - ${s.roll || 'N/A'}`;
+
+                let html = `
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 bg-slate-50 p-3.5 sm:p-4 rounded-lg border border-slate-200">
+                            <div><p class="text-[10px] sm:text-xs text-slate-500 uppercase">Roll Number</p><p class="font-bold text-xs sm:text-sm font-mono">${s.roll || 'N/A'}</p></div>
+                            <div><p class="text-[10px] sm:text-xs text-slate-500 uppercase">Student Name</p><p class="font-bold text-xs sm:text-sm">${s.name || 'Unknown'}</p></div>
+                            <div><p class="text-[10px] sm:text-xs text-slate-500 uppercase">Total Attended</p><p class="font-bold text-xs sm:text-sm">${attSum} / ${heldSum} Hours</p></div>
+                            <div><p class="text-[10px] sm:text-xs text-slate-500 uppercase">Status</p><p class="font-bold text-xs sm:text-sm ${parseFloat(pct)<75?'text-rose-600':'text-emerald-600'}">${pct}% ${parseFloat(pct)<75?'(Irregular)':'(Eligible)'}</p></div>
+                        </div>
+                        <h4 class="text-xs font-bold uppercase text-slate-600 tracking-wider">Subject-Wise Breakdown</h4>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left text-xs border-collapse border border-slate-200">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                        <th class="p-2 border-r">Subject Code</th><th class="p-2 border-r">Faculty Name</th>
+                                        <th class="p-2 text-center border-r">Hours Conducted</th><th class="p-2 text-center border-r">Hours Attended</th>
+                                        <th class="p-2 text-center">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200">
+                `;
+                uniqueSubjectCodes.forEach(subCode => {
+                    const matchingKeys = Array.from(enrolled).filter(k => formatUniqueSub(k).subCode === subCode);
+                    if (matchingKeys.length > 0) {
+                        let subAtt = 0; let subHeld = 0;
+                        let facNames = [...new Set(matchingKeys.map(mk => formatUniqueSub(mk).facName))].join(', ');
+                        
+                        matchingKeys.forEach(mk => {
+                            const stats = getStudentSubjectStats(s, mk, monthFilter);
+                            subAtt += stats.att;
+                            subHeld += stats.held;
+                        });
+                        const subPct = subHeld > 0 ? ((subAtt / subHeld) * 100).toFixed(1) : "0.0";
+                        html += `<tr><td class="p-2 font-bold border-r whitespace-nowrap">${subCode}</td><td class="p-2 border-r text-slate-500 text-[10px]">${facNames}</td>
+                                 <td class="p-2 text-center border-r">${subHeld}</td><td class="p-2 text-center border-r">${subAtt}</td>
+                                 <td class="p-2 text-center font-bold ${parseFloat(subPct)<75?'text-rose-600':'text-emerald-600'}">${subPct}%</td></tr>`;
+                    }
+                });
+                html += `</tbody></table></div></div>`;
+                renderArea.innerHTML = html;
+
+            } else if (reportType === 'FACULTY_SUBJECT') {
+                document.getElementById('reportTitleHeader').innerText = "Faculty-Subject Attendance Summary";
+                document.getElementById('printReportTitle').innerText = "Faculty-Subject Attendance Summary";
+
+                let html = `
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs border-collapse border border-slate-200">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                    <th class="p-2 border-r">Faculty Name</th><th class="p-2 border-r">Assigned Subject / Batch</th>
+                                    <th class="p-2 text-center border-r">Hours Held</th><th class="p-2 text-center border-r">Allocated Students</th>
+                                    <th class="p-2 text-center">Batch Avg %</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                `;
+                Object.keys(facultyBatchAllocations).forEach(facKey => {
+                    const alloc = facultyBatchAllocations[facKey];
+                    if(alloc.subjects) {
+                        Object.entries(alloc.subjects).forEach(([subKey, rolls]) => {
+                            const uniqueSubKey = `${facKey}_${subKey}`;
+                            const held = Number(subjectHoursHeld[uniqueSubKey] || 0);
+                            const safeAllocRolls = (rolls || []).map(r => getSafeDocId(r));
+                            const allocatedStudents = studentMasterList.filter(s => safeAllocRolls.includes(getSafeDocId(s.roll)));
+                            
+                            const totalAttendedSum = allocatedStudents.reduce((acc, s) => acc + Number((s.attendance && s.attendance[uniqueSubKey]) || 0), 0);
+                            const maxPossible = held * allocatedStudents.length;
+                            const avg = maxPossible > 0 ? ((totalAttendedSum / maxPossible) * 100).toFixed(1) : "0.0";
+
+                            html += `<tr><td class="p-2 font-bold border-r whitespace-nowrap">${alloc.name}</td><td class="p-2 border-r whitespace-nowrap">${subKey}</td>
+                                     <td class="p-2 text-center border-r">${held} Hrs</td><td class="p-2 text-center border-r">${allocatedStudents.length} Students</td>
+                                     <td class="p-2 text-center font-bold text-indigo-600">${avg}%</td></tr>`;
+                        });
+                    }
+                });
+                html += `</tbody></table></div>`;
+                if (Object.keys(facultyBatchAllocations).length === 0) html = `<div class="p-4 bg-slate-50 text-slate-500 rounded border text-center text-sm">No Faculty allocations found.</div>`;
+                renderArea.innerHTML = html;
+            }
+        }
+
+        function downloadCSVReport() {
+            const reportType = document.getElementById('reportTypeSelect').value;
+            const threshold = document.getElementById('reportThreshold').value;
+            const targetRoll = document.getElementById('reportStudentSelect').value;
+            const yearFilter = document.getElementById('reportYearFilter').value; 
+            const monthFilter = document.getElementById('reportMonthFilter') ? document.getElementById('reportMonthFilter').value : 'ALL';
+            
+            const dynamicSubjectKeys = Object.keys(subjectHoursHeld);
+            const studentEnrolledSubjects = getEnrolledSubjectsMap();
+            const uniqueSubjectCodes = [...new Set(dynamicSubjectKeys.map(k => formatUniqueSub(k).subCode))];
+
+            let csv = "";
+            let fileName = `Attendance_Report_${reportType}.csv`;
+
+            if (reportType === 'FULL_MONTHLY' || reportType === 'IRREGULAR_SHORTAGE') {
+                const isShortageOnly = reportType === 'IRREGULAR_SHORTAGE';
+                let dataset = studentMasterList.filter(s => {
+                    const safeId = getSafeDocId(s.roll);
+                    const enrolled = studentEnrolledSubjects[safeId] || new Set();
+                    if (enrolled.size === 0) return false;
+
+                    if (yearFilter !== 'ALL') {
+                        const rollPrefix = s.roll ? String(s.roll).trim().substring(0, 2) : '';
+                        if (rollPrefix !== yearFilter) return false;
+                    }
+
+                    let attSum = 0; let heldSum = 0;
+                    enrolled.forEach(sub => { 
+                        const stats = getStudentSubjectStats(s, sub, monthFilter);
+                        attSum += stats.att; 
+                        heldSum += stats.held; 
+                    });
+
+                    const pct = heldSum > 0 ? (attSum / heldSum) * 100 : 0;
+                    if (isShortageOnly) return pct < 75;
+                    if (threshold === 'BELOW_75') return pct < 75;
+                    if (threshold === 'ABOVE_75') return pct >= 75;
+                    return true;
+                });
+
+                csv = "Roll No,Student Name,";
+                uniqueSubjectCodes.forEach(subCode => { 
+                    csv += `"${subCode}",`; 
+                });
+                csv += "Total Attended,Total Held,Overall Percentage,Status\n";
+
+                dataset.forEach(s => {
+                    const safeId = getSafeDocId(s.roll);
+                    const enrolled = studentEnrolledSubjects[safeId] || new Set();
+
+                    let attSum = 0; let heldSum = 0;
+                    enrolled.forEach(sub => { 
+                        const stats = getStudentSubjectStats(s, sub, monthFilter);
+                        attSum += stats.att; 
+                        heldSum += stats.held; 
+                    });
+                    const pct = heldSum > 0 ? ((attSum / heldSum) * 100).toFixed(1) : "0.0";
+                    const status = parseFloat(pct) < 75 ? 'IRREGULAR' : 'REGULAR';
+
+                    csv += `"${s.roll || 'N/A'}","${s.name || 'Unknown'}",`;
+                    
+                    uniqueSubjectCodes.forEach(subCode => { 
+                        const matchingKeys = Array.from(enrolled).filter(k => formatUniqueSub(k).subCode === subCode);
+                        if (matchingKeys.length > 0) {
+                            let subAtt = 0; let subHeld = 0;
+                            matchingKeys.forEach(mk => {
+                                const stats = getStudentSubjectStats(s, mk, monthFilter);
+                                subAtt += stats.att;
+                                subHeld += stats.held;
+                            });
+                            csv += `"${subAtt}/${subHeld}",`;
+                        } else {
+                            csv += `-,`;
+                        }
+                    });
+                    csv += `${attSum},${heldSum},${pct}%,"${status}"\n`;
+                });
+
+            } else if (reportType === 'INDIVIDUAL') {
+                const s = studentMasterList.find(st => getSafeDocId(st.roll) === getSafeDocId(targetRoll)) || studentMasterList[0];
+                if (!s) { showToast("No student selected for CSV export.", "error"); return; }
+
+                const safeId = getSafeDocId(s.roll);
+                const enrolled = studentEnrolledSubjects[safeId] || new Set();
+
+                csv = `Individual Attendance Transcript\n`;
+                csv += `Roll No,"${s.roll || 'N/A'}"\n`;
+                csv += `Student Name,"${s.name || 'Unknown'}"\n\n`;
+                csv += `Subject Code,Faculty Name,Hours Conducted,Hours Attended,Percentage,Status\n`;
+
+                uniqueSubjectCodes.forEach(subCode => {
+                    const matchingKeys = Array.from(enrolled).filter(k => formatUniqueSub(k).subCode === subCode);
+                    if (matchingKeys.length > 0) {
+                        let subAtt = 0; let subHeld = 0;
+                        let facNames = [...new Set(matchingKeys.map(mk => formatUniqueSub(mk).facName))].join(', ');
+                        
+                        matchingKeys.forEach(mk => {
+                            const stats = getStudentSubjectStats(s, mk, monthFilter);
+                            subAtt += stats.att;
+                            subHeld += stats.held;
+                        });
+                        const subPct = subHeld > 0 ? ((subAtt / subHeld) * 100).toFixed(1) : "0.0";
+                        const status = parseFloat(subPct) < 75 ? 'IRREGULAR' : 'REGULAR';
+                        csv += `"${subCode}","${facNames}",${subHeld},${subAtt},${subPct}%,"${status}"\n`;
+                    }
+                });
+                fileName = `Transcript_${s.roll || 'N/A'}.csv`;
+
+            } else if (reportType === 'FACULTY_SUBJECT') {
+                csv = "Faculty Name,Assigned Subject / Batch,Hours Held,Allocated Students,Batch Avg %\n";
+                Object.keys(facultyBatchAllocations).forEach(facKey => {
+                    const alloc = facultyBatchAllocations[facKey];
+                    if(alloc.subjects) {
+                        Object.entries(alloc.subjects).forEach(([subKey, rolls]) => {
+                            const uniqueSubKey = `${facKey}_${subKey}`;
+                            const held = Number(subjectHoursHeld[uniqueSubKey] || 0);
+                            const safeAllocRolls = (rolls || []).map(r => getSafeDocId(r));
+                            const allocatedStudents = studentMasterList.filter(s => safeAllocRolls.includes(getSafeDocId(s.roll)));
+                            
+                            const totalAttendedSum = allocatedStudents.reduce((acc, s) => acc + Number((s.attendance && s.attendance[uniqueSubKey]) || 0), 0);
+                            const maxPossible = held * allocatedStudents.length;
+                            const avg = maxPossible > 0 ? ((totalAttendedSum / maxPossible) * 100).toFixed(1) : "0.0";
+
+                            csv += `"${alloc.name}","${subKey}",${held},${allocatedStudents.length},${avg}%\n`;
+                        });
+                    }
+                });
+            }
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', fileName);
+            a.click();
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        async function factoryResetDatabase() {
+            if (!confirm("CRITICAL WARNING: This will permanently delete ALL students, attendance records, metadata, and faculty mappings from the cloud. This action CANNOT be undone. Are you sure?")) {
+                return;
+            }
+            if (prompt("Type 'ERASE' to confirm factory reset:") !== 'ERASE') {
+                showToast("Factory reset cancelled.", "info");
+                return;
+            }
+
+            const btn = document.getElementById('resetDbBtn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> ERASING...';
+            btn.disabled = true;
+
+            try {
+                const studentsSnapshot = await db.collection(getCollectionName('students')).get();
+                if (!studentsSnapshot.empty) {
+                    const batch1 = db.batch();
+                    studentsSnapshot.docs.forEach(doc => {
+                        batch1.delete(doc.ref);
+                    });
+                    await batch1.commit();
+                }
+
+                const metaSnapshot = await db.collection(getCollectionName('metadata')).get();
+                if (!metaSnapshot.empty) {
+                    const batch2 = db.batch();
+                    metaSnapshot.docs.forEach(doc => {
+                        batch2.delete(doc.ref);
+                    });
+                    await batch2.commit();
+                }
+
+                subjectHoursHeld = {};
+                subjectDailyHoursHeld = {};
+                facultyBatchAllocations = {};
+                studentMasterList = [];
+                activeFacultyRoster = [];
+                activeDashboardSubjectFilters.clear();
+                filtersInitialized = false;
+
+                renderFacultyDropdowns();
+                populateStudentDropdowns();
+                renderDashboard();
+                switchTab('faculty');
+                
+                showToast("Database successfully factory reset. All data erased.", "success", 6000);
+            } catch (error) {
+                console.error("Reset error:", error);
+                showToast("Failed to completely erase database.", "error");
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
