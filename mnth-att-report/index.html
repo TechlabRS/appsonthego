@@ -6,6 +6,7 @@
     <title>Academic Attendance & Faculty Management System - Direct Access</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link rel="icon" type="image/x-icon" href="/mp120.ico">
     
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -57,7 +58,7 @@
                         <i class="fa-solid fa-graduation-cap text-xl sm:text-2xl text-indigo-300"></i>
                         <div>
                             <h1 class="text-sm sm:text-base font-bold leading-tight">Faculty Attendance Engine</h1>
-                            <p class="text-[10px] sm:text-xs text-indigo-200">RGMCET • CSE (AI&ML) •<span id="envBadge" class="uppercase font-bold text-amber-300">Test Mode</span></p>
+                            <p class="text-[10px] sm:text-xs text-indigo-200"> RGMCET • CSE (AI&ML) • <span id="envBadge" class="uppercase font-bold text-amber-300">Test Mode</span></p>
                         </div>
                     </div>
                 </div>
@@ -148,7 +149,7 @@
                         <div class="flex items-center space-x-2.5 sm:space-x-3">
                             <i class="fa-solid fa-shield-halved text-indigo-600 text-base flex-shrink-0"></i>
                             <p id="rosterDynamicLogicText" class="leading-tight">
-                                <strong>Dynamic Presence Faculty</strong> You have selected Faculty and Subject <span id="allocationNoticeText" class="font-bold underline">None Selected</span>.
+                                <strong>Dynamic Presence Logic:</strong> Roster reflects <span id="allocationNoticeText" class="font-bold underline">None Selected</span>.
                             </p>
                         </div>
                         <span id="autoSaveIndicator" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 sm:py-1 rounded-full items-center flex-shrink-0 self-end sm:self-auto">
@@ -485,9 +486,9 @@
             }, duration);
         }
 
-        const APP_PATH = 'base';
-        function getCollectionName(base) {
-            return base
+        const APP_PATH = 'artifacts/a-report-monthly';
+        function getCollectionName(baseCollectionName) {
+            return `${APP_PATH}/${baseCollectionName}`;
         }
 
         const firebaseConfig = {
