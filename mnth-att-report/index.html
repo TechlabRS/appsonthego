@@ -1848,161 +1848,7 @@
             a.click();
         }
 
-        // DEDUPLICATED, DELTA-OVERWRITE ATTENDANCE SUBMISSION ENGINE
-        async function submitDailyAttendance() {
-            if (isSubmitting) return;
 
-            const btn = document.getElementById('submitAttendanceBtn');
-            const facKey = document.getElementById('facultySelect').value;
-            let subject = document.getElementById('subjectSelect').value;
-            const date = document.getElementById('attendanceDate').value;
-
-            let hrsConducted = 0;
-            if (inputMode === 'daily') {
-                hrsConducted = selectedHours;
-            } else {
-                hrsConducted = Number(document.getElementById('monthlyBulkHours').value);
-                if (!hrsConducted || hrsConducted <= 0) {
-                    showToast("Enter a valid number of Total Class Hours Conducted.", "error");
-                    return;
-                }
-            }
-
-            if (!date || !subject || !facKey) {
-                showToast("Ensure date and subject are selected.", "info");
-                return;
-            }
-
-            const uniqueSubKey = `${facKey}_${subject}`;
-            const studentPayload = activeFacultyRoster.map(fStudent => {
-                const safeId = getSafeDocId(fStudent.roll);
-                let attendedHours = 0;
-                if (inputMode === 'daily') {
-                    attendedHours = fStudent.status ? hrsConducted : 0;
-                } else {
-                    const inputEl = document.getElementById(`bulk-input-${safeId}`);
-                    attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
-                }
-                return { roll: fStudent.roll, attended: attendedHours };
-            });
-
-            if (inputMode === 'monthly') {
-                for (let fStudent of activeFacultyRoster) {
-                    const safeId = getSafeDocId(fStudent.roll);
-                    const inputEl = document.getElementById(`bulk-input-${safeId}`);
-                    const attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
-                    
-                    if (attendedHours > hrsConducted) {
-                        showToast(`Error: ${fStudent.name} (${fStudent.roll}) marked for ${attendedHours} hrs, exceeding total ${hrsConducted} held hrs.`, "error", 7000);
-                        if(inputEl) {
-                            inputEl.classList.add('ring-2', 'ring-rose-500', 'bg-rose-50');
-                            setTimeout(() => inputEl.classList.remove('ring-2', 'ring-rose-500', 'bg-rose-50'), 3000);
-                        }
-                        return; 
-                    }
-                }
-            }
-
-            const existingHeldForDate = Number(
-                (subjectDailyHoursHeld[uniqueSubKey] && subjectDailyHoursHeld[uniqueSubKey][date]) || 0
-            );
-
-            if (existingHeldForDate > 0) {
-                const confirmOverwrite = confirm(
-                    `Attendance for ${subject} on ${date} is already recorded (${existingHeldForDate} Hrs).\n\nDo you want to OVERWRITE this session instead of duplicating it?`
-                );
-                if (!confirmOverwrite) return;
-            }
-
-            const heldDelta = hrsConducted - existingHeldForDate;
-
-            if (!navigator.onLine) {
-                const queueKey = `attendance_offline_queue_${APP_PATH}`;
-                let queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
-
-                queue = queue.filter(item => !(item.facKey === facKey && item.subject === subject && item.date === date));
-                queue.push({
-                    facKey, subject, date, hrsConducted, records: studentPayload
-                });
-                localStorage.setItem(queueKey, JSON.stringify(queue));
-                
-                clearCurrentDraft();
-                showToast("Offline Mode: Saved locally! Duplicates prevented.", "info", 8000);
-                switchTab('breport');
-                return;
-            }
-
-            try {
-                isSubmitting = true;
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Syncing...';
-
-                const batch = db.batch();
-
-                const currentHeld = Number(subjectHoursHeld[uniqueSubKey] || 0);
-                subjectHoursHeld[uniqueSubKey] = Math.max(0, currentHeld + heldDelta);
-
-                const metaRef = db.collection(getCollectionName('metadata')).doc('subjectHours');
-                batch.set(metaRef, { [uniqueSubKey]: subjectHoursHeld[uniqueSubKey] }, { merge: true });
-
-                if (!subjectDailyHoursHeld[uniqueSubKey]) subjectDailyHoursHeld[uniqueSubKey] = {};
-                subjectDailyHoursHeld[uniqueSubKey][date] = hrsConducted;
-
-                const dailyMetaRef = db.collection(getCollectionName('metadata')).doc('subjectDailyHours');
-                batch.set(dailyMetaRef, {
-                    [`${uniqueSubKey}.${date}`]: hrsConducted
-                }, { merge: true });
-
-                studentPayload.forEach(item => {
-                    const safeId = getSafeDocId(item.roll);
-                    let masterStudent = studentMasterList.find(m => getSafeDocId(m.roll) === safeId);
-
-                    if (masterStudent) {
-                        masterStudent.attendance = masterStudent.attendance || {};
-                        masterStudent.dailyLogs = masterStudent.dailyLogs || {};
-                        masterStudent.dailyLogs[uniqueSubKey] = masterStudent.dailyLogs[uniqueSubKey] || {};
-
-                        const prevAttForDate = Number(masterStudent.dailyLogs[uniqueSubKey][date] || 0);
-                        const attDelta = item.attended - prevAttForDate;
-
-                        masterStudent.attendance[uniqueSubKey] = Math.max(0, Number(masterStudent.attendance[uniqueSubKey] || 0) + attDelta);
-                        masterStudent.dailyLogs[uniqueSubKey][date] = item.attended;
-
-                        const studentRef = db.collection(getCollectionName('students')).doc(safeId);
-                        batch.set(studentRef, {
-                            [`attendance.${uniqueSubKey}`]: masterStudent.attendance[uniqueSubKey],
-                            [`dailyLogs.${uniqueSubKey}.${date}`]: item.attended
-                        }, { merge: true });
-                    }
-                });
-
-                await batch.commit();
-
-                if (filtersInitialized) {
-                    activeDashboardSubjectFilters.add(uniqueSubKey);
-                }
-
-                clearCurrentDraft();
-                showToast(
-                    existingHeldForDate > 0
-                        ? `Session on ${date} updated cleanly (no duplicates)!`
-                        : `Attendance logged successfully for ${date} (${hrsConducted} Hrs)!`,
-                    "success"
-                );
-
-                populateMonthFilters();
-                renderDashboard();
-                switchTab('breport');
-
-            } catch (error) {
-                console.error("Database save failed: ", error);
-                showToast("Submission interrupted. Please verify connection and retry.", "error");
-            } finally {
-                isSubmitting = false;
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Submit & Sync Records';
-            }
-        }
 
         function onBReportFacultyChange() {
             const facKey = document.getElementById('bReportFacultySelect').value;
@@ -2127,6 +1973,201 @@
                 }
             });
             return studentEnrolledSubjects;
+        }
+        
+        
+        async function submitDailyAttendance() {
+            if (isSubmitting) return;
+        
+            const btn = document.getElementById('submitAttendanceBtn');
+            const facKey = document.getElementById('facultySelect').value;
+            const subject = document.getElementById('subjectSelect').value;
+            const date = document.getElementById('attendanceDate').value;
+        
+            let hrsConducted = 0;
+            if (inputMode === 'daily') {
+                hrsConducted = selectedHours;
+            } else {
+                hrsConducted = Number(document.getElementById('monthlyBulkHours').value);
+                if (!hrsConducted || hrsConducted <= 0) {
+                    showToast("Enter a valid number of Total Class Hours Conducted.", "error");
+                    return;
+                }
+            }
+        
+            if (!date || !subject || !facKey) {
+                showToast("Ensure date, faculty, and subject are selected.", "info");
+                return;
+            }
+        
+            const uniqueSubKey = `${facKey}_${subject}`;
+            const studentPayload = activeFacultyRoster.map(fStudent => {
+                const safeId = getSafeDocId(fStudent.roll);
+                let attendedHours = 0;
+                if (inputMode === 'daily') {
+                    attendedHours = fStudent.status ? hrsConducted : 0;
+                } else {
+                    const inputEl = document.getElementById(`bulk-input-${safeId}`);
+                    attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
+                }
+                return { roll: fStudent.roll, attended: attendedHours };
+            });
+        
+            if (inputMode === 'monthly') {
+                for (let fStudent of activeFacultyRoster) {
+                    const safeId = getSafeDocId(fStudent.roll);
+                    const inputEl = document.getElementById(`bulk-input-${safeId}`);
+                    const attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
+                    
+                    if (attendedHours > hrsConducted) {
+                        showToast(`Error: ${fStudent.name} (${fStudent.roll}) marked for ${attendedHours} hrs, exceeding total ${hrsConducted} held hrs.`, "error", 7000);
+                        if (inputEl) {
+                            inputEl.classList.add('ring-2', 'ring-rose-500', 'bg-rose-50');
+                            setTimeout(() => inputEl.classList.remove('ring-2', 'ring-rose-500', 'bg-rose-50'), 3000);
+                        }
+                        return;
+                    }
+                }
+            }
+        
+            const existingHeldForDate = Number(
+                (subjectDailyHoursHeld[uniqueSubKey] && subjectDailyHoursHeld[uniqueSubKey][date]) || 0
+            );
+        
+            if (existingHeldForDate > 0) {
+                const confirmOverwrite = confirm(
+                    `Attendance for ${subject} on ${date} is already recorded (${existingHeldForDate} Hrs).\n\nDo you want to OVERWRITE this session instead of duplicating it?`
+                );
+                if (!confirmOverwrite) return;
+            }
+        
+            const heldDelta = hrsConducted - existingHeldForDate;
+        
+            // Offline handling with clean deduplication
+            if (!navigator.onLine) {
+                const queueKey = `attendance_offline_queue_${APP_PATH}`;
+                let queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+        
+                queue = queue.filter(item => !(item.facKey === facKey && item.subject === subject && item.date === date));
+                queue.push({
+                    facKey, subject, date, hrsConducted, records: studentPayload
+                });
+                localStorage.setItem(queueKey, JSON.stringify(queue));
+                
+                clearCurrentDraft();
+                showToast("Offline Mode: Saved locally! Duplicates prevented.", "info", 8000);
+                switchTab('breport');
+                return;
+            }
+        
+            try {
+                isSubmitting = true;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Syncing to Cloud...';
+        
+                const batch = db.batch();
+        
+                // 1. Update overall subject held hours
+                const currentHeld = Number(subjectHoursHeld[uniqueSubKey] || 0);
+                const newTotalHeld = Math.max(0, currentHeld + heldDelta);
+                const metaRef = db.collection(getCollectionName('metadata')).doc('subjectHours');
+                batch.set(metaRef, { [uniqueSubKey]: newTotalHeld }, { merge: true });
+        
+                // 2. Write real nested Map for daily/monthly hours (avoids literal dot string names)
+                const dailyMetaRef = db.collection(getCollectionName('metadata')).doc('subjectDailyHours');
+                batch.set(dailyMetaRef, {
+                    [uniqueSubKey]: {
+                        [date]: hrsConducted
+                    }
+                }, { merge: true });
+        
+                // Staging container for local memory updates after commit confirmation
+                const stagedStudentUpdates = [];
+        
+                // 3. Queue real nested Map writes for each student document
+                studentPayload.forEach(item => {
+                    const safeId = getSafeDocId(item.roll);
+                    let masterStudent = studentMasterList.find(m => getSafeDocId(m.roll) === safeId);
+        
+                    const currentAtt = masterStudent && masterStudent.attendance ? Number(masterStudent.attendance[uniqueSubKey] || 0) : 0;
+                    const prevAttForDate = masterStudent && masterStudent.dailyLogs && masterStudent.dailyLogs[uniqueSubKey] ? Number(masterStudent.dailyLogs[uniqueSubKey][date] || 0) : 0;
+                    const attDelta = item.attended - prevAttForDate;
+                    const newStudentTotalAtt = Math.max(0, currentAtt + attDelta);
+        
+                    const studentRef = db.collection(getCollectionName('students')).doc(safeId);
+                    batch.set(studentRef, {
+                        roll: item.roll,
+                        name: (masterStudent && masterStudent.name) ? masterStudent.name : item.roll,
+                        attendance: {
+                            [uniqueSubKey]: newStudentTotalAtt
+                        },
+                        dailyLogs: {
+                            [uniqueSubKey]: {
+                                [date]: item.attended
+                            }
+                        }
+                    }, { merge: true });
+        
+                    stagedStudentUpdates.push({
+                        masterStudent,
+                        safeId,
+                        roll: item.roll,
+                        newStudentTotalAtt,
+                        attended: item.attended
+                    });
+                });
+        
+                // 4. Atomic cloud write
+                await batch.commit();
+        
+                // 5. Apply local in-memory mutations ONLY after Firestore commit succeeds
+                subjectHoursHeld[uniqueSubKey] = newTotalHeld;
+                if (!subjectDailyHoursHeld[uniqueSubKey]) subjectDailyHoursHeld[uniqueSubKey] = {};
+                subjectDailyHoursHeld[uniqueSubKey][date] = hrsConducted;
+        
+                stagedStudentUpdates.forEach(update => {
+                    let target = update.masterStudent;
+                    if (!target) {
+                        target = {
+                            roll: update.roll,
+                            name: update.roll,
+                            attendance: {},
+                            dailyLogs: {}
+                        };
+                        studentMasterList.push(target);
+                    }
+                    target.attendance = target.attendance || {};
+                    target.dailyLogs = target.dailyLogs || {};
+                    target.dailyLogs[uniqueSubKey] = target.dailyLogs[uniqueSubKey] || {};
+        
+                    target.attendance[uniqueSubKey] = update.newStudentTotalAtt;
+                    target.dailyLogs[uniqueSubKey][date] = update.attended;
+                });
+        
+                if (filtersInitialized) {
+                    activeDashboardSubjectFilters.add(uniqueSubKey);
+                }
+        
+                clearCurrentDraft();
+                showToast(
+                    existingHeldForDate > 0
+                        ? `Session on ${date} updated cleanly (overwritten without duplicates)!`
+                        : `Attendance successfully committed to Firestore for ${date} (${hrsConducted} Hrs)!`,
+                    "success"
+                );
+        
+                populateMonthFilters();
+                renderDashboard();
+                switchTab('breport');
+        
+            } catch (error) {
+                console.error("Database save failed:", error);
+                showToast("Submission failed: " + error.message, "error", 6000);
+            } finally {
+                isSubmitting = false;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Submit & Sync Records';
+            }
         }
 
         function renderDashboardSubjectChips(allKeys) {
