@@ -162,7 +162,7 @@
                         <i class="fa-solid fa-graduation-cap text-xl sm:text-2xl text-indigo-300"></i>
                         <div>
                             <h1 class="text-sm sm:text-base font-bold leading-tight flex items-center gap-2">
-                                Faculty Attendance Engine
+                                Faculty Attendance System - CSE (AI&ML)
                                 <span class="text-[9px] bg-emerald-400 text-emerald-950 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">DIRECT ACCESS</span>
                             </h1>
                             <p class="text-[10px] sm:text-xs text-indigo-200">Standalone Master Portal • <span id="envBadge" class="uppercase font-bold text-amber-300">nl.v.1.9.5.0</span></p>
@@ -267,7 +267,7 @@
                     </div>
                 </section>
 
-                <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6">
+                <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6 no-print">
                     <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
                         <div>
                             <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
@@ -2500,7 +2500,7 @@
             if (!confirm("CRITICAL WARNING: This will permanently delete ALL students, attendance records, metadata, and faculty mappings from the cloud. This action CANNOT be undone. Are you sure?")) {
                 return;
             }
-            if (prompt("Type 'ERASE' to confirm factory reset:") !== 'ERASE') {
+            if (prompt("Type 'ERASE' to confirm factory reset:") !== 'ERASEE') {
                 showToast("Factory reset cancelled.", "info");
                 return;
             }
