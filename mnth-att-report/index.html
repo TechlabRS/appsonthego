@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academic Attendance & Faculty Management System v1.9.4.4</title>
+    <title>Academic Attendance & Faculty Management System nl.v.1.9.5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
     <style>
         .glass-panel {
@@ -28,7 +27,7 @@
             }
 
             header, footer, nav, .no-print, #toast-container, .sticky, button, select, input, 
-            #loginOverlay, #initialSplashLoader, #dangerZone, #pendingRequestsContainer, #adminCsvMappingWrapper {
+            #initialSplashLoader, #dangerZone {
                 display: none !important;
             }
 
@@ -146,100 +145,16 @@
                 <i class="fa-solid fa-graduation-cap text-3xl text-indigo-100"></i>
             </div>
         </div>
-        <h2 class="text-base font-bold tracking-wider uppercase text-slate-200">RGMCET Attendance OS</h2>
+        <h2 class="text-base font-bold tracking-wider uppercase text-slate-200">RGMCET Attendance Engine</h2>
         <p id="splashStatusText" class="text-xs text-indigo-300 font-mono mt-2 flex items-center">
-            <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Initializing cloud modules...
+            <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Initializing database modules...
         </p>
     </div>
 
-    <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed top-4 right-2 sm:right-4 z-[100] flex flex-col gap-2 pointer-events-none w-[calc(100vw-1rem)] sm:w-80 max-w-full"></div>
 
-    <!-- 1. LOGIN & REGISTRATION OVERLAY -->
-    <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md px-4">
-        <div class="glass-panel w-full max-w-md p-6 sm:p-8 rounded-2xl shadow-2xl space-y-6 border border-slate-200">
-            
-            <div id="loginFormContainer" class="space-y-6">
-                <div class="text-center space-y-2">
-                    <div class="w-14 h-14 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-                        <i class="fa-solid fa-user-shield text-2xl"></i>
-                    </div>
-                    <h2 class="text-lg font-bold text-slate-900 tracking-tight">Institutional Portal Access</h2>
-                    <p class="text-xs text-slate-500">Sign in with your approved institutional credentials</p>
-                </div>
-
-                <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Institutional Email</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-envelope absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                            <input type="email" id="loginEmailInput" required placeholder="faculty@rgmcet.edu.in" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Password</label>
-                        <div class="relative">
-                            <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                            <input type="password" id="loginPasswordInput" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                    </div>
-
-                    <button type="submit" id="loginSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-3 rounded-xl shadow-lg transition flex items-center justify-center">
-                        <i class="fa-solid fa-right-to-bracket mr-2"></i> Authenticate & Enter
-                    </button>
-                </form>
-
-                <div class="text-center pt-2 border-t border-slate-200">
-                    <p class="text-xs text-slate-600">New Staff Member? 
-                        <button onclick="toggleAuthForm('register')" class="font-bold text-indigo-600 hover:underline">Request Account Approval</button>
-                    </p>
-                </div>
-            </div>
-
-            <div id="registerFormContainer" class="hidden space-y-6">
-                <div class="text-center space-y-2">
-                    <div class="w-14 h-14 bg-amber-500 rounded-2xl mx-auto flex items-center justify-center text-white shadow-lg shadow-amber-500/30">
-                        <i class="fa-solid fa-user-plus text-2xl"></i>
-                    </div>
-                    <h2 class="text-lg font-bold text-slate-900 tracking-tight">Staff Registration Request</h2>
-                    <p class="text-xs text-slate-500">Submit your details for Admin approval</p>
-                </div>
-
-                <form onsubmit="handleRegistrationSubmit(event)" class="space-y-3.5">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Full Name</label>
-                        <input type="text" id="regNameInput" required placeholder="Dr. Pavan Kumar" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Institutional Email</label>
-                        <input type="email" id="regEmailInput" required placeholder="pavan@rgmcet.edu.in" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Faculty Key / ID</label>
-                        <input type="text" id="regFacultyIdInput" required placeholder="FAC_001" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-
-                    <button type="submit" id="regSubmitBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-3 rounded-xl shadow-lg transition flex items-center justify-center">
-                        <i class="fa-solid fa-paper-plane mr-2"></i> Submit Request to Admin
-                    </button>
-                </form>
-
-                <div class="text-center pt-2 border-t border-slate-200">
-                    <button onclick="toggleAuthForm('login')" class="text-xs font-bold text-slate-600 hover:underline">
-                        <i class="fa-solid fa-arrow-left mr-1"></i> Back to Login
-                    </button>
-                </div>
-            </div>
-
-            <p class="text-[10px] text-center text-slate-400">System Path: <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-600">artifacts/mp-test-report</code></p>
-        </div>
-    </div>
-
-    <!-- MAIN APP WRAPPER -->
-    <div id="appContent" class="flex-col min-h-screen flex hidden">
+    <!-- MAIN APPLICATION -->
+    <div id="appContent" class="flex-col min-h-screen flex">
         <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-30 no-print border-b border-indigo-950">
             <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row justify-between items-center gap-2.5 sm:gap-3">
                 <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
@@ -247,16 +162,12 @@
                         <i class="fa-solid fa-graduation-cap text-xl sm:text-2xl text-indigo-300"></i>
                         <div>
                             <h1 class="text-sm sm:text-base font-bold leading-tight flex items-center gap-2">
-                                Faculty Attendance System CSE(AI&ML)
-                                <span id="userRoleBadge" class="text-[9px] bg-amber-400 text-amber-950 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">STAFF</span>
+                                Faculty Attendance System - CSE (AI&ML)
+                                <span class="text-[9px] bg-emerald-400 text-emerald-950 font-black px-2 py-0.5 rounded-full uppercase tracking-wider">DIRECT ACCESS</span>
                             </h1>
-                            <p class="text-[10px] sm:text-xs text-indigo-200"><span id="userEmailDisplay" class="font-semibold text-white">user@rgmcet.edu.in</span> • <span id="envBadge" class="uppercase font-bold text-amber-300">v1.9.4.4 Test</span></p>
+                            <p class="text-[10px] sm:text-xs text-indigo-200">Standalone Master Portal • <span id="envBadge" class="uppercase font-bold text-amber-300">nl.v.1.9.5.0</span></p>
                         </div>
                     </div>
-
-                    <button onclick="handleLogout()" class="sm:hidden px-2.5 py-1 bg-rose-600/80 hover:bg-rose-600 text-white text-[10px] font-bold rounded-lg border border-rose-400/40 flex items-center">
-                        <i class="fa-solid fa-power-off mr-1"></i> Logout
-                    </button>
                 </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
@@ -274,10 +185,6 @@
                             <i class="fa-solid fa-file-invoice mr-1"></i> Exports
                         </button>
                     </div>
-
-                    <button onclick="handleLogout()" class="hidden sm:flex px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl border border-rose-500 shadow-sm items-center transition">
-                        <i class="fa-solid fa-power-off mr-1.5"></i> Logout
-                    </button>
                 </div>
             </div>
         </header>
@@ -285,7 +192,7 @@
         <main class="max-w-7xl mx-auto w-full px-2.5 sm:px-4 py-4 sm:py-6 flex-grow">
 
             <!-- TAB 1: FACULTY INPUT -->
-            <div id="viewFaculty" class="space-y-4 sm:space-y-6 max-w-6xl mx-auto">
+            <div id="viewFaculty" class="space-y-4 sm:space-y-6 max-w-4xl mx-auto">
                 <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6">
                     <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 mb-4">
                         <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
@@ -312,7 +219,6 @@
                             <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Faculty Member</label>
                             <div class="relative">
                                 <input type="text" id="facultySearchInput" placeholder="Search Faculty Name..." onfocus="showFacultyDropdown()" onkeyup="filterFacultyList()" class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-3 pr-14 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
-                                
                                 <button type="button" id="clearFacultyBtn" onclick="clearFacultySelection()" title="Clear faculty selection" class="hidden absolute right-7 top-2.5 text-slate-400 hover:text-rose-600 transition p-0.5 focus:outline-none">
                                     <i class="fa-solid fa-circle-xmark text-sm"></i>
                                 </button>
@@ -352,7 +258,7 @@
                         <div class="flex items-center space-x-2.5 sm:space-x-3">
                             <i class="fa-solid fa-shield-halved text-indigo-600 text-base flex-shrink-0"></i>
                             <p id="rosterDynamicLogicText" class="leading-tight">
-                                <strong>Dynamic Presence Logic:</strong> You Have Selected Faculty & Subject <span id="allocationNoticeText" class="font-bold underline">None Selected</span>.
+                                <strong>Dynamic Presence Logic:</strong> Roster reflects <span id="allocationNoticeText" class="font-bold underline">None Selected</span>.
                             </p>
                         </div>
                         <span id="autoSaveIndicator" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 sm:py-1 rounded-full items-center flex-shrink-0 self-end sm:self-auto">
@@ -361,12 +267,11 @@
                     </div>
                 </section>
 
-                <!-- 70-STUDENT COMPACT GRID ROSTER SECTION -->
-                <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6">
+                <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6 no-print">
                     <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
                         <div>
                             <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
-                                <i class="fa-solid fa-users-gear text-indigo-600 mr-2"></i> Allocated Batch Roster (High Density Grid)
+                                <i class="fa-solid fa-users-gear text-indigo-600 mr-2"></i> Allocated Batch Roster
                             </h2>
                         </div>
                         <div class="flex items-center space-x-2">
@@ -400,8 +305,7 @@
                         </div>
                     </div>
 
-                    <!-- HIGH DENSITY FLEXIBLE RESPONSIVE GRID -->
-                    <div id="studentListContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5"></div>
+                    <div id="studentListContainer" class="space-y-2"></div>
                 </section>
 
                 <section class="bg-indigo-900 text-white rounded-xl shadow-lg p-3.5 sm:p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -423,7 +327,7 @@
                     </div>
 
                     <button id="submitAttendanceBtn" onclick="submitDailyAttendance()" class="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold text-sm px-6 py-3 rounded-lg shadow-md transition flex items-center justify-center focus:outline-none">
-                        <i class="fa-solid fa-paper-plane mr-2"></i> Submit, Sync & Auto-Export CSV
+                        <i class="fa-solid fa-paper-plane mr-2"></i> Submit & Sync Records
                     </button>
                 </section>
             </div>
@@ -456,7 +360,7 @@
                 </section>
             </div>
 
-            <!-- TAB 3: DASHBOARD (ADMIN ONLY) -->
+            <!-- TAB 3: DASHBOARD -->
             <div id="viewDashboard" class="space-y-4 sm:space-y-6 hidden">
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto flex-grow">
@@ -555,20 +459,8 @@
                 </div>
             </div>
 
-            <!-- TAB 4: REPORTS & ADMIN APPROVALS (ADMIN ONLY) -->
+            <!-- TAB 4: REPORTS & EXPORTS -->
             <div id="viewReports" class="space-y-6 hidden">
-                <section class="bg-amber-50/80 rounded-xl shadow-sm border border-amber-200 p-3.5 sm:p-6 space-y-3 no-print">
-                    <div class="flex items-center justify-between border-b border-amber-200 pb-3">
-                        <h2 class="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center">
-                            <i class="fa-solid fa-user-clock text-amber-600 mr-2"></i> Pending Staff Registration Requests
-                        </h2>
-                        <button onclick="loadPendingRegistrations()" class="text-xs font-bold text-amber-800 hover:underline"><i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh</button>
-                    </div>
-                    <div id="pendingRequestsContainer" class="space-y-2">
-                        <p class="text-xs text-slate-500">Loading pending registration requests...</p>
-                    </div>
-                </section>
-
                 <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 sm:p-6 no-print">
                     <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center">
                         <i class="fa-solid fa-file-invoice text-indigo-600 mr-2"></i> Custom Report Builder
@@ -661,7 +553,7 @@
         </main>
     </div>
 
-    <!-- Complete Backend Engine (v1.9.4.4 Fixed) -->
+    <!-- COMPLETE SYSTEM ENGINE (DIRECT ACCESS NO LOGIN) -->
     <script>
         function showToast(message, type = 'success', duration = 4000) {
             const container = document.getElementById('toast-container');
@@ -709,7 +601,7 @@
             }, duration);
         }
 
-        const APP_PATH = 'artifacts/a-test-report';
+        const APP_PATH = 'artifacts/a-report-monthly';
         function getCollectionName(baseCollectionName) { return `${APP_PATH}/${baseCollectionName}`; }
 
         const firebaseConfig = {
@@ -724,11 +616,6 @@
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
-        let currentUser = null;
-        let currentUserRole = 'staff'; 
-        let whitelistedUsersMap = {};
-        let pendingRegistrationsMap = {};
 
         let inputMode = 'daily'; 
         let selectedHours = 1;
@@ -788,6 +675,14 @@
                     splash.classList.add('opacity-0', 'pointer-events-none');
                     setTimeout(() => splash.remove(), 500);
                 }
+
+                // Initialize Views Directly
+                renderFacultyDropdowns();
+                populateMonthFilters();
+                setInputMode('daily'); 
+                switchTab('faculty');
+                syncOfflineQueue();
+
             } catch (err) {
                 console.warn("Firestore handshake delay:", err);
                 showToast("Connection slow. Working in offline fallback mode if necessary.", "warning", 6000);
@@ -796,185 +691,6 @@
                     splash.classList.add('opacity-0', 'pointer-events-none');
                     setTimeout(() => splash.remove(), 500);
                 }
-            }
-        }
-
-        function toggleAuthForm(target) {
-            document.getElementById('loginFormContainer').classList.toggle('hidden', target !== 'login');
-            document.getElementById('registerFormContainer').classList.toggle('hidden', target !== 'register');
-        }
-
-        async function handleRegistrationSubmit(event) {
-            event.preventDefault();
-            const fullName = document.getElementById('regNameInput').value.trim();
-            const email = document.getElementById('regEmailInput').value.trim().toLowerCase();
-            const facultyId = document.getElementById('regFacultyIdInput').value.trim();
-            const btn = document.getElementById('regSubmitBtn');
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting...';
-
-            try {
-                const pendingRef = db.collection(getCollectionName('metadata')).doc('pendingRegistrations');
-                const safeEmailKey = email.replace(/\./g, '_');
-
-                await pendingRef.set({
-                    [safeEmailKey]: {
-                        email, name: fullName, facultyId, requestedAt: new Date().toISOString()
-                    }
-                }, { merge: true });
-
-                showToast("Registration request submitted! Admin approval pending.", "success", 6000);
-                toggleAuthForm('login');
-            } catch (err) {
-                console.error("Registration error:", err);
-                showToast("Failed to submit registration request.", "error");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Submit Request to Admin';
-            }
-        }
-
-        async function handleLoginSubmit(event) {
-            event.preventDefault();
-            const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
-            const password = document.getElementById('loginPasswordInput').value;
-            const btn = document.getElementById('loginSubmitBtn');
-
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Verifying...';
-
-            try {
-                const userDoc = whitelistedUsersMap[email];
-
-                if (!userDoc && email !== 'hcseaiml@rgmcet.edu.in') {
-                    showToast("Access Denied: Email is not whitelisted for faculty portal.", "error");
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i> Authenticate & Enter';
-                    return;
-                }
-
-                await firebase.auth().signInWithEmailAndPassword(email, password);
-
-                currentUser = { email };
-                currentUserRole = userDoc ? userDoc.role : (email === 'hcseaiml@rgmcet.edu.in' ? 'admin' : 'staff');
-
-                document.getElementById('userEmailDisplay').innerText = email;
-                document.getElementById('userRoleBadge').innerText = currentUserRole.toUpperCase();
-                document.getElementById('userRoleBadge').className = currentUserRole === 'admin' 
-                    ? "text-[9px] bg-rose-500 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider"
-                    : "text-[9px] bg-amber-400 text-amber-950 font-black px-2 py-0.5 rounded-full uppercase tracking-wider";
-
-                document.getElementById('loginOverlay').classList.add('hidden');
-                document.getElementById('appContent').classList.remove('hidden');
-
-                applyRoleBasedUIPermissions();
-                showToast(`Welcome, ${userDoc ? (userDoc.name || email) : email}! Signed in as ${currentUserRole.toUpperCase()}.`, "success");
-
-            } catch (err) {
-                console.error("Login verification failed:", err);
-                showToast("Invalid email or password.", "error");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-2"></i> Authenticate & Enter';
-            }
-        }
-
-        function handleLogout() {
-            firebase.auth().signOut();
-            currentUser = null;
-            currentUserRole = 'staff';
-            document.getElementById('appContent').classList.add('hidden');
-            document.getElementById('loginOverlay').classList.remove('hidden');
-            showToast("Signed out successfully.", "info");
-        }
-
-        function applyRoleBasedUIPermissions() {
-            const isStaff = (currentUserRole === 'staff');
-
-            const dashBtn = document.getElementById('tabBtnDashboard');
-            const repoBtn = document.getElementById('tabBtnReports');
-            const csvWrapper = document.getElementById('adminCsvMappingWrapper');
-
-            if (dashBtn) dashBtn.style.display = isStaff ? 'none' : 'flex';
-            if (repoBtn) repoBtn.style.display = isStaff ? 'none' : 'flex';
-            if (csvWrapper) csvWrapper.style.display = isStaff ? 'none' : 'flex';
-
-            renderFacultyDropdowns();
-            populateMonthFilters();
-            setInputMode('daily'); 
-            switchTab('faculty');
-            syncOfflineQueue();
-
-            if (currentUserRole === 'admin') {
-                renderDashboard();
-                onReportTypeChange();
-                loadPendingRegistrations();
-            }
-        }
-
-        async function loadPendingRegistrations() {
-            const container = document.getElementById('pendingRequestsContainer');
-            if (!container) return;
-
-            try {
-                const doc = await db.collection(getCollectionName('metadata')).doc('pendingRegistrations').get();
-                pendingRegistrationsMap = doc.exists ? doc.data() : {};
-
-                const entries = Object.values(pendingRegistrationsMap);
-                if (entries.length === 0) {
-                    container.innerHTML = `<p class="text-xs text-slate-500 italic"><i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> No pending staff registration requests.</p>`;
-                    return;
-                }
-
-                container.innerHTML = '';
-                entries.forEach(req => {
-                    container.innerHTML += `
-                        <div class="bg-white p-3 rounded-lg border border-amber-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                            <div>
-                                <p class="text-xs font-bold text-slate-800">${req.name} <span class="text-slate-400">(${req.facultyId})</span></p>
-                                <p class="text-[11px] text-indigo-700 font-mono">${req.email}</p>
-                            </div>
-                            <button onclick="approveStaffUser('${req.email}', '${req.facultyId}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold shadow transition flex items-center">
-                                <i class="fa-solid fa-check mr-1.5"></i> Approve & Send Password Link
-                            </button>
-                        </div>
-                    `;
-                });
-            } catch (err) {
-                console.error("Error loading pending registrations:", err);
-            }
-        }
-
-        async function approveStaffUser(email, facultyKey) {
-            try {
-                const batch = db.batch();
-                const safeEmailKey = email.replace(/\./g, '_');
-
-                const whiteRef = db.collection(getCollectionName('metadata')).doc('whitelistedUsers');
-                batch.set(whiteRef, {
-                    [email]: { role: 'staff', facultyKey, approvedAt: new Date().toISOString() }
-                }, { merge: true });
-
-                const pendingRef = db.collection(getCollectionName('metadata')).doc('pendingRegistrations');
-                batch.update(pendingRef, {
-                    [safeEmailKey]: firebase.firestore.FieldValue.delete()
-                });
-
-                await batch.commit();
-
-                firebase.auth().sendPasswordResetEmail(email)
-                    .then(() => {
-                        showToast(`Approved ${email}! Password reset link sent (Check Inbox/Spam).`, "success");
-                    })
-                    .catch((authErr) => {
-                        showToast(`Approved in DB! Create ${email} in Firebase Auth console if new.`, "info", 6000);
-                    });
-
-                loadPendingRegistrations();
-            } catch (err) {
-                console.error("Approval error:", err);
-                showToast("Failed to approve staff user.", "error");
             }
         }
 
@@ -1166,7 +882,7 @@
 
             if (!navigator.onLine) return;
 
-            showToast(`Syncing ${queue.length} offline record(s) to cloud...`, "info");
+            showToast(`Syncing ${queue.length} offline record(s) with delta verification...`, "info");
             
             try {
                 const batch = db.batch();
@@ -1182,12 +898,12 @@
                     const metaRef = db.collection(getCollectionName('metadata')).doc('subjectHours');
                     batch.set(metaRef, { [uniqueSubKey]: subjectHoursHeld[uniqueSubKey] }, { merge: true });
 
-                    // True Nested Map (No flat dots)
+                    if (!subjectDailyHoursHeld[uniqueSubKey]) subjectDailyHoursHeld[uniqueSubKey] = {};
+                    subjectDailyHoursHeld[uniqueSubKey][item.date] = item.hrsConducted;
+                    
                     const dailyMetaRef = db.collection(getCollectionName('metadata')).doc('subjectDailyHours');
-                    batch.set(dailyMetaRef, {
-                        [uniqueSubKey]: {
-                            [item.date]: item.hrsConducted
-                        }
+                    batch.set(dailyMetaRef, { 
+                        [`${uniqueSubKey}.${item.date}`]: item.hrsConducted 
                     }, { merge: true });
 
                     item.records.forEach(r => {
@@ -1207,16 +923,8 @@
                             
                             const studentRef = db.collection(getCollectionName('students')).doc(safeId);
                             batch.set(studentRef, {
-                                roll: r.roll,
-                                name: masterStudent.name || r.name || r.roll,
-                                attendance: {
-                                    [uniqueSubKey]: masterStudent.attendance[uniqueSubKey]
-                                },
-                                dailyLogs: {
-                                    [uniqueSubKey]: {
-                                        [item.date]: r.attended
-                                    }
-                                }
+                                [`attendance.${uniqueSubKey}`]: masterStudent.attendance[uniqueSubKey],
+                                [`dailyLogs.${uniqueSubKey}.${item.date}`]: r.attended
                             }, { merge: true });
                         }
                     });
@@ -1248,9 +956,6 @@
 
         async function loadFirestoreData() {
             try {
-                const whiteDoc = await db.collection(getCollectionName('metadata')).doc('whitelistedUsers').get();
-                whitelistedUsersMap = whiteDoc.exists ? whiteDoc.data() : {};
-
                 const allocDoc = await db.collection(getCollectionName('metadata')).doc('facultyAllocations').get();
                 facultyBatchAllocations = allocDoc.exists ? allocDoc.data() : {};
 
@@ -1404,25 +1109,6 @@
             const allAllocKeys = Object.keys(facultyBatchAllocations);
             let targetKeys = [...allAllocKeys];
 
-            // Case-Insensitive Staff-Subject Isolation Lookup
-            if (currentUserRole === 'staff' && currentUser) {
-                const userEmail = currentUser.email.toLowerCase().trim();
-                const userWhitelistData = whitelistedUsersMap[userEmail];
-                
-                let mappedFacKey = userWhitelistData ? (userWhitelistData.facultyKey || userWhitelistData.facultyId) : null;
-                
-                if (mappedFacKey) {
-                    const normalizedKey = String(mappedFacKey).trim().toLowerCase();
-                    const matchedKey = allAllocKeys.find(k => k.trim().toLowerCase() === normalizedKey);
-                    targetKeys = matchedKey ? [matchedKey] : [];
-                } else {
-                    targetKeys = allAllocKeys.filter(k => {
-                        const alloc = facultyBatchAllocations[k];
-                        return alloc.email && alloc.email.trim().toLowerCase() === userEmail;
-                    });
-                }
-            }
-
             targetKeys.sort((a, b) => {
                 const nameA = (facultyBatchAllocations[a]?.name || a).toLowerCase();
                 const nameB = (facultyBatchAllocations[b]?.name || b).toLowerCase();
@@ -1449,28 +1135,20 @@
             });
 
             if (targetKeys.length === 0) {
-                list.innerHTML = '<div class="p-3 text-xs text-rose-500 font-bold text-center">No allocated subjects found for this account. Contact Admin.</div>';
-                bReportFacSelect.innerHTML = '<option value="">-- No Subjects Found --</option>';
+                list.innerHTML = '<div class="p-3 text-xs text-rose-500 font-bold text-center">No allocated faculty found in database.</div>';
+                bReportFacSelect.innerHTML = '<option value="">-- No Faculty Found --</option>';
                 clearFacultySelection();
                 return;
             }
 
             const defaultKey = targetKeys[0];
             selectFaculty(defaultKey, facultyBatchAllocations[defaultKey].name);
-
-            if (currentUserRole === 'staff') {
-                searchInput.disabled = true;
-                searchInput.classList.add('bg-slate-200', 'cursor-not-allowed');
-                if (clearBtn) clearBtn.classList.add('hidden');
-            } else {
-                searchInput.disabled = false;
-                searchInput.classList.remove('bg-slate-200', 'cursor-not-allowed');
-                if (clearBtn) clearBtn.classList.remove('hidden');
-            }
+            searchInput.disabled = false;
+            searchInput.classList.remove('bg-slate-200', 'cursor-not-allowed');
+            if (clearBtn) clearBtn.classList.remove('hidden');
         }
 
         function showFacultyDropdown() {
-            if (currentUserRole === 'staff') return;
             const list = document.getElementById('facultyDropdownList');
             filterFacultyList();
             list.classList.remove('hidden');
@@ -1496,9 +1174,7 @@
             document.getElementById('facultyDropdownList').classList.add('hidden');
             
             const clearBtn = document.getElementById('clearFacultyBtn');
-            if (clearBtn && currentUserRole !== 'staff') {
-                clearBtn.classList.remove('hidden');
-            }
+            if (clearBtn) clearBtn.classList.remove('hidden');
 
             const bSelect = document.getElementById('bReportFacultySelect');
             if (bSelect) bSelect.value = key;
@@ -1507,8 +1183,6 @@
         }
 
         function clearFacultySelection() {
-            if (currentUserRole === 'staff') return;
-
             document.getElementById('facultySelect').value = '';
             const searchInput = document.getElementById('facultySearchInput');
             searchInput.value = '';
@@ -1598,11 +1272,6 @@
         }
 
         function switchTab(tabName) {
-            if (currentUserRole === 'staff' && (tabName === 'dashboard' || tabName === 'reports')) {
-                showToast("Access Denied: Staff accounts cannot access Admin modules.", "error");
-                tabName = 'faculty';
-            }
-
             const views = { 'faculty': document.getElementById('viewFaculty'), 'breport': document.getElementById('viewBReport'), 'dashboard': document.getElementById('viewDashboard'), 'reports': document.getElementById('viewReports') };
             const btns = { 'faculty': document.getElementById('tabBtnFaculty'), 'breport': document.getElementById('tabBtnBReport'), 'dashboard': document.getElementById('tabBtnDashboard'), 'reports': document.getElementById('tabBtnReports') };
 
@@ -1616,8 +1285,8 @@
                 if(btns[tabName]) btns[tabName].className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow-sm flex items-center justify-center focus:outline-none";
             }
 
-            if (tabName === 'dashboard' && currentUserRole === 'admin') renderDashboard();
-            if (tabName === 'reports' && currentUserRole === 'admin') { populateStudentDropdowns(); onReportTypeChange(); }
+            if (tabName === 'dashboard') renderDashboard();
+            if (tabName === 'reports') { populateStudentDropdowns(); onReportTypeChange(); }
             if (tabName === 'breport') renderBReport();
         }
 
@@ -1725,7 +1394,6 @@
             });
         }
 
-        // HIGH-DENSITY COMPACT GRID RENDERER (PERFECT FOR 60-75+ STUDENTS)
         function renderFacultyRoster() {
             const container = document.getElementById('studentListContainer');
             container.innerHTML = '';
@@ -1736,37 +1404,36 @@
                 const card = document.createElement('div');
                 card.id = `roster-card-${safeId}`; 
                 
-                card.className = `p-2.5 rounded-xl border transition-all duration-150 flex items-center justify-between shadow-xs ${
+                card.className = `flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 rounded-xl sm:rounded-lg border transition gap-2.5 sm:gap-0 ${
                     inputMode === 'daily' 
-                        ? (isPresent ? 'bg-emerald-50/90 border-emerald-300' : 'bg-rose-50/90 border-rose-300')
-                        : 'bg-white border-slate-200 hover:border-indigo-400 hover:shadow'
+                        ? (isPresent ? 'bg-emerald-50 border-emerald-300' : 'bg-rose-50 border-rose-300')
+                        : 'bg-white border-slate-200 hover:border-indigo-300 shadow-sm'
                 }`;
 
                 let controlsHTML = '';
                 if (inputMode === 'daily') {
                     controlsHTML = `
-                        <button onclick="toggleStudentStatus(${idx})" class="px-2.5 py-1.5 rounded-lg text-[11px] font-black transition focus:outline-none shadow-sm flex items-center flex-shrink-0 ${
+                        <button onclick="toggleStudentStatus(${idx})" class="w-full sm:w-auto px-4 py-2 sm:py-1.5 rounded-lg text-xs font-bold transition focus:outline-none shadow ${
                             isPresent ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-rose-600 text-white hover:bg-rose-700'
                         }">
-                            ${isPresent ? '<i class="fa-solid fa-check mr-1"></i> P' : '<i class="fa-solid fa-xmark mr-1"></i> A'}
+                            ${isPresent ? '<i class="fa-solid fa-check mr-1"></i> PRESENT' : '<i class="fa-solid fa-xmark mr-1"></i> ABSENT'}
                         </button>
                     `;
                 } else {
                     controlsHTML = `
-                        <div class="flex items-center space-x-1.5 flex-shrink-0">
-                            <input type="number" min="0" id="bulk-input-${safeId}" oninput="autoSaveDraft()" class="roster-bulk-input w-14 px-1.5 py-1 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-center text-indigo-800 bg-slate-50" placeholder="0" onwheel="event.preventDefault()" onkeydown="handleEnterKey(event, this)">
+                        <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Attended:</label>
+                            <input type="number" min="0" id="bulk-input-${safeId}" oninput="autoSaveDraft()" class="roster-bulk-input w-20 sm:w-16 px-2 py-1.5 sm:py-1 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-center text-indigo-700 bg-slate-50" placeholder="0" onwheel="event.preventDefault()" onkeydown="handleEnterKey(event, this)">
                         </div>
                     `;
                 }
 
                 card.innerHTML = `
-                    <div class="flex flex-col min-w-0 pr-2">
-                        <span class="text-[11px] font-mono font-bold truncate leading-tight ${inputMode === 'daily' ? (isPresent ? 'text-emerald-950' : 'text-rose-950') : 'text-slate-800'}">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-mono font-bold px-2 py-1 rounded-md ${inputMode === 'daily' ? (isPresent ? 'bg-emerald-200 text-emerald-900 border border-emerald-300' : 'bg-rose-200 text-rose-900 border border-rose-300') : 'bg-slate-100 text-slate-700'}">
                             ${student.roll || 'N/A'}
                         </span>
-                        <p class="text-[11px] font-medium text-slate-500 truncate leading-tight mt-0.5" title="${student.name || 'Unknown'}">
-                            ${student.name || 'Unknown'}
-                        </p>
+                        <p class="text-sm font-semibold text-slate-800">${student.name || 'Unknown'}</p>
                     </div>
                     ${controlsHTML}
                 `;
@@ -1827,7 +1494,7 @@
                 document.getElementById('presentCountDisplay').innerText = present;
                 document.getElementById('absentCountDisplay').innerText = absent;
             }
-            document.getElementById('rosterCountText').innerText = `Showing ${activeFacultyRoster.length} Allocated Students (Compact Grid)`;
+            document.getElementById('rosterCountText').innerText = `Showing ${activeFacultyRoster.length} Allocated Students`;
         }
 
         function downloadFacultyRosterCSV() {
@@ -1850,245 +1517,200 @@
             a.click();
         }
 
-        // AUTOMATIC SESSION CSV EXPORT & LOCAL AUDIT WRITER
-        function autoSaveAndDownloadSessionCSV(payload, facKey, subject, date, hrsConducted) {
-            const alloc = facultyBatchAllocations[facKey];
-            const facName = alloc ? alloc.name : facKey;
-
-            try {
-                const historyKey = `local_attendance_history_${APP_PATH}`;
-                const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
-                history.unshift({
-                    timestamp: new Date().toISOString(),
-                    facultyKey: facKey,
-                    facultyName: facName,
-                    subject: subject,
-                    date: date,
-                    hoursHeld: hrsConducted,
-                    studentRecords: payload
-                });
-                if (history.length > 50) history.pop();
-                localStorage.setItem(historyKey, JSON.stringify(history));
-            } catch (e) {
-                console.warn("Local storage audit error:", e);
-            }
-
-            let csv = `Roll No.,Name,Attendance,Percentage,Status\n`;
-            payload.forEach(item => {
-                const pct = hrsConducted > 0 ? ((item.attended / hrsConducted) * 100).toFixed(1) : "0.0";
-                const status = item.attended > 0 ? "PRESENT" : "ABSENT";
-                csv += `"${item.roll}","${item.name}","${item.attended} out of ${hrsConducted}","${pct}%","${status}"\n`;
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Attendance_${subject}_${date}_(${hrsConducted}Hrs).csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        // FIXED SUBMISSION ENGINE (ZERO SILENT FAILURES + AUTO CSV DOWNLOAD)
+        // DEDUPLICATED, DELTA-OVERWRITE ATTENDANCE SUBMISSION ENGINE
         async function submitDailyAttendance() {
-            if (isSubmitting) return;
+    if (isSubmitting) return;
 
-            const btn = document.getElementById('submitAttendanceBtn');
-            const facKey = document.getElementById('facultySelect').value;
-            let subject = document.getElementById('subjectSelect').value;
-            const date = document.getElementById('attendanceDate').value;
+    const btn = document.getElementById('submitAttendanceBtn');
+    const facKey = document.getElementById('facultySelect').value;
+    const subject = document.getElementById('subjectSelect').value;
+    const date = document.getElementById('attendanceDate').value;
 
-            let hrsConducted = 0;
-            if (inputMode === 'daily') {
-                hrsConducted = selectedHours;
-            } else {
-                hrsConducted = Number(document.getElementById('monthlyBulkHours').value);
-                if (!hrsConducted || hrsConducted <= 0) {
-                    showToast("Enter a valid number of Total Class Hours Conducted.", "error");
-                    return;
+    let hrsConducted = 0;
+    if (inputMode === 'daily') {
+        hrsConducted = selectedHours;
+    } else {
+        hrsConducted = Number(document.getElementById('monthlyBulkHours').value);
+        if (!hrsConducted || hrsConducted <= 0) {
+            showToast("Enter a valid number of Total Class Hours Conducted.", "error");
+            return;
+        }
+    }
+
+    if (!date || !subject || !facKey) {
+        showToast("Ensure date, faculty, and subject are selected.", "info");
+        return;
+    }
+
+    const uniqueSubKey = `${facKey}_${subject}`;
+    const studentPayload = activeFacultyRoster.map(fStudent => {
+        const safeId = getSafeDocId(fStudent.roll);
+        let attendedHours = 0;
+        if (inputMode === 'daily') {
+            attendedHours = fStudent.status ? hrsConducted : 0;
+        } else {
+            const inputEl = document.getElementById(`bulk-input-${safeId}`);
+            attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
+        }
+        return { roll: fStudent.roll, attended: attendedHours };
+    });
+
+    if (inputMode === 'monthly') {
+        for (let fStudent of activeFacultyRoster) {
+            const safeId = getSafeDocId(fStudent.roll);
+            const inputEl = document.getElementById(`bulk-input-${safeId}`);
+            const attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
+            
+            if (attendedHours > hrsConducted) {
+                showToast(`Error: ${fStudent.name} (${fStudent.roll}) marked for ${attendedHours} hrs, exceeding total ${hrsConducted} held hrs.`, "error", 7000);
+                if (inputEl) {
+                    inputEl.classList.add('ring-2', 'ring-rose-500', 'bg-rose-50');
+                    setTimeout(() => inputEl.classList.remove('ring-2', 'ring-rose-500', 'bg-rose-50'), 3000);
                 }
-            }
-
-            if (!date || !subject || !facKey) {
-                showToast("Ensure date, faculty, and subject are selected.", "info");
                 return;
-            }
-
-            const uniqueSubKey = `${facKey}_${subject}`;
-            const studentPayload = activeFacultyRoster.map(fStudent => {
-                const safeId = getSafeDocId(fStudent.roll);
-                let attendedHours = 0;
-                if (inputMode === 'daily') {
-                    attendedHours = fStudent.status ? hrsConducted : 0;
-                } else {
-                    const inputEl = document.getElementById(`bulk-input-${safeId}`);
-                    attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
-                }
-                return { roll: fStudent.roll, name: fStudent.name, attended: attendedHours };
-            });
-
-            if (inputMode === 'monthly') {
-                for (let fStudent of activeFacultyRoster) {
-                    const safeId = getSafeDocId(fStudent.roll);
-                    const inputEl = document.getElementById(`bulk-input-${safeId}`);
-                    const attendedHours = inputEl && inputEl.value ? Number(inputEl.value) : 0;
-                    
-                    if (attendedHours > hrsConducted) {
-                        showToast(`Error: ${fStudent.name} (${fStudent.roll}) marked for ${attendedHours} hrs, exceeding total ${hrsConducted} held hrs.`, "error", 7000);
-                        if(inputEl) {
-                            inputEl.classList.add('ring-2', 'ring-rose-500', 'bg-rose-50');
-                            setTimeout(() => inputEl.classList.remove('ring-2', 'ring-rose-500', 'bg-rose-50'), 3000);
-                        }
-                        return; 
-                    }
-                }
-            }
-
-            const existingHeldForDate = Number(
-                (subjectDailyHoursHeld[uniqueSubKey] && subjectDailyHoursHeld[uniqueSubKey][date]) || 0
-            );
-
-            if (existingHeldForDate > 0) {
-                const confirmOverwrite = confirm(
-                    `Attendance for ${subject} on ${date} is already recorded (${existingHeldForDate} Hrs).\n\nDo you want to OVERWRITE this session instead of duplicating it?`
-                );
-                if (!confirmOverwrite) return;
-            }
-
-            const heldDelta = hrsConducted - existingHeldForDate;
-
-            if (!navigator.onLine) {
-                const queueKey = `attendance_offline_queue_${APP_PATH}`;
-                let queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
-
-                queue = queue.filter(item => !(item.facKey === facKey && item.subject === subject && item.date === date));
-                queue.push({
-                    facKey, subject, date, hrsConducted, records: studentPayload
-                });
-                localStorage.setItem(queueKey, JSON.stringify(queue));
-                
-                clearCurrentDraft();
-                autoSaveAndDownloadSessionCSV(studentPayload, facKey, subject, date, hrsConducted);
-                showToast("Offline Mode: Saved locally and CSV downloaded! Duplicates prevented.", "info", 8000);
-                switchTab('breport');
-                return;
-            }
-
-            try {
-                isSubmitting = true;
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Syncing to Cloud...';
-
-                const batch = db.batch();
-
-                // 1. Update overall subject held hours
-                const currentHeld = Number(subjectHoursHeld[uniqueSubKey] || 0);
-                const newTotalHeld = Math.max(0, currentHeld + heldDelta);
-                const metaRef = db.collection(getCollectionName('metadata')).doc('subjectHours');
-                batch.set(metaRef, { [uniqueSubKey]: newTotalHeld }, { merge: true });
-
-                // 2. Write real nested Map for daily session hours (avoids literal dot string names)
-                const dailyMetaRef = db.collection(getCollectionName('metadata')).doc('subjectDailyHours');
-                batch.set(dailyMetaRef, {
-                    [uniqueSubKey]: {
-                        [date]: hrsConducted
-                    }
-                }, { merge: true });
-
-                const stagedStudentUpdates = [];
-
-                // 3. Queue real nested Map writes for each student document
-                studentPayload.forEach(item => {
-                    const safeId = getSafeDocId(item.roll);
-                    let masterStudent = studentMasterList.find(m => getSafeDocId(m.roll) === safeId);
-
-                    const currentAtt = masterStudent && masterStudent.attendance ? Number(masterStudent.attendance[uniqueSubKey] || 0) : 0;
-                    const prevAttForDate = masterStudent && masterStudent.dailyLogs && masterStudent.dailyLogs[uniqueSubKey] ? Number(masterStudent.dailyLogs[uniqueSubKey][date] || 0) : 0;
-                    const attDelta = item.attended - prevAttForDate;
-                    const newStudentTotalAtt = Math.max(0, currentAtt + attDelta);
-
-                    const studentRef = db.collection(getCollectionName('students')).doc(safeId);
-                    batch.set(studentRef, {
-                        roll: item.roll,
-                        name: (masterStudent && masterStudent.name) ? masterStudent.name : item.name,
-                        attendance: {
-                            [uniqueSubKey]: newStudentTotalAtt
-                        },
-                        dailyLogs: {
-                            [uniqueSubKey]: {
-                                [date]: item.attended
-                            }
-                        }
-                    }, { merge: true });
-
-                    stagedStudentUpdates.push({
-                        masterStudent,
-                        safeId,
-                        roll: item.roll,
-                        name: item.name,
-                        newStudentTotalAtt,
-                        attended: item.attended
-                    });
-                });
-
-                // 4. Atomic cloud write
-                await batch.commit();
-
-                // 5. Apply local in-memory mutations ONLY after Firestore commit succeeds
-                subjectHoursHeld[uniqueSubKey] = newTotalHeld;
-                if (!subjectDailyHoursHeld[uniqueSubKey]) subjectDailyHoursHeld[uniqueSubKey] = {};
-                subjectDailyHoursHeld[uniqueSubKey][date] = hrsConducted;
-
-                stagedStudentUpdates.forEach(update => {
-                    let target = update.masterStudent;
-                    if (!target) {
-                        target = {
-                            roll: update.roll,
-                            name: update.name,
-                            attendance: {},
-                            dailyLogs: {}
-                        };
-                        studentMasterList.push(target);
-                    }
-                    target.attendance = target.attendance || {};
-                    target.dailyLogs = target.dailyLogs || {};
-                    target.dailyLogs[uniqueSubKey] = target.dailyLogs[uniqueSubKey] || {};
-
-                    target.attendance[uniqueSubKey] = update.newStudentTotalAtt;
-                    target.dailyLogs[uniqueSubKey][date] = update.attended;
-                });
-
-                if (filtersInitialized) {
-                    activeDashboardSubjectFilters.add(uniqueSubKey);
-                }
-
-                clearCurrentDraft();
-
-                // Trigger Instant Auto-CSV Download
-                autoSaveAndDownloadSessionCSV(studentPayload, facKey, subject, date, hrsConducted);
-
-                showToast(
-                    existingHeldForDate > 0
-                        ? `Session on ${date} updated cleanly & CSV exported!`
-                        : `Attendance saved to cloud & CSV downloaded for ${date} (${hrsConducted} Hrs)!`,
-                    "success"
-                );
-
-                populateMonthFilters();
-                renderDashboard();
-                switchTab('breport');
-
-            } catch (error) {
-                console.error("Database save failed:", error);
-                showToast("Submission failed: " + error.message, "error", 6000);
-            } finally {
-                isSubmitting = false;
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Submit, Sync & Auto-Export CSV';
             }
         }
+    }
+
+    const existingHeldForDate = Number(
+        (subjectDailyHoursHeld[uniqueSubKey] && subjectDailyHoursHeld[uniqueSubKey][date]) || 0
+    );
+
+    if (existingHeldForDate > 0) {
+        const confirmOverwrite = confirm(
+            `Attendance for ${subject} on ${date} is already recorded (${existingHeldForDate} Hrs).\n\nDo you want to OVERWRITE this session instead of duplicating it?`
+        );
+        if (!confirmOverwrite) return;
+    }
+
+    const heldDelta = hrsConducted - existingHeldForDate;
+
+    // Offline handling with clean deduplication
+    if (!navigator.onLine) {
+        const queueKey = `attendance_offline_queue_${APP_PATH}`;
+        let queue = JSON.parse(localStorage.getItem(queueKey) || "[]");
+
+        queue = queue.filter(item => !(item.facKey === facKey && item.subject === subject && item.date === date));
+        queue.push({
+            facKey, subject, date, hrsConducted, records: studentPayload
+        });
+        localStorage.setItem(queueKey, JSON.stringify(queue));
+        
+        clearCurrentDraft();
+        showToast("Offline Mode: Saved locally! Duplicates prevented.", "info", 8000);
+        switchTab('breport');
+        return;
+    }
+
+    try {
+        isSubmitting = true;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Syncing to Cloud...';
+
+        const batch = db.batch();
+
+        // 1. Update overall subject held hours
+        const currentHeld = Number(subjectHoursHeld[uniqueSubKey] || 0);
+        const newTotalHeld = Math.max(0, currentHeld + heldDelta);
+        const metaRef = db.collection(getCollectionName('metadata')).doc('subjectHours');
+        batch.set(metaRef, { [uniqueSubKey]: newTotalHeld }, { merge: true });
+
+        // 2. Write real nested Map for daily/monthly hours (avoids literal dot string names)
+        const dailyMetaRef = db.collection(getCollectionName('metadata')).doc('subjectDailyHours');
+        batch.set(dailyMetaRef, {
+            [uniqueSubKey]: {
+                [date]: hrsConducted
+            }
+        }, { merge: true });
+
+        // Staging container for local memory updates after commit confirmation
+        const stagedStudentUpdates = [];
+
+        // 3. Queue real nested Map writes for each student document
+        studentPayload.forEach(item => {
+            const safeId = getSafeDocId(item.roll);
+            let masterStudent = studentMasterList.find(m => getSafeDocId(m.roll) === safeId);
+
+            const currentAtt = masterStudent && masterStudent.attendance ? Number(masterStudent.attendance[uniqueSubKey] || 0) : 0;
+            const prevAttForDate = masterStudent && masterStudent.dailyLogs && masterStudent.dailyLogs[uniqueSubKey] ? Number(masterStudent.dailyLogs[uniqueSubKey][date] || 0) : 0;
+            const attDelta = item.attended - prevAttForDate;
+            const newStudentTotalAtt = Math.max(0, currentAtt + attDelta);
+
+            const studentRef = db.collection(getCollectionName('students')).doc(safeId);
+            batch.set(studentRef, {
+                roll: item.roll,
+                name: (masterStudent && masterStudent.name) ? masterStudent.name : item.roll,
+                attendance: {
+                    [uniqueSubKey]: newStudentTotalAtt
+                },
+                dailyLogs: {
+                    [uniqueSubKey]: {
+                        [date]: item.attended
+                    }
+                }
+            }, { merge: true });
+
+            stagedStudentUpdates.push({
+                masterStudent,
+                safeId,
+                roll: item.roll,
+                newStudentTotalAtt,
+                attended: item.attended
+            });
+        });
+
+        // 4. Atomic cloud write
+        await batch.commit();
+
+        // 5. Apply local in-memory mutations ONLY after Firestore commit succeeds
+        subjectHoursHeld[uniqueSubKey] = newTotalHeld;
+        if (!subjectDailyHoursHeld[uniqueSubKey]) subjectDailyHoursHeld[uniqueSubKey] = {};
+        subjectDailyHoursHeld[uniqueSubKey][date] = hrsConducted;
+
+        stagedStudentUpdates.forEach(update => {
+            let target = update.masterStudent;
+            if (!target) {
+                target = {
+                    roll: update.roll,
+                    name: update.roll,
+                    attendance: {},
+                    dailyLogs: {}
+                };
+                studentMasterList.push(target);
+            }
+            target.attendance = target.attendance || {};
+            target.dailyLogs = target.dailyLogs || {};
+            target.dailyLogs[uniqueSubKey] = target.dailyLogs[uniqueSubKey] || {};
+
+            target.attendance[uniqueSubKey] = update.newStudentTotalAtt;
+            target.dailyLogs[uniqueSubKey][date] = update.attended;
+        });
+
+        if (filtersInitialized) {
+            activeDashboardSubjectFilters.add(uniqueSubKey);
+        }
+
+        clearCurrentDraft();
+        showToast(
+            existingHeldForDate > 0
+                ? `Session on ${date} updated cleanly (overwritten without duplicates)!`
+                : `Attendance successfully committed to Firestore for ${date} (${hrsConducted} Hrs)!`,
+            "success"
+        );
+
+        populateMonthFilters();
+        renderDashboard();
+        switchTab('breport');
+
+    } catch (error) {
+        console.error("Database save failed:", error);
+        showToast("Submission failed: " + error.message, "error", 6000);
+    } finally {
+        isSubmitting = false;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Submit & Sync Records';
+    }
+}
 
         function onBReportFacultyChange() {
             const facKey = document.getElementById('bReportFacultySelect').value;
@@ -2417,7 +2039,7 @@
                         </div>
                         <div class="text-right">
                             <span class="text-sm font-extrabold text-rose-600">${pct}%</span>
-                            <p class="text-[10px] font-bold text-rose-500 uppercase">Defaulter</p>
+                            <p class="text-[10px] font-bold text-rose-600 uppercase">Defaulter</p>
                         </div>
                     `;
                     irregularContainer.appendChild(card);
@@ -2878,7 +2500,7 @@
             if (!confirm("CRITICAL WARNING: This will permanently delete ALL students, attendance records, metadata, and faculty mappings from the cloud. This action CANNOT be undone. Are you sure?")) {
                 return;
             }
-            if (prompt("Type 'ERASE' to confirm factory reset:") !== 'ERASE') {
+            if (prompt("Type 'ERASE' to confirm factory reset:") !== 'ERASEE') {
                 showToast("Factory reset cancelled.", "info");
                 return;
             }
