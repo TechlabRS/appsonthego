@@ -174,7 +174,7 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <h2 class="text-2xl font-bold text-slate-800">Class Matrix Report</h2>
                     <button onclick="downloadMatrixCSV()" class="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3 sm:py-2 rounded-full font-bold text-sm shadow-md hover:bg-emerald-700 active:scale-95 transition-transform flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <svg class="w-5 h-5 fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         Export CSV
                     </button>
                 </div>
@@ -251,13 +251,11 @@
         </main>
     </div>
 
-    <!-- UI Core Script (UNCHANGED logic from previous) -->
+    <!-- UI Core Script -->
     <script>
         // -------------------------
         // STATE MANAGEMENT
         // -------------------------
-        // We initialize as empty. We will fetch existing data if the user has a saved Sync Key in local storage.
-        // We only use localStorage to hold the Key and serve as a momentary buffer.
         let groups = JSON.parse(localStorage.getItem('groups')) || {};
         let history = JSON.parse(localStorage.getItem('history')) || [];
         let currentSubjectFilter = '';
@@ -563,7 +561,45 @@
 
             const filteredHistory = history.filter(h => h.subject === subject);
             const uniqueDatesRaw = [...new Set(filteredHistory.map(h => h.date))].sort();
-            const rolls = [...new Set(filteredHistory.map(h => h.roll))].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+
+            // Custom parser & sorter to sort regular numeric entries (01..99) ahead of lateral entries (A1, B2)
+            const parseRoll = (val) => {
+                const s = String(val).trim();
+                const match = s.match(/^(.*)(.{2})$/);
+                const prefix = match ? match[1] : '';
+                const suffix = match ? match[2] : s;
+                const isPureDigits = /^\d+$/.test(suffix);
+
+                return {
+                    prefix,
+                    suffix,
+                    isPureDigits,
+                    numericVal: isPureDigits ? parseInt(suffix, 10) : null,
+                    raw: s
+                };
+            };
+
+            const rolls = [...new Set(filteredHistory.map(h => h.roll))].sort((a, b) => {
+                const itemA = parseRoll(a);
+                const itemB = parseRoll(b);
+
+                // 1. If prefixes differ (e.g., 21 vs 22 vs 33), sort by prefix first
+                if (itemA.prefix !== itemB.prefix) {
+                    return itemA.prefix.localeCompare(itemB.prefix, undefined, { numeric: true });
+                }
+
+                // 2. Pure numbers (01, 02, 10) always precede alphanumeric suffixes (A1, B2)
+                if (itemA.isPureDigits && !itemB.isPureDigits) return -1;
+                if (!itemA.isPureDigits && itemB.isPureDigits) return 1;
+
+                // 3. Both are pure numbers: sort numerically
+                if (itemA.isPureDigits && itemB.isPureDigits) {
+                    return itemA.numericVal - itemB.numericVal;
+                }
+
+                // 4. Both are alphanumeric: sort naturally
+                return itemA.suffix.localeCompare(itemB.suffix, undefined, { numeric: true, sensitivity: 'base' });
+            });
 
             let headHtml = `<tr class="sticky top-0 z-20 shadow-sm">
                 <th class="p-4 sm:p-5 text-left font-bold text-slate-700 whitespace-nowrap sticky left-0 top-0 bg-slate-50 z-30 border-b border-r border-slate-200">Roll No.</th>`;
@@ -644,10 +680,10 @@
             }
 
             const blob = new Blob([csv.join('\n')], {type: 'text/csv'});
-			const currentDate = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+            const currentDate = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-			a.download = `Attendance_Report_${currentSubjectFilter || 'All'}_${currentDate}.csv`;
+            a.download = `Attendance_Report_${currentSubjectFilter || 'All'}_${currentDate}.csv`;
 
             a.click();
         }
@@ -713,7 +749,6 @@
         // SPLASH SCREEN & AUTO-FETCH LOGIC
         // -------------------------
         window.addEventListener('load', () => {
-            // Keep splash screen visible for exactly 2 seconds
             setTimeout(() => {
                 const splash = document.getElementById('splashScreen');
                 if(splash) {
@@ -722,7 +757,6 @@
                 }
             }, 2000);
 
-            // Auto-fetch in background if Sync Key exists
             if(window.syncKey && window.fetchWorkspaceBackground) {
                 window.fetchWorkspaceBackground();
             }
@@ -768,7 +802,6 @@
                     label.classList.replace('bg-rose-100', 'bg-emerald-100');
                     label.classList.replace('border-rose-200', 'border-emerald-200');
                     
-                    // If page loaded with an existing syncKey, fetch automatically now that auth is ready
                     if(window.syncKey) window.fetchWorkspaceBackground();
                 }
             });
@@ -789,12 +822,10 @@
             
             try {
                 const { doc, getDoc, setDoc } = firestoreApi;
-                // FIXED SCHEMA PATH (6 Segments: Even Number)
                 const docRef = doc(db, 'artifacts', artifactAppId, 'public', 'workspaces', inputKey, 'data');
                 const docSnap = await getDoc(docRef);
                 
                 if(docSnap.exists()) {
-                    // Load existing workspace
                     const data = docSnap.data();
                     if(data.groups) groups = JSON.parse(data.groups);
                     if(data.history) history = JSON.parse(data.history);
@@ -807,7 +838,6 @@
                     refreshAllUI();
                     alert(`Connected to Workspace "${inputKey}". Fresh data loaded!`);
                 } else {
-                    // Create new workspace and push local state as initial state
                     if(confirm(`Workspace "${inputKey}" does not exist. Do you want to CREATE it and push your local data to it?`)) {
                         await setDoc(docRef, {
                             groups: JSON.stringify(groups),
@@ -829,7 +859,6 @@
             if(!window.syncKey || !currentUserId || !db) return;
             try {
                 const { doc, getDoc } = firestoreApi;
-                // FIXED SCHEMA PATH (6 Segments)
                 const docRef = doc(db, 'artifacts', artifactAppId, 'public', 'workspaces', window.syncKey, 'data');
                 const docSnap = await getDoc(docRef);
                 
@@ -850,14 +879,12 @@
 
         // 3. AUTO PUSH STATE (Called automatically by safeSaveLocalAndCloud)
         window.syncStateToCloud = async function() {
-            if(!window.syncKey || !currentUserId || !db) return; // Silent skip if not connected to a workspace
+            if(!window.syncKey || !currentUserId || !db) return;
             
             try {
                 const { doc, setDoc } = firestoreApi;
-                // FIXED SCHEMA PATH (6 Segments)
                 const docRef = doc(db, 'artifacts', artifactAppId, 'public', 'workspaces', window.syncKey, 'data');
                 
-                // Show subtle syncing indicator
                 const statusLabel = document.getElementById('cloudStatusLabel');
                 const origLabelText = statusLabel.innerText;
                 statusLabel.innerText = "Syncing...";
