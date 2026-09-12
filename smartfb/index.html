@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Classroom Pulse | v10 Strict</title>
+    <title>Classroom Pulse | v11 Strict Data</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -275,10 +275,15 @@
                 <canvas id="sessionChart"></canvas>
             </div>
 
+            <!-- Date Filter & List Header -->
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <span id="listTitle">Recent Feedback</span>
+                </h3>
+                <input type="date" id="dateFilter" onchange="applyDateFilter()" class="custom-input py-1 px-2 rounded-lg text-white text-[10px] bg-black/30 border-white/10 max-w-[110px]">
+            </div>
+            
             <!-- Feedback List -->
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                <span id="listTitle">Recent Feedback</span>
-            </h3>
             <div id="commentsList" class="space-y-3 overflow-y-auto max-h-[300px] pb-10 pr-1 custom-scrollbar"></div>
         </div>
     </div>
@@ -291,12 +296,12 @@
 
         const firebaseConfig = {
             apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
-  authDomain: "stuattnd.firebaseapp.com",
-  projectId: "stuattnd",
-  storageBucket: "stuattnd.firebasestorage.app",
-  messagingSenderId: "511533506488",
-  appId: "1:511533506488:web:aca4de3d513915d012f94d",
-  measurementId: "G-9PZZM5LFKX"
+            authDomain: "stuattnd.firebaseapp.com",
+            projectId: "stuattnd",
+            storageBucket: "stuattnd.firebasestorage.app",
+            messagingSenderId: "511533506488",
+            appId: "1:511533506488:web:aca4de3d513915d012f94d",
+            measurementId: "G-9PZZM5LFKX"
         };
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const app = initializeApp(firebaseConfig);
@@ -311,7 +316,10 @@
         
         let adminViewMode = 'anonymous'; 
         let currentAdminData = []; 
+        let allAdminData = []; 
         let longPressTimer;
+        let isSubmitting = false; 
+        let dashboardUnsubscribe = null; 
         const LONG_PRESS_DURATION = 2000; 
 
         signInAnonymously(auth).catch(console.error);
@@ -438,13 +446,11 @@
             };
             
             const onDragEnd = () => {
-                if (!isDragging) return;
+                if (!isDragging || handle.classList.contains('submitted')) return;
                 isDragging = false;
                 handle.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
                 const maxMove = track.clientWidth - handle.clientWidth - 8;
                 
-                // VALIDATION CHECK BEFORE SUBMITTING
-                // 1. Check if all questions are answered
                 let allAnswered = true;
                 activeQuestions.forEach(q => {
                     const resp = userResponses[q.id];
@@ -455,7 +461,6 @@
 
                 if (currentX > maxMove * 0.9) {
                     if (!allAnswered) {
-                        // Snap back and warn
                         handle.style.transform = `translateX(0px)`;
                         text.style.opacity = 1;
                         icon.style.transform = "rotate(0deg)";
@@ -465,13 +470,12 @@
                         return;
                     }
 
-                    // Success Snap
                     handle.style.transform = `translateX(${maxMove}px)`;
                     text.style.opacity = 0;
-                    submitData();
                     handle.classList.add('submitted');
                     icon.className = "fa-solid fa-check text-white";
                     icon.style.transform = "rotate(0deg)";
+                    submitData();
                 } else {
                     handle.style.transform = `translateX(0px)`;
                     text.style.opacity = 1;
@@ -490,7 +494,8 @@
         // --- SUBMIT ---
         const toxicWords = ['stupid', 'idiot', 'worst', 'useless', 'trash', 'shut up'];
         window.submitData = async function() {
-            if(!currentUser) return;
+            if(!currentUser || isSubmitting) return;
+            isSubmitting = true;
             
             let isToxic = false;
             Object.values(userResponses).forEach(resp => {
@@ -507,6 +512,7 @@
                 handle.classList.remove('submitted');
                 document.getElementById('swipeText').style.opacity = 1;
                 document.getElementById('swipeIcon').className = "fa-solid fa-paper-plane text-white";
+                isSubmitting = false;
                 return;
             }
 
@@ -531,6 +537,7 @@
                 handle.classList.remove('submitted');
                 document.getElementById('swipeText').style.opacity = 1;
                 document.getElementById('swipeIcon').className = "fa-solid fa-paper-plane text-white";
+                isSubmitting = false;
             }
         }
 
@@ -621,21 +628,68 @@
             document.getElementById('viewModeText').innerText = "Anonymous Mode";
         }
 
+        window.applyDateFilter = function() {
+            const filterVal = document.getElementById('dateFilter').value;
+            let dataToRender = allAdminData;
+
+            if (filterVal) {
+                dataToRender = allAdminData.filter(item => {
+                    const year = item.dateObj.getFullYear();
+                    const month = String(item.dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(item.dateObj.getDate()).padStart(2, '0');
+                    const localDateStr = `${year}-${month}-${day}`;
+                    return localDateStr === filterVal;
+                });
+            }
+
+            currentAdminData = dataToRender;
+            renderComments(dataToRender);
+        }
+
         function initDashboard() {
+            // Prevent multiple listeners from stacking and drawing duplicates
+            if (dashboardUnsubscribe) dashboardUnsubscribe();
+
             const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'feedback');
-            onSnapshot(collectionRef, (snapshot) => {
+            dashboardUnsubscribe = onSnapshot(collectionRef, (snapshot) => {
                 let rawData = [];
                 snapshot.forEach(doc => {
                     const d = doc.data();
                     if(d.timestamp) rawData.push({ ...d, dateObj: d.timestamp.toDate(), id: doc.id });
                 });
                 
-                // DATA PROCESSING FOR CHART (Oldest First)
+                // 1. Sort newest first to ensure we keep the latest submission during deduplication
+                rawData.sort((a, b) => b.dateObj - a.dateObj);
+
+                // 2. STRICT DEDUPLICATION: Only allow 1 submission per Student (Roll No) per Day.
+                const uniqueData = [];
+                const seenStudentDay = new Set();
+                
+                rawData.forEach(item => {
+                    const year = item.dateObj.getFullYear();
+                    const month = String(item.dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(item.dateObj.getDate()).padStart(2, '0');
+                    const localDateStr = `${year}-${month}-${day}`;
+                    
+                    const uniqueKey = `${localDateStr}_${item.roll}`;
+                    
+                    if (!seenStudentDay.has(uniqueKey)) {
+                        seenStudentDay.add(uniqueKey);
+                        uniqueData.push(item);
+                    }
+                });
+
+                // Update rawData to ONLY hold unique, non-duplicated submissions
+                rawData = uniqueData;
+                allAdminData = rawData;
+                
+                // 3. CHART DATA GENERATION (Requires oldest first sorting of keys)
                 const sessionMap = {};
                 rawData.forEach(item => {
-                    // Create a sortable key (YYYY-MM-DD) for ordering
-                    const sortKey = item.dateObj.toISOString().split('T')[0];
-                    // Display key (Short Date)
+                    const year = item.dateObj.getFullYear();
+                    const month = String(item.dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(item.dateObj.getDate()).padStart(2, '0');
+                    const sortKey = `${year}-${month}-${day}`;
                     const dispKey = item.dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     
                     if(!sessionMap[sortKey]) sessionMap[sortKey] = { sum: 0, count: 0, label: dispKey };
@@ -643,27 +697,24 @@
                     sessionMap[sortKey].count += 1;
                 });
 
-                // Convert map to array and sort by Date Key (Oldest -> Newest)
                 const sortedKeys = Object.keys(sessionMap).sort(); 
                 const labels = sortedKeys.map(k => sessionMap[k].label);
                 const values = sortedKeys.map(k => (sessionMap[k].sum / sessionMap[k].count).toFixed(1));
                 
-                // Data for List (Newest First)
-                rawData.sort((a, b) => b.dateObj - a.dateObj);
-                currentAdminData = rawData; 
-
-                // Today's Stats
-                const todaySortKey = new Date().toISOString().split('T')[0];
-                if(sessionMap[todaySortKey]) {
-                    document.getElementById('statTodayAvg').innerText = (sessionMap[todaySortKey].sum / sessionMap[todaySortKey].count).toFixed(1);
-                    document.getElementById('statTodayCount').innerText = sessionMap[todaySortKey].count;
+                // 4. TODAY'S STATS (Using Local System Date to match logic)
+                const today = new Date();
+                const localToday = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+                
+                if(sessionMap[localToday]) {
+                    document.getElementById('statTodayAvg').innerText = (sessionMap[localToday].sum / sessionMap[localToday].count).toFixed(1);
+                    document.getElementById('statTodayCount').innerText = sessionMap[localToday].count;
                 } else {
                     document.getElementById('statTodayAvg').innerText = "--";
                     document.getElementById('statTodayCount').innerText = "0";
                 }
                 
                 renderChart(labels, values);
-                renderComments(rawData);
+                applyDateFilter(); 
             });
         }
 
@@ -680,7 +731,7 @@
                         borderColor: '#ec4899', 
                         borderWidth: 2, 
                         pointBackgroundColor: '#ec4899',
-                        pointRadius: 5, // Dot Chart Style
+                        pointRadius: 5, 
                         pointHoverRadius: 7,
                         tension: 0.2 
                     }]
@@ -719,7 +770,6 @@
                 
                 let headerContent = '';
                 if(adminViewMode === 'detailed') {
-                    // FULL VISIBILITY (No Blur, No Toggles)
                     headerContent = `
                         <div class="flex justify-between items-center mb-1">
                             <span class="text-[10px] text-cyan-400 font-mono font-bold">${item.name} <span class="text-gray-500 font-normal">(${item.roll})</span></span>
@@ -730,7 +780,6 @@
                         </div>
                     `;
                 } else {
-                    // ANONYMOUS
                     headerContent = `
                         <div class="flex justify-between items-center mb-1">
                             <span class="text-[10px] text-gray-500 font-mono italic">Student Feedback</span>
@@ -746,5 +795,4 @@
         }
     </script>
 </body>
-
 </html>
