@@ -33,7 +33,6 @@
       transform: translateY(-3px);
       border-color: rgba(99, 102, 241, 0.5);
     }
-    /* Legacy Chips used only for Broadcast Wizard */
     .chip {
       padding: 0.4rem 1rem;
       border-radius: 9999px;
@@ -73,7 +72,6 @@
 </head>
 <body class="flex flex-col min-h-screen text-slate-100">
 
-  <!-- TOP NAVIGATION -->
   <header class="glass-panel sticky top-0 z-40 border-b border-white/10 px-4 lg:px-8 py-3.5 flex items-center justify-between">
     <div class="flex items-center space-x-3 truncate">
       <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 font-extrabold text-base sm:text-lg shrink-0">
@@ -88,6 +86,7 @@
       </div>
     </div>
 
+    <!-- User Profile Dropdown -->
     <div class="flex items-center space-x-3 shrink-0" id="nav-user-section">
       <div id="user-badge" class="hidden items-center space-x-2.5 bg-white/5 border border-white/10 px-2 sm:px-3 py-1.5 rounded-full">
         <img id="nav-profile-pic" src="" alt="Profile" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-indigo-400 shrink-0">
@@ -103,7 +102,6 @@
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
   <main class="flex-grow w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
 
     <!-- LANDING / ONBOARDING VIEW -->
@@ -117,11 +115,13 @@
           <p class="text-[11px] sm:text-xs text-slate-400 mt-1">Authenticate or register your secure device profile.</p>
         </div>
 
+        <!-- AUTH MODE TOGGLE -->
         <div class="flex bg-slate-900/50 p-1.5 rounded-xl mb-6 relative z-10">
           <button type="button" id="tab-login" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white font-bold text-sm shadow-md transition-all">Secure Login</button>
           <button type="button" id="tab-signup" class="flex-1 py-2.5 rounded-lg text-slate-400 font-bold text-sm hover:text-white transition-all">New Registration</button>
         </div>
 
+        <!-- LOGIN FORM -->
         <form id="form-login" class="space-y-4">
           <div>
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Registered Email</label>
@@ -151,12 +151,14 @@
           </button>
         </form>
 
+        <!-- SIGN UP FORM -->
         <form id="form-signup" class="space-y-4 hidden">
           <div class="flex justify-center gap-2.5 sm:gap-3 mb-5" id="role-selector">
             <button type="button" class="chip active py-2 sm:py-2.5 flex-1" data-role="student"><i class="fa-solid fa-user-graduate mr-2"></i> Student</button>
             <button type="button" class="chip py-2 sm:py-2.5 flex-1" data-role="faculty"><i class="fa-solid fa-chalkboard-user mr-2"></i> Faculty</button>
           </div>
 
+          <!-- Master Key (Hidden by default) -->
           <div id="wrapper-masterkey" class="hidden">
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-amber-300 mb-1.5">Faculty Master Key</label>
             <div class="relative">
@@ -214,15 +216,16 @@
             <div>
               <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Section / Branch</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-1.5" id="signup-chip-group-section">
-                <button type="button" class="chip active shrink-0 flex-1 py-2.5 text-sm" data-val="A">A</button>
-                <button type="button" class="chip shrink-0 flex-1 py-2.5 text-sm" data-val="B">B</button>
-                <button type="button" class="chip shrink-0 flex-1 py-2.5 text-sm" data-val="C">C</button>
-                <button type="button" class="chip shrink-0 flex-1 py-2.5 text-sm" data-val="D">D</button>
+                <button type="button" class="chip active shrink-0 flex-1 py-3 text-xs" data-val="A">Sec A</button>
+                <button type="button" class="chip shrink-0 flex-1 py-3 text-xs" data-val="B">Sec B</button>
+                <button type="button" class="chip shrink-0 flex-1 py-3 text-xs" data-val="C">Sec C</button>
+                <button type="button" class="chip shrink-0 flex-1 py-3 text-xs" data-val="D">Sec D</button>
               </div>
               <input type="hidden" id="signup-section" value="A">
             </div>
           </div>
 
+          <!-- Camera Capture Section -->
           <div class="pt-2">
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Biometric Profile Photo (Required)</label>
             <div class="flex items-center space-x-3 sm:space-x-4 bg-slate-900/50 p-2.5 sm:p-3 rounded-2xl border border-white/5">
@@ -247,7 +250,6 @@
       </div>
     </section>
 
-    <!-- FACULTY DASHBOARD VIEW -->
     <section id="view-faculty" class="hidden space-y-4 sm:space-y-6">
       
       <!-- Faculty Navigation Tabs -->
@@ -266,28 +268,61 @@
         </div>
       </div>
 
-      <!-- Tab 1: Session Broadcast (Keeps Chips for Wizard-like flow) -->
+      <!-- Tab 1: Session Broadcast -->
       <div id="tab-fac-broadcast" class="glass-panel rounded-3xl p-5 sm:p-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           
-          <div class="lg:col-span-7 space-y-5 sm:space-y-6">
+        <div class="lg:col-span-7 space-y-5 sm:space-y-6">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Configure Broadcast</h3>
-              <p class="text-[11px] sm:text-xs text-slate-400 mt-1">Select parameters using interactive chips to initiate acoustic and geofenced verification.</p>
+              <p class="text-[11px] sm:text-xs text-slate-400 mt-1">Set subject, time, and geofence parameters to initiate acoustic verification.</p>
             </div>
 
-            <div>
-              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">1. Select Course Subject</label>
-              <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-subject">
-                <button type="button" class="chip active shrink-0" data-val="CVIP">CVIP</button>
-                <button type="button" class="chip shrink-0" data-val="CVIP-LAB">CVIP-LAB</button>
-                <button type="button" class="chip shrink-0" data-val="PE-AIML">PE-AIML</button>
-                <button type="button" class="chip shrink-0" data-val="PE-BS">PE-BS</button>
+            <div class="space-y-4 bg-slate-900/40 p-4 rounded-2xl border border-white/5">
+              <!-- 1. Dynamic Subject -->
+              <div>
+                <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">1. Course Subject</label>
+                <div class="relative">
+                  <i class="fa-solid fa-book absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm"></i>
+                  <input type="text" id="input-fac-subject" placeholder="e.g., DATA STRUCTURES" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors uppercase placeholder:normal-case placeholder:text-slate-600">
+                </div>
+              </div>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- 2. Date -->
+                <div>
+                  <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">2. Class Date</label>
+                  <input type="date" id="input-fac-date" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-4 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-slate-200" style="color-scheme: dark;">
+                </div>
+
+                <!-- 3. Time Slots -->
+                <div class="sm:col-span-2">
+                  <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">3. Class Timing</label>
+                  <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-time">
+                    <button type="button" class="chip active shrink-0" data-val="09:00-10:40">9:00 - 10:40</button>
+                    <button type="button" class="chip shrink-0" data-val="11:00-12:40">11:00 - 12:40</button>
+                    <button type="button" class="chip shrink-0" data-val="13:50-14:40">1:50 - 2:40</button>
+                    <button type="button" class="chip shrink-0" data-val="14:40-16:20">2:40 - 4:20</button>
+                    <button type="button" class="chip shrink-0" data-val="CUSTOM"><i class="fa-solid fa-clock mr-1.5"></i>Custom</button>
+                  </div>
+                </div>
+
+                <!-- Custom Time Inputs (Hidden by default) -->
+                <div id="wrapper-custom-time" class="sm:col-span-2 grid grid-cols-2 gap-4 hidden bg-white/5 p-3 rounded-xl border border-white/10 mt-1">
+                   <div>
+                      <label class="block text-[9px] sm:text-[10px] font-semibold tracking-wider text-slate-400 mb-1">Start Time</label>
+                      <input type="time" id="input-fac-time-start" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2 px-3 text-sm focus:outline-none focus:border-indigo-500 text-slate-200" style="color-scheme: dark;">
+                   </div>
+                   <div>
+                      <label class="block text-[9px] sm:text-[10px] font-semibold tracking-wider text-slate-400 mb-1">End Time</label>
+                      <input type="time" id="input-fac-time-end" class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2 px-3 text-sm focus:outline-none focus:border-indigo-500 text-slate-200" style="color-scheme: dark;">
+                   </div>
+                </div>
               </div>
             </div>
 
             <div>
-              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">2. Target Academic Year</label>
+              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">4. Target Academic Year</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-year">
                 <button type="button" class="chip active shrink-0" data-val="1">1st Year</button>
                 <button type="button" class="chip shrink-0" data-val="2">2nd Year</button>
@@ -297,7 +332,7 @@
             </div>
 
             <div>
-              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">3. Target Section / Branch</label>
+              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">5. Target Section / Branch</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-section">
                 <button type="button" class="chip active shrink-0" data-val="A">SECTION A</button>
                 <button type="button" class="chip shrink-0" data-val="B">SECTION B</button>
@@ -307,7 +342,7 @@
             </div>
 
             <div>
-              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">4. Geofence Boundary Radius</label>
+              <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 sm:mb-2.5">6. Geofence Boundary Radius</label>
               <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-1" id="chip-group-radius">
                 <button type="button" class="chip shrink-0" data-val="15">15m (STRICT ROOM)</button>
                 <button type="button" class="chip active shrink-0" data-val="25">25m (STANDARD)</button>
@@ -326,6 +361,7 @@
               </button>
             </div>
           </div>
+
 
           <div class="lg:col-span-5 bg-slate-900/80 border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[280px] sm:min-h-[340px]">
             <div id="broadcast-inactive-state" class="space-y-3 w-full">
@@ -398,34 +434,33 @@
         </div>
       </div>
 
-      <!-- Tab 3: Student Directory (MODERNIZED FILTERS) -->
+      <!-- Tab 3: Student Directory -->
       <div id="tab-fac-directory" class="hidden space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-4 sm:p-5 rounded-2xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 glass-panel p-4 rounded-2xl">
           <div>
             <h3 class="text-base sm:text-lg font-bold">Student Directory</h3>
-            <p class="text-[10px] sm:text-xs text-slate-400">Registered students sorted ASC by Roll Number.</p>
+            <p class="text-[10px] sm:text-xs text-slate-400">Registered students strictly sorted ASC by Roll Number.</p>
           </div>
-          <!-- Modern Action Bar -->
-          <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <div class="relative min-w-[120px]">
-              <select id="dir-filter-year" class="w-full bg-slate-900/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                <option value="ALL">All Years</option>
-                <option value="1">1st Year</option>
-                <option value="2">2nd Year</option>
-                <option value="3">3rd Year</option>
-                <option value="4">4th Year</option>
-              </select>
-              <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+          <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+            <div class="flex items-center space-x-2 w-full sm:w-auto">
+              <span class="text-[10px] sm:text-xs font-semibold text-slate-300 shrink-0">Year:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="dir-year-filters">
+                <button class="chip active py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="ALL">ALL</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="1">1st</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="2">2nd</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="3">3rd</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-yr="4">4th</button>
+              </div>
             </div>
-            <div class="relative min-w-[120px]">
-              <select id="dir-filter-sec" class="w-full bg-slate-900/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                <option value="ALL">All Sections</option>
-                <option value="A">Section A</option>
-                <option value="B">Section B</option>
-                <option value="C">Section C</option>
-                <option value="D">Section D</option>
-              </select>
-              <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
+            <div class="flex items-center space-x-2 w-full sm:w-auto">
+              <span class="text-[10px] sm:text-xs font-semibold text-slate-300 shrink-0">Section:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="dir-section-filters">
+                <button class="chip active py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="ALL">ALL</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="A">Sec A</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="B">Sec B</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="C">Sec C</button>
+                <button class="chip py-1 px-3 text-[10px] sm:text-[11px] shrink-0" data-sec="D">Sec D</button>
+              </div>
             </div>
           </div>
         </div>
@@ -441,7 +476,6 @@
                   <th class="py-3 px-4">Yr & Sec</th>
                   <th class="py-3 px-4">Role</th>
                   <th class="py-3 px-4">Status</th>
-                  <th class="py-3 px-4 text-center">Action</th>
                 </tr>
               </thead>
               <tbody id="directory-table-body" class="divide-y divide-white/5 text-slate-300 font-medium">
@@ -451,57 +485,56 @@
         </div>
       </div>
 
-      <!-- Tab 4: MANAGE MASTER LIST (MODERNIZED FILTERS) -->
+      <!-- Tab 4: MANAGE MASTER LIST -->
       <div id="tab-fac-whitelist" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-8 space-y-5 sm:space-y-6">
-          <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
-            <div>
-              <h3 class="text-lg sm:text-xl font-bold text-white">Master Attendance List</h3>
-              <p class="text-[10px] sm:text-xs text-slate-400 mt-1 max-w-lg">Upload a CSV containing: <strong>RollNo, Name, Year, Section</strong>. This generates expected cards in the Live Grid.</p>
-            </div>
-            <!-- Upload Actions -->
-            <div class="flex flex-wrap gap-3 shrink-0">
+          <div>
+            <h3 class="text-lg sm:text-xl font-bold text-white">Master Attendance List</h3>
+            <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Upload a CSV containing: <strong>RollNo, Name, Year, Section</strong>. This generates expected cards in the Live Grid.</p>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-y border-white/10 py-4 sm:py-5">
+            <div class="flex flex-col sm:flex-row gap-3">
               <input type="file" id="whitelist-csv-input" accept=".csv" class="hidden">
-              <button id="btn-upload-csv" class="chip bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30 py-2.5 px-4 font-bold text-xs flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-file-arrow-up text-sm"></i><span>Import CSV</span>
+              <button id="btn-upload-csv" class="chip bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30 py-2.5 sm:py-3 px-4 sm:px-6 font-bold flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-file-arrow-up text-base sm:text-lg"></i>
+                <span>Import Master CSV</span>
               </button>
-              <button id="btn-clear-whitelist" class="chip bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30 py-2.5 px-4 font-bold text-xs flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-trash text-sm"></i><span>Wipe List</span>
+              <button id="btn-clear-whitelist" class="chip bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30 py-2.5 sm:py-3 px-4 sm:px-6 font-bold flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-trash text-base sm:text-lg"></i>
+                <span>Wipe List</span>
               </button>
+            </div>
+            
+            <div class="flex flex-col gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+               <div class="flex items-center space-x-2">
+                 <span class="text-[10px] text-slate-400 shrink-0 w-10">Year:</span>
+                 <div class="flex overflow-x-auto hide-scrollbar gap-1" id="master-year-filters">
+                   <button class="chip active py-1 px-2 text-[9px]" data-yr="ALL">ALL</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-yr="1">1st</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-yr="2">2nd</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-yr="3">3rd</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-yr="4">4th</button>
+                 </div>
+               </div>
+               <div class="flex items-center space-x-2">
+                 <span class="text-[10px] text-slate-400 shrink-0 w-10">Sec:</span>
+                 <div class="flex overflow-x-auto hide-scrollbar gap-1" id="master-section-filters">
+                   <button class="chip active py-1 px-2 text-[9px]" data-sec="ALL">ALL</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-sec="A">A</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-sec="B">B</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-sec="C">C</button>
+                   <button class="chip py-1 px-2 text-[9px]" data-sec="D">D</button>
+                 </div>
+               </div>
             </div>
           </div>
           
           <div class="bg-slate-900/60 border border-white/5 p-4 sm:p-6 rounded-2xl w-full overflow-hidden">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b border-white/10 pb-3 gap-3">
-              <div class="flex items-center space-x-3">
-                <span class="text-xs sm:text-sm font-bold text-slate-300">Expected Student Records</span>
-                <span class="text-[10px] sm:text-xs font-mono bg-emerald-500/20 text-emerald-300 px-2 sm:px-3 py-0.5 rounded-full">Total: <strong id="whitelist-count">0</strong></span>
-              </div>
-              <!-- Modern Action Bar -->
-              <div class="flex items-center gap-2">
-                <div class="relative w-24">
-                  <select id="master-filter-year" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-lg py-1.5 pl-2 pr-6 text-[10px] font-semibold text-slate-300 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                    <option value="ALL">All Yrs</option>
-                    <option value="1">1st Yr</option>
-                    <option value="2">2nd Yr</option>
-                    <option value="3">3rd Yr</option>
-                    <option value="4">4th Yr</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-500 text-[8px] pointer-events-none"></i>
-                </div>
-                <div class="relative w-24">
-                  <select id="master-filter-sec" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-lg py-1.5 pl-2 pr-6 text-[10px] font-semibold text-slate-300 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                    <option value="ALL">All Sec</option>
-                    <option value="A">Sec A</option>
-                    <option value="B">Sec B</option>
-                    <option value="C">Sec C</option>
-                    <option value="D">Sec D</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-500 text-[8px] pointer-events-none"></i>
-                </div>
-              </div>
+            <div class="flex justify-between items-center mb-3 sm:mb-4 border-b border-white/10 pb-2 sm:pb-3">
+              <span class="text-xs sm:text-sm font-bold text-slate-300">Expected Student Records</span>
+              <span class="text-[10px] sm:text-xs font-mono bg-emerald-500/20 text-emerald-300 px-2 sm:px-3 py-1 rounded-full">Total: <strong id="whitelist-count">0</strong></span>
             </div>
-            
             <div id="whitelist-preview" class="max-h-48 sm:max-h-64 overflow-y-auto pr-1 sm:pr-2 hide-scrollbar w-full">
               <div class="text-slate-500 text-[10px] sm:text-xs italic">No Master List loaded. System is blocking student registrations.</div>
             </div>
@@ -509,107 +542,66 @@
         </div>
       </div>
 
-      <!-- Tab 5: Analytics & Reports (MODERNIZED FILTERS) -->
+      <!-- Tab 5: Analytics & Reports (Historical Editing) -->
       <div id="tab-fac-reports" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-5 sm:space-y-6 w-full overflow-hidden">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Attendance Analytics</h3>
-              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Filter, review, and export historical attendance records.</p>
+              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">Filter and Edit historical records dynamically. Export to CSV.</p>
             </div>
-            <button id="btn-export-csv" class="chip bg-emerald-500/20 border-emerald-500/40 hover:bg-emerald-500/30 text-emerald-300 py-2 sm:py-2.5 px-4 font-bold flex items-center justify-center space-x-2 w-full md:w-auto shrink-0">
-              <i class="fa-solid fa-file-csv text-sm"></i>
+            <button id="btn-export-csv" class="chip bg-emerald-500/20 border-emerald-500/40 hover:bg-emerald-500/30 text-emerald-300 py-2 sm:py-2.5 px-4 sm:px-5 font-bold flex items-center justify-center space-x-2 w-full sm:w-auto">
+              <i class="fa-solid fa-file-csv text-sm sm:text-base"></i>
               <span>Export to CSV</span>
             </button>
           </div>
 
-          <!-- The Modern SaaS Filter Bar -->
-          <div class="bg-slate-900/40 border border-white/5 p-3 sm:p-4 rounded-2xl w-full">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 items-end">
-              <!-- Time Filter -->
-              <div class="flex flex-col space-y-1.5 lg:col-span-1">
-                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Timeframe</label>
-                <div class="relative">
-                  <select id="report-filter-time" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                    <option value="ALL">All Time</option>
-                    <option value="TODAY">Today</option>
-                    <option value="YESTERDAY">Yesterday</option>
-                    <option value="WEEK">This Week</option>
-                    <option value="MONTH">This Month</option>
-                    <option value="CUSTOM">Custom Date...</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
-                </div>
+          <div class="space-y-3 sm:space-y-4 border-y border-white/10 py-4 sm:py-5 w-full">
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Time:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-time">
+                <button class="chip active shrink-0" data-val="ALL">All Time</button>
+                <button class="chip shrink-0" data-val="TODAY">Today</button>
+                <button class="chip shrink-0" data-val="YESTERDAY">Yesterday</button>
+                <button class="chip shrink-0" data-val="WEEK">Week</button>
+                <button class="chip shrink-0" data-val="MONTH">Month</button>
               </div>
+            </div>
 
-              <!-- Custom Date Picker (Hidden by default) -->
-              <div id="wrapper-custom-date" class="flex flex-col space-y-1.5 hidden lg:col-span-1">
-                <label class="text-[9px] sm:text-[10px] font-bold text-indigo-400 uppercase tracking-wider pl-1">Select Date</label>
-                <input type="date" id="report-custom-date-picker" class="w-full bg-slate-800/80 border border-indigo-500/50 rounded-xl px-3 py-[7px] text-xs font-semibold text-slate-200 focus:outline-none transition-all" style="color-scheme: dark;">
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Subject:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-subject">
+                <button class="chip active shrink-0" data-val="ALL">All Subjects</button>
+                <button class="chip shrink-0" data-val="CVIP">CVIP</button>
+                <button class="chip shrink-0" data-val="CVIP-LAB">CVIP-LAB</button>
+                <button class="chip shrink-0" data-val="PE-AIML">PE-AIML</button>
+                <button class="chip shrink-0" data-val="PE-BS">PE-BS</button>
               </div>
+            </div>
 
-              <!-- Subject Filter -->
-              <div class="flex flex-col space-y-1.5 lg:col-span-1">
-                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Subject</label>
-                <div class="relative">
-                  <select id="report-filter-subject" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                    <option value="ALL">All Subjects</option>
-                    <option value="CVIP">CVIP</option>
-                    <option value="CVIP-LAB">CVIP-LAB</option>
-                    <option value="PE-AIML">PE-AIML</option>
-                    <option value="PE-BS">PE-BS</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
-                </div>
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Year:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-year">
+                <button class="chip active shrink-0" data-val="ALL">All Years</button>
+                <button class="chip shrink-0" data-val="1">1st Yr</button>
+                <button class="chip shrink-0" data-val="2">2nd Yr</button>
+                <button class="chip shrink-0" data-val="3">3rd Yr</button>
+                <button class="chip shrink-0" data-val="4">4th Yr</button>
               </div>
+            </div>
 
-              <!-- Year Filter -->
-              <div class="flex flex-col space-y-1.5 lg:col-span-1">
-                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Year</label>
-                <div class="relative">
-                  <select id="report-filter-year" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                    <option value="ALL">All Years</option>
-                    <option value="1">1st Year</option>
-                    <option value="2">2nd Year</option>
-                    <option value="3">3rd Year</option>
-                    <option value="4">4th Year</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
-                </div>
-              </div>
-
-              <!-- Section Filter -->
-              <div class="flex flex-col space-y-1.5 lg:col-span-1">
-                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Section</label>
-                <div class="relative">
-                  <select id="report-filter-section" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                    <option value="ALL">All Sections</option>
-                    <option value="A">Section A</option>
-                    <option value="B">Section B</option>
-                    <option value="C">Section C</option>
-                    <option value="D">Section D</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
-                </div>
-              </div>
-
-              <!-- Status Filter -->
-              <div class="flex flex-col space-y-1.5 lg:col-span-1">
-                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Status</label>
-                <div class="relative">
-                  <select id="report-filter-status" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                    <option value="ALL">All Statuses</option>
-                    <option value="verified">Verified</option>
-                    <option value="MANUAL">Manual Override</option>
-                    <option value="ABSENT">Absent</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
-                </div>
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Section:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="report-filter-section">
+                <button class="chip active shrink-0" data-val="ALL">All Sections</button>
+                <button class="chip shrink-0" data-val="A">Sec A</button>
+                <button class="chip shrink-0" data-val="B">Sec B</button>
+                <button class="chip shrink-0" data-val="C">Sec C</button>
+                <button class="chip shrink-0" data-val="D">Sec D</button>
               </div>
             </div>
           </div>
 
-          <!-- Table Container -->
           <div class="overflow-x-auto hide-scrollbar w-full -mx-5 px-5 sm:mx-0 sm:px-0">
             <table class="w-full text-left text-[11px] sm:text-sm whitespace-nowrap min-w-[750px]">
               <thead class="bg-white/5 text-[10px] sm:text-xs uppercase tracking-wider text-slate-300 font-semibold border-b border-white/10">
@@ -630,62 +622,47 @@
         </div>
       </div>
 
-      <!-- Tab 6: Manage Login Credentials (MODERNIZED FILTERS) -->
+      <!-- Tab 6: Manage Login Credentials -->
       <div id="tab-fac-users" class="hidden space-y-4 sm:space-y-6">
         <div class="glass-panel rounded-3xl p-5 sm:p-6 space-y-5 sm:space-y-6 w-full overflow-hidden">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
               <h3 class="text-lg sm:text-xl font-bold">Manage Login Credentials</h3>
-              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">View and update registered student and faculty details.</p>
+              <p class="text-[10px] sm:text-xs text-slate-400 mt-1">View and update registered student and faculty details. Wipe device bindings.</p>
             </div>
           </div>
 
-          <!-- Modern Action Bar -->
-          <div class="bg-slate-900/40 border border-white/5 p-3 sm:p-4 rounded-2xl w-full">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 items-end">
-              <!-- Role Filter -->
-              <div class="flex flex-col space-y-1.5">
-                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Role Type</label>
-                <div class="relative">
-                  <select id="user-filter-role" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                    <option value="ALL">All Roles</option>
-                    <option value="student">Students</option>
-                    <option value="faculty">Faculty</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
-                </div>
+          <div class="space-y-3 sm:space-y-4 border-y border-white/10 py-4 sm:py-5 w-full">
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Role:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="user-filter-role">
+                <button class="chip active shrink-0" data-val="ALL">All Roles</button>
+                <button class="chip shrink-0" data-val="student">Students</button>
+                <button class="chip shrink-0" data-val="faculty">Faculty / Staff</button>
               </div>
+            </div>
 
-              <!-- Year Filter -->
-              <div class="flex flex-col space-y-1.5">
-                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Year</label>
-                <div class="relative">
-                  <select id="user-filter-year" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                    <option value="ALL">All Years</option>
-                    <option value="1">1st Year</option>
-                    <option value="2">2nd Year</option>
-                    <option value="3">3rd Year</option>
-                    <option value="4">4th Year</option>
-                    <option value="FACULTY">Faculty</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
-                </div>
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Year:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="user-filter-year">
+                <button class="chip active shrink-0" data-val="ALL">All Years</button>
+                <button class="chip shrink-0" data-val="1">1st Yr</button>
+                <button class="chip shrink-0" data-val="2">2nd Yr</button>
+                <button class="chip shrink-0" data-val="3">3rd Yr</button>
+                <button class="chip shrink-0" data-val="4">4th Yr</button>
+                <button class="chip shrink-0" data-val="FACULTY">Faculty</button>
               </div>
+            </div>
 
-              <!-- Section Filter -->
-              <div class="flex flex-col space-y-1.5">
-                <label class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-1">Section</label>
-                <div class="relative">
-                  <select id="user-filter-section" class="w-full bg-slate-800/80 border border-white/10 hover:border-indigo-500/40 rounded-xl py-2 pl-3 pr-8 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                    <option value="ALL">All Sections</option>
-                    <option value="A">Section A</option>
-                    <option value="B">Section B</option>
-                    <option value="C">Section C</option>
-                    <option value="D">Section D</option>
-                    <option value="FACULTY">Faculty</option>
-                  </select>
-                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 text-[10px] pointer-events-none"></i>
-                </div>
+            <div class="flex items-center gap-2 w-full overflow-hidden">
+              <span class="text-[10px] sm:text-xs font-bold text-slate-400 w-16 sm:w-20 shrink-0">Section:</span>
+              <div class="flex overflow-x-auto hide-scrollbar gap-1.5 w-full pb-1" id="user-filter-section">
+                <button class="chip active shrink-0" data-val="ALL">All Sections</button>
+                <button class="chip shrink-0" data-val="A">Sec A</button>
+                <button class="chip shrink-0" data-val="B">Sec B</button>
+                <button class="chip shrink-0" data-val="C">Sec C</button>
+                <button class="chip shrink-0" data-val="D">Sec D</button>
+                <button class="chip shrink-0" data-val="FACULTY">Faculty</button>
               </div>
             </div>
           </div>
@@ -712,7 +689,6 @@
 
     </section>
 
-    <!-- STUDENT DASHBOARD VIEW -->
     <section id="view-student" class="hidden space-y-4 sm:space-y-6">
       
       <!-- Student Navigation Tabs -->
@@ -794,7 +770,7 @@
             <p class="text-[10px] sm:text-xs text-slate-400 mt-1 leading-relaxed">Web Audio API isolates the high-frequency beacon emitted by your instructor's device (FFT Size: 2048).</p>
             <div class="mt-3 sm:mt-4 flex flex-wrap items-center gap-3 sm:space-x-4 text-[10px] sm:text-xs font-mono">
               <span class="flex items-center text-slate-300"><i class="fa-solid fa-square text-indigo-500 mr-1.5"></i> Freq: 18.5kHz</span>
-              <span class="flex items-center text-slate-300"><i class="fa-solid fa-square text-emerald-500 mr-1.5"></i> Thresh: &gt;-65dB</span>
+              <span class="flex items-center text-slate-300"><i class="fa-solid fa-square text-emerald-500 mr-1.5"></i> Thresh: &gt;-75dB</span>
             </div>
           </div>
           <div class="bg-slate-900 rounded-xl p-3 sm:p-4 border border-white/10 h-28 sm:h-32 flex items-center justify-center relative overflow-hidden">
@@ -875,14 +851,14 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Role</label>
-            <select id="edit-role" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-white appearance-none">
+            <select id="edit-role" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-white">
               <option value="student">Student</option>
               <option value="faculty">Faculty</option>
             </select>
           </div>
           <div>
             <label class="block text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Academic Year</label>
-            <select id="edit-year" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-white appearance-none">
+            <select id="edit-year" required class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-2.5 px-3 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-colors text-white">
               <option value="1">1st Year</option>
               <option value="2">2nd Year</option>
               <option value="3">3rd Year</option>
@@ -984,7 +960,7 @@
       measurementId: "G-9PZZM5LFKX"
     };
 
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'uvlog_att_app';
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'uvlog-att-app';
 
     let app, db, auth, useMockStorage = false;
     let isAuthReady = false;
@@ -1027,12 +1003,13 @@
     }
 
     // --- GLOBAL APPLICATION STATE ---
-    const STATE = {
+        const STATE = {
       currentUser: null,        
       activeSession: null,      
       sessionListener: null,    
       selectedRole: 'student',  
-      facSubject: 'CVIP',
+      facSubject: '', 
+      facTimeSlot: '09:00-10:40',
       facYear: '1',
       facSection: 'A',
       facRadius: 25,
@@ -1047,17 +1024,14 @@
       reportFilterSubj: 'ALL',
       reportFilterYear: 'ALL',
       reportFilterSec: 'ALL',
-      reportFilterStatus: 'ALL',
-      reportCustomDate: null,
       dirFilterYear: 'ALL',
       dirFilterSec: 'ALL',
       userFilterRole: 'ALL',
       userFilterYear: 'ALL',
       userFilterSec: 'ALL',
-      masterFilterYear: 'ALL',
-      masterFilterSec: 'ALL',
       activeWhitelist: [] 
     };
+
 
     // --- DOM ELEMENT CACHE ---
     const DOM = {
@@ -1138,7 +1112,7 @@
       csvInput: document.getElementById('whitelist-csv-input'),
       btnUploadCsv: document.getElementById('btn-upload-csv'),
       btnClearWhitelist: document.getElementById('btn-clear-whitelist'),
-      btnExportCsv: document.getElementById('btn-export-csv'),
+      btnExportCsv: document.getElementById('btn-export-csv'), 
       whitelistCount: document.getElementById('whitelist-count'),
       whitelistPreview: document.getElementById('whitelist-preview'),
 
@@ -1161,6 +1135,7 @@
       usersTableBody: document.getElementById('users-table-body')
     };
 
+    // --- STREAMING_CHUNK:Defining Utility Functions ---
     // --- CRYPTO HASHING ENGINE (SHA-256) ---
     async function hashString(message) {
       const msgBuffer = new TextEncoder().encode(message);
@@ -1169,7 +1144,6 @@
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // --- HARDWARE DEVICE BINDING INIT ---
     function getHardwareDeviceId() {
       let dId = localStorage.getItem('acoustix_hardware_id');
       if (!dId) {
@@ -1217,7 +1191,7 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
-    function isWithinTimeframe(timestampMs, filterType, customDateStr = null) {
+    function isWithinTimeframe(timestampMs, filterType) {
       if (filterType === 'ALL') return true;
       const date = new Date(timestampMs);
       const now = new Date();
@@ -1234,15 +1208,10 @@
         return timestampMs >= mon.getTime() && timestampMs <= sat.getTime();
       }
       if (filterType === 'MONTH') return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-      if (filterType === 'CUSTOM' && customDateStr) {
-        const offsetDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
-        const recordDateStr = offsetDate.toISOString().split('T')[0];
-        return recordDateStr === customDateStr;
-      }
-      if (filterType === 'CUSTOM' && !customDateStr) return true;
       return true;
     }
 
+    // --- STREAMING_CHUNK:Configuring Database Engine ---
     // ==========================================
     // 🧠 CLOUD-FIRST DB ENGINE
     // ==========================================
@@ -1287,7 +1256,7 @@
                    localStorage.setItem('acoustix_whitelist', JSON.stringify(list)); 
                    return list;
                } else {
-                   return []; // Stop falling through if empty on cloud
+                   return [];
                }
            } catch(e) {}
         }
@@ -1311,7 +1280,7 @@
                  localStorage.setItem('acoustix_users', JSON.stringify(users));
                  return cloudUser;
              } else {
-                 return null; // Prevents "Ghost Cache" leak
+                 return null;
              }
            } catch(e) {}
         }
@@ -1324,7 +1293,7 @@
                 const q = query(getColRef("users"), where("role", "==", "student"));
                 const snap = await getDocs(q);
                 return snap.docs.map(d => d.data());
-            } catch(e) {}
+            } catch(e) { console.error("Cloud directory fail", e); }
         }
         const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
         return Object.values(users).filter(u => u.role === 'student');
@@ -1335,7 +1304,7 @@
                 const snap = await getDocs(getColRef("users"));
                 const allUsers = snap.docs.map(d => d.data());
                 return allUsers;
-            } catch(e) {}
+            } catch(e) { console.error("Cloud users fetch failed", e); }
         }
         const users = JSON.parse(localStorage.getItem('acoustix_users') || '{}');
         return Object.values(users);
@@ -1350,7 +1319,7 @@
            try {
                await updateDoc(getDocRef('users', rollNo), updatedData);
                return;
-           } catch(e) {}
+           } catch(e) { console.error("Cloud User Update Failed", e); }
         }
         SYNC_QUEUE.pushOperation('UPDATE', 'users', rollNo, updatedData);
       },
@@ -1474,12 +1443,11 @@
       }
     };
 
-    // --- STRICT CAPITALIZATION ENFORCEMENT ---
+    // --- STREAMING_CHUNK:Setting up Event Listeners ---
     [DOM.signupName, DOM.signupRoll].forEach(el => {
       if (el) el.addEventListener('input', (e) => e.target.value = e.target.value.toUpperCase());
     });
 
-    // --- AUTH TOGGLE TABS ---
     DOM.tabLogin.addEventListener('click', () => {
       DOM.tabLogin.className = "flex-1 py-2.5 rounded-lg bg-indigo-600 text-white font-bold text-sm shadow-md transition-all";
       DOM.tabSignup.className = "flex-1 py-2.5 rounded-lg text-slate-400 font-bold text-sm hover:text-white transition-all";
@@ -1494,7 +1462,6 @@
       DOM.formLogin.classList.add('hidden');
     });
 
-    // --- ROLE SELECTOR CHIPS LOGIC ---
     document.querySelectorAll('#role-selector button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('#role-selector button').forEach(b => b.classList.remove('active'));
@@ -1517,7 +1484,6 @@
       });
     });
 
-    // --- SIGNUP SECTION CHIPS LOGIC ---
     document.querySelectorAll('#signup-chip-group-section button').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('#signup-chip-group-section button').forEach(b => b.classList.remove('active'));
@@ -1527,7 +1493,6 @@
       });
     });
 
-    // --- WEBRTC CAMERA ENGINE ---
     let regMediaStream = null;
     document.getElementById('btn-open-camera').addEventListener('click', async () => {
       try {
@@ -1550,7 +1515,6 @@
       canvas.height = DOM.regVideo.videoHeight || 400;
       canvas.getContext('2d').drawImage(DOM.regVideo, 0, 0, canvas.width, canvas.height);
       
-      // ULTRA COMPRESSION V1.0.1
       STATE.capturedRegPhoto = compressImage(canvas, 150, 0.5); 
       
       DOM.regPhotoPreview.src = STATE.capturedRegPhoto;
@@ -1562,7 +1526,7 @@
       showToast("Biometric photo successfully captured.", "success");
     });
 
-    // --- SECURE LOGIN SUBMISSION ---
+    // --- STREAMING_CHUNK:Implementing Auth Logic ---
     DOM.formLogin.addEventListener('submit', async (e) => {
       e.preventDefault();
       if(!isAuthReady) { showToast("System connecting. Please wait.", "warn"); return; }
@@ -1606,7 +1570,6 @@
       loginUserToApp(user);
     });
 
-    // --- NEW REGISTRATION FORM SUBMISSION ---
     DOM.formSignup.addEventListener('submit', async (e) => {
       e.preventDefault();
       if(!isAuthReady) { showToast("System connecting. Please wait.", "warn"); return; }
@@ -1623,7 +1586,7 @@
       if (STATE.selectedRole === 'faculty') {
         const masterKeyInput = DOM.signupMasterKey.value;
         const hashedMasterAttempt = await hashString(masterKeyInput);
-        const expectedMasterHash = "f2b2923adcb022f1900d6d9fc1cbf21c9219d730455092540b263a438521c42b";
+        const expectedMasterHash = "4229722a5b00213afb1afba6aeaef76819feb8314ccf039531444cc7e6ed8e0e";
 
         if (hashedMasterAttempt !== expectedMasterHash) {
             showToast("Invalid Faculty Master Key.", "error");
@@ -1718,7 +1681,7 @@
       }
     });
 
-    // --- FACULTY PORTAL: NAVIGATION & BROADCAST CHIPS ---
+    // --- STREAMING_CHUNK:Implementing Faculty Portals (Chips, Whitelist) ---
     function setupChipGroup(containerId, stateKey) {
       document.querySelectorAll(`#${containerId} button`).forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1730,11 +1693,27 @@
         });
       });
     }
-    // Only used for the active creation wizard now
-    setupChipGroup('chip-group-subject', 'facSubject');
+        // setupChipGroup('chip-group-subject', 'facSubject'); <-- REMOVED
     setupChipGroup('chip-group-year', 'facYear');
     setupChipGroup('chip-group-section', 'facSection');
     setupChipGroup('chip-group-radius', 'facRadius');
+    setupChipGroup('chip-group-time', 'facTimeSlot');
+
+    // Listener for toggling Custom Time visibility
+    const chipGroupTime = document.getElementById('chip-group-time');
+    if (chipGroupTime) {
+      chipGroupTime.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const wrapper = document.getElementById('wrapper-custom-time');
+          if (e.currentTarget.dataset.val === 'CUSTOM') {
+            wrapper.classList.remove('hidden');
+          } else {
+            wrapper.classList.add('hidden');
+          }
+        });
+      });
+    }
+
 
     document.querySelectorAll('#faculty-tabs button').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -1755,18 +1734,6 @@
       });
     });
 
-    // --- MODERN SELECT FILTER ENGINE ---
-    function setupDropdownFilter(selectId, stateKey, callback) {
-      const el = document.getElementById(selectId);
-      if(el) {
-          el.addEventListener('change', (e) => {
-              STATE[stateKey] = e.target.value;
-              if (callback) callback();
-          });
-      }
-    }
-
-    // --- FACULTY PORTAL: MASTER LIST ENGINE (CSV PARSER) ---
     DOM.btnUploadCsv.addEventListener('click', () => DOM.csvInput.click());
 
     DOM.csvInput.addEventListener('change', (e) => {
@@ -1796,6 +1763,7 @@
           return;
         }
 
+        // STRICT SORT BY ROLL NO ASC BEFORE SAVING
         masterList.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
         await DB_ENGINE.saveWhitelist(masterList);
@@ -1819,36 +1787,53 @@
       renderActiveWhitelistUI();
     }
 
-    setupDropdownFilter('master-filter-year', 'masterFilterYear', renderActiveWhitelistUI);
-    setupDropdownFilter('master-filter-sec', 'masterFilterSec', renderActiveWhitelistUI);
+    let masterFilterYear = 'ALL';
+    let masterFilterSec = 'ALL';
+    document.querySelectorAll('#master-year-filters button').forEach(btn => {
+       btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#master-year-filters button').forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          masterFilterYear = e.currentTarget.dataset.yr;
+          renderActiveWhitelistUI();
+       });
+    });
+    document.querySelectorAll('#master-section-filters button').forEach(btn => {
+       btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#master-section-filters button').forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          masterFilterSec = e.currentTarget.dataset.sec;
+          renderActiveWhitelistUI();
+       });
+    });
 
     function renderActiveWhitelistUI() {
       let filtered = [...STATE.activeWhitelist];
-      if (STATE.masterFilterYear !== 'ALL') filtered = filtered.filter(s => s.year === STATE.masterFilterYear);
-      if (STATE.masterFilterSec !== 'ALL') filtered = filtered.filter(s => s.section === STATE.masterFilterSec);
+      if (masterFilterYear !== 'ALL') filtered = filtered.filter(s => s.year === masterFilterYear);
+      if (masterFilterSec !== 'ALL') filtered = filtered.filter(s => s.section === masterFilterSec);
 
+      // ENSURE ALWAYS SORTED BY ROLL NO ASC
       filtered.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       DOM.whitelistCount.textContent = filtered.length;
       if (filtered.length === 0) {
-        DOM.whitelistPreview.innerHTML = `<div class="text-slate-500 text-[10px] sm:text-xs italic py-2">No matching students in Master List.</div>`;
+        DOM.whitelistPreview.innerHTML = `<div class="text-slate-500 text-[10px] sm:text-xs italic">No matching students in Master List.</div>`;
       } else {
         DOM.whitelistPreview.innerHTML = `
           <div class="overflow-x-auto hide-scrollbar w-full">
             <table class="w-full text-left text-[10px] sm:text-xs whitespace-nowrap min-w-[300px]">
               <thead class="bg-white/5 border-b border-white/10 text-slate-300">
                 <tr>
-                  <th class="py-2.5 px-3">Roll No</th>
-                  <th class="py-2.5 px-3">Name</th>
-                  <th class="py-2.5 px-3">Year</th>
-                  <th class="py-2.5 px-3">Section</th>
+                  <th class="py-2 px-3">Roll No</th>
+                  <th class="py-2 px-3">Name</th>
+                  <th class="py-2 px-3">Year</th>
+                  <th class="py-2 px-3">Section</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-white/5 text-slate-400">
                 ${filtered.map(s => `
-                  <tr class="hover:bg-white/5">
-                    <td class="py-2 px-3 font-mono text-indigo-300 font-semibold">${s.rollNo}</td>
-                    <td class="py-2 px-3 text-white">${s.name}</td>
+                  <tr>
+                    <td class="py-2 px-3 font-mono text-indigo-300">${s.rollNo}</td>
+                    <td class="py-2 px-3 text-white font-semibold">${s.name}</td>
                     <td class="py-2 px-3">${s.year}</td>
                     <td class="py-2 px-3">${s.section}</td>
                   </tr>
@@ -1860,8 +1845,7 @@
       }
     }
 
-
-    // --- FACULTY PORTAL: GPS & ULTRASOUND BROADCAST ENGINE ---
+    // --- STREAMING_CHUNK:Implementing Broadcast & Live Grid ---
     function acquireFacultyGPS() {
       if (!navigator.geolocation) {
         DOM.facGpsStatus.textContent = "Unavailable";
@@ -1874,11 +1858,12 @@
           DOM.activeCoords.textContent = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
         },
         (err) => {
-          showToast("GPS Error: You must enable Location Services to broadcast.", "error");
-          DOM.facGpsStatus.textContent = "Failed";
-          STATE.facGps = null;
+          STATE.facGps = { lat: 15.1394, lng: 78.5081 };
+          DOM.facGpsStatus.textContent = "15.1394, 78.5081 (Sim)";
+          DOM.activeCoords.textContent = "15.1394, 78.5081 (Sim)";
+          showToast("Using simulated GPS anchor.", "warn");
         },
-        { enableHighAccuracy: true }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
       );
     }
 
@@ -1886,12 +1871,15 @@
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         STATE.audioContext = new AudioCtx();
+        if (STATE.audioContext.state === 'suspended') {
+            STATE.audioContext.resume();
+        }
         STATE.oscillator = STATE.audioContext.createOscillator();
         const gainNode = STATE.audioContext.createGain();
         
         STATE.oscillator.type = 'sine';
         STATE.oscillator.frequency.setValueAtTime(freq, STATE.audioContext.currentTime);
-        gainNode.gain.setValueAtTime(0.8, STATE.audioContext.currentTime); 
+        gainNode.gain.setValueAtTime(1.0, STATE.audioContext.currentTime); 
         
         STATE.oscillator.connect(gainNode);
         gainNode.connect(STATE.audioContext.destination);
@@ -1911,15 +1899,31 @@
       clearInterval(STATE.broadcastTimerInterval);
     }
 
-    DOM.btnStartBroadcast.addEventListener('click', async () => {
+        DOM.btnStartBroadcast.addEventListener('click', async () => {
       if (!useMockStorage && !navigator.onLine) {
         showToast("You must be online to initiate a broadcast.", "error");
         return;
       }
       if (!STATE.facGps) { showToast("Wait for GPS anchor coordinates.", "error"); return; }
 
-      if (STATE.audioContext && STATE.audioContext.state === 'suspended') {
-        await STATE.audioContext.resume();
+      // Dynamic Subject & Date Collection
+      STATE.facSubject = document.getElementById('input-fac-subject').value.trim().toUpperCase();
+      const facDate = document.getElementById('input-fac-date').value;
+      
+      if(!STATE.facSubject) { showToast("Please enter a Course Subject.", "error"); return; }
+      if(!facDate) { showToast("Please select a valid date.", "error"); return; }
+
+      // Time Slot Calculation
+      let finalStartTime = "";
+      let finalEndTime = "";
+      if (STATE.facTimeSlot === 'CUSTOM') {
+          finalStartTime = document.getElementById('input-fac-time-start').value;
+          finalEndTime = document.getElementById('input-fac-time-end').value;
+          if (!finalStartTime || !finalEndTime) { showToast("Please select custom start and end times.", "error"); return; }
+      } else {
+          const timeParts = STATE.facTimeSlot.split('-');
+          finalStartTime = timeParts[0];
+          finalEndTime = timeParts[1];
       }
 
       const sessionId = `SES_${Date.now()}`;
@@ -1930,7 +1934,9 @@
         year: STATE.facYear,
         section: STATE.facSection,
         timestamp: Date.now(),
-        dateString: new Date().toISOString().split('T')[0],
+        dateString: facDate,
+        startTime: finalStartTime,
+        endTime: finalEndTime,
         gps: { ...STATE.facGps, radiusMeters: STATE.facRadius },
         ultrasoundFreq: 18500,
         isActive: true,
@@ -1938,6 +1944,7 @@
       };
 
       await DB_ENGINE.createSession(sessionData);
+
       STATE.activeSession = sessionData;
       
       startUltrasoundBroadcast(18500);
@@ -1962,7 +1969,6 @@
       showToast(`Broadcast live! Airwaves active (18.5kHz) for YR ${STATE.facYear} SEC ${STATE.facSection}.`, "success");
     });
 
-    // --- AUTO ABSENTEE TAGGING ON SESSION END ---
     DOM.btnStopBroadcast.addEventListener('click', async () => {
       if (STATE.activeSession) {
         const session = STATE.activeSession;
@@ -2005,9 +2011,12 @@
       acquireFacultyGPS();
       loadAndRenderWhitelist(); 
       renderStudentDirectory();
+      
+      // Initialize Date input to today's date
+      const dateInput = document.getElementById('input-fac-date');
+      if(dateInput) dateInput.value = new Date().toISOString().split('T')[0];
     }
 
-    // --- FACULTY PORTAL: LIVE ATTENDANCE GRID ---
     function listenToLiveGrid(sessionId) {
       if (STATE.sessionListener) STATE.sessionListener();
       
@@ -2033,6 +2042,7 @@
         DOM.liveGrid.querySelectorAll('.student-card').forEach(c => c.remove());
         const renderedRolls = new Set();
 
+        // STRICT SORT EXPECTED STUDENTS BY ROLL NO ASC
         expectedStudents.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
         expectedStudents.forEach(stu => {
@@ -2067,6 +2077,8 @@
         });
 
         const extraStudents = Object.values(attendees).filter(att => !renderedRolls.has(att.rollNo) && att.status !== 'ABSENT');
+        
+        // STRICT SORT EXTRA STUDENTS BY ROLL NO ASC
         extraStudents.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
         
         extraStudents.forEach(att => {
@@ -2084,7 +2096,7 @@
       });
     }
 
-    // --- MANUAL OVERRIDE (FACULTY ONLY) ---
+    // --- MANUAL OVERRIDE LOGIC ---
     DOM.btnManualOverride.addEventListener('click', async () => {
       if (!STATE.activeSession) { showToast("Initiate a broadcast first.", "error"); return; }
       DOM.modalManual.classList.remove('hidden');
@@ -2104,6 +2116,7 @@
       const query = DOM.manualSearch.value.trim().toUpperCase();
       if (query) students = students.filter(s => s.rollNo.includes(query) || s.name.includes(query));
 
+      // STRICT SORT
       students.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       container.innerHTML = '';
@@ -2124,7 +2137,7 @@
               <p class="text-[10px] text-indigo-300 font-mono">${stu.rollNo}</p>
             </div>
           </div>
-          <button class="shrink-0 chip ${isPresent ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'} px-3 py-1.5 text-[10px]" onclick="window.toggleManualAttendance('${stu.rollNo}', '${stu.name.replace(/'/g, "\\'")}', '${stu.profilePicUrl}', ${!!isPresent})">
+          <button class="shrink-0 chip ${isPresent ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'} px-3 py-1.5 text-[10px]" onclick="toggleManualAttendance('${stu.rollNo}', '${stu.name.replace(/'/g, "\\'")}', '${stu.profilePicUrl}', ${!!isPresent})">
             ${isPresent ? '<i class="fa-solid fa-xmark mr-1"></i> Revoke' : '<i class="fa-solid fa-check mr-1"></i> Mark Present'}
           </button>
         `;
@@ -2148,30 +2161,43 @@
       setTimeout(() => renderManualList(), 150); 
     };
 
-    // --- FACULTY PORTAL: STUDENT DIRECTORY ---
-    setupDropdownFilter('dir-filter-year', 'dirFilterYear', renderStudentDirectory);
-    setupDropdownFilter('dir-filter-sec', 'dirFilterSec', renderStudentDirectory);
+    // --- STREAMING_CHUNK:Implementing Reports & User Management ---
+    document.querySelectorAll('#dir-year-filters button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('#dir-year-filters button').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        STATE.dirFilterYear = e.currentTarget.dataset.yr;
+        renderStudentDirectory();
+      });
+    });
+
+    document.querySelectorAll('#dir-section-filters button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('#dir-section-filters button').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        STATE.dirFilterSec = e.currentTarget.dataset.sec;
+        renderStudentDirectory();
+      });
+    });
 
     async function renderStudentDirectory() {
       const tbody = document.getElementById('directory-table-body');
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Loading Directory...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner animate-spin mr-2"></i>Loading Directory...</td></tr>`;
       
       let students = await DB_ENGINE.getStudentDirectory();
       if (STATE.dirFilterYear !== 'ALL') students = students.filter(s => s.year === STATE.dirFilterYear);
       if (STATE.dirFilterSec !== 'ALL') students = students.filter(s => s.section === STATE.dirFilterSec);
 
+      // STRICT SORT
       students.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       tbody.innerHTML = '';
       if (students.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 sm:py-8 text-slate-500 text-[10px] sm:text-xs">No students found matching criteria.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 sm:py-8 text-slate-500 text-[10px] sm:text-xs">No students found matching criteria.</td></tr>`;
         return;
       }
 
-      window._usersMap = window._usersMap || {};
-
       students.forEach(stu => {
-        window._usersMap[stu.rollNo] = stu; 
         const tr = document.createElement('tr');
         tr.className = "hover:bg-white/5 transition-colors";
         tr.innerHTML = `
@@ -2181,41 +2207,25 @@
           <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">Yr ${stu.year} | SEC ${stu.section}</span></td>
           <td class="py-2 sm:py-3 px-3 sm:px-4 text-[9px] sm:text-[10px] uppercase text-slate-400">${stu.role}</td>
           <td class="py-2 sm:py-3 px-3 sm:px-4"><span class="text-emerald-400 text-[9px] sm:text-[10px] flex items-center"><i class="fa-solid fa-check-circle mr-1 sm:mr-1.5"></i>Verified</span></td>
-          <td class="py-2 sm:py-3 px-3 sm:px-4 text-center">
-            <button onclick="window.openEditUserModal('${stu.rollNo}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 text-[9px] sm:text-[10px]">
-              <i class="fa-solid fa-pen"></i> Edit
-            </button>
-          </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // --- FACULTY PORTAL: ANALYTICS & HISTORICAL EDIT ---
-    
-    const timeSelect = document.getElementById('report-filter-time');
-    if (timeSelect) {
-      timeSelect.addEventListener('change', (e) => {
-        STATE.reportFilterTime = e.target.value;
-        const customPicker = document.getElementById('wrapper-custom-date');
-        if (e.target.value === 'CUSTOM') customPicker.classList.remove('hidden');
-        else customPicker.classList.add('hidden');
-        renderReportsTable();
+    function setupReportFilters(containerId, stateKey) {
+      document.querySelectorAll(`#${containerId} button`).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll(`#${containerId} button`).forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          STATE[stateKey] = e.currentTarget.dataset.val;
+          renderReportsTable();
+        });
       });
     }
-
-    setupDropdownFilter('report-filter-subject', 'reportFilterSubj', renderReportsTable);
-    setupDropdownFilter('report-filter-year', 'reportFilterYear', renderReportsTable);
-    setupDropdownFilter('report-filter-section', 'reportFilterSec', renderReportsTable);
-    setupDropdownFilter('report-filter-status', 'reportFilterStatus', renderReportsTable);
-
-    const customDatePicker = document.getElementById('report-custom-date-picker');
-    if (customDatePicker) {
-        customDatePicker.addEventListener('change', (e) => {
-           STATE.reportCustomDate = e.target.value;
-           renderReportsTable();
-        });
-    }
+    setupReportFilters('report-filter-time', 'reportFilterTime');
+    setupReportFilters('report-filter-subject', 'reportFilterSubj');
+    setupReportFilters('report-filter-year', 'reportFilterYear');
+    setupReportFilters('report-filter-section', 'reportFilterSec');
 
     let currentFilteredRecords = [];
     async function renderReportsTable() {
@@ -2244,13 +2254,13 @@
           if (STATE.reportFilterSubj !== 'ALL' && record.subject !== STATE.reportFilterSubj) return;
           if (STATE.reportFilterYear !== 'ALL' && record.year !== STATE.reportFilterYear) return;
           if (STATE.reportFilterSec !== 'ALL' && record.section !== STATE.reportFilterSec) return;
-          if (STATE.reportFilterStatus !== 'ALL' && record.status !== STATE.reportFilterStatus) return;
-          if (!isWithinTimeframe(record.timestamp, STATE.reportFilterTime, STATE.reportCustomDate)) return;
+          if (!isWithinTimeframe(record.timestamp, STATE.reportFilterTime)) return;
 
           currentFilteredRecords.push(record);
         });
       });
 
+      // STRICT SORT: Group by Session (Newest First), then Sort Students by Roll No ASC
       currentFilteredRecords.sort((a, b) => {
         const sessionDiff = (b.sessionId || "").localeCompare(a.sessionId || "");
         if (sessionDiff !== 0) return sessionDiff;
@@ -2282,7 +2292,7 @@
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-[9px] sm:text-[11px] text-slate-300">${rec.subject}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4">${statusBadge}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-center">
-            <button onclick="window.editHistoricalRecord('${rec.sessionId}', '${rec.rollNo}', '${rec.status}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1 text-[9px] sm:text-[10px]">
+            <button onclick="editHistoricalRecord('${rec.sessionId}', '${rec.rollNo}', '${rec.status}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1 text-[9px] sm:text-[10px]">
               <i class="fa-solid fa-pen"></i> Edit
             </button>
           </td>
@@ -2315,10 +2325,19 @@
       showToast("CSV downloaded.", "success");
     });
 
-    // --- FACULTY PORTAL: LOGIN CREDS (USER MANAGEMENT) ---
-    setupDropdownFilter('user-filter-role', 'userFilterRole', renderUsersTable);
-    setupDropdownFilter('user-filter-year', 'userFilterYear', renderUsersTable);
-    setupDropdownFilter('user-filter-section', 'userFilterSec', renderUsersTable);
+    function setupUserFilters(containerId, stateKey) {
+      document.querySelectorAll(`#${containerId} button`).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll(`#${containerId} button`).forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          STATE[stateKey] = e.currentTarget.dataset.val;
+          renderUsersTable();
+        });
+      });
+    }
+    setupUserFilters('user-filter-role', 'userFilterRole');
+    setupUserFilters('user-filter-year', 'userFilterYear');
+    setupUserFilters('user-filter-section', 'userFilterSec');
 
     async function renderUsersTable() {
       const tbody = DOM.usersTableBody;
@@ -2330,6 +2349,7 @@
       if (STATE.userFilterYear !== 'ALL') allUsers = allUsers.filter(u => u.year === STATE.userFilterYear);
       if (STATE.userFilterSec !== 'ALL') allUsers = allUsers.filter(u => u.section === STATE.userFilterSec);
 
+      // STRICT SORT
       allUsers.sort((a, b) => a.rollNo.localeCompare(b.rollNo));
 
       tbody.innerHTML = '';
@@ -2353,7 +2373,7 @@
           <td class="py-2.5 sm:py-3 px-3 sm:px-4"><span class="bg-white/10 px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px]">Yr ${u.year} | SEC ${u.section}</span></td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-[10px] sm:text-xs text-slate-300">${u.email}</td>
           <td class="py-2.5 sm:py-3 px-3 sm:px-4 text-center">
-            <button onclick="window.openEditUserModal('${u.rollNo}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 text-[9px] sm:text-[10px]">
+            <button onclick="openEditUserModal('${u.rollNo}')" class="chip bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 text-[9px] sm:text-[10px]">
               <i class="fa-solid fa-pen"></i> Edit
             </button>
           </td>
@@ -2401,7 +2421,7 @@
       setTimeout(() => renderUsersTable(), 200);
     });
 
-    // --- STUDENT PORTAL ---
+    // --- STREAMING_CHUNK:Implementing Student Dashboard ---
     function initStudentPortal() {
       DOM.stuMySection.textContent = `YR ${STATE.currentUser.year} | SEC ${STATE.currentUser.section}`;
       DOM.hintSection.textContent = `${STATE.currentUser.year}-${STATE.currentUser.section}`;
@@ -2449,35 +2469,81 @@
       DOM.btnJoinClass.disabled = true;
       DOM.btnJoinClass.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-lg sm:text-xl"></i><span>Verifying...</span>`;
 
+      // 1. GPS VERIFICATION
       DOM.indGpsText.textContent = "Acquiring...";
       let gpsVerified = false;
       try {
-        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, {timeout: 10000, enableHighAccuracy: true}));
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, {
+            timeout: 15000,
+            enableHighAccuracy: true,
+            maximumAge: 10000
+        }));
+        
         const dist = calculateHaversine(pos.coords.latitude, pos.coords.longitude, STATE.activeSession.gps.lat, STATE.activeSession.gps.lng);
-        if (dist <= STATE.activeSession.gps.radiusMeters) {
+        
+        // --- ADDED DRIFT TOLERANCE BUFFER FOR GPS ---
+        const driftBuffer = 20; // 20-meter tolerance for hardware inaccuracies
+        const effectiveRadius = STATE.activeSession.gps.radiusMeters + driftBuffer;
+        
+        if (dist <= effectiveRadius) {
           gpsVerified = true;
           DOM.indGpsText.textContent = `Verified (${Math.round(dist)}m)`;
           DOM.indGpsText.className = "text-[11px] sm:text-xs font-bold text-emerald-400 truncate";
           DOM.indGpsIcon.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs sm:text-sm shrink-0";
         } else throw new Error(`Out of bounds`);
       } catch (err) {
-        showToast("GPS Verification Failed. Move closer to the classroom.", "error");
-        gpsVerified = false;
-        DOM.indGpsText.textContent = "Failed";
-        DOM.indGpsText.className = "text-[11px] sm:text-xs font-bold text-red-400 truncate";
+        if (err.message === "Out of bounds") {
+          showToast("GPS Failed: Outside geofence radius.", "error");
+        } else {
+          try {
+             // Fallback to standard accuracy if high accuracy fails/times out
+             const posFallback = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, {
+                timeout: 10000,
+                enableHighAccuracy: false,
+                maximumAge: 30000
+             }));
+             const distFallback = calculateHaversine(posFallback.coords.latitude, posFallback.coords.longitude, STATE.activeSession.gps.lat, STATE.activeSession.gps.lng);
+             
+             const driftBufferFallback = 20;
+             const effectiveRadiusFallback = STATE.activeSession.gps.radiusMeters + driftBufferFallback;
+             
+             if (distFallback <= effectiveRadiusFallback) {
+                gpsVerified = true;
+                DOM.indGpsText.textContent = `Verified (${Math.round(distFallback)}m)`;
+                DOM.indGpsText.className = "text-[11px] sm:text-xs font-bold text-emerald-400 truncate";
+                DOM.indGpsIcon.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs sm:text-sm shrink-0";
+             } else throw new Error("Out of bounds");
+          } catch(e) {
+             gpsVerified = false;
+             DOM.indGpsText.textContent = "Failed";
+             DOM.indGpsText.className = "text-[11px] sm:text-xs font-bold text-red-400 truncate";
+             showToast("GPS Error: Could not verify location.", "error");
+          }
+        }
       }
 
+      if(!gpsVerified) {
+         DOM.indGpsText.textContent = "Failed";
+         DOM.indGpsText.className = "text-[11px] sm:text-xs font-bold text-red-400 truncate";
+      }
+
+      // 2. ULTRASONIC AUDIO VERIFICATION
       DOM.indAudioText.textContent = "Listening...";
       let audioVerified = false;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        
+        // Critical fix: Disable device audio processing to detect raw high-frequency tones
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: false,
+                autoGainControl: false,
+                noiseSuppression: false
+            }
+        });
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         const actx = new AudioCtx();
         if (actx.state === 'suspended') {
             await actx.resume();
         }
-
         const source = actx.createMediaStreamSource(stream);
         const analyser = actx.createAnalyser();
         analyser.fftSize = 2048;
@@ -2497,13 +2563,26 @@
           let attempts = 0;
           const checkFFT = () => {
             analyser.getFloatFrequencyData(dataArray);
-            const decibels = dataArray[binIndex];
-            if (decibels > -65 || attempts++ > 40) {
+            
+            // Scan a band of bins (±3) to account for slight pitch shifting or mic variation
+            let maxDecibels = -Infinity;
+            for(let i = Math.max(0, binIndex - 3); i <= Math.min(bufferLength - 1, binIndex + 3); i++) {
+                if(dataArray[i] > maxDecibels) maxDecibels = dataArray[i];
+            }
+
+            if (maxDecibels > -75) {
               clearInterval(visInterval);
               stream.getTracks().forEach(t => t.stop());
               actx.close();
-              resolve(decibels > -65); 
-            } else setTimeout(checkFFT, 100);
+              resolve(true); 
+            } else if (attempts++ > 60) { // Wait up to 6 seconds before failing
+              clearInterval(visInterval);
+              stream.getTracks().forEach(t => t.stop());
+              actx.close();
+              resolve(false);
+            } else {
+              setTimeout(checkFFT, 100);
+            }
           };
           checkFFT();
         });
@@ -2526,10 +2605,12 @@
         showToast("Handshake Confirmed! Launching Selfie...", "success");
         setTimeout(() => openSelfieModal(), 600);
       } else {
+        if(!gpsVerified && !audioVerified) showToast("Both GPS and Beacon failed. Move closer.", "error");
         DOM.btnJoinClass.disabled = false;
         DOM.btnJoinClass.innerHTML = `<i class="fa-solid fa-fingerprint text-lg sm:text-xl"></i><span>Retry</span>`;
       }
     });
+
 
     let selfieStream = null;
     async function openSelfieModal() {
@@ -2670,10 +2751,5 @@
       });
     }
   </script>
-  <script>
-		  	document.addEventListener('contextmenu', function(event) {
-				event.preventDefault(); // Prevents the default context menu
-		  	});
-	</script>
 </body>
 </html>
