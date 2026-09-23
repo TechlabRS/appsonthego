@@ -6,18 +6,30 @@
     <title>Student Attendance Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
         :root {
-            --primary: #4f46e5;
-            --primary-light: #eef2ff;
-            --success: #10b981;
-            --danger: #ef4444;
+            --primary: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             --bg: #f8fafc;
             --card: #ffffff;
-            --text-main: #1e293b;
+            --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
+            
+            /* Status Tags */
+            --present-bg: #ecfdf5;
+            --present-text: #047857;
+            --present-border: #a7f3d0;
+            --absent-bg: #fef2f2;
+            --absent-text: #b91c1c;
+            --absent-border: #fecaca;
+
+            /* Category Tags */
+            --theory-tag-bg: #e0e7ff;
+            --theory-tag-text: #3730a3;
+            --lab-tag-bg: #f3e8ff;
+            --lab-tag-text: #6b21a8;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -27,188 +39,423 @@
             background-color: var(--bg);
             color: var(--text-main);
             margin: 0;
-            padding: 16px;
+            padding: 24px 16px;
             display: flex;
             justify-content: center;
+            min-height: 100vh;
         }
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 920px;
         }
 
         /* Search Section */
         .search-container {
             background: var(--card);
-            padding: 24px;
+            padding: 20px 24px;
             border-radius: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
             margin-bottom: 24px;
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
+            align-items: center;
         }
+
+        .input-wrapper { flex: 1; min-width: 220px; }
 
         input {
-            flex: 1;
-            min-width: 200px;
+            width: 100%;
             padding: 14px 18px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            font-size: 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
             outline: none;
-            transition: all 0.2s;
+            transition: all 0.25s ease;
+            background: #fafafa;
         }
 
-        input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+        input:focus { 
+            border-color: var(--primary); 
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12); 
+        }
 
         button {
             padding: 14px 28px;
-            background: var(--primary);
+            background: var(--primary-gradient);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             font-weight: 700;
+            font-size: 0.95rem;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
         }
 
-        button:active { transform: scale(0.97); }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35); }
+        button:active { transform: translateY(0); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-        /* Results Area */
-        #resultView { display: none; animation: fadeIn 0.4s ease-out; }
+        /* Dashboard Header & Profile Card */
+        #resultView { display: none; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 
         .profile-card {
-            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            background: var(--primary-gradient);
             color: white;
-            padding: 30px;
+            padding: 28px 32px;
             border-radius: 24px;
             margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
+            flex-wrap: wrap;
+            gap: 24px;
+            box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.25);
+            position: relative;
+            overflow: hidden;
         }
 
-        .profile-info h2 { margin: 0; font-size: 1.5rem; }
-        .profile-info p { margin: 5px 0 0; opacity: 0.8; font-size: 0.9rem; }
+        .profile-info h2 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
+        .profile-info p { margin: 6px 0 0; opacity: 0.85; font-size: 0.92rem; font-weight: 500; }
+        
+        .cache-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+        }
 
-        .stat-circle {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 15px;
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
+        .cache-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; }
+
+        /* Stat Chips Container */
+        .stats-container { display: flex; gap: 12px; flex-wrap: wrap; }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 14px 18px;
+            border-radius: 18px;
+            min-width: 95px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
-        .stat-circle span { font-weight: 800; font-size: 1.2rem; }
-        .stat-circle small { font-size: 0.6rem; font-weight: 600; }
-
-        /* Grid Layout */
-        .attendance-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
+        .stat-card.featured {
+            background: rgba(255, 255, 255, 0.22);
+            border: 1.5px solid rgba(255, 255, 255, 0.45);
         }
 
-        .data-card {
-            background: var(--card);
-            border-radius: 20px;
+        .stat-card .value { font-weight: 800; font-size: 1.35rem; line-height: 1; }
+        .stat-card .label { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.8px; opacity: 0.9; margin-top: 6px; text-transform: uppercase; }
+
+        .progress-mini {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin-top: 8px;
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            border: 1px solid var(--border);
         }
 
-        .card-header {
-            padding: 16px 20px;
-            background: #fcfcfd;
-            border-bottom: 1px solid var(--border);
+        .progress-bar-inner {
+            height: 100%;
+            background: #ffffff;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Filter Controls & Header */
+        .feed-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
-        .card-header h4 { margin: 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .view-indicator {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
 
-        table { width: 100%; border-collapse: collapse; }
-        td { padding: 14px 20px; font-size: 0.9rem; border-bottom: 1px solid #f8fafc; }
-        tr:last-child td { border: none; }
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scroll-behavior: smooth;
+        }
 
-        .status-dot {
+        .filter-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+        }
+
+        .filter-btn.absent-filter.active {
+            background: #ef4444;
+            border-color: #ef4444;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+        }
+
+        /* Timeline Feed View */
+        .timeline-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .session-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .session-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px -4px rgba(0,0,0,0.06);
+            border-color: #cbd5e1;
+        }
+
+        .session-details { display: flex; align-items: center; gap: 14px; }
+
+        .type-tag {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .type-theory { background: var(--theory-tag-bg); color: var(--theory-tag-text); }
+        .type-lab { background: var(--lab-tag-bg); color: var(--lab-tag-text); }
+
+        .date-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
+
+        /* Status Badge Components */
+        .chip-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-weight: 700;
-            font-size: 0.75rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
         }
 
-        .p-dot { color: var(--success); }
-        .a-dot { color: var(--danger); }
+        .chip-present {
+            background: var(--present-bg);
+            color: var(--present-text);
+            border: 1px solid var(--present-border);
+        }
+
+        .chip-absent {
+            background: var(--absent-bg);
+            color: var(--absent-text);
+            border: 1px solid var(--absent-border);
+        }
+
+        .chip-dot { width: 6px; height: 6px; border-radius: 50%; background-color: currentColor; }
+
+        /* View More Trigger Button */
+        .expand-wrapper {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .btn-expand {
+            background: var(--card);
+            color: var(--primary);
+            border: 1.5px solid var(--border);
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-expand:hover {
+            border-color: var(--primary);
+            background: var(--primary-light, #eef2ff);
+            transform: translateY(-2px);
+        }
+
+        #emptyNotice {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: var(--card);
+            border-radius: 20px;
+            border: 1px dashed var(--border);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
 
         /* Loader */
-        #loader { display: none; text-align: center; padding: 20px; font-weight: 600; color: var(--primary); }
+        #loader { display: none; text-align: center; padding: 24px; font-weight: 700; color: var(--primary); }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(16px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
 
-        @media (max-width: 480px) {
-            .profile-card { flex-direction: column; text-align: center; gap: 20px; }
-            .attendance-grid { grid-template-columns: 1fr; }
+        @media (max-width: 640px) {
+            body { padding: 12px 8px; }
+            .profile-card { flex-direction: column; text-align: center; padding: 24px 20px; }
+            .stats-container { justify-content: center; width: 100%; }
+            .session-card { padding: 14px 16px; }
+            .date-title { font-size: 0.88rem; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- Search Section -->
     <div class="search-container">
-        <input type="text" id="rollNo" placeholder="Enter Roll Number...in all CAPS" autocomplete="off">
+        <div class="input-wrapper">
+            <input type="text" id="rollNo" placeholder="Enter Roll Number (e.g. 21X01A0501)..." autocomplete="off">
+        </div>
         <button id="btnSearch" onclick="handleSearch()">View Attendance</button>
     </div>
 
-    <div id="loader">Fetching records...</div>
+    <div id="loader">Fetching student records...</div>
 
+    <!-- Main Results View -->
     <div id="resultView">
+        <!-- Profile & Glassmorphism Stat Cards -->
         <div class="profile-card">
             <div class="profile-info">
                 <h2 id="studentName">Student Name</h2>
                 <p id="studentSubject">Subject Details</p>
+                <div class="cache-badge">
+                    <span class="cache-dot"></span>
+                    <span id="cacheStatusText">Updated Just Now</span>
+                </div>
             </div>
-            <div class="stat-circle">
-                <span id="totalPerc">0%</span>
-                <small>TOTAL</small>
+
+            <div class="stats-container">
+                <!-- Theory Stat Chip -->
+                <div class="stat-card">
+                    <span class="value" id="theoryPerc">0%</span>
+                    <span class="label">Theory</span>
+                    <div class="progress-mini">
+                        <div class="progress-bar-inner" id="theoryBar"></div>
+                    </div>
+                </div>
+
+                <!-- Lab Stat Chip -->
+                <div class="stat-card">
+                    <span class="value" id="labPerc">0%</span>
+                    <span class="label">Lab</span>
+                    <div class="progress-mini">
+                        <div class="progress-bar-inner" id="labBar"></div>
+                    </div>
+                </div>
+
+                <!-- Overall Stat Chip -->
+                <div class="stat-card featured">
+                    <span class="value" id="totalPerc">0%</span>
+                    <span class="label">Overall</span>
+                    <div class="progress-mini">
+                        <div class="progress-bar-inner" id="totalBar"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="attendance-grid">
-            <div class="data-card">
-                <div class="card-header">
-                    <h4>Theory Classes</h4>
-                    <span id="theoryCount" style="font-size: 0.75rem; font-weight: 700; color: var(--primary);"></span>
-                </div>
-                <table id="theoryTable"><tbody></tbody></table>
+        <!-- Filter & View Bar -->
+        <div class="feed-header">
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="setFilter('all', this)">All Sessions</button>
+                <button class="filter-btn" onclick="setFilter('theory', this)">Theory Only</button>
+                <button class="filter-btn" onclick="setFilter('lab', this)">Lab Only</button>
+                <button class="filter-btn absent-filter" onclick="setFilter('absent', this)">⚠️ Missed / Absent</button>
             </div>
+            <span class="view-indicator" id="viewModeIndicator">Recent 10 Sessions</span>
+        </div>
 
-            <div class="data-card">
-                <div class="card-header">
-                    <h4>Lab Sessions</h4>
-                    <span id="labCount" style="font-size: 0.75rem; font-weight: 700; color: var(--primary);"></span>
-                </div>
-                <table id="labTable"><tbody></tbody></table>
-            </div>
+        <!-- Session Timeline Cards Feed -->
+        <div class="timeline-feed" id="sessionsList"></div>
+        <div id="emptyNotice">No sessions found matching this filter.</div>
+
+        <!-- View All Trigger -->
+        <div class="expand-wrapper" id="expandWrapper" style="display: none;">
+            <button class="btn-expand" id="btnToggleExpand" onclick="toggleExpand()">
+                <span id="btnExpandText">View All Records</span>
+            </button>
         </div>
     </div>
 </div>
 
 <script>
-    // Replace with your Google Sheets Published CSV URL
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ09J-6CWdP4vxWACd4IsN8Bov0mTYQLkHTQZEEWSdTn9v0eoBv-Ri8TkbQyc9hCvvjEx6czqJTpTnQ/pub?gid=1294429618&single=true&output=csv';
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSlZPhiFBEIhsbftEmT0WXXkxX_VhqsuYwCyFGrCwsNUe-DGLtgDcPPx8SArWlGf5BCBpG2NBXJKRJL/pub?gid=1176925705&single=true&output=csv';
+    
+    // LocalStorage 24-Hour Cache Config
+    const CACHE_KEY = 'attendanceDataCache';
+    const CACHE_TIME_KEY = 'attendanceDataTimestamp';
+    const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+	//const CACHE_DURATION = 60; // 24 hours
 
-    // Auto-fill previous ID if exists
+    let rawSessionsData = [];
+    let currentFilter = 'all';
+    let isExpanded = false; // State to track view all vs recent 10/1 week
+    const DEFAULT_LIMIT = 10;
+
     window.onload = () => {
         const savedId = localStorage.getItem('lastRollNo');
         if (savedId) {
@@ -221,49 +468,169 @@
         const id = document.getElementById('rollNo').value.trim();
         if (!id) return;
 
-        // UI State
         const btn = document.getElementById('btnSearch');
         const loader = document.getElementById('loader');
         const resultView = document.getElementById('resultView');
+        const cacheStatusText = document.getElementById('cacheStatusText');
         
         btn.disabled = true;
         loader.style.display = 'block';
         resultView.style.display = 'none';
+        isExpanded = false; // Reset to collapse mode on new search
 
-        // Save for next time
         localStorage.setItem('lastRollNo', id);
 
-        Papa.parse(CSV_URL, {
-            download: true,
-            header: true,
-            skipEmptyLines: 'greedy',
-            complete: (results) => {
-                const student = results.data.find(row => {
-                    const key = Object.keys(row).find(k => k.toLowerCase().trim() === 'no');
-                    return row[key] && row[key].toString().trim() === id;
-                });
+        const now = Date.now();
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
 
-                if (student) {
-                    renderUI(student);
-                } else {
-                    alert("Roll number not found in current records.");
+        if (cachedData && cachedTime && (now - parseInt(cachedTime)) < CACHE_DURATION) {
+            const dataArray = JSON.parse(cachedData);
+            cacheStatusText.innerText = "Cached Data (Refreshes Daily)";
+            processData(dataArray, id);
+            
+            btn.disabled = false;
+            loader.style.display = 'none';
+        } else {
+            cacheStatusText.innerText = "Live Cloud Sync";
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: 'greedy',
+                complete: (results) => {
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(results.data));
+                    localStorage.setItem(CACHE_TIME_KEY, now.toString());
+                    
+                    processData(results.data, id);
+                    
+                    btn.disabled = false;
+                    loader.style.display = 'none';
+                },
+                error: () => {
+                    alert("Error retrieving database. Please check connection.");
+                    btn.disabled = false;
+                    loader.style.display = 'none';
                 }
-                
-                btn.disabled = false;
-                loader.style.display = 'none';
-            },
-            error: () => {
-                alert("Error connecting to database. Please check your internet.");
-                btn.disabled = false;
-                loader.style.display = 'none';
-            }
+            });
+        }
+    }
+
+    function processData(dataArray, id) {
+        const student = dataArray.find(row => {
+            const key = Object.keys(row).find(k => k.toLowerCase().trim() === 'no');
+            return row[key] && row[key].toString().trim() === id;
+        });
+
+        if (student) {
+            parseSessions(student);
+            renderUI(student);
+        } else {
+            alert("Roll number not found in attendance records.");
+        }
+    }
+
+    function parseSessions(data) {
+        rawSessionsData = [];
+        const columns = Object.keys(data).reverse();
+
+        columns.forEach(key => {
+            const k = key.toLowerCase().trim();
+            if (['no', 'name', 'subject'].some(word => k.includes(word))) return;
+
+            const val = data[key].trim().toUpperCase();
+            if (val !== 'P' && val !== 'A') return;
+
+            const isLab = k.includes('lab');
+
+            rawSessionsData.push({
+                date: key,
+                status: val,
+                type: isLab ? 'lab' : 'theory'
+            });
+        });
+    }
+
+    function setFilter(filterType, btnElement) {
+        currentFilter = filterType;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+        renderTimeline();
+    }
+
+    function toggleExpand() {
+        isExpanded = !isExpanded;
+        renderTimeline();
+    }
+
+    function renderTimeline() {
+        const container = document.getElementById('sessionsList');
+        const emptyNotice = document.getElementById('emptyNotice');
+        const expandWrapper = document.getElementById('expandWrapper');
+        const btnExpandText = document.getElementById('btnExpandText');
+        const viewIndicator = document.getElementById('viewModeIndicator');
+
+        container.innerHTML = "";
+
+        const filtered = rawSessionsData.filter(item => {
+            if (currentFilter === 'theory') return item.type === 'theory';
+            if (currentFilter === 'lab') return item.type === 'lab';
+            if (currentFilter === 'absent') return item.status === 'A';
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            emptyNotice.style.display = 'block';
+            expandWrapper.style.display = 'none';
+            viewIndicator.innerText = "0 Records";
+            return;
+        }
+
+        emptyNotice.style.display = 'none';
+
+        // Check if truncation is needed
+        let displayList = filtered;
+        if (!isExpanded && filtered.length > DEFAULT_LIMIT) {
+            displayList = filtered.slice(0, DEFAULT_LIMIT);
+            expandWrapper.style.display = 'block';
+            btnExpandText.innerText = `View All (${filtered.length} Sessions)`;
+            viewIndicator.innerText = `Recent 10 of ${filtered.length} Sessions`;
+        } else if (filtered.length > DEFAULT_LIMIT) {
+            expandWrapper.style.display = 'block';
+            btnExpandText.innerText = `Show Recent Only`;
+            viewIndicator.innerText = `Showing All ${filtered.length} Sessions`;
+        } else {
+            expandWrapper.style.display = 'none';
+            viewIndicator.innerText = `${filtered.length} Sessions`;
+        }
+
+        displayList.forEach(session => {
+            const isP = session.status === 'P';
+            const isLab = session.type === 'lab';
+
+            const statusChip = isP 
+                ? `<span class="chip-badge chip-present"><span class="chip-dot"></span>PRESENT</span>`
+                : `<span class="chip-badge chip-absent"><span class="chip-dot"></span>ABSENT</span>`;
+
+            const typeTag = isLab
+                ? `<span class="type-tag type-lab">LAB</span>`
+                : `<span class="type-tag type-theory">THEORY</span>`;
+
+            const card = `
+                <div class="session-card">
+                    <div class="session-details">
+                        ${typeTag}
+                        <span class="date-title">${session.date}</span>
+                    </div>
+                    <div>${statusChip}</div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', card);
         });
     }
 
     function renderUI(data) {
         document.getElementById('resultView').style.display = 'block';
         
-        // Dynamic Key Finding (Case Insensitive)
         const findVal = (terms) => {
             const key = Object.keys(data).find(k => terms.some(t => k.toLowerCase().includes(t)));
             return data[key] || "N/A";
@@ -272,51 +639,41 @@
         document.getElementById('studentName').innerText = findVal(['name']);
         document.getElementById('studentSubject').innerText = findVal(['subject']);
 
-        const theoryBody = document.querySelector('#theoryTable tbody');
-        const labBody = document.querySelector('#labTable tbody');
-        theoryBody.innerHTML = "";
-        labBody.innerHTML = "";
+        // Compute Metrics
+        let pTheory = 0, totalTheory = 0;
+        let pLab = 0, totalLab = 0;
 
-        let p = 0, total = 0, tCount = 0, lCount = 0;
-
-        // Reverse keys to show newest dates first
-        const columns = Object.keys(data).reverse();
-
-        columns.forEach(key => {
-            const k = key.toLowerCase().trim();
-            if (['no', 'name', 'subject'].some(word => k.includes(word))) return;
-
-            const val = data[key].trim().toUpperCase();
-            if (val !== 'P' && val !== 'A') return; // Skip columns that aren't attendance
-
-            const isP = val === 'P';
-            p += isP ? 1 : 0;
-            total++;
-
-            const row = `
-                <tr>
-                    <td style="color: var(--text-muted); font-weight: 500;">${key}</td>
-                    <td style="text-align: right;">
-                        <span class="status-dot ${isP ? 'p-dot' : 'a-dot'}">
-                            ${isP ? '● PRESENT' : '○ ABSENT'}
-                        </span>
-                    </td>
-                </tr>
-            `;
-
-            if (k.includes('lab')) {
-                labBody.insertAdjacentHTML('beforeend', row);
-                lCount++;
+        rawSessionsData.forEach(s => {
+            if (s.type === 'lab') {
+                totalLab++;
+                if (s.status === 'P') pLab++;
             } else {
-                theoryBody.insertAdjacentHTML('beforeend', row);
-                tCount++;
+                totalTheory++;
+                if (s.status === 'P') pTheory++;
             }
         });
 
-        document.getElementById('totalPerc').innerText = total > 0 ? Math.round((p / total) * 100) + "%" : "0%";
-        document.getElementById('theoryCount').innerText = tCount + " Sessions";
-        document.getElementById('labCount').innerText = lCount + " Sessions";
+        const getRatio = (p, total) => total > 0 ? Math.round((p / total) * 100) : 0;
+        
+        const theoryPercVal = getRatio(pTheory, totalTheory);
+        const labPercVal = getRatio(pLab, totalLab);
+        const totalPercVal = getRatio(pTheory + pLab, totalTheory + totalLab);
+
+        document.getElementById('theoryPerc').innerText = theoryPercVal + "%";
+        document.getElementById('labPerc').innerText = labPercVal + "%";
+        document.getElementById('totalPerc').innerText = totalPercVal + "%";
+
+        document.getElementById('theoryBar').style.width = theoryPercVal + "%";
+        document.getElementById('labBar').style.width = labPercVal + "%";
+        document.getElementById('totalBar').style.width = totalPercVal + "%";
+
+        renderTimeline();
     }
+</script>
+<script>
+document.addEventListener('contextmenu', function(event) {
+event.preventDefault(); // Prevents the default context menu
+});
 </script>
 
 </body>
