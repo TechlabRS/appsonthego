@@ -17,42 +17,91 @@
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900 pb-28 md:pb-0">
     
-    <!-- Stunning 2-Second Splash Screen -->
+    <!-- Stunning Splash Screen -->
     <div id="splashScreen" class="fixed inset-0 z-[100] bg-gradient-to-br from-indigo-900 via-slate-900 to-black flex flex-col items-center justify-center transition-all duration-700 ease-in-out">
         <div class="relative flex flex-col items-center">
-            <!-- Pulsing Logo -->
             <svg class="w-20 h-20 text-indigo-400 mb-6 drop-shadow-[0_0_15px_rgba(129,140,248,0.5)]" style="animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-            
             <h1 class="text-4xl font-black text-white tracking-widest drop-shadow-md">ATTENDANCE<span class="text-indigo-400">.PRO</span></h1>
             <p class="text-indigo-200 mt-4 text-xs font-semibold tracking-[0.3em] uppercase opacity-80" style="animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;">Initializing Workspace</p>
-            
-            <!-- Animated Orbitals -->
             <div class="absolute -inset-10 border-[3px] border-indigo-500/20 rounded-full border-t-indigo-400 drop-shadow-[0_0_10px_rgba(129,140,248,0.8)]" style="animation: spin 1.5s linear infinite;"></div>
             <div class="absolute -inset-14 border-[2px] border-slate-500/10 rounded-full border-b-indigo-300" style="animation: spin 2.5s linear infinite reverse;"></div>
         </div>
     </div>
 
-    <!-- Main wrapper: padding bottom for mobile nav, padding left for desktop nav -->
-    <div class="md:pl-64 min-h-screen flex flex-col">
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="authScreen" class="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-100">
+            <div class="flex flex-col items-center mb-6">
+                <div class="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mb-3">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-black text-slate-800">ATTENDANCE<span class="text-indigo-600">.PRO</span></h2>
+                <p class="text-xs text-slate-400 font-medium tracking-wide mt-1">Sign in to access your attendance workspace</p>
+            </div>
+
+            <div id="authError" class="hidden mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-600 text-xs rounded-xl font-medium text-center"></div>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wider">Email Address</label>
+                        <input type="email" id="authEmail" required placeholder="prof@university.edu" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl outline-none focus:ring-2 ring-indigo-500 text-sm font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 uppercase tracking-wider">Password</label>
+                        <input type="password" id="authPassword" required minlength="6" placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl outline-none focus:ring-2 ring-indigo-500 text-sm font-medium">
+                    </div>
+                    <button type="submit" id="authSubmitBtn" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 active:scale-95 transition-transform shadow-lg shadow-indigo-100 mt-2">
+                        Sign In
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span id="authToggleText" class="text-slate-500">Don't have an account?</span>
+                <!--<button id="authToggleBtn" onclick="toggleAuthMode()" class="font-bold text-indigo-600 hover:text-indigo-800 focus:outline-none">
+                    Create Account
+                </button>-->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APPLICATION WRAPPER (HIDDEN BEFORE AUTH) -->
+    <div id="mainAppWrapper" class="hidden md:pl-64 min-h-screen flex flex-col">
         
-        <!-- Desktop Sidebar Navigation (Hidden on Mobile) -->
-        <aside class="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 p-6 shadow-sm fixed top-0 left-0 h-full z-20">
-            <h1 class="text-xl font-black mb-10 text-indigo-700 tracking-tight flex items-center gap-2">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                ATTENDANCE.PRO
-            </h1>
-            <nav class="space-y-3">
-                <button onclick="showSection('setup')" id="nav-desk-setup" class="nav-btn w-full text-left px-5 py-3 rounded-xl font-semibold text-indigo-700 bg-indigo-50 transition">1. Setup Groups</button>
-                <button onclick="showSection('attendance')" id="nav-desk-attendance" class="nav-btn w-full text-left px-5 py-3 rounded-xl font-semibold text-slate-600 hover:bg-slate-50 transition">2. Mark Attendance</button>
-                <button onclick="showSection('reports')" id="nav-desk-reports" class="nav-btn w-full text-left px-5 py-3 rounded-xl font-semibold text-slate-600 hover:bg-slate-50 transition">3. Matrix Reports</button>
-                <button onclick="showSection('datasync')" id="nav-desk-datasync" class="nav-btn w-full text-left px-5 py-3 rounded-xl font-semibold text-slate-600 hover:bg-slate-50 transition flex items-center justify-between">
-                    <span>4. Cloud Workspace</span>
-                    <span id="deskCloudStatus" class="w-2 h-2 rounded-full bg-rose-500"></span>
-                </button>
-            </nav>
+        <!-- Desktop Sidebar Navigation -->
+        <aside class="hidden md:flex flex-col justify-between w-64 bg-white border-r border-slate-200 p-6 shadow-sm fixed top-0 left-0 h-full z-20">
+            <div>
+                <h1 class="text-xl font-black mb-10 text-indigo-700 tracking-tight flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    ATTENDANCE.PRO
+                </h1>
+                <nav class="space-y-3">
+                    <button onclick="showSection('setup')" id="nav-desk-setup" class="nav-btn w-full text-left px-5 py-3 rounded-xl font-semibold text-indigo-700 bg-indigo-50 transition">1. Setup Groups</button>
+                    <button onclick="showSection('attendance')" id="nav-desk-attendance" class="nav-btn w-full text-left px-5 py-3 rounded-xl font-semibold text-slate-600 hover:bg-slate-50 transition">2. Mark Attendance</button>
+                    <button onclick="showSection('reports')" id="nav-desk-reports" class="nav-btn w-full text-left px-5 py-3 rounded-xl font-semibold text-slate-600 hover:bg-slate-50 transition">3. Matrix Reports</button>
+                    <button onclick="showSection('datasync')" id="nav-desk-datasync" class="nav-btn w-full text-left px-5 py-3 rounded-xl font-semibold text-slate-600 hover:bg-slate-50 transition flex items-center justify-between">
+                        <span>4. Cloud Workspace</span>
+                        <span id="deskCloudStatus" class="w-2 h-2 rounded-full bg-rose-500"></span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Sidebar User Card & Sign Out -->
+            <div class="border-t border-slate-100 pt-4 mt-auto">
+                <div class="flex items-center justify-between">
+                    <div class="truncate mr-2">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Signed In As</p>
+                        <p class="user-email-label text-xs font-bold text-slate-700 truncate">user@app.com</p>
+                    </div>
+                    <button onclick="handleLogout()" title="Sign Out" class="p-2 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 rounded-xl transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
+                </div>
+            </div>
         </aside>
 
-        <!-- Mobile Bottom Navigation (Hidden on Desktop) -->
+        <!-- Mobile Bottom Navigation -->
         <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 flex justify-around items-center p-2 pb-safe z-50 shadow-[0_-4px_6px_-1px_rgb(0,0,0,0.05)]">
             <button onclick="showSection('setup')" id="nav-mob-setup" class="nav-btn-mob flex flex-col items-center p-2 text-indigo-700 w-1/4">
                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -76,10 +125,15 @@
         <!-- Main Content Area -->
         <main class="flex-1 p-4 sm:p-6 md:p-10 max-w-7xl mx-auto w-full">
             
-            <!-- Mobile Header (Visible only on mobile) -->
-            <header class="md:hidden flex items-center gap-2 mb-6 pt-2">
-                <svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                <h1 class="text-xl font-black text-indigo-700 tracking-tight">ATTENDANCE.PRO</h1>
+            <!-- Mobile Header -->
+            <header class="md:hidden flex items-center justify-between mb-6 pt-2 border-b border-slate-200 pb-3">
+                <div class="flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    <h1 class="text-xl font-black text-indigo-700 tracking-tight">ATTENDANCE.PRO</h1>
+                </div>
+                <button onclick="handleLogout()" class="px-3 py-1 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-lg text-xs font-bold transition">
+                    Sign Out
+                </button>
             </header>
 
             <!-- 1. SETUP SECTION -->
@@ -111,7 +165,6 @@
 
             <!-- 2. ATTENDANCE SECTION -->
             <div id="attendance" class="section hidden">
-                
                 <!-- Edit Past Session Tool -->
                 <div class="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-indigo-50 p-4 rounded-2xl border border-indigo-100 shadow-sm">
                     <div>
@@ -145,16 +198,12 @@
                 <!-- Bulk Actions, Search & List -->
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-4 gap-4 px-1">
                     <h3 class="font-bold text-slate-700 text-lg whitespace-nowrap">Student List</h3>
-                    
                     <div class="flex flex-col sm:flex-row w-full xl:w-auto gap-3">
-                        <!-- Search Bar -->
                         <div class="flex items-center bg-white border border-slate-200 rounded-full px-4 py-2 w-full sm:w-64 focus-within:ring-2 ring-indigo-500 transition shadow-sm">
                             <svg class="w-5 h-5 text-slate-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                             <input type="text" id="searchStudent" onkeyup="filterStudents()" placeholder="Search Roll or Name..." class="bg-transparent border-0 outline-none w-full text-sm">
                             <button onclick="document.getElementById('searchStudent').value=''; filterStudents()" class="text-slate-300 hover:text-slate-600 focus:outline-none flex-shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
                         </div>
-                        
-                        <!-- Buttons -->
                         <div class="flex gap-2 w-full sm:w-auto">
                             <button onclick="setBulk(true)" class="flex-1 sm:flex-none bg-emerald-100 text-emerald-700 px-5 py-3 sm:py-2 rounded-full text-sm font-bold hover:bg-emerald-200 active:scale-95 transition-transform text-center whitespace-nowrap">Present All</button>
                             <button onclick="setBulk(false)" class="flex-1 sm:flex-none bg-rose-100 text-rose-700 px-5 py-3 sm:py-2 rounded-full text-sm font-bold hover:bg-rose-200 active:scale-95 transition-transform text-center whitespace-nowrap">Absent All</button>
@@ -174,7 +223,7 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <h2 class="text-2xl font-bold text-slate-800">Class Matrix Report</h2>
                     <button onclick="downloadMatrixCSV()" class="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3 sm:py-2 rounded-full font-bold text-sm shadow-md hover:bg-emerald-700 active:scale-95 transition-transform flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5 fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         Export CSV
                     </button>
                 </div>
@@ -205,20 +254,17 @@
                     <span id="cloudStatusLabel" class="text-xs font-bold text-rose-600 bg-rose-100 px-3 py-1 rounded-full border border-rose-200">Connecting...</span>
                 </div>
                 
-                <!-- Cross-Device Sync Key -->
                 <div class="mb-10 bg-white p-6 rounded-3xl shadow-sm border border-indigo-100">
-                    <h3 class="font-bold text-indigo-800 text-lg mb-2">Connect to Cloud Workspace</h3>
-                    <p class="text-sm text-slate-500 mb-4">Your application runs securely on the cloud. Enter your unique Sync Key to fetch your data and enable auto-sync across all your devices.</p>
+                    <h3 class="font-bold text-indigo-800 text-lg mb-2">Connect to Shared Sync Key</h3>
+                    <p class="text-sm text-slate-500 mb-4">By default, your account syncs under your unique User ID. Enter a custom Sync Key if you want to share data with other devices.</p>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <input type="text" id="syncKeyInput" placeholder="Enter Workspace Sync Key (e.g., ProfName2026)" class="bg-slate-50 border border-slate-200 p-3 rounded-xl w-full text-base focus:ring-2 ring-indigo-500 outline-none font-bold text-indigo-900">
+                        <input type="text" id="syncKeyInput" placeholder="Enter Workspace Sync Key..." class="bg-slate-50 border border-slate-200 p-3 rounded-xl w-full text-base focus:ring-2 ring-indigo-500 outline-none font-bold text-indigo-900">
                         <button onclick="connectWorkspace()" id="btn-connect-workspace" class="w-full sm:w-auto bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 active:scale-95 transition-transform whitespace-nowrap shadow-md">Connect & Sync</button>
                     </div>
                 </div>
 
                 <h2 class="text-2xl font-bold mb-6 text-rose-800">Data Management (Wipe)</h2>
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <!-- Session Wipe -->
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-rose-100 flex flex-col justify-between">
                         <div>
                             <h3 class="font-bold text-slate-700 mb-2">Wipe Specific Session</h3>
@@ -230,7 +276,6 @@
                         <button onclick="wipeSessionData()" class="w-full bg-rose-100 text-rose-700 py-3 rounded-xl font-bold hover:bg-rose-200 active:scale-95 transition-transform text-sm">Delete Session Permanently</button>
                     </div>
 
-                    <!-- Student Wipe -->
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-rose-100 flex flex-col justify-between">
                         <div>
                             <h3 class="font-bold text-slate-700 mb-2">Wipe Student Data</h3>
@@ -241,7 +286,6 @@
                     </div>
                 </div>
 
-                <!-- Complete Wipe -->
                 <div class="bg-rose-50 p-6 rounded-3xl shadow-sm border border-rose-200 text-center">
                     <h3 class="font-black text-rose-800 text-xl mb-2">DANGER ZONE</h3>
                     <p class="text-sm text-rose-600 mb-6 max-w-lg mx-auto">This will completely eradicate ALL your groups and attendance history from the Cloud Workspace. This cannot be undone.</p>
@@ -251,21 +295,91 @@
         </main>
     </div>
 
-    <!-- UI Core Script -->
+    <!-- UI CORE & LOGIC SCRIPT -->
     <script>
         // -------------------------
-        // STATE MANAGEMENT
+        // STATE MANAGEMENT & HELPERS
         // -------------------------
         let groups = JSON.parse(localStorage.getItem('groups')) || {};
         let history = JSON.parse(localStorage.getItem('history')) || [];
         let currentSubjectFilter = '';
         window.syncKey = localStorage.getItem('syncKey') || '';
 
-        // Master function to save locally (as buffer) AND instantly push to cloud
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         function safeSaveLocalAndCloud() {
             localStorage.setItem('groups', JSON.stringify(groups));
             localStorage.setItem('history', JSON.stringify(history));
             if(window.syncStateToCloud) window.syncStateToCloud();
+        }
+
+        // -------------------------
+        // AUTHENTICATION UI LOGIC
+        // -------------------------
+        let isSignUpMode = false;
+
+        function toggleAuthMode() {
+            isSignUpMode = !isSignUpMode;
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const toggleText = document.getElementById('authToggleText');
+            const toggleBtn = document.getElementById('authToggleBtn');
+            const errorDiv = document.getElementById('authError');
+            errorDiv.classList.add('hidden');
+
+            if(isSignUpMode) {
+                submitBtn.innerText = "Create Account";
+                toggleText.innerText = "Already have an account?";
+                toggleBtn.innerText = "Sign In";
+            } else {
+                submitBtn.innerText = "Sign In";
+                toggleText.innerText = "Don't have an account?";
+                toggleBtn.innerText = "Create Account";
+            }
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const errorDiv = document.getElementById('authError');
+            
+            errorDiv.classList.add('hidden');
+            submitBtn.disabled = true;
+            const origText = submitBtn.innerText;
+            submitBtn.innerText = "Processing...";
+
+            try {
+                if(isSignUpMode) {
+                    if(!window.firebaseRegister) throw new Error("Cloud auth module loading... Please try again in 2 seconds.");
+                    await window.firebaseRegister(email, password);
+                } else {
+                    if(!window.firebaseLogin) throw new Error("Cloud auth module loading... Please try again in 2 seconds.");
+                    await window.firebaseLogin(email, password);
+                }
+            } catch(err) {
+                errorDiv.innerText = err.message.replace('Firebase: ', '');
+                errorDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = origText;
+            }
+        }
+
+        async function handleLogout() {
+            if(confirm("Are you sure you want to sign out?")) {
+                if(window.firebaseLogout) {
+                    await window.firebaseLogout();
+                }
+            }
         }
 
         // -------------------------
@@ -275,7 +389,6 @@
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
             
-            // Desktop Nav Update
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('text-indigo-700', 'bg-indigo-50');
                 btn.classList.add('text-slate-600');
@@ -283,7 +396,6 @@
             const activeDesk = document.getElementById(`nav-desk-${id}`);
             if (activeDesk) activeDesk.classList.add('text-indigo-700', 'bg-indigo-50');
 
-            // Mobile Nav Update
             document.querySelectorAll('.nav-btn-mob').forEach(btn => {
                 btn.classList.remove('text-indigo-700');
                 btn.classList.add('text-slate-400');
@@ -300,7 +412,7 @@
         document.getElementById('sessDate').value = new Date().toISOString().split('T')[0];
 
         // -------------------------
-        // GROUP MANAGEMENT & DELETION
+        // GROUP MANAGEMENT
         // -------------------------
         function saveGroup() {
             const subject = document.getElementById('setupSubject').value.trim();
@@ -313,13 +425,17 @@
             const reader = new FileReader();
             
             reader.onload = e => {
-                const lines = e.target.result.split('\n').filter(r => r.trim());
+                const lines = e.target.result.split(/\r?\n/).filter(r => r.trim().length > 0);
+                if (lines.length < 2) return alert("CSV file must contain a header row and at least one student row.");
+
                 groups[name] = lines.slice(1).map(r => {
-                    const [roll, studentName] = r.split(',');
-                    return { roll: roll.trim(), name: studentName?.trim() || '' };
-                });
+                    const parts = r.split(',');
+                    const roll = parts[0] ? parts[0].trim() : '';
+                    const studentName = parts[1] ? parts[1].trim() : '';
+                    return { roll, name: studentName };
+                }).filter(s => s.roll !== '');
                 
-                safeSaveLocalAndCloud(); // Auto Cloud Sync
+                safeSaveLocalAndCloud();
                 alert(`Group "${name}" saved successfully with ${groups[name].length} students!`);
                 document.getElementById('setupSubject').value = '';
                 document.getElementById('setupYear').value = '';
@@ -339,20 +455,24 @@
                 return;
             }
             
-            container.innerHTML = groupNames.map(g => `
+            container.innerHTML = groupNames.map((g, idx) => `
                 <div class="flex items-center bg-white border border-slate-200 rounded-full pl-4 pr-1 py-1 shadow-sm hover:border-indigo-300 transition">
-                    <span class="text-sm font-bold text-slate-700 mr-3">${g}</span>
-                    <button onclick="deleteGroup('${g}')" class="bg-rose-50 text-rose-500 p-1.5 rounded-full hover:bg-rose-100 hover:text-rose-700 transition" title="Delete Group">
+                    <span class="text-sm font-bold text-slate-700 mr-3">${escapeHtml(g)}</span>
+                    <button onclick="deleteGroupByIndex(${idx})" class="bg-rose-50 text-rose-500 p-1.5 rounded-full hover:bg-rose-100 hover:text-rose-700 transition" title="Delete Group">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                 </div>
             `).join('');
         }
 
-        function deleteGroup(name) {
-            if(confirm(`Are you sure you want to delete the group "${name}"?\n\nDon't worry, past attendance records will NOT be deleted, but you won't be able to select this group for new sessions.`)) {
+        function deleteGroupByIndex(idx) {
+            const groupNames = Object.keys(groups);
+            const name = groupNames[idx];
+            if(!name) return;
+
+            if(confirm(`Are you sure you want to delete group "${name}"?\nPast records are preserved.`)) {
                 delete groups[name];
-                safeSaveLocalAndCloud(); // Auto Cloud Sync
+                safeSaveLocalAndCloud();
                 refreshAllUI();
                 
                 if(document.getElementById('selectGroup').value === name) {
@@ -365,11 +485,11 @@
         function updateGroupDropdown() {
             const select = document.getElementById('selectGroup');
             select.innerHTML = '<option value="">-- Select Group --</option>' + 
-                Object.keys(groups).map(g => `<option value="${g}">${g}</option>`).join('');
+                Object.keys(groups).map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
         }
 
         // -------------------------
-        // ATTENDANCE LOGIC & SEARCH
+        // ATTENDANCE LOGIC
         // -------------------------
         function filterStudents() {
             const term = document.getElementById('searchStudent').value.toLowerCase();
@@ -386,7 +506,7 @@
             
             document.getElementById('searchStudent').value = '';
             
-            if(!groupName) {
+            if(!groupName || !groups[groupName]) {
                 container.innerHTML = `<p class="text-slate-400 text-sm col-span-full p-4 text-center">Select a group above to load students.</p>`;
                 subjInput.value = '';
                 return;
@@ -395,14 +515,14 @@
             subjInput.value = groupName.split(',')[0].trim();
 
             container.innerHTML = groups[groupName].map(s => `
-                <div class="student-card bg-white p-3 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow-sm hover:border-indigo-300 transition w-full active:bg-slate-50 cursor-pointer" onclick="document.getElementById('check-${s.roll}').click()">
+                <div class="student-card bg-white p-3 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow-sm hover:border-indigo-300 transition w-full active:bg-slate-50 cursor-pointer" onclick="document.getElementById('check-${CSS.escape(s.roll)}').click()">
                     <div class="flex flex-col pr-1 overflow-hidden pointer-events-none w-full">
-                        <span class="text-sm font-bold text-slate-800 truncate">${s.roll}</span>
-                        ${s.name ? `<span class="text-[10px] sm:text-xs font-medium text-slate-500 truncate" title="${s.name}">${s.name}</span>` : ''}
+                        <span class="text-sm font-bold text-slate-800 truncate">${escapeHtml(s.roll)}</span>
+                        ${s.name ? `<span class="text-[10px] sm:text-xs font-medium text-slate-500 truncate" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</span>` : ''}
                     </div>
                     <div class="self-end sm:self-auto mt-1 sm:mt-0 flex-shrink-0">
                         <label class="relative inline-flex items-center cursor-pointer" onclick="event.stopPropagation()">
-                            <input type="checkbox" id="check-${s.roll}" class="status-toggle sr-only peer" data-roll="${s.roll}" checked>
+                            <input type="checkbox" id="check-${escapeHtml(s.roll)}" class="status-toggle sr-only peer" data-roll="${escapeHtml(s.roll)}" checked>
                             <div class="w-10 h-5 sm:w-11 sm:h-6 bg-rose-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                         </label>
                     </div>
@@ -416,9 +536,6 @@
             });
         }
 
-        // -------------------------
-        // SESSIONS DATA DROPDOWNS
-        // -------------------------
         function updateSessionDropdowns() {
             const sessions = [];
             const seen = new Set();
@@ -433,7 +550,7 @@
             
             sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
             const options = '<option value="">-- Select a Session --</option>' + 
-                sessions.map(s => `<option value="${s.key}">${s.date} - ${s.subject} (${s.sTime})</option>`).join('');
+                sessions.map(s => `<option value="${escapeHtml(s.key)}">${escapeHtml(s.date)} - ${escapeHtml(s.subject)} (${escapeHtml(s.sTime)})</option>`).join('');
             
             document.getElementById('editSessionSelect').innerHTML = options;
             document.getElementById('wipeSessionSelect').innerHTML = options;
@@ -447,7 +564,7 @@
             const sample = history.find(h => h.date === date && h.group === group && h.subject === subject && h.sTime === sTime);
             
             if(!groups[group]) {
-                alert(`Cannot edit this session because the underlying group "${group}" has been deleted from the Setup page.`);
+                alert(`Cannot edit this session because underlying group "${group}" was deleted.`);
                 document.getElementById('editSessionSelect').value = '';
                 return;
             }
@@ -456,25 +573,23 @@
             document.getElementById('subj').value = subject;
             document.getElementById('sessDate').value = date;
             document.getElementById('sTime').value = sTime;
-            document.getElementById('eTime').value = sample ? sample.eTime : '';
+            document.getElementById('eTime').value = sample ? sample.eTime || '' : '';
 
             renderAttendanceList();
             
             const sessionData = history.filter(h => h.date === date && h.group === group && h.subject === subject && h.sTime === sTime);
             sessionData.forEach(record => {
-                const checkbox = document.getElementById(`check-${record.roll}`);
-                if(checkbox) checkbox.checked = record.present;
+                try {
+                    const checkbox = document.getElementById(`check-${CSS.escape(record.roll)}`);
+                    if(checkbox) checkbox.checked = record.present;
+                } catch(e){}
             });
             
             document.getElementById('searchStudent').value = '';
             filterStudents();
-            
-            alert(`Session loaded! Make your corrections below and click "Submit Session Attendance" to safely overwrite and update this session.`);
+            alert(`Session loaded! Make changes and click "Submit & Sync Attendance".`);
         }
 
-        // -------------------------
-        // SAVE ATTENDANCE
-        // -------------------------
         function saveAttendance() {
             const group = document.getElementById('selectGroup').value;
             const subject = document.getElementById('subj').value.trim();
@@ -483,10 +598,12 @@
             const eTime = document.getElementById('eTime').value;
             
             if(!group || !subject || !date) return alert("Group, Subject, and Date are mandatory!");
-            if(!sTime || !eTime) return alert("Start and End Time are mandatory to calculate session credits!");
+            if(!sTime || !eTime) return alert("Start and End Time are mandatory!");
 
             const [sH, sM] = sTime.split(':').map(Number);
             const [eH, eM] = eTime.split(':').map(Number);
+            if (isNaN(sH) || isNaN(sM) || isNaN(eH) || isNaN(eM)) return alert("Invalid time format.");
+
             let durationMinutes = (eH * 60 + eM) - (sH * 60 + sM);
             if (durationMinutes < 0) durationMinutes += 24 * 60; 
             const calculatedCredits = Math.max(1, Math.round(durationMinutes / 50));
@@ -494,7 +611,7 @@
             const existingCount = history.filter(h => h.group === group && h.subject === subject && h.date === date && h.sTime === sTime).length;
             
             if(existingCount > 0) {
-                if(!confirm(`You are about to UPDATE an existing session (${existingCount} records found). Proceed?`)) return;
+                if(!confirm(`You are updating an existing session (${existingCount} records found). Proceed?`)) return;
                 history = history.filter(h => !(h.group === group && h.subject === subject && h.date === date && h.sTime === sTime));
             }
 
@@ -514,9 +631,9 @@
                 });
             });
 
-            if(studentsCount === 0) return alert("No students found to save. Please select a valid group.");
+            if(studentsCount === 0) return alert("No students found. Select a valid group.");
             
-            safeSaveLocalAndCloud(); // Auto Cloud Sync
+            safeSaveLocalAndCloud();
             alert(existingCount > 0 ? `Session Updated Successfully!` : `Attendance Submitted! (${calculatedCredits} Credit(s) logged)`);
             
             refreshAllUI();
@@ -526,7 +643,7 @@
         }
 
         // -------------------------
-        // REPORTING LOGIC
+        // REPORTS LOGIC
         // -------------------------
         function updateSubjectChips() {
             const subjects = [...new Set(history.map(h => h.subject))];
@@ -541,7 +658,7 @@
                 const isActive = s === currentSubjectFilter;
                 const baseClass = "px-5 py-2 sm:px-4 sm:py-1.5 rounded-full text-sm font-bold cursor-pointer transition whitespace-nowrap ";
                 const activeClass = isActive ? "bg-indigo-600 text-white shadow-md" : "bg-slate-200 text-slate-600 hover:bg-slate-300";
-                return `<button onclick="generateMatrix('${s}')" class="${baseClass} ${activeClass}">${s}</button>`;
+                return `<button onclick="generateMatrix('${escapeHtml(s)}')" class="${baseClass} ${activeClass}">${escapeHtml(s)}</button>`;
             }).join('');
         }
 
@@ -562,7 +679,6 @@
             const filteredHistory = history.filter(h => h.subject === subject);
             const uniqueDatesRaw = [...new Set(filteredHistory.map(h => h.date))].sort();
 
-            // Custom parser & sorter to sort regular numeric entries (01..99) ahead of lateral entries (A1, B2)
             const parseRoll = (val) => {
                 const s = String(val).trim();
                 const match = s.match(/^(.*)(.{2})$/);
@@ -570,34 +686,16 @@
                 const suffix = match ? match[2] : s;
                 const isPureDigits = /^\d+$/.test(suffix);
 
-                return {
-                    prefix,
-                    suffix,
-                    isPureDigits,
-                    numericVal: isPureDigits ? parseInt(suffix, 10) : null,
-                    raw: s
-                };
+                return { prefix, suffix, isPureDigits, numericVal: isPureDigits ? parseInt(suffix, 10) : null, raw: s };
             };
 
             const rolls = [...new Set(filteredHistory.map(h => h.roll))].sort((a, b) => {
                 const itemA = parseRoll(a);
                 const itemB = parseRoll(b);
-
-                // 1. If prefixes differ (e.g., 21 vs 22 vs 33), sort by prefix first
-                if (itemA.prefix !== itemB.prefix) {
-                    return itemA.prefix.localeCompare(itemB.prefix, undefined, { numeric: true });
-                }
-
-                // 2. Pure numbers (01, 02, 10) always precede alphanumeric suffixes (A1, B2)
+                if (itemA.prefix !== itemB.prefix) return itemA.prefix.localeCompare(itemB.prefix, undefined, { numeric: true });
                 if (itemA.isPureDigits && !itemB.isPureDigits) return -1;
                 if (!itemA.isPureDigits && itemB.isPureDigits) return 1;
-
-                // 3. Both are pure numbers: sort numerically
-                if (itemA.isPureDigits && itemB.isPureDigits) {
-                    return itemA.numericVal - itemB.numericVal;
-                }
-
-                // 4. Both are alphanumeric: sort naturally
+                if (itemA.isPureDigits && itemB.isPureDigits) return itemA.numericVal - itemB.numericVal;
                 return itemA.suffix.localeCompare(itemB.suffix, undefined, { numeric: true, sensitivity: 'base' });
             });
 
@@ -606,7 +704,7 @@
             
             uniqueDatesRaw.forEach(d => {
                 const shortDate = d.slice(5).replace('-', '/');
-                headHtml += `<th class="p-2 border-l border-b border-slate-200 rotate-text text-slate-500 font-semibold tracking-widest bg-slate-50">${shortDate}</th>`;
+                headHtml += `<th class="p-2 border-l border-b border-slate-200 rotate-text text-slate-500 font-semibold tracking-widest bg-slate-50">${escapeHtml(shortDate)}</th>`;
             });
             
             headHtml += `
@@ -657,7 +755,7 @@
                 
                 return `
                     <tr class="hover:bg-indigo-50/50 transition">
-                        <td class="p-4 sm:p-5 font-bold text-slate-800 border-b border-r border-slate-200 whitespace-nowrap sticky left-0 bg-white z-10">${roll}</td>
+                        <td class="p-4 sm:p-5 font-bold text-slate-800 border-b border-r border-slate-200 whitespace-nowrap sticky left-0 bg-white z-10">${escapeHtml(roll)}</td>
                         ${rowCells}
                         <td class="p-4 font-black text-indigo-600 text-center border-b border-l border-slate-200 bg-indigo-50/30">${totalCredits}</td>
                         <td class="p-4 font-bold text-slate-700 text-center border-b border-l border-slate-200">${percent}%</td>
@@ -673,23 +771,22 @@
             for (let i = 0; i < table.rows.length; i++) {
                 let row = [], cols = table.rows[i].querySelectorAll('td, th');
                 for (let j = 0; j < cols.length; j++) {
-                    let text = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").trim();
+                    let text = cols[j].innerText.replace(/[\r\n]+/g, " ").trim().replace(/"/g, '""');
                     row.push('"' + text + '"'); 
                 }
                 csv.push(row.join(','));
             }
 
-            const blob = new Blob([csv.join('\n')], {type: 'text/csv'});
+            const blob = new Blob([csv.join('\n')], {type: 'text/csv;charset=utf-8;'});
             const currentDate = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = `Attendance_Report_${currentSubjectFilter || 'All'}_${currentDate}.csv`;
-
             a.click();
         }
 
         // -------------------------
-        // DATA MANAGEMENT WIPES
+        // DATA WIPES
         // -------------------------
         function refreshAllUI() {
             updateGroupDropdown();
@@ -705,9 +802,9 @@
             if(!val) return alert("Select a session to wipe.");
             
             const [date, group, subject, sTime] = val.split('|');
-            if(confirm(`Are you sure you want to permanently delete the session for ${subject} on ${date}?\n\nThis will also be wiped from the Cloud Workspace.`)) {
+            if(confirm(`Are you sure you want to permanently delete the session for ${subject} on ${date}?`)) {
                 history = history.filter(h => !(h.date === date && h.group === group && h.subject === subject && h.sTime === sTime));
-                safeSaveLocalAndCloud(); // Auto Cloud Wipe
+                safeSaveLocalAndCloud();
                 refreshAllUI();
                 alert("Session deleted permanently.");
             }
@@ -717,37 +814,33 @@
             const roll = document.getElementById('wipeStudentRoll').value.trim();
             if(!roll) return alert("Please enter an exact Roll No.");
             
-            if(confirm(`WARNING: Are you absolutely sure you want to delete ALL historical attendance records for Roll No: ${roll}?`)) {
+            if(confirm(`WARNING: Are you sure you want to delete ALL records for Roll No: ${roll}?`)) {
                 const origLength = history.length;
                 history = history.filter(h => h.roll !== roll);
                 
                 if(history.length === origLength) return alert("No records found for that Roll No.");
                 
-                safeSaveLocalAndCloud(); // Auto Cloud Wipe
+                safeSaveLocalAndCloud();
                 document.getElementById('wipeStudentRoll').value = '';
                 refreshAllUI();
-                alert(`All attendance data for ${roll} has been deleted permanently.`);
+                alert(`All attendance data for ${roll} deleted.`);
             }
         }
 
         function wipeCompleteData() {
-            if(confirm("🚨 DANGER ZONE: This will completely wipe ALL your groups and ALL your attendance history locally AND in the Cloud Workspace! Are you sure?")) {
+            if(confirm("🚨 DANGER ZONE: This will completely wipe ALL your groups and history locally and in Cloud!")) {
                 if(confirm("Are you REALLY sure? This cannot be undone.")) {
                     groups = {};
                     history = [];
-                    safeSaveLocalAndCloud(); // Auto Cloud Wipe (pushes empty state)
+                    safeSaveLocalAndCloud();
                     refreshAllUI();
-                    alert("Entire Workspace wiped clean.");
+                    alert("Workspace wiped clean.");
                 }
             }
         }
 
-        // Initialize UI
         refreshAllUI();
 
-        // -------------------------
-        // SPLASH SCREEN & AUTO-FETCH LOGIC
-        // -------------------------
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const splash = document.getElementById('splashScreen');
@@ -755,17 +848,27 @@
                     splash.classList.add('opacity-0', 'pointer-events-none', 'scale-110');
                     setTimeout(() => splash.remove(), 700);
                 }
-            }, 2000);
-
-            if(window.syncKey && window.fetchWorkspaceBackground) {
-                window.fetchWorkspaceBackground();
-            }
+            }, 1800);
         });
-
     </script>
 
-    <!-- FIREBASE CLOUD-FIRST ARCHITECTURE LOGIC -->
+    <!-- FIREBASE AUTH & CLOUD BACKEND LOGIC -->
     <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            setDoc 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
             authDomain: "stuattnd.firebaseapp.com",
@@ -776,52 +879,74 @@
             measurementId: "G-9PZZM5LFKX"
         };
         const artifactAppId = "app_att_sync";
-        
-        let db, auth, currentUserId;
-        let firestoreApi = {};
 
-        Promise.all([
-            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"),
-            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"),
-            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js")
-        ]).then(([firebaseApp, firebaseAuth, firebaseFirestore]) => {
-            const app = firebaseApp.initializeApp(firebaseConfig);
-            auth = firebaseAuth.getAuth(app);
-            db = firebaseFirestore.getFirestore(app);
-            firestoreApi = firebaseFirestore;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let currentUserId = null;
+
+        function updateCloudUIStatus(isConnected) {
+            const deskBadge = document.getElementById('deskCloudStatus');
+            const mobBadge = document.getElementById('mobCloudStatus');
+            const label = document.getElementById('cloudStatusLabel');
             
-            firebaseAuth.signInAnonymously(auth).catch(e => console.error("Firebase Auth Error:", e));
-            firebaseAuth.onAuthStateChanged(auth, user => {
-                if(user) {
-                    currentUserId = user.uid;
-                    document.getElementById('deskCloudStatus').classList.replace('bg-rose-500', 'bg-emerald-500');
-                    document.getElementById('mobCloudStatus').classList.replace('bg-rose-500', 'bg-emerald-500');
-                    const label = document.getElementById('cloudStatusLabel');
+            if(isConnected) {
+                if(deskBadge) deskBadge.className = "w-2 h-2 rounded-full bg-emerald-500";
+                if(mobBadge) mobBadge.className = "absolute top-2 right-4 w-2 h-2 rounded-full bg-emerald-500 border-2 border-white";
+                if(label) {
                     label.innerText = "Cloud Active";
-                    label.classList.replace('text-rose-600', 'text-emerald-700');
-                    label.classList.replace('bg-rose-100', 'bg-emerald-100');
-                    label.classList.replace('border-rose-200', 'border-emerald-200');
-                    
-                    if(window.syncKey) window.fetchWorkspaceBackground();
+                    label.className = "text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200";
                 }
-            });
-        }).catch(err => {
-            console.error("Firebase load error:", err);
-            document.getElementById('cloudStatusLabel').innerText = "Cloud Failed to Load";
+            } else {
+                if(deskBadge) deskBadge.className = "w-2 h-2 rounded-full bg-rose-500";
+                if(mobBadge) mobBadge.className = "absolute top-2 right-4 w-2 h-2 rounded-full bg-rose-500 border-2 border-white";
+                if(label) {
+                    label.innerText = "Disconnected";
+                    label.className = "text-xs font-bold text-rose-600 bg-rose-100 px-3 py-1 rounded-full border border-rose-200";
+                }
+            }
+        }
+
+        // Global Auth Functions
+        window.firebaseLogin = (email, password) => signInWithEmailAndPassword(auth, email, password);
+        window.firebaseRegister = (email, password) => createUserWithEmailAndPassword(auth, email, password);
+        window.firebaseLogout = () => signOut(auth);
+
+        // Auth Listener Gatekeeper
+        onAuthStateChanged(auth, user => {
+            if(user) {
+                currentUserId = user.uid;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('mainAppWrapper').classList.remove('hidden');
+                
+                document.querySelectorAll('.user-email-label').forEach(el => el.innerText = user.email || 'Authenticated User');
+                
+                if(!window.syncKey) {
+                    window.syncKey = user.uid;
+                    localStorage.setItem('syncKey', user.uid);
+                }
+                
+                updateCloudUIStatus(true);
+                window.fetchWorkspaceBackground();
+            } else {
+                currentUserId = null;
+                document.getElementById('mainAppWrapper').classList.add('hidden');
+                document.getElementById('authScreen').classList.remove('hidden');
+                updateCloudUIStatus(false);
+            }
         });
 
-        // 1. CONNECT & FETCH (Manual User Input)
+        // Cloud Operations
         window.connectWorkspace = async function() {
             const inputKey = document.getElementById('syncKeyInput').value.trim();
             if(!inputKey) return alert("Please enter a Workspace Sync Key.");
-            if(!currentUserId || !db) return alert("Cloud connection not ready. Check internet.");
+            if(!currentUserId) return alert("Cloud connection not ready.");
             
             const btn = document.getElementById('btn-connect-workspace');
             const origText = btn.innerHTML;
             btn.innerHTML = "Connecting...";
             
             try {
-                const { doc, getDoc, setDoc } = firestoreApi;
                 const docRef = doc(db, 'artifacts', artifactAppId, 'public', 'workspaces', inputKey, 'data');
                 const docSnap = await getDoc(docRef);
                 
@@ -838,7 +963,7 @@
                     refreshAllUI();
                     alert(`Connected to Workspace "${inputKey}". Fresh data loaded!`);
                 } else {
-                    if(confirm(`Workspace "${inputKey}" does not exist. Do you want to CREATE it and push your local data to it?`)) {
+                    if(confirm(`Workspace "${inputKey}" does not exist. Do you want to CREATE it with your local data?`)) {
                         await setDoc(docRef, {
                             groups: JSON.stringify(groups),
                             history: JSON.stringify(history)
@@ -854,11 +979,9 @@
             btn.innerHTML = origText;
         };
 
-        // 2. AUTO BACKGROUND FETCH (Silently updates app when loaded)
         window.fetchWorkspaceBackground = async function() {
-            if(!window.syncKey || !currentUserId || !db) return;
+            if(!window.syncKey || !currentUserId) return;
             try {
-                const { doc, getDoc } = firestoreApi;
                 const docRef = doc(db, 'artifacts', artifactAppId, 'public', 'workspaces', window.syncKey, 'data');
                 const docSnap = await getDoc(docRef);
                 
@@ -870,33 +993,22 @@
                     localStorage.setItem('groups', JSON.stringify(groups));
                     localStorage.setItem('history', JSON.stringify(history));
                     refreshAllUI();
-                    console.log("Workspace auto-synced from cloud.");
                 }
             } catch(e) {
-                console.error("Auto-fetch failed.", e);
+                console.error("Auto-fetch failed:", e);
             }
         };
 
-        // 3. AUTO PUSH STATE (Called automatically by safeSaveLocalAndCloud)
         window.syncStateToCloud = async function() {
-            if(!window.syncKey || !currentUserId || !db) return;
-            
+            if(!window.syncKey || !currentUserId) return;
             try {
-                const { doc, setDoc } = firestoreApi;
                 const docRef = doc(db, 'artifacts', artifactAppId, 'public', 'workspaces', window.syncKey, 'data');
-                
-                const statusLabel = document.getElementById('cloudStatusLabel');
-                const origLabelText = statusLabel.innerText;
-                statusLabel.innerText = "Syncing...";
-                
                 await setDoc(docRef, {
                     groups: JSON.stringify(groups),
                     history: JSON.stringify(history)
                 });
-                
-                statusLabel.innerText = origLabelText;
             } catch(e) {
-                console.error("Auto-sync failed: ", e.message);
+                console.error("Auto-sync failed:", e);
             }
         };
     </script>
