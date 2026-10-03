@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance Shortage Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16243a; --ink2:#4a5a72; --line:#d9dfe8; --paper:#f4f6f9; --card:#ffffff;
+  --brand:#1d3a6e; --brand2:#2f5bb0; --warn:#b4231a; --warnbg:#fdecea;
+  --ok:#17704f; --okbg:#e5f4ed; --amber:#8a5a00; --amberbg:#fff3d6;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Public Sans',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;margin:0;line-height:1.2}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--brand2);outline-offset:2px}
+.top{background:var(--brand);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.top b{font-family:'Source Serif 4',serif;font-size:18px;font-weight:700}
+.top small{display:block;opacity:.8;font-size:12px}
+.wrap{max-width:880px;margin:0 auto;padding:18px 16px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+.btn{border:0;background:var(--brand);color:#fff;padding:11px 18px;border-radius:8px;font-weight:600;cursor:pointer;min-height:44px}
+.btn:hover{background:var(--brand2)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
+.btn.ghost:hover{background:#e9eef8}
+.btn.small{padding:6px 12px;min-height:34px;font-size:14px}
+.btn.light{background:rgba(255,255,255,.15)}
+.btn.light:hover{background:rgba(255,255,255,.28)}
+label{display:block;font-weight:600;font-size:14px;margin:12px 0 5px}
+input[type=text],input[type=email],input[type=password],input[type=search]{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;min-height:44px}
+input:focus{border-color:var(--brand2);outline:none;box-shadow:0 0 0 3px #2f5bb033}
+.err{background:var(--warnbg);color:var(--warn);padding:10px 12px;border-radius:8px;margin-top:12px;font-size:14px}
+.note{color:var(--ink2);font-size:14px}
+.portal-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.portal-switch button{padding:10px;border-radius:8px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-weight:700;color:var(--ink2)}
+.portal-switch button.active{border-color:var(--brand);background:var(--brand);color:#fff}
+.tabs{display:flex;border-bottom:1px solid var(--line);margin:-18px -18px 14px}
+.tabs button{flex:1;background:none;border:0;padding:14px;font-weight:600;color:var(--ink2);cursor:pointer;border-bottom:3px solid transparent}
+.tabs button.on{color:var(--brand);border-color:var(--brand)}
+.auth{max-width:440px;margin:28px auto}
+.auth h1{font-size:26px;margin-bottom:4px}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.b-pend{background:var(--amberbg);color:var(--amber)}
+.b-sign{background:var(--okbg);color:var(--ok)}
+.b-low{background:var(--warnbg);color:var(--warn)}
+.hero{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.gauge{position:relative;width:128px;height:128px;flex:none}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .v{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-family:'Source Serif 4',serif;font-size:28px;font-weight:700;color:var(--warn)}
+.gauge .v small{display:block;font:500 11px 'Public Sans';color:var(--ink2)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:15px;margin-top:10px}
+.kv dt{color:var(--ink2)}
+.kv dd{margin:0;font-weight:600;word-break:break-word}
+.decl{background:#fafbfd;border:1px dashed #b7c1d1;border-radius:8px;padding:14px;font-family:'Source Serif 4',serif;font-size:16px;line-height:1.65}
+.chk{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-weight:500}
+.chk input{width:22px;height:22px;margin-top:2px;flex:none}
+.pad{border:1.5px solid var(--ink2);border-radius:8px;background:#fff;touch-action:none;width:100%;height:150px;display:block}
+.padbar{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px;text-align:center}
+.stat b{font:700 26px 'Source Serif 4',serif;display:block}
+.stat span{font-size:12px;color:var(--ink2)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.bar input[type=search]{flex:1;min-width:150px}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;font-weight:600;font-size:13px;cursor:pointer}
+.chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.row:first-child{border-top:0}
+.row .who{min-width:0;flex:1 1 200px}
+.row .who b{display:block}
+.row .who span{font-size:13px;color:var(--ink2);word-break:break-all}
+.pct{font:700 18px 'Source Serif 4',serif;color:var(--warn);min-width:60px;text-align:right}
+.empty{text-align:center;padding:30px 10px;color:var(--ink2)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:14px;z-index:9;max-width:90vw}
+pre{background:#101a2b;color:#d8e3f7;padding:12px;border-radius:8px;overflow:auto;font-size:12px;line-height:1.5}
+details{margin-top:10px}
+summary{cursor:pointer;font-weight:600}
+code{background:#e9eef8;padding:1px 5px;border-radius:4px;font-size:13px}
+.loader{text-align:center;padding:60px;color:var(--ink2)}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .25s}@keyframes up{from{opacity:0;transform:translate(-50%,10px)}}}
+</style>
+</head>
+<body>
+<div id="app"><div class="loader">Loading…</div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* =====================================================================
+   1. CONFIG & BASE PATHS
+   ===================================================================== */
+const CONFIG = {
+  firebase: {
+    apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
+    authDomain: "stuattnd.firebaseapp.com",
+    projectId: "stuattnd",
+    storageBucket: "stuattnd.firebasestorage.app",
+    messagingSenderId: "511533506488",
+    appId: "1:511533506488:web:aca4de3d513915d012f94d",
+    measurementId: "G-9PZZM5LFKX"
+  },
+  institution: "RGMCET-CSE-AI&ML",
+  term: "2026-ODD",
+  minAtt: 75,
+  // Base parent document path
+  basePath: "artifacts/att-mail"
+};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const app = $('#app');
+let auth, db;
+
+// State
+const S = { 
+  user: null, 
+  role: null, 
+  student: null, 
+  hod: null, 
+  rows: [], 
+  filter: 'all', 
+  q: '', 
+  portalMode: 'student', // 'student' or 'admin'
+  authTab: 'in'          // 'in' or 'up'
+};
+
+// Subcollection path helpers
+const pCol = name => `${CONFIG.basePath}/${name}`;
+const pDoc = (col, id) => `${CONFIG.basePath}/${col}/${id}`;
+
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),3500);
+}
+
+function friendly(e){
+  const m={ 
+    'auth/invalid-credential':'Wrong email or password.',
+    'auth/user-not-found':'No account with this email.',
+    'auth/wrong-password':'Wrong email or password.',
+    'auth/email-already-in-use':'An account already exists. Please Sign In.',
+    'auth/weak-password':'Password must be at least 6 characters.',
+    'auth/invalid-email':'Enter a valid email address.',
+    'auth/too-many-requests':'Too many attempts. Try again in a few minutes.',
+    'permission-denied':'Access denied. Check Firestore security rules or authorization.' 
+  };
+  return m[e.code] || e.message || 'Something went wrong.';
+}
+
+/* =====================================================================
+   2. BOOT
+   ===================================================================== */
+function boot(){
+  if (CONFIG.firebase.apiKey === 'YOUR_API_KEY'){ return viewSetup(); }
+  firebase.initializeApp(CONFIG.firebase);
+  auth = firebase.auth(); 
+  db = firebase.firestore();
+
+  auth.onAuthStateChanged(async u=>{
+    S.user = u; S.role = null; S.student = null; S.hod = null; S.rows = [];
+    if(!u) return viewAuth();
+
+    app.innerHTML = '<div class="loader">Verifying session permissions…</div>';
+    try{
+      const email = u.email.toLowerCase();
+
+      if (S.portalMode === 'admin') {
+        const hd = await db.doc(pDoc('hods', email)).get();
+        if (!hd.exists) {
+          await auth.signOut();
+          return viewAuth('Access denied: No Admin/HOD record exists for this email.');
+        }
+        S.role = 'hod'; 
+        S.hod = { id: hd.id, ...hd.data() }; 
+        await loadRows(); 
+        return viewHod();
+      } else {
+        const sd = await db.doc(pDoc('students', email)).get();
+        S.role = 'student';
+        if (sd.exists) {
+          S.student = { id: sd.id, ...sd.data() };
+        }
+        return viewStudent();
+      }
+    }catch(e){ 
+      await auth.signOut();
+      viewAuth(friendly(e)); 
+      toast(friendly(e)); 
+    }
+  });
+}
+
+/* =====================================================================
+   3. HEADER & SETUP
+   ===================================================================== */
+function header(sub){
+  return `<div class="top">
+    <div><b>${esc(CONFIG.institution)}</b><small>${esc(sub)} · ${esc(S.user?.email||'')}</small></div>
+    <button class="btn small light" id="out">Sign out</button>
+  </div>`;
+}
+
+function bindOut(){ 
+  $('#out').onclick = () => auth.signOut(); 
+}
+
+function viewSetup(){
+  app.innerHTML = `<div class="wrap"><div class="card">
+  <h2>One-Time Setup & Security Rules</h2>
+  <p class="note">Deploy these Firestore rules to support data in <code>${CONFIG.basePath}/...</code></p>
+  <details open><summary>Firestore Security Rules</summary>
+<pre>rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function hodDoc() {
+      return get(/databases/$(db)/documents/${CONFIG.basePath}/hods/$(request.auth.token.email)).data;
+    }
+    function isHod() {
+      return request.auth != null &amp;&amp; exists(/databases/$(db)/documents/${CONFIG.basePath}/hods/$(request.auth.token.email));
+    }
+
+    match /${CONFIG.basePath} {
+      allow read: if request.auth != null;
+
+      match /hods/{id} {
+        // Allows reading own record, and creating/updating own HOD profile
+        allow read: if request.auth != null &amp;&amp; request.auth.token.email == id;
+        allow create, update: if request.auth != null &amp;&amp; request.auth.token.email == id;
+      }
+      match /students/{id} {
+        allow read: if request.auth != null &amp;&amp; (request.auth.token.email == id
+                     || (isHod() &amp;&amp; resource.data.dept == hodDoc().dept));
+        allow create, update: if (isHod() &amp;&amp; request.resource.data.dept == hodDoc().dept)
+          || (request.auth.token.email == id &amp;&amp;
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','signedAt']));
+      }
+      match /declarations/{id} {
+        allow create: if request.auth != null &amp;&amp; request.resource.data.email == request.auth.token.email;
+        allow read: if request.auth != null &amp;&amp; (resource.data.email == request.auth.token.email
+                     || (isHod() &amp;&amp; resource.data.dept == hodDoc().dept));
+      }
+      match /mail/{id} {
+        allow create: if request.auth != null;
+      }
+    }
+  }
+}</pre></details>
+  </div></div>`;
+}
+
+/* =====================================================================
+   4. AUTHENTICATION (STUDENT & ADMIN / HOD)
+   ===================================================================== */
+function viewAuth(error){
+  const isAdmin = S.portalMode === 'admin';
+  const up = S.authTab === 'up';
+
+  app.innerHTML = `<div class="wrap"><div class="auth">
+   <h1>${esc(CONFIG.institution)}</h1>
+   <p class="note">Attendance Management & Declaration Portal</p>
+   
+   <div class="portal-switch">
+     <button id="sw-std" class="${!isAdmin ? 'active' : ''}">Student Portal</button>
+     <button id="sw-adm" class="${isAdmin ? 'active' : ''}">Admin / HOD Portal</button>
+   </div>
+
+   <div class="card">
+    <div class="tabs">
+      <button id="t-in" class="${up ? '' : 'on'}">Sign In</button>
+      <button id="t-up" class="${up ? 'on' : ''}">Create ${isAdmin ? 'HOD' : 'Student'} Account</button>
+    </div>
+
+    ${isAdmin && up ? `
+      <label for="hn">HOD / Admin Full Name</label>
+      <input id="hn" type="text" placeholder="e.g. Dr. A. Sharma">
+      <label for="hd">Department Code</label>
+      <input id="hd" type="text" placeholder="e.g. AIML, CSE, ECE">
+    ` : ''}
+
+    <label for="em">${isAdmin ? 'Institutional Admin / HOD Email' : 'Student College Email'}</label>
+    <input id="em" type="email" autocomplete="email" placeholder="${isAdmin ? 'hod.aiml@ilabs.com' : 'student@college.edu'}">
+    
+    <label for="pw">Password</label>
+    <input id="pw" type="password" autocomplete="${up ? 'new-password' : 'current-password'}">
+    
+    ${error ? `<div class="err">${esc(error)}</div>` : ''}
+    
+    <button class="btn" id="go" style="width:100%;margin-top:16px">
+      ${up ? (isAdmin ? 'Create HOD Account' : 'Create Student Account') : (isAdmin ? 'Sign In as Admin / HOD' : 'Sign In as Student')}
+    </button>
+    
+    ${!up ? '<p style="text-align:center;margin:12px 0 0"><a href="#" id="fg" class="note">Forgot password?</a></p>' : ''}
+   </div>
+   <p class="note" style="text-align:center">Data path: <code>${CONFIG.basePath}</code></p>
+  </div></div>`;
+
+  $('#sw-std').onclick = () => { S.portalMode = 'student'; S.authTab = 'in'; viewAuth(); };
+  $('#sw-adm').onclick = () => { S.portalMode = 'admin'; S.authTab = 'in'; viewAuth(); };
+  $('#t-in').onclick = () => { S.authTab = 'in'; viewAuth(); };
+  $('#t-up').onclick = () => { S.authTab = 'up'; viewAuth(); };
+
+  const go = async () => {
+    const e = $('#em').value.trim().toLowerCase();
+    const p = $('#pw').value;
+    if(!e || !p) return viewAuth('Please enter your email and password.');
+
+    const btn = $('#go');
+    btn.disabled = true; btn.textContent = 'Processing…';
+
+    try {
+      if (up) {
+        // Sign Up
+        if (isAdmin) {
+          const name = $('#hn').value.trim();
+          const dept = $('#hd').value.trim().toUpperCase();
+          if(!name || !dept) {
+            btn.disabled = false; btn.textContent = 'Create HOD Account';
+            return viewAuth('Name and Department code are required for HOD registration.');
+          }
+          const cred = await auth.createUserWithEmailAndPassword(e, p);
+          // Persist HOD Document in Firestore
+          await db.doc(pDoc('hods', e)).set({
+            name: name,
+            dept: dept,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } else {
+          await auth.createUserWithEmailAndPassword(e, p);
+        }
+      } else {
+        // Sign In
+        await auth.signInWithEmailAndPassword(e, p);
+      }
+    } catch(x) { 
+      viewAuth(friendly(x)); 
+      $('#em').value = e; 
+    }
+  };
+
+  $('#go').onclick = go;
+  $('#pw').onkeydown = k => { if(k.key === 'Enter') go(); };
+
+  const fg = $('#fg');
+  if(fg) fg.onclick = async ev => {
+    ev.preventDefault();
+    const e = $('#em').value.trim();
+    if(!e) return toast('Type your email first.');
+    try {
+      await auth.sendPasswordResetEmail(e);
+      toast('Reset link sent. Check your inbox.');
+    } catch(x) {
+      toast(friendly(x));
+    }
+  };
+}
+
+/* =====================================================================
+   5. STUDENT PORTAL
+   ===================================================================== */
+function gauge(p){
+  const r=54,c=2*Math.PI*r,off=c*(1-Math.min(p,100)/100);
+  return `<div class="gauge"><svg width="128" height="128" viewBox="0 0 128 128"><circle cx="64" cy="64" r="${r}" fill="none" stroke="#e3e8f0" stroke-width="12"/>
+  <circle cx="64" cy="64" r="${r}" fill="none" stroke="#b4231a" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg>
+  <div class="v"><div>${p}%<small>attendance</small></div></div></div>`;
+}
+
+function declText(s){
+  return `I, <b>${esc(s.name)}</b> (Roll No. <b>${esc(s.roll)}</b>), a student of the Department of <b>${esc(s.dept)}</b>, confirm that my attendance for term <b>${esc(s.term||CONFIG.term)}</b> is <b>${esc(s.att)}%</b>, which is below the required minimum of ${CONFIG.minAtt}%. I have been informed of this shortage and I accept the consequences under the institution's attendance regulations, which may include debarment from examinations, payment of a condonation fee, or other action decided by the institution. I submit this declaration voluntarily.`;
+}
+
+function viewStudent(){
+  const s = S.student;
+  let body = '';
+  if(!s){
+    body = `<div class="card empty">
+      <h2>No Shortage Notice Found</h2>
+      <p>Your record is in good standing (at or above ${CONFIG.minAtt}%), or your department has not uploaded records for this term.</p>
+    </div>`;
+  } else if(s.status === 'signed'){
+    body = `<div class="card"><span class="badge b-sign">Declaration submitted</span>
+      <h2 style="margin-top:10px">Acknowledgement Stored, ${esc(s.name)}</h2>
+      <p class="note">Your signed declaration has been submitted to your HOD (${esc(s.hodEmail || 'Department')}).</p>
+      <button class="btn" id="dl">Download A4 PDF Acknowledgement</button>
+    </div>`;
+  } else {
+    body = `<div class="card"><div class="hero">${gauge(s.att)}
+      <div style="flex:1;min-width:200px"><span class="badge b-low">Below ${CONFIG.minAtt}%</span>
+      <h2 style="margin:8px 0 4px">Attendance Shortage Notice</h2>
+      <dl class="kv">
+        <dt>Name</dt><dd>${esc(s.name)}</dd>
+        <dt>Roll no.</dt><dd>${esc(s.roll)}</dd>
+        <dt>Department</dt><dd>${esc(s.dept)}</dd>
+        <dt>Term</dt><dd>${esc(s.term||CONFIG.term)}</dd>
+      </dl></div></div></div>
+      <div class="card"><h3 style="margin-bottom:10px">Declaration Statement</h3>
+       <div class="decl">${declText(s)}</div>
+       <label class="chk"><input type="checkbox" id="ok"><span>I have read this declaration and accept the consequences of attendance below ${CONFIG.minAtt}%.</span></label>
+       <label for="tn">Type your full name to confirm</label><input id="tn" type="text" autocomplete="off" placeholder="${esc(s.name)}">
+       <label>Digital Signature</label><canvas id="pad" class="pad"></canvas>
+       <div class="padbar"><span class="note">Sign with your mouse or finger</span><button class="btn small ghost" id="clr">Clear</button></div>
+       <div id="msg"></div>
+       <button class="btn" id="sub" style="width:100%;margin-top:16px">Sign and Submit</button>
+      </div>`;
+  }
+  app.innerHTML = header('Student Portal') + `<div class="wrap">${body}</div>`;
+  bindOut();
+
+  if(s && s.status === 'signed') $('#dl').onclick = () => downloadFor(s.id, $('#dl'));
+  if(s && s.status !== 'signed') initPad();
+}
+
+let inked = false;
+function initPad(){
+  const cv = $('#pad'), ratio = window.devicePixelRatio || 1;
+  const fit = () => {
+    const w = cv.clientWidth, h = cv.clientHeight;
+    cv.width = w * ratio; cv.height = h * ratio;
+    const x = cv.getContext('2d');
+    x.scale(ratio, ratio);
+    x.lineWidth = 2.2;
+    x.lineCap = 'round';
+    x.lineJoin = 'round';
+    x.strokeStyle = '#0b1d4d';
+  };
+  fit(); inked = false;
+  const ctx = cv.getContext('2d');
+  let down = false;
+  const pt = e => {
+    const r = cv.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top];
+  };
+
+  cv.onpointerdown = e => {
+    down = true; cv.setPointerCapture(e.pointerId);
+    const [x, y] = pt(e);
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + .1, y + .1); ctx.stroke();
+    inked = true;
+  };
+  cv.onpointermove = e => {
+    if(!down) return;
+    const [x, y] = pt(e);
+    ctx.lineTo(x, y); ctx.stroke();
+  };
+  cv.onpointerup = cv.onpointercancel = () => { down = false; };
+  $('#clr').onclick = () => { ctx.clearRect(0, 0, cv.width, cv.height); inked = false; };
+  $('#sub').onclick = submitDeclaration;
+}
+
+async function submitDeclaration(){
+  const s = S.student, msg = $('#msg');
+  const fail = t => { msg.innerHTML = `<div class="err">${esc(t)}</div>`; };
+  if(!$('#ok').checked) return fail('Tick the box to accept the declaration.');
+  if($('#tn').value.trim().toLowerCase() !== String(s.name).trim().toLowerCase()) return fail('Type your name exactly as registered: ' + s.name);
+  if(!inked) return fail('Please draw your signature in the box.');
+
+  const btn = $('#sub'); btn.disabled = true; btn.textContent = 'Submitting…';
+  try {
+    const src = $('#pad'), tmp = document.createElement('canvas');
+    tmp.width = 500; tmp.height = Math.round(500 * src.height / src.width);
+    const tc = tmp.getContext('2d');
+    tc.fillStyle = '#fff'; tc.fillRect(0, 0, tmp.width, tmp.height);
+    tc.drawImage(src, 0, 0, tmp.width, tmp.height);
+    const sig = tmp.toDataURL('image/jpeg', 0.7);
+
+    const ts = firebase.firestore.FieldValue.serverTimestamp();
+    const data = {
+      email: s.id,
+      name: s.name,
+      roll: s.roll,
+      dept: s.dept,
+      att: s.att,
+      term: s.term || CONFIG.term,
+      hodEmail: s.hodEmail || '',
+      typedName: $('#tn').value.trim(),
+      sig
+    };
+    const pdf = buildPdf({ ...data, signedAt: new Date() });
+    const b64 = pdf.output('datauristring').split(',')[1];
+    const fname = `Declaration_${s.roll}.pdf`;
+
+    const batch = db.batch();
+    batch.set(db.doc(pDoc('declarations', `${data.term}_${s.id}`)), { ...data, signedAt: ts });
+    batch.update(db.doc(pDoc('students', s.id)), { status: 'signed', signedAt: ts });
+
+    if(s.hodEmail){
+      batch.set(db.collection(pCol('mail')).doc(), {
+        to: [s.hodEmail],
+        cc: [s.id],
+        message: {
+          subject: `Attendance declaration signed – ${s.name} (${s.roll})`,
+          html: `<p>${esc(s.name)} (${esc(s.roll)}, ${esc(s.dept)}) has signed the declaration for attendance of ${esc(s.att)}%.</p><p>The signed acknowledgement is attached.</p>`,
+          attachments: [{ filename: fname, path: 'data:application/pdf;base64,' + b64 }]
+        }
+      });
+    }
+    await batch.commit();
+    pdf.save(fname);
+    S.student = { ...s, status: 'signed' }; 
+    viewStudent(); 
+    toast('Declaration submitted successfully.');
+  } catch(e) { 
+    btn.disabled = false; btn.textContent = 'Sign and Submit'; 
+    fail(friendly(e)); 
+  }
+}
+
+async function downloadFor(email, btn){
+  const old = btn?.textContent; 
+  if(btn){ btn.disabled = true; btn.textContent = 'Generating PDF…'; }
+  try {
+    const d = await db.doc(pDoc('declarations', `${CONFIG.term}_${email}`)).get();
+    if(!d.exists) throw new Error('Declaration document not found for this term.');
+    const x = d.data(); 
+    const pdf = buildPdf({ ...x, signedAt: x.signedAt?.toDate?.() || new Date() });
+    pdf.save(`Declaration_${x.roll}.pdf`);
+  } catch(e) {
+    toast(friendly(e));
+  }
+  if(btn){ btn.disabled = false; btn.textContent = old; }
+}
+
+/* =====================================================================
+   6. PDF GENERATION (A4)
+   ===================================================================== */
+function buildPdf(d){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, M = 18;
+  doc.setDrawColor(29, 58, 110); doc.setLineWidth(.6); doc.rect(8, 8, W - 16, 297 - 16);
+  doc.setTextColor(22, 36, 58);
+  doc.setFont('times', 'bold'); doc.setFontSize(17); doc.text(CONFIG.institution, W / 2, 26, { align: 'center' });
+  doc.setFont('times', 'normal'); doc.setFontSize(12); doc.text(`Department of ${d.dept}`, W / 2, 33, { align: 'center' });
+  doc.setLineWidth(.3); doc.line(M, 38, W - M, 38);
+  doc.setFont('times', 'bold'); doc.setFontSize(14);
+  doc.text('ACKNOWLEDGEMENT OF ATTENDANCE SHORTAGE', W / 2, 48, { align: 'center' });
+  doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+  const when = (d.signedAt instanceof Date ? d.signedAt : new Date());
+  doc.text(`Ref: ASD/${d.term}/${d.roll}`, M, 58);
+  doc.text(`Date: ${when.toLocaleDateString('en-GB')}  ${when.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`, W - M, 58, { align: 'right' });
+
+  const rows = [
+    ['Student name', d.name],
+    ['Roll number', d.roll],
+    ['Department', d.dept],
+    ['Email', d.email],
+    ['Term', d.term],
+    ['Attendance recorded', `${d.att}%`],
+    ['Minimum required', `${CONFIG.minAtt}%`]
+  ];
+  let y = 68; doc.setFontSize(11);
+  rows.forEach((r, i) => {
+    if(i % 2 === 0){ doc.setFillColor(244, 246, 249); doc.rect(M, y - 5, W - 2 * M, 8, 'F'); }
+    doc.setFont('helvetica', 'bold'); doc.text(r[0], M + 3, y);
+    doc.setFont('helvetica', 'normal'); doc.text(String(r[1]), M + 60, y); 
+    y += 8;
+  });
+  y += 8; doc.setFont('times', 'bold'); doc.setFontSize(13); doc.text('Declaration', M, y); y += 7;
+  doc.setFont('times', 'normal'); doc.setFontSize(12);
+  const plain = `I, ${d.name} (Roll No. ${d.roll}), a student of the Department of ${d.dept}, confirm that my attendance for term ${d.term} is ${d.att}%, which is below the required minimum of ${CONFIG.minAtt}%. I have been informed of this shortage and I accept the consequences under the institution's attendance regulations, which may include debarment from examinations, payment of a condonation fee, or other action decided by the institution. I submit this declaration voluntarily.`;
+  const lines = doc.splitTextToSize(plain, W - 2 * M); doc.text(lines, M, y, { lineHeightFactor: 1.5 });
+  y += lines.length * 7 + 14;
+
+  doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.text('Student signature', M, y);
+  doc.text('Acknowledged by HOD', W - M - 60, y);
+  y += 3;
+  if(d.sig){ try{ doc.addImage(d.sig, 'JPEG', M, y, 60, 22); }catch(e){} }
+  doc.setLineWidth(.3); doc.line(M, y + 24, M + 70, y + 24); doc.line(W - M - 70, y + 24, W - M, y + 24);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  doc.text(d.typedName || d.name, M, y + 30);
+  doc.text(d.hodEmail || 'Head of Department', W - M - 70, y + 30);
+
+  doc.setFontSize(8); doc.setTextColor(110, 120, 135);
+  doc.text(`Digitally submitted by authenticated account ${d.email}. System generated – no seal required.`, W / 2, 286, { align: 'center' });
+  return doc;
+}
+
+/* =====================================================================
+   7. ADMIN / HOD DASHBOARD
+   ===================================================================== */
+async function loadRows(){
+  const q = await db.collection(pCol('students')).where('dept', '==', S.hod.dept).get();
+  S.rows = q.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.att - b.att);
+}
+
+function viewHod(){
+  const r = S.rows, pend = r.filter(x => x.status !== 'signed').length, signed = r.length - pend;
+  const need = r.filter(x => x.status !== 'signed' && !x.alerted).length;
+  const list = r.filter(x => (S.filter === 'all' || (S.filter === 'signed' ? x.status === 'signed' : x.status !== 'signed'))
+      && (!S.q || (x.name + x.roll + x.id).toLowerCase().includes(S.q.toLowerCase())));
+
+  app.innerHTML = header(`HOD Administration · ${S.hod.dept}`) + `<div class="wrap">
+   <div class="stats">
+     <div class="stat"><b>${r.length}</b><span>Below ${CONFIG.minAtt}%</span></div>
+     <div class="stat"><b style="color:var(--amber)">${pend}</b><span>Pending</span></div>
+     <div class="stat"><b style="color:var(--ok)">${signed}</b><span>Signed</span></div>
+   </div>
+   <div class="card">
+     <h3 style="margin-bottom:8px">Upload Department CSV (${esc(S.hod.dept)})</h3>
+     <p class="note" style="margin-top:0">Header: <code>roll,name,email,attendance</code>. Only attendance below ${CONFIG.minAtt}% is stored.</p>
+     <div class="bar">
+       <input type="file" id="csv" accept=".csv" style="flex:1;min-width:180px">
+       <button class="btn" id="alerts" ${need ? '' : 'disabled'}>Email ${need} Notice${need === 1 ? '' : 's'}</button>
+     </div>
+     <div id="imsg"></div>
+   </div>
+   <div class="card">
+     <div class="bar">
+       <input type="search" id="q" placeholder="Search name, roll or email" value="${esc(S.q)}">
+       <button class="chip ${S.filter === 'all' ? 'on' : ''}" data-f="all">All</button>
+       <button class="chip ${S.filter === 'pending' ? 'on' : ''}" data-f="pending">Awaiting</button>
+       <button class="chip ${S.filter === 'signed' ? 'on' : ''}" data-f="signed">Signed</button>
+       <button class="btn small ghost" id="ref">Refresh</button>
+     </div>
+     ${list.length ? list.map(x => `
+       <div class="row">
+         <div class="who">
+           <b>${esc(x.name)} <span style="font-weight:400">· ${esc(x.roll)}</span></b>
+           <span>${esc(x.id)}</span>
+         </div>
+         <div class="pct">${esc(x.att)}\%</div>${x.status === 'signed' ? '<span class="badge b-sign">Signed</span>' : `<span class="badge b-pend">${x.alerted ? 'Alerted' : 'Unnotified'}</span>`}
+         ${x.status === 'signed' ? `<button class="btn small" data-dl="${esc(x.id)}">PDF</button>` : '<span style="width:58px"></span>'}
+       </div>`).join('')
+       : `<div class="empty">${r.length ? 'No records match this filter.' : 'No shortage records found. Upload a CSV to populate this dashboard.'}</div>`}
+   </div></div>`;
+
+  bindOut();
+  $('#q').oninput = e => {
+    S.q = e.target.value; 
+    viewHod(); 
+    const i = $('#q'); i.focus(); i.setSelectionRange(S.q.length, S.q.length);
+  };
+  document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.filter = b.dataset.f; viewHod(); });
+  document.querySelectorAll('[data-dl]').forEach(b => b.onclick = () => downloadFor(b.dataset.dl, b));
+  $('#ref').onclick = async e => {
+    e.target.disabled = true;
+    try { await loadRows(); viewHod(); toast('Updated.'); } catch(x){ toast(friendly(x)); }
+  };
+  $('#csv').onchange = importCsv;
+  $('#alerts').onclick = sendAlerts;
+}
+
+function parseCsv(text){
+  const rows = []; let row = [], cur = '', q = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    if(q){
+      if(c === '"' && text[i + 1] === '"'){ cur += '"'; i++; }
+      else if(c === '"') q = false; 
+      else cur += c;
+    } else if(c === '"'){
+      q = true;
+    } else if(c === ','){
+      row.push(cur); cur = '';
+    } else if(c === '\n' || c === '\r'){
+      if(c === '\r' && text[i + 1] === '\n') i++; 
+      row.push(cur); cur = ''; 
+      if(row.some(v => v.trim())) rows.push(row); 
+      row = [];
+    } else {
+      cur += c;
+    }
+  }
+  row.push(cur); 
+  if(row.some(v => v.trim())) rows.push(row);
+  return rows;
+}
+
+async function importCsv(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const box = $('#imsg'); box.innerHTML = '<p class="note">Reading file…</p>';
+  try {
+    const rows = parseCsv(await f.text());
+    const head = rows.shift().map(h => h.trim().toLowerCase());
+    const ix = n => head.findIndex(h => h.startsWith(n));
+    const iR = ix('roll'), iN = ix('name'), iE = ix('email'), iA = ix('att');
+    if([iR, iN, iE, iA].some(i => i < 0)) throw new Error('CSV header must contain: roll, name, email, attendance');
+
+    const existing = Object.fromEntries(S.rows.map(r => [r.id, r]));
+    const ops = []; let skipped = 0, bad = 0;
+
+    for(const r of rows){
+      const email = (r[iE] || '').trim().toLowerCase(), att = parseFloat((r[iA] || '').replace('%', ''));
+      if(!email.includes('@') || isNaN(att)){ bad++; continue; }
+      if(att >= CONFIG.minAtt){ skipped++; continue; }
+      const keep = existing[email];
+      const base = { 
+        name: r[iN].trim(), 
+        roll: r[iR].trim(), 
+        dept: S.hod.dept, 
+        att: Math.round(att * 10) / 10, 
+        term: CONFIG.term, 
+        hodEmail: S.hod.id 
+      };
+      ops.push([email, keep && keep.status === 'signed' ? { att: base.att } : { ...base, status: 'pending', alerted: false }]);
+    }
+
+    for(let i = 0; i < ops.length; i += 450){
+      const b = db.batch(); 
+      ops.slice(i, i + 450).forEach(([id, data]) => b.set(db.doc(pDoc('students', id)), data, { merge: true })); 
+      await b.commit();
+    }
+    await loadRows(); 
+    viewHod();
+    box.innerHTML = `<p class="note"><b>${ops.length}</b> records stored · ${skipped} students with ≥${CONFIG.minAtt}% skipped${bad ? ` · ${bad} invalid lines skipped` : ''}.</p>`;
+  } catch(e) { 
+    box.innerHTML = `<div class="err">${esc(friendly(e))}</div>`; 
+  }
+}
+
+async function sendAlerts(){
+  const todo = S.rows.filter(r => r.status !== 'signed' && !r.alerted);
+  if(!todo.length) return;
+  if(!confirm(`Send shortage alerts to ${todo.length} student(s)?`)) return;
+  const btn = $('#alerts'); btn.disabled = true; btn.textContent = 'Queueing…';
+  try {
+    const url = location.href.split('#')[0];
+    for(let i = 0; i < todo.length; i += 200){
+      const b = db.batch();
+      todo.slice(i, i + 200).forEach(s => {
+        b.set(db.collection(pCol('mail')).doc(), {
+          to: [s.id],
+          message: {
+            subject: `Action Required: Attendance Shortage (${s.roll})`,
+            html: `<p>Dear ${esc(s.name)},</p><p>Your attendance for ${esc(s.term || CONFIG.term)} is <b>${esc(s.att)}%</b>, which is below the mandatory ${CONFIG.minAtt}%.</p>
+                   <p>Please log in to review and sign the required declaration:</p><p><a href="${url}">${url}</a></p>
+                   <p>Regards,<br>Office of the Head of Department, ${esc(s.dept)}</p>`
+          }
+        });
+        b.update(db.doc(pDoc('students', s.id)), { alerted: true });
+      });
+      await b.commit();
+    }
+    todo.forEach(s => s.alerted = true); 
+    viewHod(); 
+    toast(`${todo.length} alert(s) queued successfully.`);
+  } catch(e) { 
+    toast(friendly(e)); 
+    btn.disabled = false; 
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
