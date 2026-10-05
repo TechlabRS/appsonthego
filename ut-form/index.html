@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance Shortage Portal</title>
+<title>Attendance Shortage Declaration Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet">
@@ -12,6 +12,7 @@
   --ink:#16243a; --ink2:#4a5a72; --line:#d9dfe8; --paper:#f4f6f9; --card:#ffffff;
   --brand:#1d3a6e; --brand2:#2f5bb0; --warn:#b4231a; --warnbg:#fdecea;
   --ok:#17704f; --okbg:#e5f4ed; --amber:#8a5a00; --amberbg:#fff3d6;
+  --wa:#128c7e; --wa-hover:#075e54;
   --radius:10px;
 }
 *{box-sizing:border-box}
@@ -23,16 +24,20 @@ button,input,select{font:inherit;color:inherit}
 .top{background:var(--brand);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .top b{font-family:'Source Serif 4',serif;font-size:18px;font-weight:700}
 .top small{display:block;opacity:.8;font-size:12px}
-.wrap{max-width:880px;margin:0 auto;padding:18px 16px 60px}
+.wrap{max-width:940px;margin:0 auto;padding:18px 16px 60px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px}
-.btn{border:0;background:var(--brand);color:#fff;padding:11px 18px;border-radius:8px;font-weight:600;cursor:pointer;min-height:44px}
+.btn{border:0;background:var(--brand);color:#fff;padding:11px 18px;border-radius:8px;font-weight:600;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
 .btn:hover{background:var(--brand2)}
-.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn[disabled]{opacity:.45;cursor:not-allowed;pointer-events:none}
 .btn.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
 .btn.ghost:hover{background:#e9eef8}
-.btn.small{padding:6px 12px;min-height:34px;font-size:14px}
+.btn.small{padding:5px 10px;min-height:32px;font-size:13px;border-radius:6px}
 .btn.light{background:rgba(255,255,255,.15)}
 .btn.light:hover{background:rgba(255,255,255,.28)}
+.btn.wa{background:var(--wa);color:#fff}
+.btn.wa:hover{background:var(--wa-hover)}
+.btn.wa-parent{background:#0277bd;color:#fff}
+.btn.wa-parent:hover{background:#01579b}
 label{display:block;font-weight:600;font-size:14px;margin:12px 0 5px}
 input[type=text],input[type=email],input[type=password],input[type=search]{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;min-height:44px}
 input:focus{border-color:var(--brand2);outline:none;box-shadow:0 0 0 3px #2f5bb033}
@@ -61,8 +66,8 @@ input:focus{border-color:var(--brand2);outline:none;box-shadow:0 0 0 3px #2f5bb0
 .decl{background:#fafbfd;border:1px dashed #b7c1d1;border-radius:8px;padding:14px;font-family:'Source Serif 4',serif;font-size:16px;line-height:1.65}
 .chk{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-weight:500}
 .chk input{width:22px;height:22px;margin-top:2px;flex:none}
-.pad{border:1.5px solid var(--ink2);border-radius:8px;background:#fff;touch-action:none;width:100%;height:150px;display:block}
-.padbar{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.digital-stamp{background:#eef3fb;border:1.5px solid #c2d2ea;border-radius:8px;padding:14px;margin-top:16px;font-size:13px;color:var(--ink)}
+.digital-stamp b{color:var(--brand)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px;text-align:center}
 .stat b{font:700 26px 'Source Serif 4',serif;display:block}
@@ -73,17 +78,22 @@ input:focus{border-color:var(--brand2);outline:none;box-shadow:0 0 0 3px #2f5bb0
 .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
 .row:first-child{border-top:0}
-.row .who{min-width:0;flex:1 1 200px}
+.row .who{min-width:0;flex:1 1 240px}
 .row .who b{display:block}
 .row .who span{font-size:13px;color:var(--ink2);word-break:break-all}
-.pct{font:700 18px 'Source Serif 4',serif;color:var(--warn);min-width:60px;text-align:right}
+.row .actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pct{font:700 18px 'Source Serif 4',serif;color:var(--warn);min-width:55px;text-align:right}
 .empty{text-align:center;padding:30px 10px;color:var(--ink2)}
-.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:14px;z-index:9;max-width:90vw}
-pre{background:#101a2b;color:#d8e3f7;padding:12px;border-radius:8px;overflow:auto;font-size:12px;line-height:1.5}
-details{margin-top:10px}
-summary{cursor:pointer;font-weight:600}
-code{background:#e9eef8;padding:1px 5px;border-radius:4px;font-size:13px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:14px;z-index:99;max-width:90vw}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.grid-2{grid-template-columns:1fr}}
 .loader{text-align:center;padding:60px;color:var(--ink2)}
+.tpl-link{font-size:12px;font-weight:600;color:var(--brand2);cursor:pointer;text-decoration:underline;float:right}
+.blast-box{background:#f0f8f5;border:1.5px solid #a3d9c9;border-radius:8px;padding:14px;margin-bottom:16px}
+.blast-box h4{margin:0 0 6px;color:var(--wa-hover)}
+.blast-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:90;padding:16px}
+.modal-body{background:#fff;padding:24px;border-radius:12px;max-width:480px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,.2)}
 @media (prefers-reduced-motion:no-preference){.toast{animation:up .25s}@keyframes up{from{opacity:0;transform:translate(-50%,10px)}}}
 </style>
 </head>
@@ -96,9 +106,6 @@ code{background:#e9eef8;padding:1px 5px;border-radius:4px;font-size:13px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-/* =====================================================================
-   1. CONFIG & BASE PATHS
-   ===================================================================== */
 const CONFIG = {
   firebase: {
     apiKey: "AIzaSyBXECIZa45dq-o8Ka4G9Y1N7nll7cyli2U",
@@ -109,19 +116,18 @@ const CONFIG = {
     appId: "1:511533506488:web:aca4de3d513915d012f94d",
     measurementId: "G-9PZZM5LFKX"
   },
-  institution: "RGMCET-CSE-AI&ML",
+  institution: "RGMCET-CSE(AI&ML)",
   term: "2026-ODD",
   minAtt: 75,
-  // Base parent document path
   basePath: "artifacts/att-mail"
 };
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cleanStr = s => String(s ?? '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 const app = $('#app');
 let auth, db;
 
-// State
 const S = { 
   user: null, 
   role: null, 
@@ -130,11 +136,10 @@ const S = {
   rows: [], 
   filter: 'all', 
   q: '', 
-  portalMode: 'student', // 'student' or 'admin'
-  authTab: 'in'          // 'in' or 'up'
+  portalMode: 'student',
+  authTab: 'in'
 };
 
-// Subcollection path helpers
 const pCol = name => `${CONFIG.basePath}/${name}`;
 const pDoc = (col, id) => `${CONFIG.basePath}/${col}/${id}`;
 
@@ -153,16 +158,77 @@ function friendly(e){
     'auth/weak-password':'Password must be at least 6 characters.',
     'auth/invalid-email':'Enter a valid email address.',
     'auth/too-many-requests':'Too many attempts. Try again in a few minutes.',
-    'permission-denied':'Access denied. Check Firestore security rules or authorization.' 
+    'permission-denied':'Access denied. Check Firestore security rules or permissions.' 
   };
   return m[e.code] || e.message || 'Something went wrong.';
 }
 
 /* =====================================================================
-   2. BOOT
+   WHATSAPP CLICK-TO-CHAT & BROADCAST GENERATOR
+   ===================================================================== */
+function formatPhone(phone, defaultCountry = '91'){
+  if(!phone) return '';
+  let digits = String(phone).replace(/\D/g, '');
+  if(!digits) return '';
+  if(digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+  if(digits.length === 10) digits = defaultCountry + digits;
+  return digits;
+}
+
+function getPortalUrl(){
+  return location.href.split('#')[0];
+}
+
+function studentMessage(s){
+  return `*ATTENDANCE SHORTAGE NOTICE*
+Dear ${s.name} (${s.roll}),
+
+Your recorded attendance for Term *${s.term || CONFIG.term}* in Department of *${s.dept}* is *${s.att}%*, which is below the required minimum of *${CONFIG.minAtt}%*.
+
+Please log in to the student portal to review and submit your official digital shortage declaration:
+🔗 ${getPortalUrl()}
+
+- Office of Head of Department, ${s.dept}
+${CONFIG.institution}`;
+}
+
+function parentMessage(s){
+  return `*IMPORTANT ATTENDANCE NOTICE FOR PARENTS*
+Dear Parent / Guardian,
+
+This is an official communication regarding your ward *${s.name}* (Roll No: *${s.roll}*), Department of *${s.dept}*, ${CONFIG.institution}.
+
+The student's attendance for Term *${s.term || CONFIG.term}* is *${s.att}%*, which is below the mandatory *${CONFIG.minAtt}%*.
+
+The student has been directed to submit an official shortage declaration via the student portal:
+🔗 ${getPortalUrl()}
+
+Kindly ensure your ward submits the declaration immediately.
+
+- Office of Head of Department, ${s.dept}
+${CONFIG.institution}`;
+}
+
+function buildStudentWaLink(s){
+  const phone = formatPhone(s.mobile);
+  if(!phone) return null;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(studentMessage(s))}`;
+}
+
+function buildParentWaLink(s){
+  const phone = formatPhone(s.parentMobile);
+  if(!phone) return null;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(parentMessage(s))}`;
+}
+
+/* =====================================================================
+   BOOT & SESSIONS
    ===================================================================== */
 function boot(){
-  if (CONFIG.firebase.apiKey === 'YOUR_API_KEY'){ return viewSetup(); }
+  if (CONFIG.firebase.apiKey === 'YOUR_API_KEY'){ 
+    app.innerHTML = '<div class="wrap"><div class="card"><h2>Firebase configuration required.</h2></div></div>';
+    return;
+  }
   firebase.initializeApp(CONFIG.firebase);
   auth = firebase.auth(); 
   db = firebase.firestore();
@@ -171,7 +237,7 @@ function boot(){
     S.user = u; S.role = null; S.student = null; S.hod = null; S.rows = [];
     if(!u) return viewAuth();
 
-    app.innerHTML = '<div class="loader">Verifying session permissions…</div>';
+    app.innerHTML = '<div class="loader">Verifying session…</div>';
     try{
       const email = u.email.toLowerCase();
 
@@ -179,7 +245,7 @@ function boot(){
         const hd = await db.doc(pDoc('hods', email)).get();
         if (!hd.exists) {
           await auth.signOut();
-          return viewAuth('Access denied: No Admin/HOD record exists for this email.');
+          return viewAuth('Access denied: No Admin/HOD account exists with this email.');
         }
         S.role = 'hod'; 
         S.hod = { id: hd.id, ...hd.data() }; 
@@ -201,9 +267,6 @@ function boot(){
   });
 }
 
-/* =====================================================================
-   3. HEADER & SETUP
-   ===================================================================== */
 function header(sub){
   return `<div class="top">
     <div><b>${esc(CONFIG.institution)}</b><small>${esc(sub)} · ${esc(S.user?.email||'')}</small></div>
@@ -215,60 +278,13 @@ function bindOut(){
   $('#out').onclick = () => auth.signOut(); 
 }
 
-function viewSetup(){
-  app.innerHTML = `<div class="wrap"><div class="card">
-  <h2>One-Time Setup & Security Rules</h2>
-  <p class="note">Deploy these Firestore rules to support data in <code>${CONFIG.basePath}/...</code></p>
-  <details open><summary>Firestore Security Rules</summary>
-<pre>rules_version = '2';
-service cloud.firestore {
-  match /databases/{db}/documents {
-    function hodDoc() {
-      return get(/databases/$(db)/documents/${CONFIG.basePath}/hods/$(request.auth.token.email)).data;
-    }
-    function isHod() {
-      return request.auth != null &amp;&amp; exists(/databases/$(db)/documents/${CONFIG.basePath}/hods/$(request.auth.token.email));
-    }
-
-    match /${CONFIG.basePath} {
-      allow read: if request.auth != null;
-
-      match /hods/{id} {
-        // Allows reading own record, and creating/updating own HOD profile
-        allow read: if request.auth != null &amp;&amp; request.auth.token.email == id;
-        allow create, update: if request.auth != null &amp;&amp; request.auth.token.email == id;
-      }
-      match /students/{id} {
-        allow read: if request.auth != null &amp;&amp; (request.auth.token.email == id
-                     || (isHod() &amp;&amp; resource.data.dept == hodDoc().dept));
-        allow create, update: if (isHod() &amp;&amp; request.resource.data.dept == hodDoc().dept)
-          || (request.auth.token.email == id &amp;&amp;
-              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','signedAt']));
-      }
-      match /declarations/{id} {
-        allow create: if request.auth != null &amp;&amp; request.resource.data.email == request.auth.token.email;
-        allow read: if request.auth != null &amp;&amp; (resource.data.email == request.auth.token.email
-                     || (isHod() &amp;&amp; resource.data.dept == hodDoc().dept));
-      }
-      match /mail/{id} {
-        allow create: if request.auth != null;
-      }
-    }
-  }
-}</pre></details>
-  </div></div>`;
-}
-
-/* =====================================================================
-   4. AUTHENTICATION (STUDENT & ADMIN / HOD)
-   ===================================================================== */
 function viewAuth(error){
   const isAdmin = S.portalMode === 'admin';
   const up = S.authTab === 'up';
 
   app.innerHTML = `<div class="wrap"><div class="auth">
    <h1>${esc(CONFIG.institution)}</h1>
-   <p class="note">Attendance Management & Declaration Portal</p>
+   <p class="note">Attendance Declaration & Portal</p>
    
    <div class="portal-switch">
      <button id="sw-std" class="${!isAdmin ? 'active' : ''}">Student Portal</button>
@@ -302,7 +318,6 @@ function viewAuth(error){
     
     ${!up ? '<p style="text-align:center;margin:12px 0 0"><a href="#" id="fg" class="note">Forgot password?</a></p>' : ''}
    </div>
-   <p class="note" style="text-align:center">Data path: <code>${CONFIG.basePath}</code></p>
   </div></div>`;
 
   $('#sw-std').onclick = () => { S.portalMode = 'student'; S.authTab = 'in'; viewAuth(); };
@@ -320,7 +335,6 @@ function viewAuth(error){
 
     try {
       if (up) {
-        // Sign Up
         if (isAdmin) {
           const name = $('#hn').value.trim();
           const dept = $('#hd').value.trim().toUpperCase();
@@ -328,8 +342,7 @@ function viewAuth(error){
             btn.disabled = false; btn.textContent = 'Create HOD Account';
             return viewAuth('Name and Department code are required for HOD registration.');
           }
-          const cred = await auth.createUserWithEmailAndPassword(e, p);
-          // Persist HOD Document in Firestore
+          await auth.createUserWithEmailAndPassword(e, p);
           await db.doc(pDoc('hods', e)).set({
             name: name,
             dept: dept,
@@ -339,7 +352,6 @@ function viewAuth(error){
           await auth.createUserWithEmailAndPassword(e, p);
         }
       } else {
-        // Sign In
         await auth.signInWithEmailAndPassword(e, p);
       }
     } catch(x) { 
@@ -366,7 +378,7 @@ function viewAuth(error){
 }
 
 /* =====================================================================
-   5. STUDENT PORTAL
+   STUDENT PORTAL
    ===================================================================== */
 function gauge(p){
   const r=54,c=2*Math.PI*r,off=c*(1-Math.min(p,100)/100);
@@ -385,12 +397,12 @@ function viewStudent(){
   if(!s){
     body = `<div class="card empty">
       <h2>No Shortage Notice Found</h2>
-      <p>Your record is in good standing (at or above ${CONFIG.minAtt}%), or your department has not uploaded records for this term.</p>
+      <p>Your record is in good standing (at or above ${CONFIG.minAtt}%), or your department has not uploaded shortage records for this term.</p>
     </div>`;
   } else if(s.status === 'signed'){
-    body = `<div class="card"><span class="badge b-sign">Declaration submitted</span>
-      <h2 style="margin-top:10px">Acknowledgement Stored, ${esc(s.name)}</h2>
-      <p class="note">Your signed declaration has been submitted to your HOD (${esc(s.hodEmail || 'Department')}).</p>
+    body = `<div class="card"><span class="badge b-sign">Declaration Submitted</span>
+      <h2 style="margin-top:10px">Acknowledgement Verified, ${esc(s.name)}</h2>
+      <p class="note">Your digital acknowledgement is permanently recorded with your HOD (${esc(s.hodEmail || 'Department')}).</p>
       <button class="btn" id="dl">Download A4 PDF Acknowledgement</button>
     </div>`;
   } else {
@@ -400,90 +412,53 @@ function viewStudent(){
       <dl class="kv">
         <dt>Name</dt><dd>${esc(s.name)}</dd>
         <dt>Roll no.</dt><dd>${esc(s.roll)}</dd>
+        <dt>Mobile</dt><dd>${esc(s.mobile || '—')}</dd>
+        <dt>Parent Phone</dt><dd>${esc(s.parentMobile || '—')}</dd>
         <dt>Department</dt><dd>${esc(s.dept)}</dd>
         <dt>Term</dt><dd>${esc(s.term||CONFIG.term)}</dd>
       </dl></div></div></div>
       <div class="card"><h3 style="margin-bottom:10px">Declaration Statement</h3>
        <div class="decl">${declText(s)}</div>
        <label class="chk"><input type="checkbox" id="ok"><span>I have read this declaration and accept the consequences of attendance below ${CONFIG.minAtt}%.</span></label>
-       <label for="tn">Type your full name to confirm</label><input id="tn" type="text" autocomplete="off" placeholder="${esc(s.name)}">
-       <label>Digital Signature</label><canvas id="pad" class="pad"></canvas>
-       <div class="padbar"><span class="note">Sign with your mouse or finger</span><button class="btn small ghost" id="clr">Clear</button></div>
+       <label for="tn">Type your full name to authenticate submission</label>
+       <input id="tn" type="text" autocomplete="off" placeholder="${esc(s.name)}">
+       <div class="digital-stamp">
+         <b>Digital Verification Note:</b> Hand-drawn signatures are suspended. Submitting with your authenticated institutional account (<code>${esc(s.id)}</code>) and typed legal name constitutes your official digital acknowledgement.
+       </div>
        <div id="msg"></div>
-       <button class="btn" id="sub" style="width:100%;margin-top:16px">Sign and Submit</button>
+       <button class="btn" id="sub" style="width:100%;margin-top:16px">Authenticate & Submit Declaration</button>
       </div>`;
   }
   app.innerHTML = header('Student Portal') + `<div class="wrap">${body}</div>`;
   bindOut();
 
   if(s && s.status === 'signed') $('#dl').onclick = () => downloadFor(s.id, $('#dl'));
-  if(s && s.status !== 'signed') initPad();
-}
-
-let inked = false;
-function initPad(){
-  const cv = $('#pad'), ratio = window.devicePixelRatio || 1;
-  const fit = () => {
-    const w = cv.clientWidth, h = cv.clientHeight;
-    cv.width = w * ratio; cv.height = h * ratio;
-    const x = cv.getContext('2d');
-    x.scale(ratio, ratio);
-    x.lineWidth = 2.2;
-    x.lineCap = 'round';
-    x.lineJoin = 'round';
-    x.strokeStyle = '#0b1d4d';
-  };
-  fit(); inked = false;
-  const ctx = cv.getContext('2d');
-  let down = false;
-  const pt = e => {
-    const r = cv.getBoundingClientRect();
-    return [e.clientX - r.left, e.clientY - r.top];
-  };
-
-  cv.onpointerdown = e => {
-    down = true; cv.setPointerCapture(e.pointerId);
-    const [x, y] = pt(e);
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + .1, y + .1); ctx.stroke();
-    inked = true;
-  };
-  cv.onpointermove = e => {
-    if(!down) return;
-    const [x, y] = pt(e);
-    ctx.lineTo(x, y); ctx.stroke();
-  };
-  cv.onpointerup = cv.onpointercancel = () => { down = false; };
-  $('#clr').onclick = () => { ctx.clearRect(0, 0, cv.width, cv.height); inked = false; };
-  $('#sub').onclick = submitDeclaration;
+  if(s && s.status !== 'signed') $('#sub').onclick = submitDeclaration;
 }
 
 async function submitDeclaration(){
   const s = S.student, msg = $('#msg');
   const fail = t => { msg.innerHTML = `<div class="err">${esc(t)}</div>`; };
-  if(!$('#ok').checked) return fail('Tick the box to accept the declaration.');
-  if($('#tn').value.trim().toLowerCase() !== String(s.name).trim().toLowerCase()) return fail('Type your name exactly as registered: ' + s.name);
-  if(!inked) return fail('Please draw your signature in the box.');
+  if(!$('#ok').checked) return fail('Please tick the box acknowledging attendance regulations.');
+  
+  if(cleanStr($('#tn').value) !== cleanStr(s.name)) {
+    return fail('Type your name exactly as registered: ' + s.name);
+  }
 
   const btn = $('#sub'); btn.disabled = true; btn.textContent = 'Submitting…';
   try {
-    const src = $('#pad'), tmp = document.createElement('canvas');
-    tmp.width = 500; tmp.height = Math.round(500 * src.height / src.width);
-    const tc = tmp.getContext('2d');
-    tc.fillStyle = '#fff'; tc.fillRect(0, 0, tmp.width, tmp.height);
-    tc.drawImage(src, 0, 0, tmp.width, tmp.height);
-    const sig = tmp.toDataURL('image/jpeg', 0.7);
-
     const ts = firebase.firestore.FieldValue.serverTimestamp();
     const data = {
       email: s.id,
       name: s.name,
       roll: s.roll,
+      mobile: s.mobile || '',
+      parentMobile: s.parentMobile || '',
       dept: s.dept,
       att: s.att,
       term: s.term || CONFIG.term,
       hodEmail: s.hodEmail || '',
-      typedName: $('#tn').value.trim(),
-      sig
+      typedName: $('#tn').value.trim()
     };
     const pdf = buildPdf({ ...data, signedAt: new Date() });
     const b64 = pdf.output('datauristring').split(',')[1];
@@ -499,7 +474,9 @@ async function submitDeclaration(){
         cc: [s.id],
         message: {
           subject: `Attendance declaration signed – ${s.name} (${s.roll})`,
-          html: `<p>${esc(s.name)} (${esc(s.roll)}, ${esc(s.dept)}) has signed the declaration for attendance of ${esc(s.att)}%.</p><p>The signed acknowledgement is attached.</p>`,
+          html: `<p>${esc(s.name)} (${esc(s.roll)}, ${esc(s.dept)}) has submitted digital declaration for attendance of ${esc(s.att)}%.</p>
+                 <p><b>Mobile:</b> ${esc(s.mobile || 'N/A')}<br><b>Parent Mobile:</b> ${esc(s.parentMobile || 'N/A')}</p>
+                 <p>The signed acknowledgement is attached.</p>`,
           attachments: [{ filename: fname, path: 'data:application/pdf;base64,' + b64 }]
         }
       });
@@ -510,7 +487,7 @@ async function submitDeclaration(){
     viewStudent(); 
     toast('Declaration submitted successfully.');
   } catch(e) { 
-    btn.disabled = false; btn.textContent = 'Sign and Submit'; 
+    btn.disabled = false; btn.textContent = 'Authenticate & Submit Declaration'; 
     fail(friendly(e)); 
   }
 }
@@ -531,7 +508,7 @@ async function downloadFor(email, btn){
 }
 
 /* =====================================================================
-   6. PDF GENERATION (A4)
+   A4 PDF GENERATION
    ===================================================================== */
 function buildPdf(d){
   const { jsPDF } = window.jspdf;
@@ -554,50 +531,83 @@ function buildPdf(d){
     ['Roll number', d.roll],
     ['Department', d.dept],
     ['Email', d.email],
+    ['Student Mobile', d.mobile || '—'],
+    ['Parent Contact', d.parentMobile || '—'],
     ['Term', d.term],
     ['Attendance recorded', `${d.att}%`],
     ['Minimum required', `${CONFIG.minAtt}%`]
   ];
-  let y = 68; doc.setFontSize(11);
+  let y = 68; doc.setFontSize(10.5);
   rows.forEach((r, i) => {
-    if(i % 2 === 0){ doc.setFillColor(244, 246, 249); doc.rect(M, y - 5, W - 2 * M, 8, 'F'); }
+    if(i % 2 === 0){ doc.setFillColor(244, 246, 249); doc.rect(M, y - 5, W - 2 * M, 7.5, 'F'); }
     doc.setFont('helvetica', 'bold'); doc.text(r[0], M + 3, y);
     doc.setFont('helvetica', 'normal'); doc.text(String(r[1]), M + 60, y); 
-    y += 8;
+    y += 7.5;
   });
-  y += 8; doc.setFont('times', 'bold'); doc.setFontSize(13); doc.text('Declaration', M, y); y += 7;
-  doc.setFont('times', 'normal'); doc.setFontSize(12);
+  y += 6; doc.setFont('times', 'bold'); doc.setFontSize(13); doc.text('Declaration Statement', M, y); y += 7;
+  doc.setFont('times', 'normal'); doc.setFontSize(11.5);
   const plain = `I, ${d.name} (Roll No. ${d.roll}), a student of the Department of ${d.dept}, confirm that my attendance for term ${d.term} is ${d.att}%, which is below the required minimum of ${CONFIG.minAtt}%. I have been informed of this shortage and I accept the consequences under the institution's attendance regulations, which may include debarment from examinations, payment of a condonation fee, or other action decided by the institution. I submit this declaration voluntarily.`;
-  const lines = doc.splitTextToSize(plain, W - 2 * M); doc.text(lines, M, y, { lineHeightFactor: 1.5 });
-  y += lines.length * 7 + 14;
+  const lines = doc.splitTextToSize(plain, W - 2 * M); doc.text(lines, M, y, { lineHeightFactor: 1.45 });
+  y += lines.length * 6.5 + 16;
 
-  doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.text('Student signature', M, y);
+  doc.setFillColor(245, 247, 252);
+  doc.setDrawColor(180, 195, 220);
+  doc.rect(M, y, W - 2 * M, 24, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(29, 58, 110);
+  doc.text('OFFICIAL DIGITAL ATTESTATION', M + 4, y + 6);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(60, 70, 85);
+  doc.text(`Electronically submitted and verified via user session (${d.email}).`, M + 4, y + 12);
+  doc.text(`Typed Legal Name: ${d.typedName || d.name}  |  Timestamp: ${when.toISOString()}`, M + 4, y + 18);
+
+  y += 36;
+  doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(22, 36, 58);
+  doc.text('Student Acknowledgement', M, y);
   doc.text('Acknowledged by HOD', W - M - 60, y);
-  y += 3;
-  if(d.sig){ try{ doc.addImage(d.sig, 'JPEG', M, y, 60, 22); }catch(e){} }
-  doc.setLineWidth(.3); doc.line(M, y + 24, M + 70, y + 24); doc.line(W - M - 70, y + 24, W - M, y + 24);
+  y += 18;
+  doc.setLineWidth(.3); doc.line(M, y, M + 70, y); doc.line(W - M - 70, y, W - M, y);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-  doc.text(d.typedName || d.name, M, y + 30);
-  doc.text(d.hodEmail || 'Head of Department', W - M - 70, y + 30);
+  doc.text(d.typedName || d.name, M, y + 6);
+  doc.text(d.hodEmail || 'Head of Department', W - M - 70, y + 6);
 
   doc.setFontSize(8); doc.setTextColor(110, 120, 135);
-  doc.text(`Digitally submitted by authenticated account ${d.email}. System generated – no seal required.`, W / 2, 286, { align: 'center' });
+  doc.text(`Digitally recorded by authenticated institutional account. Tamper-evident system log.`, W / 2, 286, { align: 'center' });
   return doc;
 }
 
 /* =====================================================================
-   7. ADMIN / HOD DASHBOARD
+   ADMIN / HOD DASHBOARD WITH BULK WHATSAPP DISPATCHER
    ===================================================================== */
 async function loadRows(){
   const q = await db.collection(pCol('students')).where('dept', '==', S.hod.dept).get();
   S.rows = q.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.att - b.att);
 }
 
+function triggerDownload(content, filename){
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function copyToClipboard(text, successMsg){
+  navigator.clipboard.writeText(text).then(()=>{
+    toast(successMsg);
+  }).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+    toast(successMsg);
+  });
+}
+
 function viewHod(){
   const r = S.rows, pend = r.filter(x => x.status !== 'signed').length, signed = r.length - pend;
   const need = r.filter(x => x.status !== 'signed' && !x.alerted).length;
   const list = r.filter(x => (S.filter === 'all' || (S.filter === 'signed' ? x.status === 'signed' : x.status !== 'signed'))
-      && (!S.q || (x.name + x.roll + x.id).toLowerCase().includes(S.q.toLowerCase())));
+      && (!S.q || (x.name + x.roll + x.id + (x.mobile||'') + (x.parentMobile||'')).toLowerCase().includes(S.q.toLowerCase())));
+
+  const withStudentPhone = r.filter(x => formatPhone(x.mobile));
+  const withParentPhone = r.filter(x => formatPhone(x.parentMobile));
 
   app.innerHTML = header(`HOD Administration · ${S.hod.dept}`) + `<div class="wrap">
    <div class="stats">
@@ -605,34 +615,88 @@ function viewHod(){
      <div class="stat"><b style="color:var(--amber)">${pend}</b><span>Pending</span></div>
      <div class="stat"><b style="color:var(--ok)">${signed}</b><span>Signed</span></div>
    </div>
-   <div class="card">
-     <h3 style="margin-bottom:8px">Upload Department CSV (${esc(S.hod.dept)})</h3>
-     <p class="note" style="margin-top:0">Header: <code>roll,name,email,attendance</code>. Only attendance below ${CONFIG.minAtt}% is stored.</p>
-     <div class="bar">
-       <input type="file" id="csv" accept=".csv" style="flex:1;min-width:180px">
-       <button class="btn" id="alerts" ${need ? '' : 'disabled'}>Email ${need} Notice${need === 1 ? '' : 's'}</button>
+
+   <!-- DEDICATED BULK WHATSAPP CONTROL CENTER -->
+   <div class="blast-box">
+     <h4>📲 WhatsApp Blast & Broadcast Control</h4>
+     <p class="note" style="margin:0 0 8px">Send WhatsApp alerts from your number to all shortage students (${withStudentPhone.length}) and parents (${withParentPhone.length}).</p>
+     
+     <div class="blast-actions">
+       <button class="btn small wa" id="blast-students" ${withStudentPhone.length ? '' : 'disabled'}>
+         🚀 Launch 1-by-1 Queue (Students: ${withStudentPhone.length})
+       </button>
+       <button class="btn small wa-parent" id="blast-parents" ${withParentPhone.length ? '' : 'disabled'}>
+         🚀 Launch 1-by-1 Queue (Parents: ${withParentPhone.length})
+       </button>
+       <button class="btn small ghost" id="copy-std-wa">
+         📋 Copy Student Broadcast Text & Numbers
+       </button>
+       <button class="btn small ghost" id="copy-par-wa">
+         📋 Copy Parent Broadcast Text & Numbers
+       </button>
      </div>
-     <div id="imsg"></div>
    </div>
+
+   <div class="grid-2">
+     <!-- PIPELINE 1: MASTER DATA CSV -->
+     <div class="card">
+       <span class="tpl-link" id="dl-master-tpl">Sample CSV</span>
+       <h3 style="margin-bottom:6px">1. Master Directory CSV</h3>
+       <p class="note" style="margin-top:0">Upload full departmental student list.<br><code>roll no, name, mobile, email, parent-mobile</code></p>
+       <input type="file" id="masterCsv" accept=".csv" style="width:100%">
+       <div id="mMsg"></div>
+     </div>
+
+     <!-- PIPELINE 2: SHORTAGE CSV -->
+     <div class="card">
+       <span class="tpl-link" id="dl-short-tpl">Sample CSV</span>
+       <h3 style="margin-bottom:6px">2. Term Shortage CSV</h3>
+       <p class="note" style="margin-top:0">Matches against master directory & stores &lt;${CONFIG.minAtt}%.<br><code>roll no, attendance</code></p>
+       <input type="file" id="shortageCsv" accept=".csv" style="width:100%">
+       <div id="sMsg"></div>
+     </div>
+   </div>
+
    <div class="card">
      <div class="bar">
-       <input type="search" id="q" placeholder="Search name, roll or email" value="${esc(S.q)}">
+       <input type="search" id="q" placeholder="Search by name, roll, phone, or email" value="${esc(S.q)}">
        <button class="chip ${S.filter === 'all' ? 'on' : ''}" data-f="all">All</button>
        <button class="chip ${S.filter === 'pending' ? 'on' : ''}" data-f="pending">Awaiting</button>
        <button class="chip ${S.filter === 'signed' ? 'on' : ''}" data-f="signed">Signed</button>
+       <button class="btn small" id="alerts" ${need ? '' : 'disabled'}>Email ${need} Notice${need === 1 ? '' : 's'}</button>
        <button class="btn small ghost" id="ref">Refresh</button>
      </div>
-     ${list.length ? list.map(x => `
-       <div class="row">
+     ${list.length ? list.map(x => {
+       const waStudent = buildStudentWaLink(x);
+       const waParent = buildParentWaLink(x);
+
+       return `<div class="row">
          <div class="who">
            <b>${esc(x.name)} <span style="font-weight:400">· ${esc(x.roll)}</span></b>
-           <span>${esc(x.id)}</span>
+           <span>${esc(x.id)}${x.mobile ? `· 📞 ${esc(x.mobile)}` : ''} ${x.parentMobile ? `· 👨‍👩‍👦 ${esc(x.parentMobile)}` : ''}</span>
          </div>
-         <div class="pct">${esc(x.att)}\%</div>${x.status === 'signed' ? '<span class="badge b-sign">Signed</span>' : `<span class="badge b-pend">${x.alerted ? 'Alerted' : 'Unnotified'}</span>`}
-         ${x.status === 'signed' ? `<button class="btn small" data-dl="${esc(x.id)}">PDF</button>` : '<span style="width:58px"></span>'}
-       </div>`).join('')
-       : `<div class="empty">${r.length ? 'No records match this filter.' : 'No shortage records found. Upload a CSV to populate this dashboard.'}</div>`}
-   </div></div>`;
+         <div class="pct">${esc(x.att)}%</div>
+         
+         <div class="actions">
+           ${waStudent 
+             ? `<a href="${waStudent}" target="_blank" rel="noopener noreferrer" class="btn small wa" title="Open WhatsApp chat with student">💬 Student</a>`
+             : `<button class="btn small wa" disabled title="No student mobile provided">💬 Student</button>`
+           }
+
+           ${waParent 
+             ? `<a href="${waParent}" target="_blank" rel="noopener noreferrer" class="btn small wa-parent" title="Open WhatsApp chat with parent">👨‍👩‍👦 Parent</a>`
+             : `<button class="btn small wa-parent" disabled title="No parent mobile provided">👨‍👩‍👦 Parent</button>`
+           }
+
+           ${x.status === 'signed' 
+             ? `<button class="btn small ghost" data-dl="${esc(x.id)}">PDF</button>` 
+             : `<span class="badge b-pend">${x.alerted ? 'Alerted' : 'Pending'}</span>`
+           }
+         </div>
+       </div>`;
+     }).join('')
+       : `<div class="empty">${r.length ? 'No records match this filter.' : 'No shortage records found. Upload Master CSV, then upload Term Shortage CSV.'}</div>`}
+   </div></div><div id="modal-slot"></div>`;
 
   bindOut();
   $('#q').oninput = e => {
@@ -646,8 +710,98 @@ function viewHod(){
     e.target.disabled = true;
     try { await loadRows(); viewHod(); toast('Updated.'); } catch(x){ toast(friendly(x)); }
   };
-  $('#csv').onchange = importCsv;
+  $('#masterCsv').onchange = importMasterCsv;
+  $('#shortageCsv').onchange = importShortageCsv;
   $('#alerts').onclick = sendAlerts;
+  
+  $('#dl-master-tpl').onclick = () => {
+    triggerDownload("roll no,name,mobile,email,parent-mobile\n23AI001,John Doe,9876543210,john@college.edu,9876543211", "sample_master_directory.csv");
+  };
+  $('#dl-short-tpl').onclick = () => {
+    triggerDownload("roll no,attendance\n23AI001,68.5", "sample_term_shortage.csv");
+  };
+
+  // Bulk WhatsApp modal triggers
+  $('#blast-students').onclick = () => launchBulkRunner(withStudentPhone, 'student');
+  $('#blast-parents').onclick = () => launchBulkRunner(withParentPhone, 'parent');
+
+  // Copy Broadcast Lists
+  $('#copy-std-wa').onclick = () => {
+    const numbers = withStudentPhone.map(x => formatPhone(x.mobile)).join(', ');
+    const generalMsg = `*ATTENDANCE SHORTAGE NOTICE*\nDear Students,\nYour attendance is below the mandatory ${CONFIG.minAtt}%. Please log in immediately and authenticate your declaration:\n🔗 ${getPortalUrl()}\n\n- Department of ${S.hod.dept}, ${CONFIG.institution}`;
+    copyToClipboard(`PHONE NUMBERS:\n${numbers}\n\nBROADCAST MESSAGE:\n${generalMsg}`, `Copied ${withStudentPhone.length} student numbers and message.`);
+  };
+
+  $('#copy-par-wa').onclick = () => {
+    const numbers = withParentPhone.map(x => formatPhone(x.parentMobile)).join(', ');
+    const generalMsg = `*IMPORTANT NOTICE FOR PARENTS*\nDear Parent / Guardian,\nThis is from Department of ${S.hod.dept}, ${CONFIG.institution}. Your ward has attendance shortage below ${CONFIG.minAtt}%. Please verify their portal submission:\n🔗 ${getPortalUrl()}`;
+    copyToClipboard(`PHONE NUMBERS:\n${numbers}\n\nBROADCAST MESSAGE:\n${generalMsg}`, `Copied ${withParentPhone.length} parent numbers and message.`);
+  };
+}
+
+/* =====================================================================
+   BULK RUNNER MODAL (SEAMLESS 1-BY-1 DISPATCHER)
+   ===================================================================== */
+function launchBulkRunner(items, targetRole){
+  const slot = $('#modal-slot');
+  let currentIdx = 0;
+
+  function renderModal(){
+    if(currentIdx >= items.length){
+      slot.innerHTML = `<div class="modal"><div class="modal-body" style="text-align:center">
+        <h3>🎉 All Done!</h3>
+        <p class="note">Successfully processed all ${items.length} ${targetRole} notifications.</p>
+        <button class="btn" id="m-close">Close Runner</button>
+      </div></div>`;
+      $('#m-close').onclick = () => { slot.innerHTML = ''; };
+      return;
+    }
+
+    const cur = items[currentIdx];
+    const link = targetRole === 'student' ? buildStudentWaLink(cur) : buildParentWaLink(cur);
+    const phone = targetRole === 'student' ? cur.mobile : cur.parentMobile;
+
+    slot.innerHTML = `<div class="modal"><div class="modal-body">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="margin:0">Sending WhatsApp (${currentIdx + 1} of ${items.length})</h3>
+        <span class="badge b-pend">${targetRole.toUpperCase()}</span>
+      </div>
+      <dl class="kv" style="margin-bottom:16px">
+        <dt>Student</dt><dd>${esc(cur.name)} (${esc(cur.roll)})</dd>
+        <dt>Target Phone</dt><dd>📞 ${esc(phone)}</dd>
+        <dt>Attendance</dt><dd style="color:var(--warn)">${esc(cur.att)}%</dd>
+      </dl>
+      <div style="display:flex;gap:10px">
+        <a href="${link}" target="_blank" rel="noopener noreferrer" class="btn wa" id="m-send" style="flex:2">
+          👉 Open Chat & Send
+        </a>
+        <button class="btn ghost" id="m-skip" style="flex:1">Skip</button>
+      </div>
+      <p class="note" style="margin-top:12px;font-size:12px;text-align:center">
+        Clicking 'Open Chat & Send' opens WhatsApp. Then click Next to proceed to the next student.
+      </p>
+      <div style="margin-top:8px;text-align:right">
+        <button class="btn small light" id="m-cancel" style="color:var(--ink2)">Cancel Batch</button>
+      </div>
+    </div></div>`;
+
+    $('#m-send').onclick = () => {
+      // Progress immediately upon opening
+      setTimeout(() => {
+        currentIdx++;
+        renderModal();
+      }, 700);
+    };
+
+    $('#m-skip').onclick = () => {
+      currentIdx++;
+      renderModal();
+    };
+
+    $('#m-cancel').onclick = () => { slot.innerHTML = ''; };
+  }
+
+  renderModal();
 }
 
 function parseCsv(text){
@@ -676,43 +830,166 @@ function parseCsv(text){
   return rows;
 }
 
-async function importCsv(ev){
+/* 1. MASTER DIRECTORY IMPORT */
+async function importMasterCsv(ev){
   const f = ev.target.files[0]; if(!f) return;
-  const box = $('#imsg'); box.innerHTML = '<p class="note">Reading file…</p>';
+  const box = $('#mMsg'); box.innerHTML = '<p class="note">Reading master directory…</p>';
   try {
     const rows = parseCsv(await f.text());
-    const head = rows.shift().map(h => h.trim().toLowerCase());
-    const ix = n => head.findIndex(h => h.startsWith(n));
-    const iR = ix('roll'), iN = ix('name'), iE = ix('email'), iA = ix('att');
-    if([iR, iN, iE, iA].some(i => i < 0)) throw new Error('CSV header must contain: roll, name, email, attendance');
+    if(!rows.length) throw new Error('Master CSV file is empty.');
+    
+    const rawHead = rows.shift();
+    const head = rawHead.map(h => h.trim().toLowerCase().replace(/[\s\-_]/g, ''));
+    const findCol = (...aliases) => head.findIndex(h => aliases.some(a => h.includes(a)));
 
-    const existing = Object.fromEntries(S.rows.map(r => [r.id, r]));
-    const ops = []; let skipped = 0, bad = 0;
+    const iR = findCol('rollno', 'roll');
+    const iN = findCol('name', 'studentname');
+    const iM = findCol('mobile', 'phone', 'contact');
+    const iE = findCol('email', 'mail');
+    const iP = findCol('parentmobile', 'parentphone', 'parentcontact', 'father', 'mother');
 
-    for(const r of rows){
-      const email = (r[iE] || '').trim().toLowerCase(), att = parseFloat((r[iA] || '').replace('%', ''));
-      if(!email.includes('@') || isNaN(att)){ bad++; continue; }
-      if(att >= CONFIG.minAtt){ skipped++; continue; }
-      const keep = existing[email];
-      const base = { 
-        name: r[iN].trim(), 
-        roll: r[iR].trim(), 
-        dept: S.hod.dept, 
-        att: Math.round(att * 10) / 10, 
-        term: CONFIG.term, 
-        hodEmail: S.hod.id 
-      };
-      ops.push([email, keep && keep.status === 'signed' ? { att: base.att } : { ...base, status: 'pending', alerted: false }]);
+    if(iR < 0 || iN < 0 || iE < 0) {
+      throw new Error('Master CSV requires columns: roll no, name, email (mobile and parent-mobile are optional).');
     }
 
+    const ops = []; let bad = 0;
+    for(const r of rows){
+      const roll = (r[iR] || '').trim();
+      const email = (r[iE] || '').trim().toLowerCase();
+      const name = (r[iN] || '').trim();
+      const mobile = iM >= 0 ? (r[iM] || '').trim() : '';
+      const parentMobile = iP >= 0 ? (r[iP] || '').trim() : '';
+
+      if(!roll || !email.includes('@') || !name){ bad++; continue; }
+
+      const record = {
+        roll, name, email, mobile, parentMobile,
+        dept: S.hod.dept,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      ops.push([roll.toUpperCase(), record]);
+    }
+
+    const totalBatches = Math.ceil(ops.length / 450);
     for(let i = 0; i < ops.length; i += 450){
+      const batchNum = Math.floor(i / 450) + 1;
+      box.innerHTML = `<p class="note">Saving batch ${batchNum} of ${totalBatches}…</p>`;
+      const b = db.batch(); 
+      ops.slice(i, i + 450).forEach(([rollKey, data]) => {
+        b.set(db.doc(pDoc('master_students', rollKey)), data, { merge: true });
+      }); 
+      await b.commit();
+    }
+
+    box.innerHTML = `<p class="note" style="color:var(--ok)"><b>${ops.length}</b> master student records stored${bad ? ` · ${bad} invalid lines skipped` : ''}.</p>`;
+    toast(`Master directory updated: ${ops.length} students loaded.`);
+  } catch(e) {
+    box.innerHTML = `<div class="err">${esc(friendly(e))}</div>`;
+  }
+}
+
+/* 2. TERM SHORTAGE IMPORT (CHUNKED IN-QUERIES) */
+async function importShortageCsv(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const box = $('#sMsg'); box.innerHTML = '<p class="note">Parsing shortage CSV…</p>';
+  try {
+    const rows = parseCsv(await f.text());
+    if(!rows.length) throw new Error('Shortage CSV file is empty.');
+    
+    const rawHead = rows.shift();
+    const head = rawHead.map(h => h.trim().toLowerCase().replace(/[\s\-_]/g, ''));
+    const findCol = (...aliases) => head.findIndex(h => aliases.some(a => h.includes(a)));
+
+    const iR = findCol('rollno', 'roll');
+    const iE = findCol('email', 'mail');
+    const iA = findCol('attendance', 'att', 'pct', 'percentage');
+
+    if(iA < 0 || (iR < 0 && iE < 0)) {
+      throw new Error('Shortage CSV must include attendance and roll no (or email).');
+    }
+
+    const candidateRows = [];
+    let skipped = 0, bad = 0;
+
+    for(const r of rows){
+      const rawAtt = (r[iA] || '').replace('%', '').trim();
+      const att = parseFloat(rawAtt);
+      if(isNaN(att)){ bad++; continue; }
+      if(att >= CONFIG.minAtt){ skipped++; continue; }
+
+      const rollVal = iR >= 0 ? (r[iR] || '').trim().toUpperCase() : '';
+      const emailVal = iE >= 0 ? (r[iE] || '').trim().toLowerCase() : '';
+      if(!rollVal && !emailVal){ bad++; continue; }
+
+      candidateRows.push({ roll: rollVal, email: emailVal, att: Math.round(att * 10) / 10 });
+    }
+
+    if(!candidateRows.length){
+      box.innerHTML = `<p class="note">No shortage records below ${CONFIG.minAtt}% found (${skipped} students passed).</p>`;
+      return;
+    }
+
+    box.innerHTML = `<p class="note">Looking up ${candidateRows.length} students in Master Directory…</p>`;
+
+    const masterMap = {};
+    const rollKeys = [...new Set(candidateRows.map(c => c.roll).filter(Boolean))];
+
+    for(let i = 0; i < rollKeys.length; i += 30){
+      const chunk = rollKeys.slice(i, i + 30);
+      const snap = await db.collection(pCol('master_students'))
+        .where(firebase.firestore.FieldPath.documentId(), 'in', chunk)
+        .get();
+      snap.docs.forEach(doc => {
+        masterMap[doc.id] = doc.data();
+      });
+    }
+
+    const existingStudents = Object.fromEntries(S.rows.map(r => [r.id, r]));
+    const ops = []; 
+    let notFound = 0;
+
+    for(const item of candidateRows){
+      const master = masterMap[item.roll];
+      if(!master || master.dept !== S.hod.dept){ 
+        notFound++; 
+        continue; 
+      }
+
+      const email = master.email.toLowerCase();
+      const keep = existingStudents[email];
+
+      const base = {
+        name: master.name,
+        roll: master.roll,
+        mobile: master.mobile || '',
+        parentMobile: master.parentMobile || '',
+        dept: S.hod.dept,
+        att: item.att,
+        term: CONFIG.term,
+        hodEmail: S.hod.id
+      };
+
+      ops.push([
+        email, 
+        keep && keep.status === 'signed' 
+          ? { ...base, status: 'signed', signedAt: keep.signedAt || null } 
+          : { ...base, status: 'pending', alerted: false }
+      ]);
+    }
+
+    const totalBatches = Math.ceil(ops.length / 450);
+    for(let i = 0; i < ops.length; i += 450){
+      const batchNum = Math.floor(i / 450) + 1;
+      box.innerHTML = `<p class="note">Writing shortage batch ${batchNum} of ${totalBatches}…</p>`;
       const b = db.batch(); 
       ops.slice(i, i + 450).forEach(([id, data]) => b.set(db.doc(pDoc('students', id)), data, { merge: true })); 
       await b.commit();
     }
+
     await loadRows(); 
     viewHod();
-    box.innerHTML = `<p class="note"><b>${ops.length}</b> records stored · ${skipped} students with ≥${CONFIG.minAtt}% skipped${bad ? ` · ${bad} invalid lines skipped` : ''}.</p>`;
+    box.innerHTML = `<p class="note" style="color:var(--ok)"><b>${ops.length}</b> shortage records stored · ${skipped} with attendance ≥${CONFIG.minAtt}% skipped${notFound ? ` · <b>${notFound} students not found in Master Directory</b>` : ''}${bad ? ` · ${bad} invalid lines ignored` : ''}.</p>`;
   } catch(e) { 
     box.innerHTML = `<div class="err">${esc(friendly(e))}</div>`; 
   }
@@ -721,10 +998,10 @@ async function importCsv(ev){
 async function sendAlerts(){
   const todo = S.rows.filter(r => r.status !== 'signed' && !r.alerted);
   if(!todo.length) return;
-  if(!confirm(`Send shortage alerts to ${todo.length} student(s)?`)) return;
+  if(!confirm(`Send email notices to ${todo.length} student(s)?`)) return;
   const btn = $('#alerts'); btn.disabled = true; btn.textContent = 'Queueing…';
   try {
-    const url = location.href.split('#')[0];
+    const url = getPortalUrl();
     for(let i = 0; i < todo.length; i += 200){
       const b = db.batch();
       todo.slice(i, i + 200).forEach(s => {
@@ -733,7 +1010,7 @@ async function sendAlerts(){
           message: {
             subject: `Action Required: Attendance Shortage (${s.roll})`,
             html: `<p>Dear ${esc(s.name)},</p><p>Your attendance for ${esc(s.term || CONFIG.term)} is <b>${esc(s.att)}%</b>, which is below the mandatory ${CONFIG.minAtt}%.</p>
-                   <p>Please log in to review and sign the required declaration:</p><p><a href="${url}">${url}</a></p>
+                   <p>Please log in to review and submit your digital declaration:</p><p><a href="${url}">${url}</a></p>
                    <p>Regards,<br>Office of the Head of Department, ${esc(s.dept)}</p>`
           }
         });
