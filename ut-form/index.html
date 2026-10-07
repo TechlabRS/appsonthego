@@ -3,102 +3,316 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Attendance Shortage Declaration Portal</title>
+<title>RGMCET - Attendance Shortage Undertaking Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{
-  --ink:#16243a; --ink2:#4a5a72; --line:#d9dfe8; --paper:#f4f6f9; --card:#ffffff;
-  --brand:#1d3a6e; --brand2:#2f5bb0; --warn:#b4231a; --warnbg:#fdecea;
-  --ok:#17704f; --okbg:#e5f4ed; --amber:#8a5a00; --amberbg:#fff3d6;
-  --wa:#128c7e; --wa-hover:#075e54;
-  --radius:10px;
+:root {
+  --bg: #0b0f19;
+  --bg-subtle: #111827;
+  --card: rgba(23, 32, 54, 0.65);
+  --border: rgba(255, 255, 255, 0.08);
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-glow: rgba(99, 102, 241, 0.35);
+  --accent: #8b5cf6;
+  --wa: #10b981;
+  --wa-hover: #059669;
+  --wa-glow: rgba(16, 185, 129, 0.3);
+  --parent-wa: #0ea5e9;
+  --parent-wa-hover: #0284c7;
+  --warn: #f43f5e;
+  --warn-bg: rgba(244, 63, 94, 0.12);
+  --warn-border: rgba(244, 63, 94, 0.3);
+  --amber: #f59e0b;
+  --amber-bg: rgba(245, 158, 11, 0.12);
+  --amber-border: rgba(245, 158, 11, 0.3);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
 }
-*{box-sizing:border-box}
-html,body{margin:0}
-body{font-family:'Public Sans',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-text-size-adjust:100%}
-h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;margin:0;line-height:1.2}
-button,input,select{font:inherit;color:inherit}
-:focus-visible{outline:3px solid var(--brand2);outline-offset:2px}
-.top{background:var(--brand);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.top b{font-family:'Source Serif 4',serif;font-size:18px;font-weight:700}
-.top small{display:block;opacity:.8;font-size:12px}
-.wrap{max-width:940px;margin:0 auto;padding:18px 16px 60px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px}
-.btn{border:0;background:var(--brand);color:#fff;padding:11px 18px;border-radius:8px;font-weight:600;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
-.btn:hover{background:var(--brand2)}
-.btn[disabled]{opacity:.45;cursor:not-allowed;pointer-events:none}
-.btn.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
-.btn.ghost:hover{background:#e9eef8}
-.btn.small{padding:5px 10px;min-height:32px;font-size:13px;border-radius:6px}
-.btn.light{background:rgba(255,255,255,.15)}
-.btn.light:hover{background:rgba(255,255,255,.28)}
-.btn.wa{background:var(--wa);color:#fff}
-.btn.wa:hover{background:var(--wa-hover)}
-.btn.wa-parent{background:#0277bd;color:#fff}
-.btn.wa-parent:hover{background:#01579b}
-label{display:block;font-weight:600;font-size:14px;margin:12px 0 5px}
-input[type=text],input[type=email],input[type=password],input[type=search]{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;min-height:44px}
-input:focus{border-color:var(--brand2);outline:none;box-shadow:0 0 0 3px #2f5bb033}
-.err{background:var(--warnbg);color:var(--warn);padding:10px 12px;border-radius:8px;margin-top:12px;font-size:14px}
-.note{color:var(--ink2);font-size:14px}
-.portal-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-.portal-switch button{padding:10px;border-radius:8px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-weight:700;color:var(--ink2)}
-.portal-switch button.active{border-color:var(--brand);background:var(--brand);color:#fff}
-.tabs{display:flex;border-bottom:1px solid var(--line);margin:-18px -18px 14px}
-.tabs button{flex:1;background:none;border:0;padding:14px;font-weight:600;color:var(--ink2);cursor:pointer;border-bottom:3px solid transparent}
-.tabs button.on{color:var(--brand);border-color:var(--brand)}
-.auth{max-width:440px;margin:28px auto}
-.auth h1{font-size:26px;margin-bottom:4px}
-.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
-.b-pend{background:var(--amberbg);color:var(--amber)}
-.b-sign{background:var(--okbg);color:var(--ok)}
-.b-low{background:var(--warnbg);color:var(--warn)}
-.hero{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-.gauge{position:relative;width:128px;height:128px;flex:none}
-.gauge svg{transform:rotate(-90deg)}
-.gauge .v{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-family:'Source Serif 4',serif;font-size:28px;font-weight:700;color:var(--warn)}
-.gauge .v small{display:block;font:500 11px 'Public Sans';color:var(--ink2)}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:15px;margin-top:10px}
-.kv dt{color:var(--ink2)}
-.kv dd{margin:0;font-weight:600;word-break:break-word}
-.decl{background:#fafbfd;border:1px dashed #b7c1d1;border-radius:8px;padding:14px;font-family:'Source Serif 4',serif;font-size:16px;line-height:1.65}
-.chk{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-weight:500}
-.chk input{width:22px;height:22px;margin-top:2px;flex:none}
-.digital-stamp{background:#eef3fb;border:1.5px solid #c2d2ea;border-radius:8px;padding:14px;margin-top:16px;font-size:13px;color:var(--ink)}
-.digital-stamp b{color:var(--brand)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px;text-align:center}
-.stat b{font:700 26px 'Source Serif 4',serif;display:block}
-.stat span{font-size:12px;color:var(--ink2)}
-.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
-.bar input[type=search]{flex:1;min-width:150px}
-.chip{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;font-weight:600;font-size:13px;cursor:pointer}
-.chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
-.row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
-.row:first-child{border-top:0}
-.row .who{min-width:0;flex:1 1 240px}
-.row .who b{display:block}
-.row .who span{font-size:13px;color:var(--ink2);word-break:break-all}
-.row .actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.pct{font:700 18px 'Source Serif 4',serif;color:var(--warn);min-width:55px;text-align:right}
-.empty{text-align:center;padding:30px 10px;color:var(--ink2)}
-.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:14px;z-index:99;max-width:90vw}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:640px){.grid-2{grid-template-columns:1fr}}
-.loader{text-align:center;padding:60px;color:var(--ink2)}
-.tpl-link{font-size:12px;font-weight:600;color:var(--brand2);cursor:pointer;text-decoration:underline;float:right}
-.blast-box{background:#f0f8f5;border:1.5px solid #a3d9c9;border-radius:8px;padding:14px;margin-bottom:16px}
-.blast-box h4{margin:0 0 6px;color:var(--wa-hover)}
-.blast-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:90;padding:16px}
-.modal-body{background:#fff;padding:24px;border-radius:12px;max-width:480px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,.2)}
-@media (prefers-reduced-motion:no-preference){.toast{animation:up .25s}@keyframes up{from{opacity:0;transform:translate(-50%,10px)}}}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100vh; }
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 60%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; margin: 0; letter-spacing: -0.02em; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+
+.top-nav {
+  position: sticky; top: 0; z-index: 40;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  background: rgba(11, 15, 25, 0.85);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.nav-brand { display: flex; align-items: center; gap: 12px; }
+.nav-logo {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  display: grid; place-items: center; font-weight: 800; font-size: 18px;
+  color: #fff; box-shadow: 0 4px 12px var(--primary-glow);
+}
+.nav-info b { display: block; font-size: 16px; font-weight: 700; line-height: 1.2; }
+.nav-info small { color: var(--text-muted); font-size: 12px; }
+
+.wrap { max-width: 960px; margin: 0 auto; padding: 24px 16px 80px; }
+
+.card {
+  background: var(--card);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.card:hover { border-color: rgba(255, 255, 255, 0.14); }
+
+.btn {
+  border: 0;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff; padding: 10px 18px; border-radius: var(--radius-sm);
+  font-weight: 600; font-size: 13.5px; cursor: pointer; min-height: 42px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  text-decoration: none; box-shadow: 0 4px 14px var(--primary-glow);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 20px var(--primary-glow);
+  filter: brightness(1.08);
+}
+.btn:active { transform: translateY(0); }
+.btn[disabled] { opacity: 0.45; cursor: not-allowed; pointer-events: none; box-shadow: none; }
+
+.btn.ghost {
+  background: rgba(255, 255, 255, 0.05); color: var(--text-main);
+  border: 1px solid var(--border); box-shadow: none;
+}
+.btn.ghost:hover {
+  background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2);
+}
+.btn.small { padding: 5px 10px; min-height: 32px; font-size: 12.5px; border-radius: 6px; }
+.btn.wa {
+  background: linear-gradient(135deg, var(--wa), var(--wa-hover));
+  box-shadow: 0 4px 14px var(--wa-glow);
+}
+.btn.wa:hover { box-shadow: 0 6px 20px var(--wa-glow); }
+.btn.wa-parent {
+  background: linear-gradient(135deg, var(--parent-wa), var(--parent-wa-hover));
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+}
+
+label {
+  display: block; font-weight: 600; font-size: 13px;
+  color: var(--text-muted); margin: 16px 0 6px; text-transform: uppercase; letter-spacing: 0.05em;
+}
+input[type=text], input[type=email], input[type=password], input[type=search] {
+  width: 100%; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: rgba(11, 15, 25, 0.6);
+  color: #fff; min-height: 44px; transition: all 0.2s ease;
+}
+input:focus {
+  border-color: var(--primary); outline: none;
+  background: rgba(11, 15, 25, 0.9);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
+}
+
+.portal-switch {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  background: rgba(0, 0, 0, 0.4); padding: 4px; border-radius: var(--radius-md);
+  border: 1px solid var(--border); margin-bottom: 20px;
+}
+.portal-switch button {
+  padding: 10px; border-radius: var(--radius-sm); border: 0;
+  background: transparent; cursor: pointer; font-weight: 700; color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+.portal-switch button.active {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.tabs {
+  display: flex; gap: 4px; background: rgba(0,0,0,0.25);
+  padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.tabs button {
+  flex: 1; background: none; border: 0; padding: 10px;
+  font-weight: 600; font-size: 13px; color: var(--text-muted); cursor: pointer;
+  border-radius: 6px; transition: all 0.15s ease;
+}
+.tabs button.on { background: rgba(255, 255, 255, 0.08); color: #fff; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700;
+}
+.b-pend { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+.b-sign { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.b-low { background: var(--warn-bg); color: #fb7185; border: 1px solid var(--warn-border); }
+
+.pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.8s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.75); } }
+
+.hero { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+.gauge { position: relative; width: 140px; height: 140px; flex: none; }
+.gauge svg { transform: rotate(-90deg); filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.3)); }
+.gauge .v {
+  position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+  font-family: 'Outfit', sans-serif; font-size: 32px; font-weight: 800; color: #fb7185;
+}
+.gauge .v small { display: block; font: 600 11px 'Plus Jakarta Sans'; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 20px; font-size: 14px; margin-top: 14px; }
+.kv dt { color: var(--text-dim); font-weight: 500; }
+.kv dd { margin: 0; font-weight: 600; color: var(--text-main); word-break: break-word; }
+
+/* Institutional Paper Undertaking Box */
+.undertaking-paper {
+  background: #fdfbf7;
+  color: #1a1a1a;
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1.65;
+  font-size: 15px;
+}
+.undertaking-paper h4 {
+  font-family: Georgia, serif;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  text-decoration: underline;
+  margin-bottom: 16px;
+  color: #0b1a30;
+}
+.undertaking-header {
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+.undertaking-header div { margin-bottom: 3px; }
+.undertaking-body { text-align: justify; margin-bottom: 20px; }
+
+.chk {
+  display: flex; gap: 12px; align-items: flex-start;
+  margin-top: 18px; font-weight: 500; font-size: 14px; color: #e2e8f0;
+}
+.chk input {
+  width: 20px; height: 20px; margin-top: 2px; accent-color: var(--primary);
+  flex: none; cursor: pointer;
+}
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+.stat {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 18px 14px; text-align: center;
+  backdrop-filter: blur(10px);
+}
+.stat b { font-family: 'Outfit', sans-serif; font-size: 32px; font-weight: 700; line-height: 1.1; }
+.stat span { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-top: 4px; }
+
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+.chip {
+  border: 1px solid var(--border); background: rgba(255, 255, 255, 0.04);
+  border-radius: 99px; padding: 6px 14px; font-weight: 600; font-size: 13px;
+  color: var(--text-muted); cursor: pointer; transition: all 0.15s ease;
+}
+.chip:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.chip.on {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; border-color: transparent; box-shadow: 0 2px 10px var(--primary-glow);
+}
+
+.row {
+  display: flex; gap: 14px; align-items: center; justify-content: space-between;
+  padding: 14px 0; border-top: 1px solid var(--border); flex-wrap: wrap;
+}
+.row:first-child { border-top: 0; }
+.row .who { min-width: 0; flex: 1 1 220px; }
+.row .who b { display: block; font-size: 15px; color: #fff; }
+.row .who span { font-size: 13px; color: var(--text-muted); word-break: break-all; }
+.row .actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pct {
+  font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700;
+  color: #fb7185; min-width: 55px; text-align: right;
+}
+
+.blast-box {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 95, 70, 0.05));
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px;
+}
+.blast-box h4 { margin: 0 0 6px; font-size: 18px; color: #34d399; }
+.blast-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.tpl-link {
+  font-size: 12px; font-weight: 600; color: #a5b4fc;
+  cursor: pointer; text-decoration: none; float: right; padding: 2px 8px;
+  border-radius: 4px; background: rgba(99, 102, 241, 0.1);
+  transition: all 0.15s ease;
+}
+.tpl-link:hover { background: rgba(99, 102, 241, 0.2); color: #fff; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(12px);
+  color: #fff; border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  padding: 12px 22px; border-radius: 99px; font-size: 14px; font-weight: 600;
+  z-index: 99; max-width: 90vw; animation: toastUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes toastUp { from { opacity: 0; transform: translate(-50%, 15px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+.modal {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center;
+  z-index: 90; padding: 16px;
+}
+.modal-body {
+  background: var(--bg-subtle); border: 1px solid var(--border);
+  padding: 28px; border-radius: var(--radius-lg); max-width: 480px; width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  animation: modalScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+.empty { text-align: center; padding: 48px 16px; color: var(--text-dim); }
+.loader { text-align: center; padding: 80px 20px; font-weight: 600; color: var(--text-muted); }
+.err {
+  background: var(--warn-bg); border: 1px solid var(--warn-border);
+  color: #fb7185; padding: 12px 14px; border-radius: var(--radius-sm);
+  margin-top: 14px; font-size: 14px; font-weight: 500;
+}
 </style>
 </head>
 <body>
-<div id="app"><div class="loader">Loading…</div></div>
+<div id="app"><div class="loader">✨ Loading RGMCET Undertaking Portal…</div></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -116,8 +330,10 @@ const CONFIG = {
     appId: "1:511533506488:web:aca4de3d513915d012f94d",
     measurementId: "G-9PZZM5LFKX"
   },
-  institution: "RGMCET-CSE(AI&ML)",
+  institution: "RGMCET",
+  fullNameInstitution: "Rajeev Gandhi Memorial College of Engineering & Technology",
   term: "2026-ODD",
+  cutoffDateText: "August 31st 2026",
   minAtt: 75,
   basePath: "artifacts/att-mail"
 };
@@ -152,20 +368,17 @@ function toast(msg){
 function friendly(e){
   const m={ 
     'auth/invalid-credential':'Wrong email or password.',
-    'auth/user-not-found':'No account with this email.',
+    'auth/user-not-found':'No account found with this email.',
     'auth/wrong-password':'Wrong email or password.',
     'auth/email-already-in-use':'An account already exists. Please Sign In.',
     'auth/weak-password':'Password must be at least 6 characters.',
-    'auth/invalid-email':'Enter a valid email address.',
+    'auth/invalid-email':'Enter a valid institutional email address.',
     'auth/too-many-requests':'Too many attempts. Try again in a few minutes.',
-    'permission-denied':'Access denied. Check Firestore security rules or permissions.' 
+    'permission-denied':'Access restricted. Check security rules or departmental authorization.' 
   };
   return m[e.code] || e.message || 'Something went wrong.';
 }
 
-/* =====================================================================
-   WHATSAPP CLICK-TO-CHAT & BROADCAST GENERATOR
-   ===================================================================== */
 function formatPhone(phone, defaultCountry = '91'){
   if(!phone) return '';
   let digits = String(phone).replace(/\D/g, '');
@@ -179,34 +392,53 @@ function getPortalUrl(){
   return location.href.split('#')[0];
 }
 
+function generateAccessToken(){
+  return Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+}
+
+function getStudentAccessUrl(student){
+  const base = getPortalUrl();
+  const token = student.token || 'token_pending';
+  return `${base}#access?email=${encodeURIComponent(student.id || student.email)}&token=${encodeURIComponent(token)}`;
+}
+
+function copyToClipboard(text, successMsg){
+  navigator.clipboard.writeText(text).then(()=>{
+    if(successMsg) toast(successMsg);
+  }).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+    if(successMsg) toast(successMsg);
+  });
+}
+
 function studentMessage(s){
-  return `*ATTENDANCE SHORTAGE NOTICE*
-Dear ${s.name} (${s.roll}),
+  const directLink = getStudentAccessUrl(s);
+  return `*RGMCET - ATTENDANCE SHORTAGE UNDERTAKING*
+Dear ${s.name} (Regd No: ${s.roll}),
 
-Your recorded attendance for Term *${s.term || CONFIG.term}* in Department of *${s.dept}* is *${s.att}%*, which is below the required minimum of *${CONFIG.minAtt}%*.
+Your recorded attendance till *${s.cutoffDateText || CONFIG.cutoffDateText}* is *${s.att}%*, which is below the required 75%.
 
-Please log in to the student portal to review and submit your official digital shortage declaration:
-🔗 ${getPortalUrl()}
+Please open your direct 1-click link to submit your official undertaking immediately:
+🔗 ${directLink}
 
 - Office of Head of Department, ${s.dept}
-${CONFIG.institution}`;
+RGMCET`;
 }
 
 function parentMessage(s){
-  return `*IMPORTANT ATTENDANCE NOTICE FOR PARENTS*
+  const directLink = getStudentAccessUrl(s);
+  return `*RGMCET - NOTICE FOR PARENTS*
 Dear Parent / Guardian,
 
-This is an official communication regarding your ward *${s.name}* (Roll No: *${s.roll}*), Department of *${s.dept}*, ${CONFIG.institution}.
+This is regarding your ward *${s.name}* (Regd No: *${s.roll}*), Department of *${s.dept}*, RGMCET.
 
-The student's attendance for Term *${s.term || CONFIG.term}* is *${s.att}%*, which is below the mandatory *${CONFIG.minAtt}%*.
-
-The student has been directed to submit an official shortage declaration via the student portal:
-🔗 ${getPortalUrl()}
-
-Kindly ensure your ward submits the declaration immediately.
+Your ward's attendance till *${s.cutoffDateText || CONFIG.cutoffDateText}* is *${s.att}%* (< 75%). An official undertaking must be authenticated immediately:
+🔗 ${directLink}
 
 - Office of Head of Department, ${s.dept}
-${CONFIG.institution}`;
+RGMCET`;
 }
 
 function buildStudentWaLink(s){
@@ -222,8 +454,45 @@ function buildParentWaLink(s){
 }
 
 /* =====================================================================
-   BOOT & SESSIONS
+   MAGIC LINK PARSER & BOOT
    ===================================================================== */
+async function checkMagicLinkAccess(){
+  const hash = window.location.hash;
+  if (!hash.startsWith('#access?')) return false;
+
+  const params = new URLSearchParams(hash.substring(8));
+  const email = (params.get('email') || '').trim().toLowerCase();
+  const token = (params.get('token') || '').trim();
+
+  if (!email || !token) return false;
+
+  app.innerHTML = '<div class="loader">🔑 Validating student access link…</div>';
+  try {
+    const docSnap = await db.doc(pDoc('students', email)).get();
+    if (!docSnap.exists) {
+      toast('Invalid access link or student record not found.');
+      return false;
+    }
+    const data = docSnap.data();
+    if (data.token !== token) {
+      toast('Expired or invalid security link.');
+      return false;
+    }
+
+    S.user = { email: email };
+    S.role = 'student';
+    S.student = { id: docSnap.id, ...data };
+    
+    history.replaceState(null, '', getPortalUrl());
+    viewStudent();
+    toast(`Welcome, ${data.name}!`);
+    return true;
+  } catch(e) {
+    console.error('Magic link error:', e);
+    return false;
+  }
+}
+
 function boot(){
   if (CONFIG.firebase.apiKey === 'YOUR_API_KEY'){ 
     app.innerHTML = '<div class="wrap"><div class="card"><h2>Firebase configuration required.</h2></div></div>';
@@ -233,62 +502,82 @@ function boot(){
   auth = firebase.auth(); 
   db = firebase.firestore();
 
-  auth.onAuthStateChanged(async u=>{
-    S.user = u; S.role = null; S.student = null; S.hod = null; S.rows = [];
-    if(!u) return viewAuth();
+  checkMagicLinkAccess().then(handled => {
+    if (handled) return;
 
-    app.innerHTML = '<div class="loader">Verifying session…</div>';
-    try{
-      const email = u.email.toLowerCase();
+    auth.onAuthStateChanged(async u => {
+      if (S.student && !u) return;
 
-      if (S.portalMode === 'admin') {
-        const hd = await db.doc(pDoc('hods', email)).get();
-        if (!hd.exists) {
-          await auth.signOut();
-          return viewAuth('Access denied: No Admin/HOD account exists with this email.');
+      S.user = u; S.role = null; S.student = null; S.hod = null; S.rows = [];
+      if(!u) return viewAuth();
+
+      app.innerHTML = '<div class="loader">Verifying session…</div>';
+      try {
+        const email = u.email.toLowerCase();
+
+        if (S.portalMode === 'admin') {
+          const hd = await db.doc(pDoc('hods', email)).get();
+          if (!hd.exists) {
+            await auth.signOut();
+            return viewAuth('Access denied: No Admin/HOD account exists with this email.');
+          }
+          S.role = 'hod'; 
+          S.hod = { id: hd.id, ...hd.data() }; 
+          await loadRows(); 
+          return viewHod();
+        } else {
+          const sd = await db.doc(pDoc('students', email)).get();
+          S.role = 'student';
+          if (sd.exists) {
+            S.student = { id: sd.id, ...sd.data() };
+          }
+          return viewStudent();
         }
-        S.role = 'hod'; 
-        S.hod = { id: hd.id, ...hd.data() }; 
-        await loadRows(); 
-        return viewHod();
-      } else {
-        const sd = await db.doc(pDoc('students', email)).get();
-        S.role = 'student';
-        if (sd.exists) {
-          S.student = { id: sd.id, ...sd.data() };
-        }
-        return viewStudent();
+      } catch(e) { 
+        await auth.signOut();
+        viewAuth(friendly(e)); 
+        toast(friendly(e)); 
       }
-    }catch(e){ 
-      await auth.signOut();
-      viewAuth(friendly(e)); 
-      toast(friendly(e)); 
-    }
+    });
   });
 }
 
 function header(sub){
-  return `<div class="top">
-    <div><b>${esc(CONFIG.institution)}</b><small>${esc(sub)} · ${esc(S.user?.email||'')}</small></div>
-    <button class="btn small light" id="out">Sign out</button>
-  </div>`;
+  return `<header class="top-nav">
+    <div class="nav-brand">
+      <div class="nav-logo">R</div>
+      <div class="nav-info">
+        <b>RGMCET Attendance Undertaking Portal</b>
+        <small>${esc(sub)} · ${esc(S.user?.email||'')}</small>
+      </div>
+    </div>
+    <button class="btn small ghost" id="out">Sign Out</button>
+  </header>`;
 }
 
 function bindOut(){ 
-  $('#out').onclick = () => auth.signOut(); 
+  $('#out').onclick = () => {
+    S.user = null; S.student = null; S.hod = null;
+    auth.signOut();
+    viewAuth();
+  }; 
 }
 
 function viewAuth(error){
   const isAdmin = S.portalMode === 'admin';
   const up = S.authTab === 'up';
 
-  app.innerHTML = `<div class="wrap"><div class="auth">
-   <h1>${esc(CONFIG.institution)}</h1>
-   <p class="note">Attendance Declaration & Portal</p>
+  app.innerHTML = `<div class="wrap"><div class="auth" style="max-width:440px;margin:40px auto">
+   <div style="text-align:center;margin-bottom:24px">
+     <h1 style="font-size:32px;font-weight:800;background:linear-gradient(135deg,#fff,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+       RGMCET
+     </h1>
+     <p style="color:var(--text-muted);font-size:14px;margin-top:4px">Attendance Shortage Undertaking Portal</p>
+   </div>
    
    <div class="portal-switch">
      <button id="sw-std" class="${!isAdmin ? 'active' : ''}">Student Portal</button>
-     <button id="sw-adm" class="${isAdmin ? 'active' : ''}">Admin / HOD Portal</button>
+     <button id="sw-adm" class="${isAdmin ? 'active' : ''}">Admin / HOD</button>
    </div>
 
    <div class="card">
@@ -299,24 +588,28 @@ function viewAuth(error){
 
     ${isAdmin && up ? `
       <label for="hn">HOD / Admin Full Name</label>
-      <input id="hn" type="text" placeholder="e.g. Dr. A. Sharma">
+      <input id="hn" type="text" placeholder="e.g. Dr. K. Subba Reddy">
       <label for="hd">Department Code</label>
-      <input id="hd" type="text" placeholder="e.g. AIML, CSE, ECE">
+      <input id="hd" type="text" placeholder="e.g. CSE, AIML, ECE">
     ` : ''}
 
-    <label for="em">${isAdmin ? 'Institutional Admin / HOD Email' : 'Student College Email'}</label>
-    <input id="em" type="email" autocomplete="email" placeholder="${isAdmin ? 'hod.aiml@ilabs.com' : 'student@college.edu'}">
+    <label for="em">${isAdmin ? 'Departmental Admin Email' : 'Student Registered Email'}</label>
+    <input id="em" type="email" autocomplete="email" placeholder="${isAdmin ? 'hod.aiml@ilabs.com' : 'student@rgmcet.edu'}">
     
     <label for="pw">Password</label>
     <input id="pw" type="password" autocomplete="${up ? 'new-password' : 'current-password'}">
     
     ${error ? `<div class="err">${esc(error)}</div>` : ''}
     
-    <button class="btn" id="go" style="width:100%;margin-top:16px">
-      ${up ? (isAdmin ? 'Create HOD Account' : 'Create Student Account') : (isAdmin ? 'Sign In as Admin / HOD' : 'Sign In as Student')}
+    <button class="btn" id="go" style="width:100%;margin-top:20px">
+      ${up ? (isAdmin ? 'Create HOD Account' : 'Register Student Account') : (isAdmin ? 'Sign In to Dashboard' : 'Sign In as Student')}
     </button>
     
-    ${!up ? '<p style="text-align:center;margin:12px 0 0"><a href="#" id="fg" class="note">Forgot password?</a></p>' : ''}
+    ${!isAdmin ? `<p style="text-align:center;margin:14px 0 0;font-size:12px;color:var(--text-dim)">
+      💡 <b>Tip:</b> If you received a link on WhatsApp/Email, open that link directly to bypass password.
+    </p>` : ''}
+    
+    ${!up ? '<p style="text-align:center;margin:16px 0 0"><a href="#" id="fg" style="color:var(--text-muted);font-size:13px;text-decoration:none">Forgot password?</a></p>' : ''}
    </div>
   </div></div>`;
 
@@ -370,25 +663,28 @@ function viewAuth(error){
     if(!e) return toast('Type your email first.');
     try {
       await auth.sendPasswordResetEmail(e);
-      toast('Reset link sent. Check your inbox.');
+      toast('Reset link sent to your inbox.');
     } catch(x) {
       toast(friendly(x));
     }
   };
 }
 
-/* =====================================================================
-   STUDENT PORTAL
-   ===================================================================== */
 function gauge(p){
-  const r=54,c=2*Math.PI*r,off=c*(1-Math.min(p,100)/100);
-  return `<div class="gauge"><svg width="128" height="128" viewBox="0 0 128 128"><circle cx="64" cy="64" r="${r}" fill="none" stroke="#e3e8f0" stroke-width="12"/>
-  <circle cx="64" cy="64" r="${r}" fill="none" stroke="#b4231a" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg>
-  <div class="v"><div>${p}%<small>attendance</small></div></div></div>`;
-}
-
-function declText(s){
-  return `I, <b>${esc(s.name)}</b> (Roll No. <b>${esc(s.roll)}</b>), a student of the Department of <b>${esc(s.dept)}</b>, confirm that my attendance for term <b>${esc(s.term||CONFIG.term)}</b> is <b>${esc(s.att)}%</b>, which is below the required minimum of ${CONFIG.minAtt}%. I have been informed of this shortage and I accept the consequences under the institution's attendance regulations, which may include debarment from examinations, payment of a condonation fee, or other action decided by the institution. I submit this declaration voluntarily.`;
+  const r=56, c=2*Math.PI*r, off=c*(1-Math.min(p,100)/100);
+  return `<div class="gauge">
+    <svg width="140" height="140" viewBox="0 0 140 140">
+      <defs>
+        <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f43f5e" />
+          <stop offset="100%" stop-color="#fb7185" />
+        </linearGradient>
+      </defs>
+      <circle cx="70" cy="70" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12"/>
+      <circle cx="70" cy="70" r="${r}" fill="none" stroke="url(#gaugeGrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/>
+    </svg>
+    <div class="v"><div>${p}%<small>Attendance</small></div></div>
+  </div>`;
 }
 
 function viewStudent(){
@@ -396,50 +692,79 @@ function viewStudent(){
   let body = '';
   if(!s){
     body = `<div class="card empty">
-      <h2>No Shortage Notice Found</h2>
-      <p>Your record is in good standing (at or above ${CONFIG.minAtt}%), or your department has not uploaded shortage records for this term.</p>
+      <div style="font-size:42px;margin-bottom:12px">✨</div>
+      <h2 style="font-size:24px;color:#fff;margin-bottom:8px">No Undertaking Required</h2>
+      <p style="max-width:440px;margin:0 auto;line-height:1.6">Your attendance is in good standing ($\ge 75\%$), or no shortage report has been registered for this term.</p>
     </div>`;
   } else if(s.status === 'signed'){
-    body = `<div class="card"><span class="badge b-sign">Declaration Submitted</span>
-      <h2 style="margin-top:10px">Acknowledgement Verified, ${esc(s.name)}</h2>
-      <p class="note">Your digital acknowledgement is permanently recorded with your HOD (${esc(s.hodEmail || 'Department')}).</p>
-      <button class="btn" id="dl">Download A4 PDF Acknowledgement</button>
+    body = `<div class="card">
+      <span class="badge b-sign"><span class="pulse-dot"></span> Undertaking Submitted</span>
+      <h2 style="margin-top:14px;font-size:24px">Undertaking Verified, ${esc(s.name)}</h2>
+      <p class="note" style="color:var(--text-muted);margin:8px 0 20px">Your digital undertaking has been recorded with the Department of ${esc(s.dept)}.</p>
+      <button class="btn" id="dl">📄 Download Half A4 Printable Undertaking</button>
     </div>`;
   } else {
-    body = `<div class="card"><div class="hero">${gauge(s.att)}
-      <div style="flex:1;min-width:200px"><span class="badge b-low">Below ${CONFIG.minAtt}%</span>
-      <h2 style="margin:8px 0 4px">Attendance Shortage Notice</h2>
-      <dl class="kv">
-        <dt>Name</dt><dd>${esc(s.name)}</dd>
-        <dt>Roll no.</dt><dd>${esc(s.roll)}</dd>
-        <dt>Mobile</dt><dd>${esc(s.mobile || '—')}</dd>
-        <dt>Parent Phone</dt><dd>${esc(s.parentMobile || '—')}</dd>
-        <dt>Department</dt><dd>${esc(s.dept)}</dd>
-        <dt>Term</dt><dd>${esc(s.term||CONFIG.term)}</dd>
-      </dl></div></div></div>
-      <div class="card"><h3 style="margin-bottom:10px">Declaration Statement</h3>
-       <div class="decl">${declText(s)}</div>
-       <label class="chk"><input type="checkbox" id="ok"><span>I have read this declaration and accept the consequences of attendance below ${CONFIG.minAtt}%.</span></label>
-       <label for="tn">Type your full name to authenticate submission</label>
-       <input id="tn" type="text" autocomplete="off" placeholder="${esc(s.name)}">
-       <div class="digital-stamp">
-         <b>Digital Verification Note:</b> Hand-drawn signatures are suspended. Submitting with your authenticated institutional account (<code>${esc(s.id)}</code>) and typed legal name constitutes your official digital acknowledgement.
-       </div>
-       <div id="msg"></div>
-       <button class="btn" id="sub" style="width:100%;margin-top:16px">Authenticate & Submit Declaration</button>
-      </div>`;
+    body = `<div class="card">
+      <div class="hero">
+        ${gauge(s.att)}
+        <div style="flex:1;min-width:200px">
+          <span class="badge b-low"><span class="pulse-dot"></span> Attendance Shortage (&lt; 75%)</span>
+          <h2 style="margin:10px 0 4px;font-size:24px">Undertaking from Student</h2>
+          <dl class="kv">
+            <dt>Regd. No</dt><dd>${esc(s.roll)}</dd>
+            <dt>Student Name</dt><dd>${esc(s.name)}</dd>
+            <dt>Year & Semester</dt><dd>${esc(s.yearSem || s.term || CONFIG.term)}</dd>
+            <dt>Branch</dt><dd>${esc(s.dept)}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Render Exact Paper Undertaking Layout -->
+    <div class="card" style="padding:16px">
+      <div class="undertaking-paper">
+        <h4>Undertaking from the Student of <u>${esc(s.name)}</u> (RGMCET)</h4>
+        <div class="undertaking-header">
+          <div><b>From:</b></div>
+          <div>Regd.No: <b>${esc(s.roll)}</b></div>
+          <div>Name: <b>${esc(s.name)}</b></div>
+          <div>Year & Semester: <b>${esc(s.yearSem || s.term || CONFIG.term)}</b></div>
+          <div>Branch: <b>${esc(s.dept)}</b></div>
+        </div>
+        <p>Sir,</p>
+        <div class="undertaking-body">
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I have attained <b>${esc(s.att)}%</b> Percentage of attendance till <b>${esc(s.cutoffDateText || CONFIG.cutoffDateText)}</b> and I understand that this may lead me to be detained, if I continue the same attitude. I assure you that I will attain a minimum of 75% of attendance, which is the requirement in order to write the semester end examinations, in the future course. I also understand that I myself will be responsible completely if I get detained for the lack of required attendance of minimum of 75%.
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:28px">
+          <div>Thanking you,</div>
+          <div style="text-align:right">
+            <div>Yours Sincerely,</div>
+            <div style="margin-top:14px;font-weight:bold">${esc(s.name)}</div>
+          </div>
+        </div>
+      </div>
+
+      <label class="chk">
+        <input type="checkbox" id="ok">
+        <span>I, <b>${esc(s.name)}</b>, confirm that I have read the above undertaking and agree to abide by all RGMCET regulations.</span>
+      </label>
+      <label for="tn">Type your registered name to submit</label>
+      <input id="tn" type="text" autocomplete="off" placeholder="${esc(s.name)}">
+      <div id="msg"></div>
+      <button class="btn" id="sub" style="width:100%;margin-top:20px">Submit Undertaking</button>
+    </div>`;
   }
-  app.innerHTML = header('Student Portal') + `<div class="wrap">${body}</div>`;
+  app.innerHTML = header('Student Undertaking Portal') + `<div class="wrap">${body}</div>`;
   bindOut();
 
-  if(s && s.status === 'signed') $('#dl').onclick = () => downloadFor(s.id, $('#dl'));
-  if(s && s.status !== 'signed') $('#sub').onclick = submitDeclaration;
+  if(s && s.status === 'signed') $('#dl').onclick = () => downloadSingleUndertakingPdf(s);
+  if(s && s.status !== 'signed') $('#sub').onclick = submitUndertaking;
 }
 
-async function submitDeclaration(){
+async function submitUndertaking(){
   const s = S.student, msg = $('#msg');
   const fail = t => { msg.innerHTML = `<div class="err">${esc(t)}</div>`; };
-  if(!$('#ok').checked) return fail('Please tick the box acknowledging attendance regulations.');
+  if(!$('#ok').checked) return fail('Please tick the checkbox to agree to the undertaking.');
   
   if(cleanStr($('#tn').value) !== cleanStr(s.name)) {
     return fail('Type your name exactly as registered: ' + s.name);
@@ -456,13 +781,16 @@ async function submitDeclaration(){
       parentMobile: s.parentMobile || '',
       dept: s.dept,
       att: s.att,
+      yearSem: s.yearSem || s.term || CONFIG.term,
       term: s.term || CONFIG.term,
+      cutoffDateText: s.cutoffDateText || CONFIG.cutoffDateText,
       hodEmail: s.hodEmail || '',
       typedName: $('#tn').value.trim()
     };
-    const pdf = buildPdf({ ...data, signedAt: new Date() });
+
+    const pdf = buildTwoUpPdf([data]);
     const b64 = pdf.output('datauristring').split(',')[1];
-    const fname = `Declaration_${s.roll}.pdf`;
+    const fname = `Undertaking_${s.roll}.pdf`;
 
     const batch = db.batch();
     batch.set(db.doc(pDoc('declarations', `${data.term}_${s.id}`)), { ...data, signedAt: ts });
@@ -473,10 +801,9 @@ async function submitDeclaration(){
         to: [s.hodEmail],
         cc: [s.id],
         message: {
-          subject: `Attendance declaration signed – ${s.name} (${s.roll})`,
-          html: `<p>${esc(s.name)} (${esc(s.roll)}, ${esc(s.dept)}) has submitted digital declaration for attendance of ${esc(s.att)}%.</p>
-                 <p><b>Mobile:</b> ${esc(s.mobile || 'N/A')}<br><b>Parent Mobile:</b> ${esc(s.parentMobile || 'N/A')}</p>
-                 <p>The signed acknowledgement is attached.</p>`,
+          subject: `RGMCET Undertaking Submitted – ${s.name} (${s.roll})`,
+          html: `<p>Student <b>${esc(s.name)}</b> (${esc(s.roll)}, ${esc(s.dept)}) has submitted the attendance undertaking for ${esc(s.att)}% attendance.</p>
+                 <p>The half-A4 printable undertaking document is attached.</p>`,
           attachments: [{ filename: fname, path: 'data:application/pdf;base64,' + b64 }]
         }
       });
@@ -485,98 +812,114 @@ async function submitDeclaration(){
     pdf.save(fname);
     S.student = { ...s, status: 'signed' }; 
     viewStudent(); 
-    toast('Declaration submitted successfully.');
+    toast('Undertaking submitted and downloaded.');
   } catch(e) { 
-    btn.disabled = false; btn.textContent = 'Authenticate & Submit Declaration'; 
+    btn.disabled = false; btn.textContent = 'Submit Undertaking'; 
     fail(friendly(e)); 
   }
 }
 
-async function downloadFor(email, btn){
-  const old = btn?.textContent; 
-  if(btn){ btn.disabled = true; btn.textContent = 'Generating PDF…'; }
-  try {
-    const d = await db.doc(pDoc('declarations', `${CONFIG.term}_${email}`)).get();
-    if(!d.exists) throw new Error('Declaration document not found for this term.');
-    const x = d.data(); 
-    const pdf = buildPdf({ ...x, signedAt: x.signedAt?.toDate?.() || new Date() });
-    pdf.save(`Declaration_${x.roll}.pdf`);
-  } catch(e) {
-    toast(friendly(e));
-  }
-  if(btn){ btn.disabled = false; btn.textContent = old; }
+/* =====================================================================
+   HALF A4 PDF ENGINE (2 STUDENTS PER A4 PAGE PORTRAIT)
+   A4 Dimensions: 210mm Width x 297mm Height
+   Top Slip: y = 0 to 148.5mm | Bottom Slip: y = 148.5 to 297mm
+   ===================================================================== */
+function drawSingleUndertakingSlot(doc, d, startY){
+  const M = 18;
+  const W = 210;
+  let y = startY + 12;
+
+  // Title
+  doc.setFont('times', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(15, 23, 42);
+  const title = `Undertaking from the Student of  ${d.name}  (RGMCET)`;
+  doc.text(title, W / 2, y, { align: 'center' });
+  const titleWidth = doc.getTextWidth(title);
+  doc.setLineWidth(0.3);
+  doc.line((W - titleWidth) / 2, y + 1.2, (W + titleWidth) / 2, y + 1.2);
+
+  // Header Details
+  y += 10;
+  doc.setFontSize(10.5);
+  doc.setFont('times', 'bold');
+  doc.text('From:', M, y);
+  
+  doc.setFont('times', 'normal');
+  const headers = [
+    `Regd.No: ${d.roll}`,
+    `Name: ${d.name}`,
+    `Year & Semester: ${d.yearSem || d.term || CONFIG.term}`,
+    `Branch: ${d.dept}`
+  ];
+  headers.forEach(h => {
+    y += 5.2;
+    doc.text(h, M, y);
+  });
+
+  // Salutation
+  y += 7.5;
+  doc.text('Sir,', M, y);
+  
+  // Body Paragraph
+  y += 5.5;
+  const attVal = `${d.att}%`;
+  const cutoff = d.cutoffDateText || CONFIG.cutoffDateText;
+  const bodyText = `        I have attained ${attVal} Percentage of attendance till ${cutoff} and I understand that this may lead me to be detained, if I continue the same attitude.  I assure you that I will attain a minimum of 75% of attendance, which is the requirement in order to write the semester end examinations, in the future course. I also understand that I myself will be responsible completely if I get detained for the lack of required attendance of minimum of 75%.`;
+  
+  const splitText = doc.splitTextToSize(bodyText, W - (2 * M));
+  doc.text(splitText, M, y, { lineHeightFactor: 1.35 });
+  y += (splitText.length * 4.8) + 8;
+
+  // Sign-off
+  doc.text('Thanking you,', M, y);
+  doc.text('Yours Sincerely', W - M - 30, y);
+  y += 8;
+  doc.setFont('times', 'bold');
+  doc.text(d.typedName || d.name, W - M - 30, y);
+
+  // Small Audit Stamp at bottom of the slip
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(100, 116, 139);
+  const when = (d.signedAt instanceof Date ? d.signedAt : new Date()).toLocaleString('en-GB');
+  doc.text(`Digitally Authenticated: ${d.email} | Roll: ${d.roll} | Date: ${when}`, M, startY + 140);
 }
 
-/* =====================================================================
-   A4 PDF GENERATION
-   ===================================================================== */
-function buildPdf(d){
+function buildTwoUpPdf(records){
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const W = 210, M = 18;
-  doc.setDrawColor(29, 58, 110); doc.setLineWidth(.6); doc.rect(8, 8, W - 16, 297 - 16);
-  doc.setTextColor(22, 36, 58);
-  doc.setFont('times', 'bold'); doc.setFontSize(17); doc.text(CONFIG.institution, W / 2, 26, { align: 'center' });
-  doc.setFont('times', 'normal'); doc.setFontSize(12); doc.text(`Department of ${d.dept}`, W / 2, 33, { align: 'center' });
-  doc.setLineWidth(.3); doc.line(M, 38, W - M, 38);
-  doc.setFont('times', 'bold'); doc.setFontSize(14);
-  doc.text('ACKNOWLEDGEMENT OF ATTENDANCE SHORTAGE', W / 2, 48, { align: 'center' });
-  doc.setFontSize(11); doc.setFont('helvetica', 'normal');
-  const when = (d.signedAt instanceof Date ? d.signedAt : new Date());
-  doc.text(`Ref: ASD/${d.term}/${d.roll}`, M, 58);
-  doc.text(`Date: ${when.toLocaleDateString('en-GB')}  ${when.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`, W - M, 58, { align: 'right' });
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' }); // 210 x 297 mm
+  const halfHeight = 148.5;
 
-  const rows = [
-    ['Student name', d.name],
-    ['Roll number', d.roll],
-    ['Department', d.dept],
-    ['Email', d.email],
-    ['Student Mobile', d.mobile || '—'],
-    ['Parent Contact', d.parentMobile || '—'],
-    ['Term', d.term],
-    ['Attendance recorded', `${d.att}%`],
-    ['Minimum required', `${CONFIG.minAtt}%`]
-  ];
-  let y = 68; doc.setFontSize(10.5);
-  rows.forEach((r, i) => {
-    if(i % 2 === 0){ doc.setFillColor(244, 246, 249); doc.rect(M, y - 5, W - 2 * M, 7.5, 'F'); }
-    doc.setFont('helvetica', 'bold'); doc.text(r[0], M + 3, y);
-    doc.setFont('helvetica', 'normal'); doc.text(String(r[1]), M + 60, y); 
-    y += 7.5;
-  });
-  y += 6; doc.setFont('times', 'bold'); doc.setFontSize(13); doc.text('Declaration Statement', M, y); y += 7;
-  doc.setFont('times', 'normal'); doc.setFontSize(11.5);
-  const plain = `I, ${d.name} (Roll No. ${d.roll}), a student of the Department of ${d.dept}, confirm that my attendance for term ${d.term} is ${d.att}%, which is below the required minimum of ${CONFIG.minAtt}%. I have been informed of this shortage and I accept the consequences under the institution's attendance regulations, which may include debarment from examinations, payment of a condonation fee, or other action decided by the institution. I submit this declaration voluntarily.`;
-  const lines = doc.splitTextToSize(plain, W - 2 * M); doc.text(lines, M, y, { lineHeightFactor: 1.45 });
-  y += lines.length * 6.5 + 16;
+  for (let i = 0; i < records.length; i += 2) {
+    if (i > 0) doc.addPage();
 
-  doc.setFillColor(245, 247, 252);
-  doc.setDrawColor(180, 195, 220);
-  doc.rect(M, y, W - 2 * M, 24, 'FD');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(29, 58, 110);
-  doc.text('OFFICIAL DIGITAL ATTESTATION', M + 4, y + 6);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(60, 70, 85);
-  doc.text(`Electronically submitted and verified via user session (${d.email}).`, M + 4, y + 12);
-  doc.text(`Typed Legal Name: ${d.typedName || d.name}  |  Timestamp: ${when.toISOString()}`, M + 4, y + 18);
+    // Top Student Slip
+    drawSingleUndertakingSlot(doc, records[i], 0);
 
-  y += 36;
-  doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(22, 36, 58);
-  doc.text('Student Acknowledgement', M, y);
-  doc.text('Acknowledged by HOD', W - M - 60, y);
-  y += 18;
-  doc.setLineWidth(.3); doc.line(M, y, M + 70, y); doc.line(W - M - 70, y, W - M, y);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-  doc.text(d.typedName || d.name, M, y + 6);
-  doc.text(d.hodEmail || 'Head of Department', W - M - 70, y + 6);
+    // Cutting Guideline (Dashed line across exact middle)
+    doc.setDrawColor(180, 190, 205);
+    doc.setLineWidth(0.3);
+    doc.setLineDashPattern([2.5, 2.5], 0);
+    doc.line(8, halfHeight, 202, halfHeight);
+    doc.setFontSize(7.5);
+    doc.setTextColor(140, 150, 165);
+    doc.text('✂ Cut Here (2 Slips per A4 Page)', 105, halfHeight - 1.5, { align: 'center' });
+    doc.setLineDashPattern([], 0); // reset
 
-  doc.setFontSize(8); doc.setTextColor(110, 120, 135);
-  doc.text(`Digitally recorded by authenticated institutional account. Tamper-evident system log.`, W / 2, 286, { align: 'center' });
+    // Bottom Student Slip (if paired)
+    if (records[i + 1]) {
+      drawSingleUndertakingSlot(doc, records[i + 1], halfHeight);
+    }
+  }
   return doc;
 }
 
-/* =====================================================================
-   ADMIN / HOD DASHBOARD WITH BULK WHATSAPP DISPATCHER
-   ===================================================================== */
+function downloadSingleUndertakingPdf(student){
+  const pdf = buildTwoUpPdf([student]);
+  pdf.save(`Undertaking_${student.roll}.pdf`);
+}
+
 async function loadRows(){
   const q = await db.collection(pCol('students')).where('dept', '==', S.hod.dept).get();
   S.rows = q.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.att - b.att);
@@ -589,20 +932,11 @@ function triggerDownload(content, filename){
   URL.revokeObjectURL(url);
 }
 
-function copyToClipboard(text, successMsg){
-  navigator.clipboard.writeText(text).then(()=>{
-    toast(successMsg);
-  }).catch(()=>{
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); ta.remove();
-    toast(successMsg);
-  });
-}
-
 function viewHod(){
   const r = S.rows, pend = r.filter(x => x.status !== 'signed').length, signed = r.length - pend;
   const need = r.filter(x => x.status !== 'signed' && !x.alerted).length;
+  const signedList = r.filter(x => x.status === 'signed');
+  
   const list = r.filter(x => (S.filter === 'all' || (S.filter === 'signed' ? x.status === 'signed' : x.status !== 'signed'))
       && (!S.q || (x.name + x.roll + x.id + (x.mobile||'') + (x.parentMobile||'')).toLowerCase().includes(S.q.toLowerCase())));
 
@@ -611,47 +945,44 @@ function viewHod(){
 
   app.innerHTML = header(`HOD Administration · ${S.hod.dept}`) + `<div class="wrap">
    <div class="stats">
-     <div class="stat"><b>${r.length}</b><span>Below ${CONFIG.minAtt}%</span></div>
+     <div class="stat"><b style="color:#fb7185">${r.length}</b><span>Below 75%</span></div>
      <div class="stat"><b style="color:var(--amber)">${pend}</b><span>Pending</span></div>
-     <div class="stat"><b style="color:var(--ok)">${signed}</b><span>Signed</span></div>
+     <div class="stat"><b style="color:#34d399">${signed}</b><span>Signed</span></div>
    </div>
 
-   <!-- DEDICATED BULK WHATSAPP CONTROL CENTER -->
    <div class="blast-box">
-     <h4>📲 WhatsApp Blast & Broadcast Control</h4>
-     <p class="note" style="margin:0 0 8px">Send WhatsApp alerts from your number to all shortage students (${withStudentPhone.length}) and parents (${withParentPhone.length}).</p>
+     <h4>📲 WhatsApp Blast & 2-per-Page Printing</h4>
+     <p class="note" style="color:var(--text-muted);margin:0 0 10px">Send 1-click links via WhatsApp and download half-A4 paper-saving print sheets.</p>
      
      <div class="blast-actions">
        <button class="btn small wa" id="blast-students" ${withStudentPhone.length ? '' : 'disabled'}>
-         🚀 Launch 1-by-1 Queue (Students: ${withStudentPhone.length})
+         🚀 WhatsApp Queue (Students: ${withStudentPhone.length})
        </button>
        <button class="btn small wa-parent" id="blast-parents" ${withParentPhone.length ? '' : 'disabled'}>
-         🚀 Launch 1-by-1 Queue (Parents: ${withParentPhone.length})
+         🚀 WhatsApp Queue (Parents: ${withParentPhone.length})
+       </button>
+       <button class="btn small ghost" id="batch-print" ${signedList.length ? '' : 'disabled'}>
+         🖨️ Batch Print Signed (${signedList.length} - 2 per A4)
        </button>
        <button class="btn small ghost" id="copy-std-wa">
-         📋 Copy Student Broadcast Text & Numbers
-       </button>
-       <button class="btn small ghost" id="copy-par-wa">
-         📋 Copy Parent Broadcast Text & Numbers
+         📋 Copy Student Broadcast Text
        </button>
      </div>
    </div>
 
    <div class="grid-2">
-     <!-- PIPELINE 1: MASTER DATA CSV -->
      <div class="card">
        <span class="tpl-link" id="dl-master-tpl">Sample CSV</span>
-       <h3 style="margin-bottom:6px">1. Master Directory CSV</h3>
-       <p class="note" style="margin-top:0">Upload full departmental student list.<br><code>roll no, name, mobile, email, parent-mobile</code></p>
+       <h3 style="margin-bottom:6px;font-size:18px">1. Master Directory CSV</h3>
+       <p class="note" style="color:var(--text-muted);font-size:13px;margin:0 0 14px">Roster with contact info.<br><code>roll no, name, mobile, email, parent-mobile, year-sem</code></p>
        <input type="file" id="masterCsv" accept=".csv" style="width:100%">
        <div id="mMsg"></div>
      </div>
 
-     <!-- PIPELINE 2: SHORTAGE CSV -->
      <div class="card">
        <span class="tpl-link" id="dl-short-tpl">Sample CSV</span>
-       <h3 style="margin-bottom:6px">2. Term Shortage CSV</h3>
-       <p class="note" style="margin-top:0">Matches against master directory & stores &lt;${CONFIG.minAtt}%.<br><code>roll no, attendance</code></p>
+       <h3 style="margin-bottom:6px;font-size:18px">2. Term Shortage CSV</h3>
+       <p class="note" style="margin-top:0">Matches against master directory &amp; stores &lt;75%.<br><code>roll no, attendance</code></p>
        <input type="file" id="shortageCsv" accept=".csv" style="width:100%">
        <div id="sMsg"></div>
      </div>
@@ -659,7 +990,7 @@ function viewHod(){
 
    <div class="card">
      <div class="bar">
-       <input type="search" id="q" placeholder="Search by name, roll, phone, or email" value="${esc(S.q)}">
+       <input type="search" id="q" placeholder="Search by name, roll no, or phone" value="${esc(S.q)}">
        <button class="chip ${S.filter === 'all' ? 'on' : ''}" data-f="all">All</button>
        <button class="chip ${S.filter === 'pending' ? 'on' : ''}" data-f="pending">Awaiting</button>
        <button class="chip ${S.filter === 'signed' ? 'on' : ''}" data-f="signed">Signed</button>
@@ -669,33 +1000,37 @@ function viewHod(){
      ${list.length ? list.map(x => {
        const waStudent = buildStudentWaLink(x);
        const waParent = buildParentWaLink(x);
+       const accessUrl = getStudentAccessUrl(x);
 
        return `<div class="row">
          <div class="who">
-           <b>${esc(x.name)} <span style="font-weight:400">· ${esc(x.roll)}</span></b>
+           <b>${esc(x.name)} <span style="font-weight:400;color:var(--text-muted)">· ${esc(x.roll)}</span></b>
            <span>${esc(x.id)}${x.mobile ? `· 📞 ${esc(x.mobile)}` : ''} ${x.parentMobile ? `· 👨‍👩‍👦 ${esc(x.parentMobile)}` : ''}</span>
          </div>
          <div class="pct">${esc(x.att)}%</div>
          
          <div class="actions">
+           <!-- Dedicated Copy Link Button for Admin -->
+           <button class="btn small ghost" data-copy-link="${esc(accessUrl)}" title="Copy student auto-login link to clipboard">🔗 Link</button>
+
            ${waStudent 
-             ? `<a href="${waStudent}" target="_blank" rel="noopener noreferrer" class="btn small wa" title="Open WhatsApp chat with student">💬 Student</a>`
-             : `<button class="btn small wa" disabled title="No student mobile provided">💬 Student</button>`
+             ? `<a href="${waStudent}" target="_blank" rel="noopener noreferrer" class="btn small wa" data-wa-click="${esc(accessUrl)}" title="Send WhatsApp alert & copy link">💬 Student</a>`
+             : `<button class="btn small wa" disabled>💬 Student</button>`
            }
 
            ${waParent 
-             ? `<a href="${waParent}" target="_blank" rel="noopener noreferrer" class="btn small wa-parent" title="Open WhatsApp chat with parent">👨‍👩‍👦 Parent</a>`
-             : `<button class="btn small wa-parent" disabled title="No parent mobile provided">👨‍👩‍👦 Parent</button>`
+             ? `<a href="${waParent}" target="_blank" rel="noopener noreferrer" class="btn small wa-parent" data-wa-click="${esc(accessUrl)}" title="Send WhatsApp parent notice">👨‍👩‍👦 Parent</a>`
+             : `<button class="btn small wa-parent" disabled>👨‍👩‍👦 Parent</button>`
            }
 
            ${x.status === 'signed' 
-             ? `<button class="btn small ghost" data-dl="${esc(x.id)}">PDF</button>` 
+             ? `<button class="btn small ghost" data-dl="${esc(x.id)}" title="Download Half-A4 PDF">📄 PDF</button>` 
              : `<span class="badge b-pend">${x.alerted ? 'Alerted' : 'Pending'}</span>`
            }
          </div>
        </div>`;
      }).join('')
-       : `<div class="empty">${r.length ? 'No records match this filter.' : 'No shortage records found. Upload Master CSV, then upload Term Shortage CSV.'}</div>`}
+       : `<div class="empty">${r.length ? 'No records match filter.' : 'No shortage records found. Upload Master CSV, then upload Term Shortage CSV.'}</div>`}
    </div></div><div id="modal-slot"></div>`;
 
   bindOut();
@@ -705,43 +1040,56 @@ function viewHod(){
     const i = $('#q'); i.focus(); i.setSelectionRange(S.q.length, S.q.length);
   };
   document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.filter = b.dataset.f; viewHod(); });
-  document.querySelectorAll('[data-dl]').forEach(b => b.onclick = () => downloadFor(b.dataset.dl, b));
+  
+  // Single PDF download (Half A4)
+  document.querySelectorAll('[data-dl]').forEach(b => b.onclick = () => {
+    const student = S.rows.find(x => x.id === b.dataset.dl);
+    if(student) downloadSingleUndertakingPdf(student);
+  });
+
+  // Dedicated Link Copy
+  document.querySelectorAll('[data-copy-link]').forEach(b => b.onclick = () => {
+    copyToClipboard(b.dataset.copyLink, 'Student 1-click undertaking link copied to clipboard!');
+  });
+
+  // Automatically copy student link when HOD clicks on WhatsApp button
+  document.querySelectorAll('[data-wa-click]').forEach(b => b.onclick = () => {
+    copyToClipboard(b.dataset.waClick);
+  });
+
   $('#ref').onclick = async e => {
     e.target.disabled = true;
-    try { await loadRows(); viewHod(); toast('Updated.'); } catch(x){ toast(friendly(x)); }
+    try { await loadRows(); viewHod(); toast('Dashboard updated.'); } catch(x){ toast(friendly(x)); }
   };
   $('#masterCsv').onchange = importMasterCsv;
   $('#shortageCsv').onchange = importShortageCsv;
   $('#alerts').onclick = sendAlerts;
+
+  // Batch Print All (2 per page)
+  $('#batch-print').onclick = () => {
+    if(!signedList.length) return toast('No signed undertakings to print.');
+    const pdf = buildTwoUpPdf(signedList);
+    pdf.save(`RGMCET_Undertakings_Batch_${S.hod.dept}.pdf`);
+    toast(`Downloaded ${signedList.length} undertakings (${Math.ceil(signedList.length / 2)} A4 pages).`);
+  };
   
   $('#dl-master-tpl').onclick = () => {
-    triggerDownload("roll no,name,mobile,email,parent-mobile\n23AI001,John Doe,9876543210,john@college.edu,9876543211", "sample_master_directory.csv");
+    triggerDownload("roll no,name,mobile,email,parent-mobile,year-sem\n23091A0501,K. Vamsi Krishna,9876543210,vamsi@rgmcet.edu,9876543211,IV-I B.Tech", "sample_master_directory.csv");
   };
   $('#dl-short-tpl').onclick = () => {
-    triggerDownload("roll no,attendance\n23AI001,68.5", "sample_term_shortage.csv");
+    triggerDownload("roll no,attendance\n23091A0501,74.2", "sample_term_shortage.csv");
   };
 
-  // Bulk WhatsApp modal triggers
   $('#blast-students').onclick = () => launchBulkRunner(withStudentPhone, 'student');
   $('#blast-parents').onclick = () => launchBulkRunner(withParentPhone, 'parent');
 
-  // Copy Broadcast Lists
   $('#copy-std-wa').onclick = () => {
     const numbers = withStudentPhone.map(x => formatPhone(x.mobile)).join(', ');
-    const generalMsg = `*ATTENDANCE SHORTAGE NOTICE*\nDear Students,\nYour attendance is below the mandatory ${CONFIG.minAtt}%. Please log in immediately and authenticate your declaration:\n🔗 ${getPortalUrl()}\n\n- Department of ${S.hod.dept}, ${CONFIG.institution}`;
-    copyToClipboard(`PHONE NUMBERS:\n${numbers}\n\nBROADCAST MESSAGE:\n${generalMsg}`, `Copied ${withStudentPhone.length} student numbers and message.`);
-  };
-
-  $('#copy-par-wa').onclick = () => {
-    const numbers = withParentPhone.map(x => formatPhone(x.parentMobile)).join(', ');
-    const generalMsg = `*IMPORTANT NOTICE FOR PARENTS*\nDear Parent / Guardian,\nThis is from Department of ${S.hod.dept}, ${CONFIG.institution}. Your ward has attendance shortage below ${CONFIG.minAtt}%. Please verify their portal submission:\n🔗 ${getPortalUrl()}`;
-    copyToClipboard(`PHONE NUMBERS:\n${numbers}\n\nBROADCAST MESSAGE:\n${generalMsg}`, `Copied ${withParentPhone.length} parent numbers and message.`);
+    const generalMsg = `*RGMCET ATTENDANCE UNDERTAKING*\nDear Students,\nYour attendance is below 75%. Please use the direct link in your email to submit your undertaking immediately.\n\n- Department of ${S.hod.dept}, RGMCET`;
+    copyToClipboard(`PHONE NUMBERS:\n${numbers}\n\nBROADCAST MESSAGE:\n${generalMsg}`, `Copied ${withStudentPhone.length} numbers & message.`);
   };
 }
 
-/* =====================================================================
-   BULK RUNNER MODAL (SEAMLESS 1-BY-1 DISPATCHER)
-   ===================================================================== */
 function launchBulkRunner(items, targetRole){
   const slot = $('#modal-slot');
   let currentIdx = 0;
@@ -749,9 +1097,9 @@ function launchBulkRunner(items, targetRole){
   function renderModal(){
     if(currentIdx >= items.length){
       slot.innerHTML = `<div class="modal"><div class="modal-body" style="text-align:center">
-        <h3>🎉 All Done!</h3>
-        <p class="note">Successfully processed all ${items.length} ${targetRole} notifications.</p>
-        <button class="btn" id="m-close">Close Runner</button>
+        <h3 style="font-size:24px;margin-bottom:8px">🎉 Queue Completed</h3>
+        <p class="note" style="color:var(--text-muted);margin-bottom:20px">Successfully processed all ${items.length} ${targetRole} notifications.</p>
+        <button class="btn" id="m-close" style="width:100%">Close</button>
       </div></div>`;
       $('#m-close').onclick = () => { slot.innerHTML = ''; };
       return;
@@ -760,16 +1108,17 @@ function launchBulkRunner(items, targetRole){
     const cur = items[currentIdx];
     const link = targetRole === 'student' ? buildStudentWaLink(cur) : buildParentWaLink(cur);
     const phone = targetRole === 'student' ? cur.mobile : cur.parentMobile;
+    const accessUrl = getStudentAccessUrl(cur);
 
     slot.innerHTML = `<div class="modal"><div class="modal-body">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <h3 style="margin:0">Sending WhatsApp (${currentIdx + 1} of ${items.length})</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="margin:0;font-size:20px">Dispatching (${currentIdx + 1} of ${items.length})</h3>
         <span class="badge b-pend">${targetRole.toUpperCase()}</span>
       </div>
-      <dl class="kv" style="margin-bottom:16px">
+      <dl class="kv" style="margin-bottom:20px">
         <dt>Student</dt><dd>${esc(cur.name)} (${esc(cur.roll)})</dd>
         <dt>Target Phone</dt><dd>📞 ${esc(phone)}</dd>
-        <dt>Attendance</dt><dd style="color:var(--warn)">${esc(cur.att)}%</dd>
+        <dt>Attendance</dt><dd style="color:#fb7185">${esc(cur.att)}%</dd>
       </dl>
       <div style="display:flex;gap:10px">
         <a href="${link}" target="_blank" rel="noopener noreferrer" class="btn wa" id="m-send" style="flex:2">
@@ -777,16 +1126,16 @@ function launchBulkRunner(items, targetRole){
         </a>
         <button class="btn ghost" id="m-skip" style="flex:1">Skip</button>
       </div>
-      <p class="note" style="margin-top:12px;font-size:12px;text-align:center">
-        Clicking 'Open Chat & Send' opens WhatsApp. Then click Next to proceed to the next student.
+      <p style="margin-top:14px;font-size:12px;color:var(--text-muted);text-align:center">
+        Opening chat automatically copies the student link to your clipboard.
       </p>
-      <div style="margin-top:8px;text-align:right">
-        <button class="btn small light" id="m-cancel" style="color:var(--ink2)">Cancel Batch</button>
+      <div style="margin-top:12px;text-align:right">
+        <button class="btn small ghost" id="m-cancel" style="border:0">Cancel Batch</button>
       </div>
     </div></div>`;
 
     $('#m-send').onclick = () => {
-      // Progress immediately upon opening
+      copyToClipboard(accessUrl);
       setTimeout(() => {
         currentIdx++;
         renderModal();
@@ -830,10 +1179,9 @@ function parseCsv(text){
   return rows;
 }
 
-/* 1. MASTER DIRECTORY IMPORT */
 async function importMasterCsv(ev){
   const f = ev.target.files[0]; if(!f) return;
-  const box = $('#mMsg'); box.innerHTML = '<p class="note">Reading master directory…</p>';
+  const box = $('#mMsg'); box.innerHTML = '<p class="note" style="color:var(--text-muted)">Reading master directory…</p>';
   try {
     const rows = parseCsv(await f.text());
     if(!rows.length) throw new Error('Master CSV file is empty.');
@@ -842,14 +1190,15 @@ async function importMasterCsv(ev){
     const head = rawHead.map(h => h.trim().toLowerCase().replace(/[\s\-_]/g, ''));
     const findCol = (...aliases) => head.findIndex(h => aliases.some(a => h.includes(a)));
 
-    const iR = findCol('rollno', 'roll');
+    const iR = findCol('rollno', 'roll', 'regdno');
     const iN = findCol('name', 'studentname');
     const iM = findCol('mobile', 'phone', 'contact');
     const iE = findCol('email', 'mail');
-    const iP = findCol('parentmobile', 'parentphone', 'parentcontact', 'father', 'mother');
+    const iP = findCol('parentmobile', 'parentphone', 'parentcontact');
+    const iY = findCol('yearsem', 'sem', 'year');
 
     if(iR < 0 || iN < 0 || iE < 0) {
-      throw new Error('Master CSV requires columns: roll no, name, email (mobile and parent-mobile are optional).');
+      throw new Error('Master CSV requires columns: roll no, name, email (mobile, parent-mobile, year-sem optional).');
     }
 
     const ops = []; let bad = 0;
@@ -859,11 +1208,12 @@ async function importMasterCsv(ev){
       const name = (r[iN] || '').trim();
       const mobile = iM >= 0 ? (r[iM] || '').trim() : '';
       const parentMobile = iP >= 0 ? (r[iP] || '').trim() : '';
+      const yearSem = iY >= 0 ? (r[iY] || '').trim() : CONFIG.term;
 
       if(!roll || !email.includes('@') || !name){ bad++; continue; }
 
       const record = {
-        roll, name, email, mobile, parentMobile,
+        roll, name, email, mobile, parentMobile, yearSem,
         dept: S.hod.dept,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
@@ -874,7 +1224,7 @@ async function importMasterCsv(ev){
     const totalBatches = Math.ceil(ops.length / 450);
     for(let i = 0; i < ops.length; i += 450){
       const batchNum = Math.floor(i / 450) + 1;
-      box.innerHTML = `<p class="note">Saving batch ${batchNum} of ${totalBatches}…</p>`;
+      box.innerHTML = `<p class="note" style="color:var(--text-muted)">Saving batch ${batchNum} of ${totalBatches}…</p>`;
       const b = db.batch(); 
       ops.slice(i, i + 450).forEach(([rollKey, data]) => {
         b.set(db.doc(pDoc('master_students', rollKey)), data, { merge: true });
@@ -882,17 +1232,16 @@ async function importMasterCsv(ev){
       await b.commit();
     }
 
-    box.innerHTML = `<p class="note" style="color:var(--ok)"><b>${ops.length}</b> master student records stored${bad ? ` · ${bad} invalid lines skipped` : ''}.</p>`;
+    box.innerHTML = `<p class="note" style="color:#34d399"><b>${ops.length}</b> master student records stored${bad ? ` · ${bad} invalid lines skipped` : ''}.</p>`;
     toast(`Master directory updated: ${ops.length} students loaded.`);
   } catch(e) {
     box.innerHTML = `<div class="err">${esc(friendly(e))}</div>`;
   }
 }
 
-/* 2. TERM SHORTAGE IMPORT (CHUNKED IN-QUERIES) */
 async function importShortageCsv(ev){
   const f = ev.target.files[0]; if(!f) return;
-  const box = $('#sMsg'); box.innerHTML = '<p class="note">Parsing shortage CSV…</p>';
+  const box = $('#sMsg'); box.innerHTML = '<p class="note" style="color:var(--text-muted)">Parsing shortage CSV…</p>';
   try {
     const rows = parseCsv(await f.text());
     if(!rows.length) throw new Error('Shortage CSV file is empty.');
@@ -901,9 +1250,9 @@ async function importShortageCsv(ev){
     const head = rawHead.map(h => h.trim().toLowerCase().replace(/[\s\-_]/g, ''));
     const findCol = (...aliases) => head.findIndex(h => aliases.some(a => h.includes(a)));
 
-    const iR = findCol('rollno', 'roll');
+    const iR = findCol('rollno', 'roll', 'regdno');
     const iE = findCol('email', 'mail');
-    const iA = findCol('attendance', 'att', 'pct', 'percentage');
+    const iA = findCol('attendance', 'att', 'pct');
 
     if(iA < 0 || (iR < 0 && iE < 0)) {
       throw new Error('Shortage CSV must include attendance and roll no (or email).');
@@ -926,11 +1275,11 @@ async function importShortageCsv(ev){
     }
 
     if(!candidateRows.length){
-      box.innerHTML = `<p class="note">No shortage records below ${CONFIG.minAtt}% found (${skipped} students passed).</p>`;
+      box.innerHTML = `<p class="note" style="color:var(--text-muted)">No shortage records below 75% found (${skipped} students passed).</p>`;
       return;
     }
 
-    box.innerHTML = `<p class="note">Looking up ${candidateRows.length} students in Master Directory…</p>`;
+    box.innerHTML = `<p class="note" style="color:var(--text-muted)">Looking up ${candidateRows.length} students in Master Directory…</p>`;
 
     const masterMap = {};
     const rollKeys = [...new Set(candidateRows.map(c => c.roll).filter(Boolean))];
@@ -958,16 +1307,20 @@ async function importShortageCsv(ev){
 
       const email = master.email.toLowerCase();
       const keep = existingStudents[email];
+      const token = keep?.token || generateAccessToken();
 
       const base = {
         name: master.name,
         roll: master.roll,
         mobile: master.mobile || '',
         parentMobile: master.parentMobile || '',
+        yearSem: master.yearSem || CONFIG.term,
         dept: S.hod.dept,
         att: item.att,
+        cutoffDateText: CONFIG.cutoffDateText,
         term: CONFIG.term,
-        hodEmail: S.hod.id
+        hodEmail: S.hod.id,
+        token: token
       };
 
       ops.push([
@@ -981,7 +1334,7 @@ async function importShortageCsv(ev){
     const totalBatches = Math.ceil(ops.length / 450);
     for(let i = 0; i < ops.length; i += 450){
       const batchNum = Math.floor(i / 450) + 1;
-      box.innerHTML = `<p class="note">Writing shortage batch ${batchNum} of ${totalBatches}…</p>`;
+      box.innerHTML = `<p class="note" style="color:var(--text-muted)">Writing shortage batch ${batchNum} of ${totalBatches}…</p>`;
       const b = db.batch(); 
       ops.slice(i, i + 450).forEach(([id, data]) => b.set(db.doc(pDoc('students', id)), data, { merge: true })); 
       await b.commit();
@@ -989,7 +1342,7 @@ async function importShortageCsv(ev){
 
     await loadRows(); 
     viewHod();
-    box.innerHTML = `<p class="note" style="color:var(--ok)"><b>${ops.length}</b> shortage records stored · ${skipped} with attendance ≥${CONFIG.minAtt}% skipped${notFound ? ` · <b>${notFound} students not found in Master Directory</b>` : ''}${bad ? ` · ${bad} invalid lines ignored` : ''}.</p>`;
+    box.innerHTML = `<p class="note" style="color:#34d399"><b>${ops.length}</b> shortage records stored · ${skipped} with &ge;75% skipped${notFound ? ` · <b>${notFound} students not found in Master Directory</b>` : ''}${bad ? ` · ${bad} invalid lines ignored` : ''}.</p>`;
   } catch(e) { 
     box.innerHTML = `<div class="err">${esc(friendly(e))}</div>`; 
   }
@@ -998,20 +1351,31 @@ async function importShortageCsv(ev){
 async function sendAlerts(){
   const todo = S.rows.filter(r => r.status !== 'signed' && !r.alerted);
   if(!todo.length) return;
-  if(!confirm(`Send email notices to ${todo.length} student(s)?`)) return;
+  if(!confirm(`Send email notices with 1-click undertaking links to ${todo.length} student(s)?`)) return;
   const btn = $('#alerts'); btn.disabled = true; btn.textContent = 'Queueing…';
   try {
-    const url = getPortalUrl();
     for(let i = 0; i < todo.length; i += 200){
       const b = db.batch();
       todo.slice(i, i + 200).forEach(s => {
+        const directUrl = getStudentAccessUrl(s);
+
         b.set(db.collection(pCol('mail')).doc(), {
           to: [s.id],
           message: {
-            subject: `Action Required: Attendance Shortage (${s.roll})`,
-            html: `<p>Dear ${esc(s.name)},</p><p>Your attendance for ${esc(s.term || CONFIG.term)} is <b>${esc(s.att)}%</b>, which is below the mandatory ${CONFIG.minAtt}%.</p>
-                   <p>Please log in to review and submit your digital declaration:</p><p><a href="${url}">${url}</a></p>
-                   <p>Regards,<br>Office of the Head of Department, ${esc(s.dept)}</p>`
+            subject: `Urgent: Attendance Undertaking Required (${s.roll})`,
+            html: `<div style="font-family:sans-serif;line-height:1.6;color:#1e293b;max-width:600px">
+              <h2 style="color:#e11d48;margin-bottom:4px">RGMCET - Attendance Undertaking Notice</h2>
+              <p>Dear <b>${esc(s.name)}</b> (Regd.No: ${esc(s.roll)}),</p>
+              <p>Your recorded attendance till <b>${esc(s.cutoffDateText || CONFIG.cutoffDateText)}</b> in Department of <b>${esc(s.dept)}</b> is <b style="color:#e11d48">${esc(s.att)}%</b>, which is below the mandatory 75%.</p>
+              <div style="margin:22px 0">
+                <a href="${directUrl}" style="background:#6366f1;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">
+                  👉 Click to Submit Official Undertaking
+                </a>
+              </div>
+              <p style="font-size:12px;color:#64748b">No login password required. The above link connects directly to your verified student profile.</p>
+              <hr style="border:0;border-top:1px solid #e2e8f0;margin:20px 0">
+              <p style="font-size:13px;color:#475569">Office of Head of Department, ${esc(s.dept)}<br>RGMCET</p>
+            </div>`
           }
         });
         b.update(db.doc(pDoc('students', s.id)), { alerted: true });
@@ -1020,7 +1384,7 @@ async function sendAlerts(){
     }
     todo.forEach(s => s.alerted = true); 
     viewHod(); 
-    toast(`${todo.length} alert(s) queued successfully.`);
+    toast(`${todo.length} email alert(s) queued.`);
   } catch(e) { 
     toast(friendly(e)); 
     btn.disabled = false; 
