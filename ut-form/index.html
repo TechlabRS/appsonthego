@@ -138,21 +138,6 @@ input:focus {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
 }
 
-.portal-switch {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-  background: rgba(0, 0, 0, 0.4); padding: 4px; border-radius: var(--radius-md);
-  border: 1px solid var(--border); margin-bottom: 20px;
-}
-.portal-switch button {
-  padding: 10px; border-radius: var(--radius-sm); border: 0;
-  background: transparent; cursor: pointer; font-weight: 700; color: var(--text-muted);
-  transition: all 0.2s ease;
-}
-.portal-switch button.active {
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  color: #fff; box-shadow: 0 4px 12px var(--primary-glow);
-}
-
 .tabs {
   display: flex; gap: 4px; background: rgba(0,0,0,0.25);
   padding: 4px; border-radius: var(--radius-sm); border: 1px solid var(--border);
@@ -209,10 +194,7 @@ input:focus {
   margin-bottom: 16px;
   color: #0b1a30;
 }
-.undertaking-header {
-  margin-bottom: 16px;
-  font-size: 14px;
-}
+.undertaking-header { margin-bottom: 16px; font-size: 14px; }
 .undertaking-header div { margin-bottom: 3px; }
 .undertaking-body { text-align: justify; margin-bottom: 20px; }
 
@@ -352,7 +334,6 @@ const S = {
   rows: [], 
   filter: 'all', 
   q: '', 
-  portalMode: 'student',
   authTab: 'in'
 };
 
@@ -368,13 +349,13 @@ function toast(msg){
 function friendly(e){
   const m={ 
     'auth/invalid-credential':'Wrong email or password.',
-    'auth/user-not-found':'No account found with this email.',
+    'auth/user-not-found':'No HOD account found with this email.',
     'auth/wrong-password':'Wrong email or password.',
     'auth/email-already-in-use':'An account already exists. Please Sign In.',
     'auth/weak-password':'Password must be at least 6 characters.',
     'auth/invalid-email':'Enter a valid institutional email address.',
     'auth/too-many-requests':'Too many attempts. Try again in a few minutes.',
-    'permission-denied':'Access restricted. Check security rules or departmental authorization.' 
+    'permission-denied':'Access restricted. Check security rules or authorization.' 
   };
   return m[e.code] || e.message || 'Something went wrong.';
 }
@@ -398,7 +379,14 @@ function generateAccessToken(){
 
 function getStudentAccessUrl(student){
   const base = getPortalUrl();
-  const token = student.token || 'token_pending';
+  let token = student.token;
+  if (!token || token === 'token_pending') {
+    token = generateAccessToken();
+    student.token = token;
+    if (student.id) {
+      db.doc(pDoc('students', student.id)).update({ token: token }).catch(console.error);
+    }
+  }
   return `${base}#access?email=${encodeURIComponent(student.id || student.email)}&token=${encodeURIComponent(token)}`;
 }
 
@@ -420,7 +408,7 @@ Dear ${s.name} (Regd No: ${s.roll}),
 
 Your recorded attendance till *${s.cutoffDateText || CONFIG.cutoffDateText}* is *${s.att}%*, which is below the required 75%.
 
-Please open your direct 1-click link to submit your official undertaking immediately:
+Please open your direct link to submit your official undertaking (No login/password required):
 🔗 ${directLink}
 
 - Office of Head of Department, ${s.dept}
@@ -434,7 +422,7 @@ Dear Parent / Guardian,
 
 This is regarding your ward *${s.name}* (Regd No: *${s.roll}*), Department of *${s.dept}*, RGMCET.
 
-Your ward's attendance till *${s.cutoffDateText || CONFIG.cutoffDateText}* is *${s.att}%* (< 75%). An official undertaking must be authenticated immediately:
+Your ward's attendance till *${s.cutoffDateText || CONFIG.cutoffDateText}* is *${s.att}%* (< 75%). An official undertaking must be authenticated:
 🔗 ${directLink}
 
 - Office of Head of Department, ${s.dept}
@@ -453,9 +441,6 @@ function buildParentWaLink(s){
   return `https://wa.me/${phone}?text=${encodeURIComponent(parentMessage(s))}`;
 }
 
-/* =====================================================================
-   MAGIC LINK PARSER & BOOT
-   ===================================================================== */
 async function checkMagicLinkAccess(){
   const hash = window.location.hash;
   if (!hash.startsWith('#access?')) return false;
@@ -466,11 +451,11 @@ async function checkMagicLinkAccess(){
 
   if (!email || !token) return false;
 
-  app.innerHTML = '<div class="loader">🔑 Validating student access link…</div>';
+  app.innerHTML = '<div class="loader">🔑 Loading your official undertaking form…</div>';
   try {
     const docSnap = await db.doc(pDoc('students', email)).get();
     if (!docSnap.exists) {
-      toast('Invalid access link or student record not found.');
+      toast('Invalid link or student record not found.');
       return false;
     }
     const data = docSnap.data();
@@ -488,7 +473,7 @@ async function checkMagicLinkAccess(){
     toast(`Welcome, ${data.name}!`);
     return true;
   } catch(e) {
-    console.error('Magic link error:', e);
+    console.error('Direct access link error:', e);
     return false;
   }
 }
@@ -508,31 +493,21 @@ function boot(){
     auth.onAuthStateChanged(async u => {
       if (S.student && !u) return;
 
-      S.user = u; S.role = null; S.student = null; S.hod = null; S.rows = [];
+      S.user = u; S.role = null; S.hod = null; S.rows = [];
       if(!u) return viewAuth();
 
-      app.innerHTML = '<div class="loader">Verifying session…</div>';
+      app.innerHTML = '<div class="loader">Verifying Admin permissions…</div>';
       try {
         const email = u.email.toLowerCase();
-
-        if (S.portalMode === 'admin') {
-          const hd = await db.doc(pDoc('hods', email)).get();
-          if (!hd.exists) {
-            await auth.signOut();
-            return viewAuth('Access denied: No Admin/HOD account exists with this email.');
-          }
-          S.role = 'hod'; 
-          S.hod = { id: hd.id, ...hd.data() }; 
-          await loadRows(); 
-          return viewHod();
-        } else {
-          const sd = await db.doc(pDoc('students', email)).get();
-          S.role = 'student';
-          if (sd.exists) {
-            S.student = { id: sd.id, ...sd.data() };
-          }
-          return viewStudent();
+        const hd = await db.doc(pDoc('hods', email)).get();
+        if (!hd.exists) {
+          await auth.signOut();
+          return viewAuth('Access denied: Only registered HOD/Admin accounts can log in here.');
         }
+        S.role = 'hod'; 
+        S.hod = { id: hd.id, ...hd.data() }; 
+        await loadRows(); 
+        return viewHod();
       } catch(e) { 
         await auth.signOut();
         viewAuth(friendly(e)); 
@@ -548,23 +523,25 @@ function header(sub){
       <div class="nav-logo">R</div>
       <div class="nav-info">
         <b>RGMCET Attendance Undertaking Portal</b>
-        <small>${esc(sub)} · ${esc(S.user?.email||'')}</small>
+        <small>${esc(sub)} ${S.user?.email ? `· ${esc(S.user.email)}` : ''}</small>
       </div>
     </div>
-    <button class="btn small ghost" id="out">Sign Out</button>
+    ${S.role === 'hod' ? '<button class="btn small ghost" id="out">Sign Out</button>' : ''}
   </header>`;
 }
 
 function bindOut(){ 
-  $('#out').onclick = () => {
-    S.user = null; S.student = null; S.hod = null;
-    auth.signOut();
-    viewAuth();
-  }; 
+  const outBtn = $('#out');
+  if(outBtn) {
+    outBtn.onclick = () => {
+      S.user = null; S.student = null; S.hod = null;
+      auth.signOut();
+      viewAuth();
+    }; 
+  }
 }
 
 function viewAuth(error){
-  const isAdmin = S.portalMode === 'admin';
   const up = S.authTab === 'up';
 
   app.innerHTML = `<div class="wrap"><div class="auth" style="max-width:440px;margin:40px auto">
@@ -572,29 +549,24 @@ function viewAuth(error){
      <h1 style="font-size:32px;font-weight:800;background:linear-gradient(135deg,#fff,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
        RGMCET
      </h1>
-     <p style="color:var(--text-muted);font-size:14px;margin-top:4px">Attendance Shortage Undertaking Portal</p>
-   </div>
-   
-   <div class="portal-switch">
-     <button id="sw-std" class="${!isAdmin ? 'active' : ''}">Student Portal</button>
-     <button id="sw-adm" class="${isAdmin ? 'active' : ''}">Admin / HOD</button>
+     <p style="color:var(--text-muted);font-size:14px;margin-top:4px">HOD / Department Administrative Access</p>
    </div>
 
    <div class="card">
     <div class="tabs">
-      <button id="t-in" class="${up ? '' : 'on'}">Sign In</button>
-      <button id="t-up" class="${up ? 'on' : ''}">Create ${isAdmin ? 'HOD' : 'Student'} Account</button>
+      <button id="t-in" class="${up ? '' : 'on'}">HOD Sign In</button>
+      <button id="t-up" class="${up ? 'on' : ''}">Register HOD Account</button>
     </div>
 
-    ${isAdmin && up ? `
-      <label for="hn">HOD / Admin Full Name</label>
+    ${up ? `
+      <label for="hn">HOD Full Name</label>
       <input id="hn" type="text" placeholder="e.g. Dr. K. Subba Reddy">
       <label for="hd">Department Code</label>
       <input id="hd" type="text" placeholder="e.g. CSE, AIML, ECE">
     ` : ''}
 
-    <label for="em">${isAdmin ? 'Departmental Admin Email' : 'Student Registered Email'}</label>
-    <input id="em" type="email" autocomplete="email" placeholder="${isAdmin ? 'hod.aiml@ilabs.com' : 'student@rgmcet.edu'}">
+    <label for="em">Department Email</label>
+    <input id="em" type="email" autocomplete="email" placeholder="hod.aiml@ilabs.com">
     
     <label for="pw">Password</label>
     <input id="pw" type="password" autocomplete="${up ? 'new-password' : 'current-password'}">
@@ -602,19 +574,17 @@ function viewAuth(error){
     ${error ? `<div class="err">${esc(error)}</div>` : ''}
     
     <button class="btn" id="go" style="width:100%;margin-top:20px">
-      ${up ? (isAdmin ? 'Create HOD Account' : 'Register Student Account') : (isAdmin ? 'Sign In to Dashboard' : 'Sign In as Student')}
+      ${up ? 'Create Department HOD Account' : 'Sign In to Dashboard'}
     </button>
-    
-    ${!isAdmin ? `<p style="text-align:center;margin:14px 0 0;font-size:12px;color:var(--text-dim)">
-      💡 <b>Tip:</b> If you received a link on WhatsApp/Email, open that link directly to bypass password.
-    </p>` : ''}
     
     ${!up ? '<p style="text-align:center;margin:16px 0 0"><a href="#" id="fg" style="color:var(--text-muted);font-size:13px;text-decoration:none">Forgot password?</a></p>' : ''}
    </div>
+   
+   <p style="text-align:center;font-size:13px;color:var(--text-dim);margin-top:16px;line-height:1.6">
+     🎓 <b>Students:</b> No login is required. Tap the personal link sent directly to your WhatsApp or Email to submit your undertaking.
+   </p>
   </div></div>`;
 
-  $('#sw-std').onclick = () => { S.portalMode = 'student'; S.authTab = 'in'; viewAuth(); };
-  $('#sw-adm').onclick = () => { S.portalMode = 'admin'; S.authTab = 'in'; viewAuth(); };
   $('#t-in').onclick = () => { S.authTab = 'in'; viewAuth(); };
   $('#t-up').onclick = () => { S.authTab = 'up'; viewAuth(); };
 
@@ -628,22 +598,18 @@ function viewAuth(error){
 
     try {
       if (up) {
-        if (isAdmin) {
-          const name = $('#hn').value.trim();
-          const dept = $('#hd').value.trim().toUpperCase();
-          if(!name || !dept) {
-            btn.disabled = false; btn.textContent = 'Create HOD Account';
-            return viewAuth('Name and Department code are required for HOD registration.');
-          }
-          await auth.createUserWithEmailAndPassword(e, p);
-          await db.doc(pDoc('hods', e)).set({
-            name: name,
-            dept: dept,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        } else {
-          await auth.createUserWithEmailAndPassword(e, p);
+        const name = $('#hn').value.trim();
+        const dept = $('#hd').value.trim().toUpperCase();
+        if(!name || !dept) {
+          btn.disabled = false; btn.textContent = 'Create Department HOD Account';
+          return viewAuth('Name and Department code are required for HOD registration.');
         }
+        await auth.createUserWithEmailAndPassword(e, p);
+        await db.doc(pDoc('hods', e)).set({
+          name: name,
+          dept: dept,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
       } else {
         await auth.signInWithEmailAndPassword(e, p);
       }
@@ -694,7 +660,7 @@ function viewStudent(){
     body = `<div class="card empty">
       <div style="font-size:42px;margin-bottom:12px">✨</div>
       <h2 style="font-size:24px;color:#fff;margin-bottom:8px">No Undertaking Required</h2>
-      <p style="max-width:440px;margin:0 auto;line-height:1.6">Your attendance is in good standing ($\ge 75\%$), or no shortage report has been registered for this term.</p>
+      <p style="max-width:440px;margin:0 auto;line-height:1.6">Your attendance is in good standing (&ge; 75%), or no shortage notice has been registered.</p>
     </div>`;
   } else if(s.status === 'signed'){
     body = `<div class="card">
@@ -720,7 +686,6 @@ function viewStudent(){
       </div>
     </div>
     
-    <!-- Render Exact Paper Undertaking Layout -->
     <div class="card" style="padding:16px">
       <div class="undertaking-paper">
         <h4>Undertaking from the Student of <u>${esc(s.name)}</u> (RGMCET)</h4>
@@ -819,17 +784,11 @@ async function submitUndertaking(){
   }
 }
 
-/* =====================================================================
-   HALF A4 PDF ENGINE (2 STUDENTS PER A4 PAGE PORTRAIT)
-   A4 Dimensions: 210mm Width x 297mm Height
-   Top Slip: y = 0 to 148.5mm | Bottom Slip: y = 148.5 to 297mm
-   ===================================================================== */
 function drawSingleUndertakingSlot(doc, d, startY){
   const M = 18;
   const W = 210;
   let y = startY + 12;
 
-  // Title
   doc.setFont('times', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(15, 23, 42);
@@ -839,7 +798,6 @@ function drawSingleUndertakingSlot(doc, d, startY){
   doc.setLineWidth(0.3);
   doc.line((W - titleWidth) / 2, y + 1.2, (W + titleWidth) / 2, y + 1.2);
 
-  // Header Details
   y += 10;
   doc.setFontSize(10.5);
   doc.setFont('times', 'bold');
@@ -857,11 +815,9 @@ function drawSingleUndertakingSlot(doc, d, startY){
     doc.text(h, M, y);
   });
 
-  // Salutation
   y += 7.5;
   doc.text('Sir,', M, y);
   
-  // Body Paragraph
   y += 5.5;
   const attVal = `${d.att}%`;
   const cutoff = d.cutoffDateText || CONFIG.cutoffDateText;
@@ -871,33 +827,29 @@ function drawSingleUndertakingSlot(doc, d, startY){
   doc.text(splitText, M, y, { lineHeightFactor: 1.35 });
   y += (splitText.length * 4.8) + 8;
 
-  // Sign-off
   doc.text('Thanking you,', M, y);
   doc.text('Yours Sincerely', W - M - 30, y);
   y += 8;
   doc.setFont('times', 'bold');
   doc.text(d.typedName || d.name, W - M - 30, y);
 
-  // Small Audit Stamp at bottom of the slip
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
   const when = (d.signedAt instanceof Date ? d.signedAt : new Date()).toLocaleString('en-GB');
-  doc.text(`Digitally Authenticated: ${d.email} | Roll: ${d.roll} | Date: ${when}`, M, startY + 140);
+  doc.text(`Authenticated via Direct Link: ${d.email} | Roll: ${d.roll} | Date: ${when}`, M, startY + 140);
 }
 
 function buildTwoUpPdf(records){
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' }); // 210 x 297 mm
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const halfHeight = 148.5;
 
   for (let i = 0; i < records.length; i += 2) {
     if (i > 0) doc.addPage();
 
-    // Top Student Slip
     drawSingleUndertakingSlot(doc, records[i], 0);
 
-    // Cutting Guideline (Dashed line across exact middle)
     doc.setDrawColor(180, 190, 205);
     doc.setLineWidth(0.3);
     doc.setLineDashPattern([2.5, 2.5], 0);
@@ -905,9 +857,8 @@ function buildTwoUpPdf(records){
     doc.setFontSize(7.5);
     doc.setTextColor(140, 150, 165);
     doc.text('✂ Cut Here (2 Slips per A4 Page)', 105, halfHeight - 1.5, { align: 'center' });
-    doc.setLineDashPattern([], 0); // reset
+    doc.setLineDashPattern([], 0);
 
-    // Bottom Student Slip (if paired)
     if (records[i + 1]) {
       drawSingleUndertakingSlot(doc, records[i + 1], halfHeight);
     }
@@ -922,7 +873,29 @@ function downloadSingleUndertakingPdf(student){
 
 async function loadRows(){
   const q = await db.collection(pCol('students')).where('dept', '==', S.hod.dept).get();
-  S.rows = q.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => a.att - b.att);
+  const repairBatch = db.batch();
+  let needsRepair = false;
+
+  S.rows = q.docs.map(d => {
+    const data = d.data();
+    let token = data.token;
+    
+    if (!token || token === 'token_pending') {
+      token = generateAccessToken();
+      repairBatch.update(d.ref, { token: token });
+      needsRepair = true;
+    }
+
+    return { 
+      id: d.id, 
+      ...data, 
+      token: token 
+    };
+  }).sort((a, b) => a.att - b.att);
+
+  if (needsRepair) {
+    repairBatch.commit().catch(console.error);
+  }
 }
 
 function triggerDownload(content, filename){
@@ -951,7 +924,7 @@ function viewHod(){
    </div>
 
    <div class="blast-box">
-     <h4>📲 WhatsApp Blast & 2-per-Page Printing</h4>
+     <h4>📲 WhatsApp Alerts & 2-per-Page Printing</h4>
      <p class="note" style="color:var(--text-muted);margin:0 0 10px">Send 1-click links via WhatsApp and download half-A4 paper-saving print sheets.</p>
      
      <div class="blast-actions">
@@ -1010,8 +983,7 @@ function viewHod(){
          <div class="pct">${esc(x.att)}%</div>
          
          <div class="actions">
-           <!-- Dedicated Copy Link Button for Admin -->
-           <button class="btn small ghost" data-copy-link="${esc(accessUrl)}" title="Copy student auto-login link to clipboard">🔗 Link</button>
+           <button class="btn small ghost" data-copy-link="${esc(accessUrl)}" title="Copy student 1-click undertaking link">🔗 Link</button>
 
            ${waStudent 
              ? `<a href="${waStudent}" target="_blank" rel="noopener noreferrer" class="btn small wa" data-wa-click="${esc(accessUrl)}" title="Send WhatsApp alert & copy link">💬 Student</a>`
@@ -1041,18 +1013,15 @@ function viewHod(){
   };
   document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.filter = b.dataset.f; viewHod(); });
   
-  // Single PDF download (Half A4)
   document.querySelectorAll('[data-dl]').forEach(b => b.onclick = () => {
     const student = S.rows.find(x => x.id === b.dataset.dl);
     if(student) downloadSingleUndertakingPdf(student);
   });
 
-  // Dedicated Link Copy
   document.querySelectorAll('[data-copy-link]').forEach(b => b.onclick = () => {
     copyToClipboard(b.dataset.copyLink, 'Student 1-click undertaking link copied to clipboard!');
   });
 
-  // Automatically copy student link when HOD clicks on WhatsApp button
   document.querySelectorAll('[data-wa-click]').forEach(b => b.onclick = () => {
     copyToClipboard(b.dataset.waClick);
   });
@@ -1065,7 +1034,6 @@ function viewHod(){
   $('#shortageCsv').onchange = importShortageCsv;
   $('#alerts').onclick = sendAlerts;
 
-  // Batch Print All (2 per page)
   $('#batch-print').onclick = () => {
     if(!signedList.length) return toast('No signed undertakings to print.');
     const pdf = buildTwoUpPdf(signedList);
@@ -1307,7 +1275,7 @@ async function importShortageCsv(ev){
 
       const email = master.email.toLowerCase();
       const keep = existingStudents[email];
-      const token = keep?.token || generateAccessToken();
+      const token = (keep && keep.token && keep.token !== 'token_pending') ? keep.token : generateAccessToken();
 
       const base = {
         name: master.name,
@@ -1372,7 +1340,7 @@ async function sendAlerts(){
                   👉 Click to Submit Official Undertaking
                 </a>
               </div>
-              <p style="font-size:12px;color:#64748b">No login password required. The above link connects directly to your verified student profile.</p>
+              <p style="font-size:12px;color:#64748b">No login required. The above link opens your undertaking form directly.</p>
               <hr style="border:0;border-top:1px solid #e2e8f0;margin:20px 0">
               <p style="font-size:13px;color:#475569">Office of Head of Department, ${esc(s.dept)}<br>RGMCET</p>
             </div>`
