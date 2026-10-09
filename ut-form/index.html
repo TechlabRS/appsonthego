@@ -555,7 +555,7 @@ function viewAuth(error){
    <div class="card">
     <div class="tabs">
       <button id="t-in" class="${up ? '' : 'on'}">HOD Sign In</button>
-      <button id="t-up" class="${up ? 'on' : ''}">Register HOD Account</button>
+      <!-- <button id="t-up" class="${up ? 'on' : ''}">Register HOD Account</button> -->
     </div>
 
     ${up ? `
@@ -566,7 +566,7 @@ function viewAuth(error){
     ` : ''}
 
     <label for="em">Department Email</label>
-    <input id="em" type="email" autocomplete="email" placeholder="hod.aiml@ilabs.com">
+    <input id="em" type="email" autocomplete="email" placeholder="hodmail">
     
     <label for="pw">Password</label>
     <input id="pw" type="password" autocomplete="${up ? 'new-password' : 'current-password'}">
